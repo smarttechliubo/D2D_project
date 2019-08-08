@@ -9,6 +9,6 @@
 
 int main()
 {
-
+    printf("rrc main thread\n");
 	return 0;
 }
