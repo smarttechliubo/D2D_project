@@ -14,7 +14,7 @@
 #include <typedef.h>
 
 /**MAC_RRC_INITIAL_CFM **/
-typedef struct rlc_rrc_initial_cfm_s
+typedef struct mac_rrc_initial_cfm_s
 {
 	uint16_t  status; /**1:pass; 0:error*/
 	uint16_t  error_code;     /**error code, self definition*/
