@@ -7,7 +7,8 @@
  *  All rights reserved.
  */
 
-int main()
+
+int main(int a, int *c, char d)
 {
     printf("rrc main thread\n");
 	return 0;
