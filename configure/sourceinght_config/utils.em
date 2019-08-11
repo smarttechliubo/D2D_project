@@ -1,8 +1,14 @@
-/* Utils.em - a small collection of useful editing macros */
+/******************************************************************
+ * @file  utils.em
+ * @brief 
+ * @author: bo.liu
+ * @Date 2019年8月10日
+ * COPYRIGHT NOTICE: (c) smartlogictech. All rights reserved. 
+ * Change_date         Owner         Change_content
+ * 2019年8月10日        bo.liu       create file
 
-
-
-/*-------------------------------------------------------------------------
+*****************************************************************
+/*-----------------------------------------------
 	I N S E R T   H E A D E R
 
 	Inserts a comment header block at the top of the current function. 
@@ -75,19 +81,38 @@ macro InsertHeader()
    To use this, define an environment variable "MYNAME" and set it
    to your email name.  eg. set MYNAME=raygr
 */
-macro fileInsertFileHeader()
+macro InsertFileHeader()
 {
 	szMyName = getenv(USERNAME)
 	
 	hbuf = GetCurrentBuf()  
     sfile = GetBufName(hbuf)
+    
     line_num = 0
 
+    len = strlen(sfile)
+    i=len-1
+    while ( i>0)
+    {
+		if (sfile[i] == "\\")
+		{
+			break
+		}
+		i = i -1
+    }
+    if (i != 0)
+    {
+    	sfile_name = strmid(sfile,i+1,len)
+    }
+    else 
+    {
+       sfile_name = strmid(sfile,0,len)
+    }
     InsBufLine(hbuf,line_num++ , "/******************************************************************")
-	InsBufLine(hbuf,line_num++ , " * @@file  @sfile@")
+	InsBufLine(hbuf,line_num++ , " * @@file  @sfile_name@")
 	
 	/* if owner variable exists, insert Owner: name */
-	InsBufLine(hbuf, line_num++, " * @@brief ")
+	InsBufLine(hbuf, line_num++, " * @@brief:    [file description] ")
 	if (strlen(szMyName) > 0)
 	{
 		sz = " * @@author: @szMyName@"
@@ -266,7 +291,7 @@ macro ListAllSiblings(symbol)
 //!create new document 
 event DocumentNew(sfile)
 {
-    fileInsertFileHeader()
+    InsertFileHeader()
     len = strlen(sfile)
     if ((sfile[len-1] == "h") || (sfile[len-1] == "H"))
     {
@@ -529,3 +554,68 @@ macro InsertFunctionHeader( )
 
 }
 
+
+
+macro AddModifyInfo()
+{
+    szMyName = getenv(USERNAME)
+    create_time = GetSysTime(1)
+
+    time_y = create_time.Year
+	time_m = create_time.Month
+	time_d = create_time.Day
+	create_date = "@time_y@" # "/" # "@time_m@" # "/" # "@time_d@"  //！格式为:2019/8/10
+	//create_date = create_time.date   //!格式为2019年8月10日
+	hbuf = GetCurrentBuf()  
+
+	
+    start_line = GetBufLnCur(hbuf)
+    //msg(start_line)
+    modify_info = "modify begin: " # " by @szMyName@, " # "Date: " # "@create_date@"
+
+    InsBufLine(hbuf,start_line,"     /*!" # "@modify_info@" )
+    InsBufLine(hbuf,start_line+1,"       " # "modify cause:" # "*/")
+    
+}
+
+macro AddCommentSingle()
+{
+     hbuf = GetCurrentBuf()  
+	 start_line = GetBufLnCur(hbuf)
+	 length = GetBufLineLength(hbuf,start_line)
+	 if (length == 0)
+	 {
+	 	InsBufLine(hbuf,start_line,"    //!")
+	 }
+	 else 
+	 {
+		
+		s = GetBufLine(hbuf,start_line)
+		s = cat(s,"   //!")
+		PutBufLine(hbuf,start_line,s)
+	 }
+}
+macro AddCommentMulti( )
+{
+
+
+ 	hbuf = GetCurrentBuf()  
+	 start_line = GetBufLnCur(hbuf)
+	 length = GetBufLineLength(hbuf,start_line)
+	 if (length == 0)
+	 {
+	 	InsBufLine(hbuf,start_line,"    /*!")
+	 	InsBufLine(hbuf,start_line+1,"      */")
+	 }
+	 else 
+	 {
+		
+		s = GetBufLine(hbuf,start_line)
+		s = cat(s,"   /*!")
+		PutBufLine(hbuf,start_line,s)
+		InsBufLine(hbuf,start_line+1,"   */")
+	 }
+
+
+
+}
