@@ -1,0 +1,13 @@
+EUTRA-RRC-Definitions DEFINITIONS AUTOMATIC TAGS ::=
+
+BEGIN
+RRCConnectionRelease::= SEQUENCE {
+
+	ue-Identity		 INTEGER(0..maxUeId), 
+        releaseCause             ENUMERATED {normal, other}
+}
+
+maxUeId  INTEGER ::= 8 
+
+END 
+
