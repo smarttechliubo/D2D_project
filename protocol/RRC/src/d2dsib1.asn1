@@ -1,0 +1,51 @@
+EUTRA-RRC-Definitions DEFINITIONS AUTOMATIC TAGS ::=
+
+BEGIN
+
+SystemInformationBlockType1 ::=		SEQUENCE {
+  p-Max						P-Max			,
+  tdd-Config				        TDD-Config		,
+  carrierFreq-info                              Carrier,	
+  radioResourceConfigCommon                     RadioResourceConfigCommonSIB
+
+} 
+
+
+
+P-Max ::=				INTEGER (-30..33)
+
+TDD-Config ::=						SEQUENCE {
+	subframeAssignment	  ENUMERATED {dduu, notdefine}
+}
+
+
+Carrier  ::= SEQUENCE {
+	band-info      ENUMERATED {band0,band1,band2,band3,band4,band5,band6,band7},
+        ul-carrier-freq       INTEGER(0..20),
+        dl-carrier-freq       INTEGER(0..20)
+        
+}
+
+
+RadioResourceConfigCommonSIB ::= SEQUENCE {
+	psush-Hop-Config      PuschHoppingConfig,
+        ul-ref-signal-pusch   UlRefSigConfig-PUSCH
+}
+
+PuschHoppingConfig ::=     SEQUENCE {
+    hop-enable    BOOLEAN,
+    hop-mode      ENUMERATED{inter,interandintra}               OPTIONAL,
+    hop-offset    INTEGER(0..98)            OPTIONAL
+}
+
+
+UlRefSigConfig-PUSCH ::= SEQUENCE {
+	group-hopping-enable   BOOLEAN, 
+        seq-hopping-enable     BOOLEAN, 
+        group-assign-pusch     INTEGER(0..29)            OPTIONAL,
+        cycle-shift            INTEGER(0..7)            OPTIONAL
+       
+}
+
+
+END

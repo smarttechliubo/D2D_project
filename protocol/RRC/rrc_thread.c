@@ -8,8 +8,8 @@
  */
 
 
-int main(int a, int *c, char d)
+int main()
 {
-    printf("rrc main thread\n");
+   // printf("rrc main thread\n");
 	return 0;
 }

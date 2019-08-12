@@ -1,0 +1,14 @@
+
+EUTRA-RRC-Definitions DEFINITIONS AUTOMATIC TAGS ::=
+
+BEGIN
+
+MasterInformationBlock ::= SEQUENCE {
+    dl-Bandwidth             ENUMERATED {dlBw1dot5, dlBw3, dlBw6, dlBw12},
+    systemFrameNumber	     BIT STRING (SIZE (7)),
+    pdcch-Config             BIT STRING (SIZE (7))
+}
+
+
+
+END 

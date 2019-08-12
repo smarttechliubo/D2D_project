@@ -77,8 +77,7 @@ typedef struct rrc_rlc_drb_release_req_s
 typedef struct rrc_rlc_initial_req_s
 {
 
-	rrc_rlc_srb_addmod_req   srb_cfg_req;  /**srb addmod request*/
-	rrc_rlc_drb_addmod_req   drb_cfg_req;  /**drb addmod request*/
+	uint32   initial_flag; //!initial,rlc initial ,buffer,hash table establish
 }rrc_rlc_initial_req;
 
 /**RLC_RRC_INITIAL_CFM **/

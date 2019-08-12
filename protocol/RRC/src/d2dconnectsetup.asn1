@@ -1,0 +1,154 @@
+EUTRA-RRC-Definitions DEFINITIONS AUTOMATIC TAGS ::=
+
+BEGIN
+RRCConnectionSetup ::=		SEQUENCE {
+	radioResourceConfigCommon    RadioResourceConfigDedicate,
+        mac-config                   MacConfig,
+        srb-ToAddModList             SRB-ToAddModList     OPTIONAL , 
+        drb-ToAddModList             DRB-ToAddModList     OPTIONAL,
+        drb-ToReleaselist             DRB-ToReleaseList    OPTIONAL
+}
+
+RadioResourceConfigDedicate ::= SEQUENCE {
+    pusch-dedi-config            PdschDedicateConfig
+}
+PdschDedicateConfig ::= SEQUENCE {
+
+	beta-off-ack-ind        INTEGER(0..15) 
+}
+
+
+MacConfig ::= SEQUENCE {
+	maxharq-tx        INTEGER(0..8),
+        max-out-sync	  INTEGER(0..8)
+        
+}
+
+SRB-ToAddModList ::= SEQUENCE(SIZE(1..4)) OF SRB-ToAddMod
+
+SRB-ToAddMod ::= SEQUENCE {
+	srb-Identity                 SRB-Identity, 
+        rlc-config                   RLC-Config, 
+        logicChannelConfig           LogicChannelConfig
+
+}
+
+DRB-ToAddModList ::= SEQUENCE(SIZE(1..4)) OF DRB-ToAddMod
+DRB-ToReleaseList ::= SEQUENCE (SIZE (1..maxDRB)) OF DRB-Identity
+
+DRB-ToAddMod ::= SEQUENCE {
+	drb-Identity                 DRB-Identity, 
+        rlc-config                   RLC-Config, 
+        logicChannelConfig           LogicChannelConfig
+
+}
+
+ DRB-Identity ::= INTEGER (1..maxDRB)
+ SRB-Identity ::= INTEGER(0..maxSRB)
+ LOGICCHENNEL-Identity ::= INTEGER(0..maxLogicChannel)
+
+ maxSRB     INTEGER ::= 4
+ maxDRB     INTEGER ::= 4
+ maxLogicChannel   INTEGER ::= 4
+
+LogicChannelConfig ::= SEQUENCE {
+
+	logicch-id              LOGICCHENNEL-Identity,
+        priority		INTEGER (1..16),
+        channel-type            ENUMERATED {ccch,dtch}
+         
+}
+
+RLC-Config ::= CHOICE {
+        am                         SEQUENCE {
+             ul-am-rlc              UL-AM-RLC, 
+             dl-am-rlc              DL-AM-RLC
+        },
+	um-bi-direction            SEQUENCE {
+             ul-um-rlc              UL-UM-RLC, 
+             dl-um-rlc              DL-UM-RLC
+       }
+}
+
+
+
+UL-AM-RLC ::=						SEQUENCE {
+	t-PollRetransmit					T-PollRetransmit,
+	pollPDU							PollPDU,
+	pollByte						PollByte,
+	maxRetxThreshold					ENUMERATED {
+											t1, t2, t3, t4, t6, t8, t16, t32}
+}
+
+DL-AM-RLC ::=						SEQUENCE {
+	t-Reordering						T-Reordering,
+	t-StatusProhibit					T-StatusProhibit
+}
+
+
+UL-UM-RLC ::=						SEQUENCE {
+	sn-FieldLength						SN-FieldLength
+}
+
+DL-UM-RLC ::=						SEQUENCE {
+	sn-FieldLength						SN-FieldLength,
+	t-Reordering						T-Reordering
+}
+
+
+SN-FieldLength ::=					ENUMERATED {size5, size10}
+
+T-PollRetransmit ::=				ENUMERATED {
+										ms5, ms10, ms15, ms20, ms25, ms30, ms35,
+										ms40, ms45, ms50, ms55, ms60, ms65, ms70,
+										ms75, ms80, ms85, ms90, ms95, ms100, ms105,
+										ms110, ms115, ms120, ms125, ms130, ms135,
+										ms140, ms145, ms150, ms155, ms160, ms165,
+										ms170, ms175, ms180, ms185, ms190, ms195,
+										ms200, ms205, ms210, ms215, ms220, ms225,
+										ms230, ms235, ms240, ms245, ms250, ms300,
+										ms350, ms400, ms450, ms500, ms800-v1310,
+										ms1000-v1310, ms2000-v1310, ms4000-v1310,
+										spare5, spare4, spare3, spare2, spare1}
+
+PollPDU ::=							ENUMERATED {
+										p4, p8, p16, p32, p64, p128, p256, pInfinity}
+
+PollPDU-v1310 ::=					ENUMERATED {
+										p512, p1024, p2048, p4096, p6144, p8192, p12288, p16384}
+
+PollByte ::=						ENUMERATED {
+										kB25, kB50, kB75, kB100, kB125, kB250, kB375,
+										kB500, kB750, kB1000, kB1250, kB1500, kB2000,
+										kB3000, kBinfinity, spare1}
+
+PollByte-r14 ::=					ENUMERATED {
+										kB1, kB2, kB5, kB8, kB10, kB15, kB3500,
+										kB4000, kB4500, kB5000, kB5500, kB6000, kB6500,
+										kB7000, kB7500, kB8000, kB9000, kB10000, kB11000, kB12000,
+										kB13000, kB14000, kB15000, kB16000, kB17000, kB18000,
+										kB19000, kB20000, kB25000, kB30000, kB35000, kB40000}
+
+T-Reordering ::=					ENUMERATED {
+										ms0, ms5, ms10, ms15, ms20, ms25, ms30, ms35,
+										ms40, ms45, ms50, ms55, ms60, ms65, ms70,
+										ms75, ms80, ms85, ms90, ms95, ms100, ms110,
+										ms120, ms130, ms140, ms150, ms160, ms170,
+										ms180, ms190, ms200, ms1600-v1310}
+
+T-StatusProhibit ::=				ENUMERATED {
+										ms0, ms5, ms10, ms15, ms20, ms25, ms30, ms35,
+										ms40, ms45, ms50, ms55, ms60, ms65, ms70,
+										ms75, ms80, ms85, ms90, ms95, ms100, ms105,
+										ms110, ms115, ms120, ms125, ms130, ms135,
+										ms140, ms145, ms150, ms155, ms160, ms165,
+										ms170, ms175, ms180, ms185, ms190, ms195,
+										ms200, ms205, ms210, ms215, ms220, ms225,
+										ms230, ms235, ms240, ms245, ms250, ms300,
+										ms350, ms400, ms450, ms500, ms800-v1310,
+										ms1000-v1310, ms1200-v1310, ms1600-v1310, ms2000-v1310, ms2400-v1310, spare2,
+										spare1}
+
+
+
+END 
