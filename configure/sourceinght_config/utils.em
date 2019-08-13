@@ -484,9 +484,9 @@ macro InsertFunctionHeader( )
 
     all_str = strmid(all_str,j,i+1)
     process_txt_len = strlen(all_str)
-    msg(all_str)
+ 
 
-    msg("only include ():@all_str@")
+   // msg("only include ():@all_str@")
    
      //!清除中间的空格,防止参数为0，只有空格的情况
     all_str_without_space = ""
