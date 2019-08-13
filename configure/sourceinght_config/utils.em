@@ -484,12 +484,32 @@ macro InsertFunctionHeader( )
 
     all_str = strmid(all_str,j,i+1)
     process_txt_len = strlen(all_str)
+    msg(all_str)
+
     msg("only include ():@all_str@")
+   
+     //!清除中间的空格,防止参数为0，只有空格的情况
+    all_str_without_space = ""
+    i = 0
+    while ( i < process_txt_len)
+    {
+		if (all_str[i] != " ")
+		{
+		    
+            all_str_without_space = cat(all_str_without_space,all_str[i])
+		}
+         i = i+1
+    }
+    without_space_len = strlen(all_str_without_space)
+   
+    
+    
 
     //! 在参数不为空时的处理
+    process_txt_len = strlen(all_str)
     i = 0
     j = 0
-    if (process_txt_len > 2)
+    if ((process_txt_len > 2) && (without_space_len > 2))
     {
         while(i < process_txt_len)
         {
@@ -505,7 +525,7 @@ macro InsertFunctionHeader( )
                     if( //all_str[j] == "*" || all_str[j] == "&" ||
                        all_str[j] == "(" || all_str[j] == ",") 
                     {
-                      // msg("j = @j@")
+                     //  msg("j = @j@")
                         last_pos = i-1 //!从后往前找第一个不是空格的位置
                         while(last_pos >= j)
                         {
@@ -518,7 +538,7 @@ macro InsertFunctionHeader( )
     
                         valid_last = last_pos+1
                        
-                        msg("valid_last = @valid_last@")
+                       // msg("valid_last = @valid_last@")
                       
     
                          
@@ -534,7 +554,7 @@ macro InsertFunctionHeader( )
     
                         valid_first = first_pos
                        
-                        msg("valid_first = @valid_first@")
+                      //  msg("valid_first = @valid_first@")
                        
                         
                         symbol_func.Symbol = strmid(all_str,valid_first,valid_last)
