@@ -302,7 +302,7 @@ event DocumentNew(sfile)
         hfile_name_3= strtrunc(hfile_name_2,strlen(hfile_name_2)-2)
         
         pre_1 = "#ifndef " # "   " # hfile_name_3 # "_H" 
-        pre_2 = "#ifdef " # "    " # hfile_name_3 # "_H" 
+        pre_2 = "#def " # "    " # hfile_name_3 # "_H" 
        
         post = "#endif" 
 	    AppendBufLine(hbuf,pre_1)
@@ -320,6 +320,7 @@ event DocumentNew(sfile)
 	{
         hbuf = GetCurrentBuf()  
         AppendBufLine(hbuf,"/**************************include******************************/")
+        AppendBufLine(hbuf,"#include <typedef.h>")
          i = 0
         while(i < 5)
         {

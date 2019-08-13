@@ -12,8 +12,9 @@
 
 
 #include <typedef.h>
+#include <d2d_system_global.h>
 
-#define  MAX_LOGICCHAN_NUM    4
+
 
 /**MAC_RRC_INITIAL_CFM **/
 typedef struct mac_rrc_initial_cfm_s

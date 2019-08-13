@@ -423,9 +423,12 @@
 		<Menu
 			Name="Work"
 			>
-			<item Command="InsertFunctionHeader" Allocated="1" />
 			<item Command="Enable Event Handlers" />
+			<item Command="InsertFunctionHeader" Allocated="1" />
 			<item Command="fileInsertFileHeader" Allocated="1" />
+			<item Command="AddModifyInfo" Allocated="1" />
+			<item Command="AddCommentMulti" Allocated="1" />
+			<item Command="AddCommentSingle" Allocated="1" />
 		</Menu>
 	</Menus>
 	<Keymaps>
