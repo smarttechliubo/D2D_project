@@ -300,9 +300,10 @@ event DocumentNew(sfile)
 
         hfile_name_2 = toupper(hfile_name)
         hfile_name_3= strtrunc(hfile_name_2,strlen(hfile_name_2)-2)
-        
-        pre_1 = "#ifndef " # "   " # hfile_name_3 # "_H" 
-        pre_2 = "#def " # "    " # hfile_name_3 # "_H" 
+
+        pre_1 = "#ifndef " # "    " # hfile_name_3 # "_H" 
+        pre_2 = "#define " # "    " # hfile_name_3 # "_H" 
+
        
         post = "#endif" 
 	    AppendBufLine(hbuf,pre_1)
@@ -353,26 +354,29 @@ function read_function_line(hbuf,line)
 
 	if (str_len < 1)
 	{
-       return
+	  // msg("string is empty,find the next line for \")\"")
+       
 	}
-
-	// find ")"
-	while(str_len > 0)  //如果找到了")"
-	{
-		if (s[--str_len] == ")")
+	else 
+    {
+		// find ")"
+		while(str_len > 0)  //如果找到了")"
 		{
-		   // msg("find )")
-		    last_line_read = line  //!最后找到的行
-		    return
-	 		
+			if (s[--str_len] == ")")
+			{
+			    //msg("find )")
+			    last_line_read = line  //!最后找到的行
+			    return
+		 		
+			}
 		}
 	}
-
+    //!没有找到")"
 	if (str_len == 0)
 	{
 		//msg("there is no ) in this line" # line)
 		last_line_read = line +1
-        read_function_line(hbuf,last_line_read)
+	    read_function_line(hbuf,last_line_read)
 	}
 
 
@@ -450,70 +454,127 @@ macro InsertFunctionHeader( )
         all_str = cat(all_str,s_1)
         func_name_para.first_line = func_name_para.first_line + 1
     }
-	// msg(all_str)  //！打印函数声明
+	//msg(all_str)  //！打印函数声明
 
 	//!step3: truncate the content in ( )
 	param_num = 0
     param_list = SymListNew()
 
+
+    //!step4:排除参数为空的情况
 	process_txt_len  = strlen(all_str)
-    i = 0 
+    i = process_txt_len -1 
     j = 0
 
-    while(i < process_txt_len)
+    while (i > 0 )
     {
-        if(all_str[i] == "," || all_str[i] == ")")
+        if (all_str[i] == ")")
         {
-            j = i-1
-            //msg("i = @i@")
-            while(j > 0)
-            {
-                //！往前找一个,
-                if( //all_str[j] == "*" || all_str[j] == "&" ||
-                   all_str[j] == "(" || all_str[j] == ",") 
-                {
-                   //msg("j = @j@")
-                    last_pos = i-1 //!从后往前找第一个不是空格的位置
-                    while(last_pos > j)
-                    {
-                       if (all_str[last_pos] != " ")
-                       {
-                           break
-                       }
-                       last_pos = last_pos-1
-                    } 
-
-                    valid_last = last_pos+1
-                   
-                   // msg("valid_last = @valid_last@  ")
-
-                     
-                    first_pos = valid_last
-                    while(first_pos > j)
-                    {
-                        if (all_str[first_pos] == " ")
-                        {
-                               break
-                        }
-                        first_pos = first_pos - 1
-                    }
-
-                    valid_first = first_pos
-                  
-                   // msg("valid_first = @valid_first@")
-                   
-                    
-                    symbol_func.Symbol = strmid(all_str,valid_first,valid_last)
-                    //msg(symbol_func.Symbol)  //!打印参数
-                    SymListInsert(param_list,param_num,symbol_func)
-                    param_num = param_num + 1
-                    break;
-                }
-                j = j - 1
-            }
+        	break; 
         }
-        
-        i = i + 1
+        i = i - 1; 
+    }
+
+    while (j < process_txt_len)
+    {
+		if (all_str[j] == "(")
+		{
+			break
+		}
+        j = j+1
+    }
+
+    all_str = strmid(all_str,j,i+1)
+    process_txt_len = strlen(all_str)
+ 
+
+   // msg("only include ():@all_str@")
+   
+     //!清除中间的空格,防止参数为0，只有空格的情况
+    all_str_without_space = ""
+    i = 0
+    while ( i < process_txt_len)
+    {
+		if (all_str[i] != " ")
+		{
+		    
+            all_str_without_space = cat(all_str_without_space,all_str[i])
+		}
+         i = i+1
+    }
+    without_space_len = strlen(all_str_without_space)
+   
+    
+    
+
+    //! 在参数不为空时的处理
+    process_txt_len = strlen(all_str)
+    i = 0
+    j = 0
+    if ((process_txt_len > 2) && (without_space_len > 2))
+    {
+        while(i < process_txt_len)
+        {
+          
+            if(all_str[i] == "," || all_str[i] == ")")
+            {
+                j = i-1
+               // msg("i = @i@")
+                while(j >=0) //向前一直找到0
+                {
+                    
+                    //！往前找一个,
+                    if( //all_str[j] == "*" || all_str[j] == "&" ||
+                       all_str[j] == "(" || all_str[j] == ",") 
+                    {
+                     //  msg("j = @j@")
+                        last_pos = i-1 //!从后往前找第一个不是空格的位置
+                        while(last_pos >= j)
+                        {
+                           if (all_str[last_pos] != " ")
+                           {
+                               break
+                           }
+                           last_pos = last_pos-1
+                        } 
+    
+                        valid_last = last_pos+1
+                       
+                       // msg("valid_last = @valid_last@")
+                      
+    
+                         
+                        first_pos = valid_last-1 //!从不是空格的那个字符之前往前找
+                        while(first_pos >= j)
+                        {
+                            if (all_str[first_pos] == " ")
+                            {
+                                   break
+                            }
+                            first_pos = first_pos - 1
+                        }
+    
+                        valid_first = first_pos
+                       
+                      //  msg("valid_first = @valid_first@")
+                       
+                        
+                        symbol_func.Symbol = strmid(all_str,valid_first,valid_last)
+                        //msg(symbol_func.Symbol)  //!打印参数
+                        SymListInsert(param_list,param_num,symbol_func)
+                        param_num = param_num + 1
+                        break;
+                    }
+                    j = j - 1
+                }
+            }
+            
+            i = i + 1
+        }
+    }
+    else
+    {
+        param_num = 0
     }
     msg("function parameter number:@param_num@")
 

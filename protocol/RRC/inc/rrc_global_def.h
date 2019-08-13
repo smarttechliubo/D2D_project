@@ -12,23 +12,11 @@
 #ifndef      RRC_GLOBAL_DEF_H
 #define      RRC_GLOBAL_DEF_H
 
+#include <d2d_system_global.h>
+
 #define  RRC_TYPE_SOURCE     1
 #define  RRC_TYPE_DESTINATION  0
 
-typedef enum
-{
-	BANDWIDTH_1P5M,
-	BANDWIDTH_3M, 
-	BANDWIDTH_6M,
-	BANDWIDTH_12M,
-	BANDWIDTH_20M
-}bandwidth_e;
-
-typedef enum
-{
-	SUBFRAME_CONFIG_DDUUDDUU, 
-    NOT_DEFINED
-}subframeconfig_e; 
 
 typedef struct rrc_mib_info_s
 {

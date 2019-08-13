@@ -13,7 +13,24 @@
 #define     D2D_SYSTEM_GLOBAL_H
  
  
- #define  MAX_LOGICCHAN_NUM    4
+#define  MAX_LOGICCHAN_NUM    4
+
+
+typedef enum
+{
+	BANDWIDTH_1P5M,
+	BANDWIDTH_3M, 
+	BANDWIDTH_6M,
+	BANDWIDTH_12M,
+	BANDWIDTH_20M
+}bandwidth_e;
+
+typedef enum
+{
+	SUBFRAME_CONFIG_DDUUDDUU, 
+    NOT_DEFINED
+}subframeconfig_e; 
+ 
  
  
 #endif
