@@ -9,8 +9,8 @@
 
 *****************************************************************/
 
-#ifndef    D2D_SYSTEM_GLOBAL_H
-#ifdef     D2D_SYSTEM_GLOBAL_H
+#ifndef     D2D_SYSTEM_GLOBAL_H
+#define     D2D_SYSTEM_GLOBAL_H
  
  
 #define  MAX_LOGICCHAN_NUM    4
