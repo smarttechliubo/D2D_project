@@ -25,7 +25,7 @@ memb_ul_carrier_freq_constraint_1(const asn_TYPE_descriptor_t *td, const void *s
 	
 	value = *(const long *)sptr;
 	
-	if((value >= 0 && value <= 20)) {
+	if((value >= 0 && value <= 65535)) {
 		/* Constraint check succeeded */
 		return 0;
 	} else {
@@ -50,7 +50,7 @@ memb_dl_carrier_freq_constraint_1(const asn_TYPE_descriptor_t *td, const void *s
 	
 	value = *(const long *)sptr;
 	
-	if((value >= 0 && value <= 20)) {
+	if((value >= 0 && value <= 65535)) {
 		/* Constraint check succeeded */
 		return 0;
 	} else {
@@ -67,12 +67,12 @@ static asn_per_constraints_t asn_PER_type_band_info_constr_2 CC_NOTUSED = {
 	0, 0	/* No PER value map */
 };
 static asn_per_constraints_t asn_PER_memb_ul_carrier_freq_constr_11 CC_NOTUSED = {
-	{ APC_CONSTRAINED,	 5,  5,  0,  20 }	/* (0..20) */,
+	{ APC_CONSTRAINED,	 16,  16,  0,  65535 }	/* (0..65535) */,
 	{ APC_UNCONSTRAINED,	-1, -1,  0,  0 },
 	0, 0	/* No PER value map */
 };
 static asn_per_constraints_t asn_PER_memb_dl_carrier_freq_constr_12 CC_NOTUSED = {
-	{ APC_CONSTRAINED,	 5,  5,  0,  20 }	/* (0..20) */,
+	{ APC_CONSTRAINED,	 16,  16,  0,  65535 }	/* (0..65535) */,
 	{ APC_UNCONSTRAINED,	-1, -1,  0,  0 },
 	0, 0	/* No PER value map */
 };
