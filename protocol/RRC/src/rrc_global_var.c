@@ -17,6 +17,6 @@
  
  
 /**************************global var*****************************/
- rrc_init_var  g_rrc_init_para; 
-
+rrc_init_var  g_rrc_init_para; 
+rrc_status_e  g_rrc_status; 
  

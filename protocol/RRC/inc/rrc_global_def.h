@@ -14,8 +14,21 @@
 
 #include <d2d_system_global.h>
 
-#define  RRC_TYPE_SOURCE     1
-#define  RRC_TYPE_DESTINATION  0
+#define  D2D_TYPE_SOURCE     1
+#define  D2D_TYPE_DESTINATION  0
+
+
+
+typedef  enum
+{
+	RRC_STATUS_INITIAL,
+	RRC_STATUS_CELL_SEARCH,
+	RRC_STATUS_IDLE, 
+	RRC_STATUS_CONNECT_SETUP,
+	RRC_STATUS_CONNECTED, 
+    RRC_STATUS_RECONFIG,
+    RRC_STATUS_REESTABLISH
+}rrc_status_e;
 
 
 typedef struct rrc_mib_info_s
@@ -51,18 +64,9 @@ typedef struct rrc_init_var_s
 
 
 
-
-
-
-
-
-
-
-
-
 /**************************************extern var *******************************/
 extern  rrc_init_var  g_rrc_init_para;
-
+extern rrc_status_e  g_rrc_status;
 
 /*************************************extern function****************************/
  

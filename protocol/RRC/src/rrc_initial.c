@@ -17,13 +17,19 @@
  
  
 /**************************function******************************/
-void rrc_initial()
+ /*!   
+ * @brief:  rrc task initial function
+ * @author:  bo.liu
+ * @Date:  2019年8月15日
+ */
+void rrc_Initial()
 {
 	
+	
 #ifdef RRC_SOURCE	
-	g_rrc_init_para.source_type = RRC_TYPE_SOURCE;    //! source
+	g_rrc_init_para.source_type = D2D_TYPE_SOURCE;    //! source
 #else 
-    g_rrc_init_para.source_type = RRC_TYPE_DESTINATION;    //!destination
+    g_rrc_init_para.source_type = D2D_TYPE_SOURCE;    //!destination
 #endif 
 
     g_rrc_init_para.cell_id = 0; 
@@ -41,6 +47,31 @@ void rrc_initial()
 	g_rrc_init_para.mib_info.pdcch_rb_start = 2; 
 	g_rrc_init_para.mib_info.pdcch_rb_num = 2; 
 
+	rrc_StatusChange(RRC_STATUS_INITIAL);
+
 }
+
+
+ /*!   
+ * @brief:  rrc Status Change to next status 
+ * @author:  bo.liu
+ * @Date:  2019年8月15日
+ * @param: rrc_status :       [next valid rrc status ]
+ */
+void rrc_StatusChange(rrc_status_e          rrc_next_status)
+{
+	g_rrc_status = rrc_next_status; 
+}
+
+ /*!   
+ * @brief:  rrc Get CurrentStatus 
+ * @author:  bo.liu
+ * @Date:  2019年8月15日
+ */
+rrc_status_e  rrc_GetCurrentStatus( )
+{
+	return g_rrc_status; 
+}
+
 
  
