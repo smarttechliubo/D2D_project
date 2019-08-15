@@ -55,7 +55,7 @@
 /**MIB & SIB1 content changed */
 #define  RRC_MAC_BCCH_PARA_CFG_REQ  (RRC_MAC_MESSAGE_BASE + 4)
 #define  RRC_MAC_BCCH_PARA_CFG_CFM  (RRC_MAC_MESSAGE_BASE + 5)
-#define  MAC_RRC_PBCH_RPT           (RRC_MAC_MESSAGE_BASE + 6)
+#define  MAC_RRC_BCCH_MIB_RPT       (RRC_MAC_MESSAGE_BASE + 6)
 #define  RRC_MAC_BCCH_SIB1_REQ      (RRC_MAC_MESSAGE_BASE + 7)
 #define  MAC_RRC_BCCH_SIB1_RPT      (RRC_MAC_MESSAGE_BASE + 8)
 /**CCCH:rrc connect message:(connect request, connect setup,connect complete)*/
