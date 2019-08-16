@@ -27,9 +27,9 @@ void rrc_Initial()
 	
 	
 #ifdef RRC_SOURCE	
-	g_rrc_init_para.source_type = D2D_TYPE_SOURCE;    //! source
+	g_rrc_init_para.source_type = D2D_MODE_TYPE_SOURCE;    //! source
 #else 
-    g_rrc_init_para.source_type = D2D_TYPE_SOURCE;    //!destination
+    g_rrc_init_para.source_type = D2D_MODE_TYPE_SOURCE;    //!destination
 #endif 
 
     g_rrc_init_para.cell_id = 0; 

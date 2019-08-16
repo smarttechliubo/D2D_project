@@ -14,9 +14,22 @@
 
 #include <d2d_system_global.h>
 
-#define  D2D_TYPE_SOURCE     1
-#define  D2D_TYPE_DESTINATION  0
+#include <MasterInformationBlock.h>
+#include <SystemInformationBlockType1.h>
+#include <RRCConnectionSetup.h>
+#include <RRCConnectionRequest.h>
+#include <RRCConnectionRelease.h>
+#include <CCCH-Message.h>
+#include <interface_rrc_phy.h>
+#include <interface_rrc_mac.h>
+#include <interface_rrc_rlc.h>
 
+#define  D2D_MODE_TYPE_SOURCE     1
+#define  D2D_MODE_TYPE_DESTINATION  0
+
+
+#define  RRC_MESSAGE_EN_DECODE_OK    0
+#define  RRC_MESSAGE_EN_DECODE_ERROR   -1
 
 
 typedef  enum
@@ -69,6 +82,16 @@ extern  rrc_init_var  g_rrc_init_para;
 extern rrc_status_e  g_rrc_status;
 
 /*************************************extern function****************************/
- 
- 
+ extern int EncodeD2dMib(uint8_t *buf,uint32_t buffer_size); 
+ extern int EncodeD2dSib1(uint8_t *encode_buffer,uint32_t buffersize);
+ extern int EncodeD2dRrcConnectionSetup(uint8_t  *encode_buffer, uint32_t buffersize); 
+ extern int EncodeD2dRrcConnectRequest(uint8_t  *encode_buffer, uint32_t buffersize);
+ extern int EncodeD2dRrcConnectRelease(uint8_t  *encode_buffer, uint32_t buffersize);
+ extern int DecodeD2dMib(MasterInformationBlock_t       *bch_msg,uint8_t *buf,uint32_t size );
+ extern int DecodeD2dSib1(SystemInformationBlockType1_t       *decode_msg,uint8_t *buf,uint32_t size );
+ extern int DecodeD2dRrcConnectSetup(RRCConnectionSetup_t       *decode_msg,uint8_t *buf,uint32_t size );
+ extern int DecodeD2dRrcConnectRequest(RRCConnectionRequest_t           *decode_msg,uint8_t *buf,uint32_t size );
+ extern int DecodeD2dRrcConnectRelease(RRCConnectionRelease_t           *decode_msg,uint8_t *buf,uint32_t size );
+ extern int EncodeD2dCcch(uint8_t  *encode_buffer, uint32_t buffersize,CCCH_MessageType_PR ccch_messsage_type);
+ extern int DecodeD2dCcch(CCCH_Message_t           *decode_msg,uint8_t *buf,uint32_t size ); 
 #endif

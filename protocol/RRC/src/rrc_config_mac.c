@@ -24,10 +24,11 @@
  * @Date:  2019年8月15日
  * @param: init_var :         [initial rrc varibal ]
  */
-void rrc_Mac_InitialConfig(rrc_init_var init_var)
+void rrc_Mac_InitialConfig(uint16_t mode_type,rrc_init_var init_var)
 {
 	rrc_mac_initial_req   mac_init_req;
 
+   
 	mac_init_req.cellId = init_var.cell_id; 
 	mac_init_req.bandwith = (uint16_t)init_var.band_width;
 	mac_init_req.subframe_config = (uint16_t)init_var.subframe_config; 
@@ -36,7 +37,7 @@ void rrc_Mac_InitialConfig(rrc_init_var init_var)
 	mac_init_req.pdcch_config.rb_start_index = init_var.mib_info.pdcch_rb_start; 
 	mac_init_req.pdcch_config.rb_num = init_var.mib_info.pdcch_rb_num; 
 
-
+    
      //!TODO send message 
 }
 

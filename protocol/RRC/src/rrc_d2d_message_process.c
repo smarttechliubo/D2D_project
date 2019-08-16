@@ -11,11 +11,13 @@
 
 /**************************include******************************/
 #include <typedef.h>
+#include <rrc_global_def.h>
 #include <MasterInformationBlock.h>
 #include <SystemInformationBlockType1.h>
 #include <RRCConnectionSetup.h>
 #include <RRCConnectionRequest.h>
 #include <RRCConnectionRelease.h>
+#include <CCCH-Message.h>
 
 
 
@@ -53,7 +55,7 @@ int EncodeD2dMib(uint8_t *buf,uint32_t buffer_size)
 	MasterInformationBlock_t  *bch_msg; 
 
 	asn_enc_rval_t ec; 
-
+    
 
 
 	int  size ; 
@@ -76,7 +78,7 @@ int EncodeD2dMib(uint8_t *buf,uint32_t buffer_size)
 		/* for BER output */
 		if(!fp) {
 			perror(filename);
-			exit(1);
+			return RRC_MESSAGE_EN_DECODE_ERROR;
 	    }
 	}
 #endif 	
@@ -84,7 +86,7 @@ int EncodeD2dMib(uint8_t *buf,uint32_t buffer_size)
 	bch_msg = calloc(1, sizeof(MasterInformationBlock_t)); /* not malloc! */
 	if(!bch_msg) {
 		perror("calloc() failed");
-		exit(1);
+		return RRC_MESSAGE_EN_DECODE_ERROR;
 	}
 
 
@@ -113,7 +115,7 @@ int EncodeD2dMib(uint8_t *buf,uint32_t buffer_size)
 		fprintf(stderr, "Could not encode  (at %s)\n",
 		 ec.failed_type->name);  //ec.failed_type ? 
 		system("pause");
-		exit(1);
+		return RRC_MESSAGE_EN_DECODE_ERROR;
 	} else {
 	    fprintf(stderr, "Created %s with PER encoded success\n", filename);
 		printf("ec.encoded = %d bytes\n",ec.encoded); 
@@ -127,7 +129,7 @@ int EncodeD2dMib(uint8_t *buf,uint32_t buffer_size)
 		fprintf(stderr, "Could not encode  (at %s)\n",
 		 ec.failed_type->name);  //ec.failed_type ? 
 		system("pause");
-		exit(1);
+		return RRC_MESSAGE_EN_DECODE_ERROR;
 	} else {
 		//!printf("encode to buffer \n");
 		//!printf("ec.encoded = %d bytes\n",ec.encoded); 
@@ -155,7 +157,7 @@ int EncodeD2dMib(uint8_t *buf,uint32_t buffer_size)
 	//xer_fprint(stdout,&asn_DEF_MasterInformationBlock,(void*)bch_msg); //！提取出IE 内容
 	//asn_fprint(stdout, &asn_DEF_MasterInformationBlock, bch_msg); //!不提取bit,只打印原始Bite
    // system("pause");
-	return 0; /* Encoding finished successfully */
+	return RRC_MESSAGE_EN_DECODE_OK; /* Encoding finished successfully */
 
 }
 
@@ -194,7 +196,7 @@ int EncodeD2dSib1(uint8_t *encode_buffer,uint32_t buffersize)
 		/* for BER output */
 		if(!fp) {
 			perror(filename);
-			exit(1);
+			return RRC_MESSAGE_EN_DECODE_ERROR;
 	    }
 	}
  #endif 
@@ -203,7 +205,7 @@ int EncodeD2dSib1(uint8_t *encode_buffer,uint32_t buffersize)
 	sib1_msg = calloc(1, sizeof(SystemInformationBlockType1_t)); /* not malloc! */
 	if(!sib1_msg) {
 		perror("calloc() failed");
-		exit(1);
+		return RRC_MESSAGE_EN_DECODE_ERROR;
 	}
 
 
@@ -230,7 +232,7 @@ int EncodeD2dSib1(uint8_t *encode_buffer,uint32_t buffersize)
 		fprintf(stderr, "Could not encode  (at %s)\n",
 		 ec.failed_type->name);  //ec.failed_type ? 
 		system("pause");
-		exit(1);
+		return RRC_MESSAGE_EN_DECODE_ERROR;
 	} else {
 		printf("ec.encoded = %d bytes\n",ec.encoded); 
 		fprintf(stderr, "Created %s with PER encoded success\n", filename);
@@ -242,7 +244,7 @@ int EncodeD2dSib1(uint8_t *encode_buffer,uint32_t buffersize)
 		fprintf(stderr, "Could not encode  (at %s)\n",
 		 ec.failed_type->name);  //ec.failed_type ? 
 		system("pause");
-		exit(1);
+		return RRC_MESSAGE_EN_DECODE_ERROR;
 	} 
 	else 
 	{
@@ -267,7 +269,7 @@ int EncodeD2dSib1(uint8_t *encode_buffer,uint32_t buffersize)
 	//xer_fprint(stdout,&asn_DEF_SystemInformationBlockType1,(void*)sib1_msg);
 	//asn_fprint(stdout, &asn_DEF_MasterInformationBlock, bch_msg); 
     
-	return 0; /* Encoding finished successfully */
+	return RRC_MESSAGE_EN_DECODE_OK; /* Encoding finished successfully */
 
 
 
@@ -309,7 +311,7 @@ int EncodeD2dRrcConnectionSetup(uint8_t  *encode_buffer, uint32_t buffersize)
 		/* for BER output */
 		if(!fp) {
 			perror(filename);
-			exit(1);
+			return RRC_MESSAGE_EN_DECODE_ERROR;
 	    }
 	}
 #endif 
@@ -318,7 +320,7 @@ int EncodeD2dRrcConnectionSetup(uint8_t  *encode_buffer, uint32_t buffersize)
 	encode_msg = calloc(1, sizeof(RRCConnectionSetup_t)); /* not malloc! */
 	if(!encode_msg) {
 		perror("calloc() failed");
-		exit(1);
+		return RRC_MESSAGE_EN_DECODE_ERROR;
 	}
 
 	encode_msg->radioResourceConfigCommon.pusch_dedi_config.beta_off_ack_ind = 0;
@@ -373,7 +375,7 @@ int EncodeD2dRrcConnectionSetup(uint8_t  *encode_buffer, uint32_t buffersize)
 		fprintf(stderr, "Could not encode  (at %s)\n",
 		 ec.failed_type->name);  //ec.failed_type ? 
 		system("pause");
-		exit(1);
+		return RRC_MESSAGE_EN_DECODE_ERROR;
 	} else {
 		printf("ec.encoded = %d bytes\n",ec.encoded); 
 		fprintf(stderr, "Created %s with PER encoded success\n", filename);
@@ -387,7 +389,7 @@ int EncodeD2dRrcConnectionSetup(uint8_t  *encode_buffer, uint32_t buffersize)
 		fprintf(stderr, "Could not encode  (at %s)\n",
 		 ec.failed_type->name);  //ec.failed_type ? 
 		system("pause");
-		exit(1);
+		return RRC_MESSAGE_EN_DECODE_ERROR;
 	} else {
     	size = ec.encoded; 
 		}
@@ -408,7 +410,7 @@ int EncodeD2dRrcConnectionSetup(uint8_t  *encode_buffer, uint32_t buffersize)
 	//xer_fprint(stdout,&asn_DEF_RRCConnectionSetup,(void*)encode_msg);
 	//asn_fprint(stdout, &asn_DEF_MasterInformationBlock, bch_msg); 
  //   system("pause");
-	return 0; /* Encoding finished successfully */
+	return RRC_MESSAGE_EN_DECODE_OK; /* Encoding finished successfully */
 
 }
 
@@ -447,7 +449,7 @@ int EncodeD2dRrcConnectRequest(uint8_t  *encode_buffer, uint32_t buffersize)
 		/* for BER output */
 		if(!fp) {
 			perror(filename);
-			exit(1);
+			return RRC_MESSAGE_EN_DECODE_ERROR;
 	    }
 	}
 #endif 
@@ -456,7 +458,7 @@ int EncodeD2dRrcConnectRequest(uint8_t  *encode_buffer, uint32_t buffersize)
 	encode_msg = calloc(1, sizeof(RRCConnectionRequest_t)); /* not malloc! */
 	if(!encode_msg) {
 		perror("calloc() failed");
-		exit(1);
+		return RRC_MESSAGE_EN_DECODE_ERROR;
 	}
 	
 	encode_msg->ue_Identity = 8; //![0-8]
@@ -479,7 +481,7 @@ int EncodeD2dRrcConnectRequest(uint8_t  *encode_buffer, uint32_t buffersize)
 		fprintf(stderr, "Could not encode  (at %s)\n",
 		 ec.failed_type->name);  //ec.failed_type ? 
 		system("pause");
-		exit(1);
+		return RRC_MESSAGE_EN_DECODE_ERROR;
 	} else {
 		printf("ec.encoded = %d bytes\n",ec.encoded); 
 		fprintf(stderr, "Created %s with PER encoded success\n", filename);
@@ -495,7 +497,7 @@ int EncodeD2dRrcConnectRequest(uint8_t  *encode_buffer, uint32_t buffersize)
 			fprintf(stderr, "Could not encode  (at %s)\n",
 			 ec.failed_type->name);  //ec.failed_type ? 
 			system("pause");
-			exit(1);
+			return RRC_MESSAGE_EN_DECODE_ERROR;
 		} else {
 			size =ec.encoded; 
 		}
@@ -515,7 +517,7 @@ int EncodeD2dRrcConnectRequest(uint8_t  *encode_buffer, uint32_t buffersize)
 //	xer_fprint(stdout,&asn_DEF_RRCConnectionRequest,(void*)encode_msg);
 	//asn_fprint(stdout, &asn_DEF_MasterInformationBlock, bch_msg); 
   //  system("pause");
-	return 0; /* Encoding finished successfully */
+	return RRC_MESSAGE_EN_DECODE_OK; /* Encoding finished successfully */
 }
 
 
@@ -555,7 +557,7 @@ int EncodeD2dRrcConnectRelease(uint8_t  *encode_buffer, uint32_t buffersize)
 		/* for BER output */
 		if(!fp) {
 			perror(filename);
-			exit(1);
+			return RRC_MESSAGE_EN_DECODE_ERROR;
 	    }
 	}
  #endif 
@@ -564,7 +566,7 @@ int EncodeD2dRrcConnectRelease(uint8_t  *encode_buffer, uint32_t buffersize)
 	encode_msg = calloc(1, sizeof(RRCConnectionRequest_t)); /* not malloc! */
 	if(!encode_msg) {
 		perror("calloc() failed");
-		exit(1);
+		return RRC_MESSAGE_EN_DECODE_ERROR;
 	}
 	
 	encode_msg->ue_Identity = 8; //![0-8]
@@ -583,7 +585,7 @@ int EncodeD2dRrcConnectRelease(uint8_t  *encode_buffer, uint32_t buffersize)
 		fprintf(stderr, "Could not encode  (at %s)\n",
 		 ec.failed_type->name);  //ec.failed_type ? 
 		system("pause");
-		exit(1);
+		return RRC_MESSAGE_EN_DECODE_ERROR;
 	} else {
 		printf("ec.encoded = %d bytes\n",ec.encoded); 
 		fprintf(stderr, "Created %s with PER encoded success\n", filename);
@@ -599,7 +601,7 @@ int EncodeD2dRrcConnectRelease(uint8_t  *encode_buffer, uint32_t buffersize)
    		fprintf(stderr, "Could not encode  (at %s)\n",
    		 ec.failed_type->name);  //ec.failed_type ? 
    		system("pause");
-   		exit(1);
+   		return RRC_MESSAGE_EN_DECODE_ERROR;
    	} else {
    		size = ec.encoded; 
    		}
@@ -620,10 +622,137 @@ int EncodeD2dRrcConnectRelease(uint8_t  *encode_buffer, uint32_t buffersize)
 	//xer_fprint(stdout,&asn_DEF_RRCConnectionRelease,(void*)encode_msg);
 	//asn_fprint(stdout, &asn_DEF_MasterInformationBlock, bch_msg); 
    // system("pause");
-	return 0; /* Encoding finished successfully */
+	return RRC_MESSAGE_EN_DECODE_OK; /* Encoding finished successfully */
 }
 
 
+
+ /*!   
+ * @brief:  
+ * @author:  bo.liu
+ * @Date:  2019年8月16日
+ * @param: *encode_buffer :   [encode buffer ]
+ * @param: buffersize :       [buffer size  ]
+ * @param: ccch_messsage_type :[ccch_messsage_type:connection request,setup,complete]
+ */
+int EncodeD2dCcch(uint8_t  *encode_buffer, uint32_t buffersize,CCCH_MessageType_PR ccch_messsage_type)
+{
+
+	CCCH_Message_t *encode_msg; 
+	
+    FILE *fp;
+	asn_enc_rval_t ec; 
+
+	short ueip = 0xf01e; //!15bit,注意这里是按照大端模式编码
+
+	RRCConnectionSetup_t    *rrc_connect_setup; 
+
+    SRB_ToAddMod_t  *srb_addmod; 
+
+
+	DRB_ToAddMod_t   *drb_addmod;
+	DRB_Identity_t   drb_id; 
+
+	unsigned char buf[1024]; 
+	int  size ; 
+	int i;
+
+
+    	/* Allocate the Rectangle_t */
+	encode_msg = calloc(1, sizeof(CCCH_Message_t)); /* not malloc! */
+	if(!encode_msg) {
+		perror("calloc() failed");
+		return RRC_MESSAGE_EN_DECODE_ERROR;
+	}
+
+    switch (ccch_messsage_type)
+    {
+    	case CCCH_MessageType_PR_rrcConnectionrequest:
+    	{
+	    	encode_msg->message.present = CCCH_MessageType_PR_rrcConnectionrequest; 
+			encode_msg->message.choice.rrcConnectionrequest.ue_Identity = 
+			encode_msg->message.choice.rrcConnectionrequest.establishmentCause = \
+										RRCConnectionRequest__establishmentCause_emergency; 
+			encode_msg->message.choice.rrcConnectionrequest.ue_Ip.buf = &ueip;
+			encode_msg->message.choice.rrcConnectionrequest.ue_Ip.size = 2; 
+			encode_msg->message.choice.rrcConnectionrequest.ue_Ip.bits_unused = 1;
+			break; 
+	    }
+		case CCCH_MessageType_PR_rrcConnectionsetup:
+		{
+			encode_msg->message.present = CCCH_MessageType_PR_rrcConnectionsetup; 
+
+			rrc_connect_setup = calloc(1, sizeof(RRCConnectionSetup_t));
+			
+
+			rrc_connect_setup->radioResourceConfigCommon.pusch_dedi_config.beta_off_ack_ind = 0;
+	    	rrc_connect_setup->mac_config.maxharq_tx = 4;
+	    	rrc_connect_setup->mac_config.max_out_sync	 = 4 ;
+	    
+	    
+	    
+	    	srb_addmod = (calloc(1,sizeof(SRB_ToAddMod_t)));
+	    
+	    	  //! step1:srb_add
+	    	(srb_addmod)->srb_Identity = 1; //SRB1
+	    	(srb_addmod)->rlc_config.present = RLC_Config_PR_um_bi_direction; 
+	    	//!尤其注意ASN1C中的定义的枚举，要使用枚举值，而不能自己写int值
+	    	(srb_addmod)->rlc_config.choice.um_bi_direction.ul_um_rlc.sn_FieldLength = SN_FieldLength_size10;
+	    	(srb_addmod)->rlc_config.choice.um_bi_direction.dl_um_rlc.sn_FieldLength = SN_FieldLength_size10; 
+	    	(srb_addmod)->rlc_config.choice.um_bi_direction.dl_um_rlc.t_Reordering = T_Reordering_ms200; 
+	    
+	    	(srb_addmod)->logicChannelConfig.logicch_id = 0; //![0-4]
+	    	(srb_addmod)->logicChannelConfig.priority = 1; //![1-16]
+	    	(srb_addmod)->logicChannelConfig.channel_type = LogicChannelConfig__channel_type_ccch; 
+	    	rrc_connect_setup->srb_ToAddModList = calloc(1,sizeof(SRB_ToAddModList_t)); 
+	    	
+	    	ASN_SEQUENCE_ADD(&(rrc_connect_setup->srb_ToAddModList->list),srb_addmod);
+	    
+	    	//!step2: drb add 
+	    	drb_addmod = calloc(1,sizeof(DRB_ToAddMod_t)); 
+	    	rrc_connect_setup->drb_ToAddModList = calloc(1,sizeof(DRB_ToAddModList_t)); 
+	    	drb_addmod->drb_Identity = 1; //![1-4]
+	    	drb_addmod->rlc_config.present = RLC_Config_PR_um_bi_direction; 
+	    	drb_addmod->rlc_config.choice.um_bi_direction.dl_um_rlc.sn_FieldLength = SN_FieldLength_size10; 
+	    	drb_addmod->rlc_config.choice.um_bi_direction.dl_um_rlc.t_Reordering = T_Reordering_ms200; 
+	    	drb_addmod->rlc_config.choice.um_bi_direction.ul_um_rlc.sn_FieldLength = SN_FieldLength_size10; 
+	    	drb_addmod->logicChannelConfig.logicch_id = 1; //![0-4]
+	    	drb_addmod->logicChannelConfig.priority = 2; //![1..16]
+	    	drb_addmod->logicChannelConfig.channel_type = LogicChannelConfig__channel_type_dtch; 
+	    	ASN_SEQUENCE_ADD(&(rrc_connect_setup->drb_ToAddModList->list),drb_addmod);
+
+			//!step3: drb release, 在connect setup时一般不使用，为了今后扩展使用此消息进行release
+
+			/*
+			rrc_connect_setup->drb_ToReleaselist = calloc(1,sizeof(DRB_ToReleaseList_t)); 
+			drb_id = 1; 
+			ASN_SEQUENCE_ADD(&(rrc_connect_setup->drb_ToReleaselist->list),&drb_id);
+			*/
+			encode_msg->message.choice.rrcConnectionsetup = *rrc_connect_setup; 
+			break;
+		}
+		case CCCH_MessageType_PR_rrcConectioncomplete:
+		{
+			encode_msg->message.present = CCCH_MessageType_PR_rrcConectioncomplete; 
+			encode_msg->message.choice.rrcConectioncomplete.complete_status = 1;
+
+			break; 
+		}
+		default :break; 
+	}
+
+	ec = asn_encode_to_buffer(0,ATS_UNALIGNED_BASIC_PER,&asn_DEF_CCCH_Message, encode_msg,encode_buffer,buffersize); 
+  	if(ec.encoded == -1) {
+   		fprintf(stderr, "Could not encode  (at %s)\n",
+   		 ec.failed_type->name);  //ec.failed_type ? 
+   		return RRC_MESSAGE_EN_DECODE_ERROR;
+   	} else {
+   		size = ec.encoded; 
+   	}
+		
+	return RRC_MESSAGE_EN_DECODE_OK; /* Encoding finished successfully */
+
+}
 
 /*!   
  * @brief:  decode mib message  
@@ -651,7 +780,7 @@ int DecodeD2dMib(MasterInformationBlock_t       *bch_msg,uint8_t *buf,uint32_t s
 		/* for BER output */
 		if(!fp) {
 			perror(filename);
-			exit(1);
+			return RRC_MESSAGE_EN_DECODE_ERROR;
 	    }
 	}
 
@@ -660,7 +789,7 @@ int DecodeD2dMib(MasterInformationBlock_t       *bch_msg,uint8_t *buf,uint32_t s
 	fclose(fp);
 	if(!size) {
 		fprintf(stderr, "%s: Empty or broken\n", filename);
-		exit(1);
+		return RRC_MESSAGE_EN_DECODE_ERROR;
 	}
 #endif 
 	
@@ -675,7 +804,7 @@ int DecodeD2dMib(MasterInformationBlock_t       *bch_msg,uint8_t *buf,uint32_t s
 	if(ec.code != RC_OK) {
 		fprintf(stderr, "%s: Broken  decoding at byte %ld\n", filename,
 		(long)ec.consumed);
-		exit(1);
+		return RRC_MESSAGE_EN_DECODE_ERROR;
 	} else {
 		//!TODO: use log to output the decode info
 		//!printf("ec.consumed = %d bytes\n",ec.consumed); 
@@ -686,7 +815,7 @@ int DecodeD2dMib(MasterInformationBlock_t       *bch_msg,uint8_t *buf,uint32_t s
 	//xer_fprint(stdout, &asn_DEF_BCCH_BCH_Message, bch_msg); //!<
     //asn_fprint(stdout, &asn_DEF_MasterInformationBlock, bch_msg);  
     
-	return 0; /* Encoding finished successfully */
+	return RRC_MESSAGE_EN_DECODE_OK; /* Encoding finished successfully */
 }
 
 
@@ -719,7 +848,7 @@ int DecodeD2dSib1(SystemInformationBlockType1_t       *decode_msg,uint8_t *buf,u
 		/* for BER output */
 		if(!fp) {
 			perror(filename);
-			exit(1);
+			return RRC_MESSAGE_EN_DECODE_ERROR;
 	    }
 	}
 
@@ -728,7 +857,7 @@ int DecodeD2dSib1(SystemInformationBlockType1_t       *decode_msg,uint8_t *buf,u
 	fclose(fp);
 	if(!size) {
 		fprintf(stderr, "%s: Empty or broken\n", filename);
-		exit(1);
+		return RRC_MESSAGE_EN_DECODE_ERROR;
 	}
 #endif 
 	
@@ -743,7 +872,7 @@ int DecodeD2dSib1(SystemInformationBlockType1_t       *decode_msg,uint8_t *buf,u
 	if(ec.code != RC_OK) {
 		fprintf(stderr, "%s: Broken  decoding at byte %ld\n", filename,
 		(long)ec.consumed);
-		exit(1);
+		return RRC_MESSAGE_EN_DECODE_ERROR;
 	} else {
 		//!TODO: use log to output the decode info
 		//!printf("ec.consumed = %d bytes\n",ec.consumed); 
@@ -754,7 +883,7 @@ int DecodeD2dSib1(SystemInformationBlockType1_t       *decode_msg,uint8_t *buf,u
 	//xer_fprint(stdout, &asn_DEF_BCCH_BCH_Message, bch_msg); //!<
     //asn_fprint(stdout, &asn_DEF_SystemInformationBlockType1, decode_msg);  
     
-	return 0; /* Encoding finished successfully */
+	return RRC_MESSAGE_EN_DECODE_OK; /* Encoding finished successfully */
 }
 
 
@@ -785,7 +914,7 @@ int DecodeD2dRrcConnectSetup(RRCConnectionSetup_t       *decode_msg,uint8_t *buf
 		/* for BER output */
 		if(!fp) {
 			perror(filename);
-			exit(1);
+			return RRC_MESSAGE_EN_DECODE_ERROR;
 	    }
 	}
 
@@ -794,7 +923,7 @@ int DecodeD2dRrcConnectSetup(RRCConnectionSetup_t       *decode_msg,uint8_t *buf
 	fclose(fp);
 	if(!size) {
 		fprintf(stderr, "%s: Empty or broken\n", filename);
-		exit(1);
+		return RRC_MESSAGE_EN_DECODE_ERROR;
 	}
 #endif 
 	
@@ -809,7 +938,7 @@ int DecodeD2dRrcConnectSetup(RRCConnectionSetup_t       *decode_msg,uint8_t *buf
 	if(ec.code != RC_OK) {
 		fprintf(stderr, "%s: Broken  decoding at byte %ld\n", filename,
 		(long)ec.consumed);
-		exit(1);
+		return RRC_MESSAGE_EN_DECODE_ERROR;
 	} else {
 		//!TODO: use log to output the decode info
 		//!printf("ec.consumed = %d bytes\n",ec.consumed); 
@@ -820,7 +949,7 @@ int DecodeD2dRrcConnectSetup(RRCConnectionSetup_t       *decode_msg,uint8_t *buf
 	//xer_fprint(stdout, &asn_DEF_BCCH_BCH_Message, bch_msg); //!<
     //asn_fprint(stdout, &asn_DEF_RRCConnectionSetup, decode_msg);  
     
-	return 0; /* Encoding finished successfully */
+	return RRC_MESSAGE_EN_DECODE_OK; /* Encoding finished successfully */
 }
 
 
@@ -851,7 +980,7 @@ int DecodeD2dRrcConnectRequest(RRCConnectionRequest_t           *decode_msg,uint
 		/* for BER output */
 		if(!fp) {
 			perror(filename);
-			exit(1);
+			return RRC_MESSAGE_EN_DECODE_ERROR;
 	    }
 	}
 
@@ -860,7 +989,7 @@ int DecodeD2dRrcConnectRequest(RRCConnectionRequest_t           *decode_msg,uint
 	fclose(fp);
 	if(!size) {
 		fprintf(stderr, "%s: Empty or broken\n", filename);
-		exit(1);
+		return RRC_MESSAGE_EN_DECODE_ERROR;
 	}
 #endif 
 	
@@ -875,7 +1004,7 @@ int DecodeD2dRrcConnectRequest(RRCConnectionRequest_t           *decode_msg,uint
 	if(ec.code != RC_OK) {
 		fprintf(stderr, "%s: Broken  decoding at byte %ld\n", filename,
 		(long)ec.consumed);
-		exit(1);
+		return RRC_MESSAGE_EN_DECODE_ERROR;
 	} else {
 		//!TODO: use log to output the decode info
 		//!printf("ec.consumed = %d bytes\n",ec.consumed); 
@@ -886,7 +1015,7 @@ int DecodeD2dRrcConnectRequest(RRCConnectionRequest_t           *decode_msg,uint
 	//xer_fprint(stdout, &asn_DEF_BCCH_BCH_Message, bch_msg); //!<
     //asn_fprint(stdout, &asn_DEF_RRCConnectionRequest, decode_msg);  
     
-	return 0; /* Encoding finished successfully */
+	return RRC_MESSAGE_EN_DECODE_OK; /* Encoding finished successfully */
 }
 
 
@@ -916,7 +1045,7 @@ int DecodeD2dRrcConnectRelease(RRCConnectionRelease_t           *decode_msg,uint
 		/* for BER output */
 		if(!fp) {
 			perror(filename);
-			exit(1);
+			return RRC_MESSAGE_EN_DECODE_ERROR;
 	    }
 	}
 
@@ -925,7 +1054,7 @@ int DecodeD2dRrcConnectRelease(RRCConnectionRelease_t           *decode_msg,uint
 	fclose(fp);
 	if(!size) {
 		fprintf(stderr, "%s: Empty or broken\n", filename);
-		exit(1);
+		return RRC_MESSAGE_EN_DECODE_ERROR;
 	}
 #endif 
 	
@@ -940,7 +1069,7 @@ int DecodeD2dRrcConnectRelease(RRCConnectionRelease_t           *decode_msg,uint
 	if(ec.code != RC_OK) {
 		fprintf(stderr, "%s: Broken  decoding at byte %ld\n", filename,
 		(long)ec.consumed);
-		exit(1);
+		return RRC_MESSAGE_EN_DECODE_ERROR;
 	} else {
 		//!TODO: use log to output the decode info
 		//!printf("ec.consumed = %d bytes\n",ec.consumed); 
@@ -951,10 +1080,77 @@ int DecodeD2dRrcConnectRelease(RRCConnectionRelease_t           *decode_msg,uint
 	//xer_fprint(stdout, &asn_DEF_BCCH_BCH_Message, bch_msg); //!<
     //asn_fprint(stdout, &asn_DEF_RRCConnectionRelease, decode_msg);  
     
-	return 0; /* Encoding finished successfully */
+	return RRC_MESSAGE_EN_DECODE_OK; /* Encoding finished successfully */
 }
 
 
+ /*!   
+ * @brief:  
+ * @author:  bo.liu
+ * @Date:  2019年8月16日
+ * @param: *decode_msg :      [param description ]
+ * @param: *buf :             [param description ]
+ * @param: size :             [param description ]
+ */
+int DecodeD2dCcch(CCCH_Message_t           *decode_msg,uint8_t *buf,uint32_t size )
+{
 
+	FILE *fp;
+	asn_dec_rval_t ec; 
+	const char *filename; 
+
+#ifdef UPER_ENCODE_TO_FILE
+	if(argc < 2) 
+	{
+		fprintf(stderr, "Specify filename for BER output\n");
+	} else 
+	{
+		filename = argv[1];
+		fp = fopen(filename, "rb");
+		/* for BER output */
+		if(!fp) {
+			perror(filename);
+			return RRC_MESSAGE_EN_DECODE_ERROR;
+	    }
+	}
+
+
+	size = fread(buf, 1, sizeof(buf), fp); 
+	fclose(fp);
+	if(!size) {
+		fprintf(stderr, "%s: Empty or broken\n", filename);
+		return RRC_MESSAGE_EN_DECODE_ERROR;
+	}
+#endif 
+	
+	
+
+    //!<encode BCH 
+    ec = asn_decode(0,ATS_UNALIGNED_BASIC_PER,
+                    &asn_DEF_CCCH_Message,
+                    (void **)&decode_msg, buf, size); 
+   
+	fclose(fp);
+	if(ec.code != RC_OK) {
+		fprintf(stderr, "%s: Broken  decoding at byte %ld\n", filename,
+		(long)ec.consumed);
+		return RRC_MESSAGE_EN_DECODE_ERROR;
+	} else {
+		//!TODO: use log to output the decode info
+		//!printf("ec.consumed = %d bytes\n",ec.consumed); 
+		//!fprintf(stderr, " %s with PER decode success\n", filename);
+	} 
+	
+	/* Also print the constructed Rectangle XER encoded (XML) */
+	//xer_fprint(stdout, &asn_DEF_BCCH_BCH_Message, bch_msg); //!<
+    //asn_fprint(stdout, &asn_DEF_RRCConnectionRelease, decode_msg);  
+    
+	return RRC_MESSAGE_EN_DECODE_OK; /* Encoding finished successfully */
+
+
+
+
+
+}
 
 
