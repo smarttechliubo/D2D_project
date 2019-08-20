@@ -11,8 +11,8 @@
 #define INC_INTERFACE_MAC_RLC_H_
 
 #include <typedef.h>
+#include <d2d_system_global.h>
 
-#define  MAX_LOGICCHAN_NUM    4
 /**MAC_RLC_BUF_STATUS_REQ**/
 typedef struct mac_rlc_buf_status_req_s
 {

@@ -423,9 +423,18 @@
 		<Menu
 			Name="Work"
 			>
+<<<<<<< HEAD
 			<item Command="InsertFunctionHeader" Allocated="1" />
 			<item Command="Enable Event Handlers" />
 			<item Command="fileInsertFileHeader" Allocated="1" />
+=======
+			<item Command="Enable Event Handlers" />
+			<item Command="InsertFunctionHeader" Allocated="1" />
+			<item Command="fileInsertFileHeader" Allocated="1" />
+			<item Command="AddModifyInfo" Allocated="1" />
+			<item Command="AddCommentMulti" Allocated="1" />
+			<item Command="AddCommentSingle" Allocated="1" />
+>>>>>>> share_develop
 		</Menu>
 	</Menus>
 	<Keymaps>
