@@ -36,7 +36,7 @@ typedef struct
 }ue_info_s;//ue
 
 typedef struct{
-	//uint16_t cellId; //keep cell ID for PHY scrambling
+	//uint16_t cellId;
 	//uint16_t bandWidth;
 	bool mib_flag;
 	bool sib_flag;

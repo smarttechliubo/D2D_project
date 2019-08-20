@@ -20,6 +20,7 @@
 #include "mac.h"
 #include "mac_vars.h"
 #include "mac_defs.h"
+#include "pre_schedule.h"
 #include "d2d_message_type.h"
 
 bool g_run_enable = false;
@@ -39,6 +40,7 @@ void init_mac()
 	mac->subframe = INVALID_VALUE_U32;
 
 	g_context.mac = mac;
+	g_timing_sync = false;
 
 #ifdef TASK_MAC
     //pthread_create(&g_mac.thread, NULL, run_thread, g_mac.arg);
@@ -59,7 +61,7 @@ void stop_thread()
 //bool syncTime(frame_t *frame, sub_frame_t *subframe);
 uint32_t syncT()
 {
-
+	return 0;
 }
 
 /****************************************/
@@ -76,17 +78,31 @@ void rrc_mac_config(const rrc_mac_initial_req *req)
 void rrc_mac_bcch_config(const rrc_mac_bcch_para_config_req *req)
 {
 	mac_info_s *mac = g_context.mac;
-	if (req->mib.pdcch_config.rb_num > 0 && 
-		(req->mib.pdcch_config.rb_start_index >= 0 && req->mib.pdcch_config.rb_start_index <= 3))
+	if (req->flag == 1)
 	{
-		mac->common_channel.mib_flag = true;
-		mac->common_channel.mib = req->mib;
+		if (req->mib.pdcch_config.rb_num > 0 && 
+			(req->mib.pdcch_config.rb_start_index >= 0 && req->mib.pdcch_config.rb_start_index <= 3))
+		{
+			mac->common_channel.mib_flag = true;
+			mac->common_channel.mib = req->mib;
+		}
+		else
+		{
+			LOG_ERROR(MAC, "BCCH MIB parameter incorrect, PDCCH rb_num:%d, rb_start_index:%d", 
+				req->mib.pdcch_config.rb_num, req->mib.pdcch_config.rb_start_index);
+		}
+	}
+	else if (req->flag == 2)
+	{
+		mac->common_channel.sib_flag = true;
+		mac->common_channel.si.size = req->sib.size;
+		memcpy(mac->common_channel.sib_pdu,req->sib.sib_pdu,req->sib.size);
 	}
 	else
 	{
-		LOG_ERROR(MAC, "BCCH MIB parameter incorrect, PDCCH rb_num:%d, rb_start_index:%d", 
-			req->mib.pdcch_config.rb_num, req->mib.pdcch_config.rb_start_index);
+		LOG_ERROR(MAC, "BCCH got invalid BCCH info, flag:%d", req->flag);
 	}
+
 }
 
 void handle_rrc_msg()
@@ -122,6 +138,7 @@ void *task_message_handler()
 	handle_rrc_msg();
 	//handle_rlc_msg();
 
+	return 0;
 }
 
 void mac_main()
@@ -141,11 +158,12 @@ void mac_main()
 	pre_schedule(frame, sub_frame, g_context.mac);
 
 }
+
 void syncTime()//TODO: sync
 {
     // 1. get timing sync with PHY	
-    frame_t frame;
-    sub_frame_t subframe;
+    //frame_t frame;
+    //sub_frame_t subframe;
 	if (g_timing_sync == false)
     {
 		uint32_t time = syncT();
@@ -167,7 +185,7 @@ void syncTime()//TODO: sync
 		if (g_context.subframe == MAX_SUBSFN)
 		{
 		    g_context.subframe = 0;
-			g_context.frame = (frame+1)%MAX_SFN;
+			g_context.frame = (g_context.frame+1)%MAX_SFN;
 		}
 		
 		if ((g_context.frame*10 + g_context.subframe)%TIMING_SYNC_PERIOD == 0)

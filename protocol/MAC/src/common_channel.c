@@ -29,14 +29,18 @@ void schedule_mib(const frame_t frame, mac_info_s *mac)
 
 void schedule_sib(const frame_t frame, const sub_frame_t sub_frame, mac_info_s *mac)
 {
-
+	
 }
 
 void schedule_common(const frame_t frame, const sub_frame_t sub_frame, mac_info_s *mac)
 {
-	if ((sub_frame == 0) && (frame & 3) == 0)
+	if ((mac->common_channel.mib_flag == true) && ((sub_frame == 0) && (frame % 4) == 0))
+	{
 		schedule_mib(frame, mac);
-	if ((sub_frame == 0) && (frame & 3) == 0)
+	}
+	if ((mac->common_channel.sib_flag == true) && ((sub_frame == 1) && (frame % 2)) == 0)
+	{
 		schedule_sib(frame, sub_frame, mac);
+	}
 }
 
