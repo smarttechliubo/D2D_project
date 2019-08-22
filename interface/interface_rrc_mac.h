@@ -26,7 +26,14 @@ typedef struct mac_rrc_initial_cfm_s
 
 typedef mac_rrc_initial_cfm  mac_rrc_release_cfm;
 
-
+/**MAC_RRC_CONNECTION_CFM***/
+typedef struct mac_rrc_connection_cfm_s
+{
+	uint16_t ue_index;
+	rnti_t rnti;
+	uint16_t  status; /**1:pass; 0:error*/
+	uint16_t  error_code;     /**error code, self definition*/
+}mac_rrc_connection_cfm;
 
 /*****MIB & SIB1 message*******/
 
