@@ -11,6 +11,7 @@
 #include <string.h>
 #include <time.h>
 #include <sys/time.h>
+#include <stdint.h>
 
 #include "log.h"
 
@@ -87,5 +88,8 @@ void log_info(const char* filename, int line, comp_name_t comp, LogLevel level, 
 #endif
     va_end(arg_list);
 }
+
+
+
 
 
