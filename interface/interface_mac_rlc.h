@@ -41,7 +41,7 @@ typedef struct rlc_mac_buf_status_rpt_s
 
 	uint16_t sub_sfn;  /**subsfn number*/
 	uint16_t sfn;     /**sfn number*/
-	rlc_buffer_rpt   rlc_buffer_rpt[MAX_LOGICCHAN_NUM];
+	rlc_buffer_rpt   rlc_buffer_rpt[MAX_LOGICCHAN_NUM]
 }rlc_mac_buf_status_rpt;
 
 /**MAC_RLC_DATA_REQ */
