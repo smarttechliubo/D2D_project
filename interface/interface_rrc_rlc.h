@@ -14,6 +14,30 @@
 #define MAX_SRB_COUNT    3
 #define MAX_DRB_COUNT    32
 
+
+typedef  enum
+{
+	RB_TYPE_SRB0,
+	RB_TYPE_SRB1,
+	RB_TYPE_SRB2,
+	RB_TYPE_DRB
+}rb_type_e; 
+
+	
+
+
+
+typedef enum
+{/**1:tm_dl,2:tm_ul, 3:tm ul&dl, 3:um_dl,4:um_ul, 5:um_dl&ul **/
+   RLC_MODE_TM_DL,
+   RLC_MODE_TM_UL,
+   RLC_MODE_TM_DL_AND_UL,
+   RLC_MODE_UM_DL, 
+   RLC_MODE_UM_UL, 
+   RLC_MODE_UM_DL_AND_UL,
+   RLC_MODE_AM
+}rlc_mode_e; 
+
 
 typedef struct rlc_um_cfg_s
 {
@@ -32,7 +56,7 @@ typedef struct rb_info_s
 	uint8_t rb_id;
 	uint8_t logicchannel_type;
 	uint8_t logicchannel_id;
-	uint8_t rlc_mode;  /**1:tm_dl,2:tm_ul, 3:tm ul&dl, 3:um_dl,4:um_ul, 5:um_dl&ul **/
+	rlc_mode_e rlc_mode;  /**1:tm_dl,2:tm_ul, 3:tm ul&dl, 3:um_dl,4:um_ul, 5:um_dl&ul **/
 
 	rlc_entity_cfg  rlc_mode_cfg;
 }rb_info; 
@@ -41,7 +65,7 @@ typedef struct rb_info_s
 typedef struct rrc_rlc_srb_addmod_req_s
 {
 	uint32_t requset_id;
-	uint16_t  rb_type; /**1:srb1; 2:drb */
+	rb_type_e  rb_type; /**1:srb1; 2:drb */
 	uint16_t  srb_count;  /**srb count in srb_list */
 	rb_info  srb_list[MAX_SRB_COUNT];
 	
@@ -52,7 +76,7 @@ typedef struct rrc_rlc_drb_addmod_req_s
 {
 	uint32_t requset_id;
 	
-	uint16_t rb_type; /**1:srb1; 2:drb */
+	rb_type_e rb_type; /**1:srb1; 2:drb */
 	uint16_t  drb_count;  /**drb count in srb_list */
 
 	rb_info  drb_list[MAX_DRB_COUNT];
@@ -64,7 +88,7 @@ typedef struct rrc_rlc_drb_release_req_s
 {
 	uint32_t  requset_id;
 	
-	uint16_t  rb_type; /**1:srb1; 2:drb */
+	rb_type_e  rb_type; /**1:srb1; 2:drb */
 	uint16_t   drb_count;  /**drb count in srb_list */
 	
 	uint8_t drb_release_list[32]; /**drb id list*/
@@ -115,7 +139,7 @@ typedef struct rlc_rrc_buffer_rpt_s
 /**msg: RRC_RLC_DATA_IND*/
 typedef struct rrc_rlc_data_ind_s
 {
-	uint16_t   rb_type;  /** 0:srb0; 1:srb1; 2:drb */
+	rb_type_e   rb_type;  /** 0:srb0; 1:srb1; 3:drb */
 	uint16_t   data_size; /**unit: byte*/
 	uint32_t   *data_addr_ptr; /**data address*/
 }rrc_rlc_data_ind;

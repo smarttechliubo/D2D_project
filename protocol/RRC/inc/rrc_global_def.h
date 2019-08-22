@@ -44,6 +44,7 @@ typedef  enum
 }rrc_status_e;
 
 
+
 typedef struct rrc_mib_info_s
 {
 
@@ -77,11 +78,14 @@ typedef struct rrc_init_var_s
 
 
 
+
+
 /**************************************extern var *******************************/
 extern  rrc_init_var  g_rrc_init_para;
 extern rrc_status_e  g_rrc_status;
 
 /*************************************extern function****************************/
+extern void rrc_Wrap_Message_Process(int (* message_func)(void *));
  extern int EncodeD2dMib(uint8_t *buf,uint32_t buffer_size); 
  extern int EncodeD2dSib1(uint8_t *encode_buffer,uint32_t buffersize);
  extern int EncodeD2dRrcConnectionSetup(uint8_t  *encode_buffer, uint32_t buffersize); 
@@ -92,6 +96,15 @@ extern rrc_status_e  g_rrc_status;
  extern int DecodeD2dRrcConnectSetup(RRCConnectionSetup_t       *decode_msg,uint8_t *buf,uint32_t size );
  extern int DecodeD2dRrcConnectRequest(RRCConnectionRequest_t           *decode_msg,uint8_t *buf,uint32_t size );
  extern int DecodeD2dRrcConnectRelease(RRCConnectionRelease_t           *decode_msg,uint8_t *buf,uint32_t size );
- extern int EncodeD2dCcch(uint8_t  *encode_buffer, uint32_t buffersize,CCCH_MessageType_PR ccch_messsage_type);
+ extern int EncodeD2dCcch(uint8_t  *encode_buffer, uint32_t max_buffersize, 
+                       uint32_t *encode_size,  CCCH_MessageType_PR ccch_messsage_type);
  extern int DecodeD2dCcch(CCCH_Message_t           *decode_msg,uint8_t *buf,uint32_t size ); 
+
+ extern rb_info rrc_Rlc_Rbinfo_Generate(rb_type_e rb_type, uint8_t rb_id, 
+                                        uint8_t logicch_type,uint8_t logicch_id,
+                                        rlc_mode_e rlc_mode,
+                                        uint16_t um_sm_field,
+                                        uint16_t um_t_recording);
+ extern rrc_rlc_srb_addmod_req  rrc_Rlc_Srb_Config(rb_type_e rb_type,uint16_t srb_count,rb_info *rb_info_ptr);
+ extern rrc_rlc_drb_addmod_req  rrc_Rlc_Drb_Config(rb_type_e rb_type,uint16_t drb_count,rb_info *rb_info_ptr);
 #endif

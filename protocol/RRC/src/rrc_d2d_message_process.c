@@ -18,7 +18,7 @@
 #include <RRCConnectionRequest.h>
 #include <RRCConnectionRelease.h>
 #include <CCCH-Message.h>
-
+#include <log.h>
 
 
  
@@ -245,7 +245,7 @@ int EncodeD2dSib1(uint8_t *encode_buffer,uint32_t buffersize)
 		 ec.failed_type->name);  //ec.failed_type ? 
 		system("pause");
 		return RRC_MESSAGE_EN_DECODE_ERROR;
-	} 
+	}   
 	else 
 	{
 		printf("ec.encoded = %d bytes\n",ec.encoded); 
@@ -627,15 +627,18 @@ int EncodeD2dRrcConnectRelease(uint8_t  *encode_buffer, uint32_t buffersize)
 
 
 
+
  /*!   
  * @brief:  
  * @author:  bo.liu
- * @Date:  2019年8月16日
- * @param: *encode_buffer :   [encode buffer ]
- * @param: buffersize :       [buffer size  ]
- * @param: ccch_messsage_type :[ccch_messsage_type:connection request,setup,complete]
+ * @Date:  2019年8月20日
+ * @param: *encode_buffer :   [param description ]
+ * @param: max_buffersize :   [param description ]
+ * @param: encode_size :      [param description ]
+ * @param: ccch_messsage_type :[param description ]
  */
-int EncodeD2dCcch(uint8_t  *encode_buffer, uint32_t buffersize,CCCH_MessageType_PR ccch_messsage_type)
+int EncodeD2dCcch(uint8_t  *encode_buffer, uint32_t max_buffersize, 
+                       uint32_t *encode_size,  CCCH_MessageType_PR ccch_messsage_type)
 {
 
 	CCCH_Message_t *encode_msg; 
@@ -670,7 +673,7 @@ int EncodeD2dCcch(uint8_t  *encode_buffer, uint32_t buffersize,CCCH_MessageType_
     	case CCCH_MessageType_PR_rrcConnectionrequest:
     	{
 	    	encode_msg->message.present = CCCH_MessageType_PR_rrcConnectionrequest; 
-			encode_msg->message.choice.rrcConnectionrequest.ue_Identity = 
+			encode_msg->message.choice.rrcConnectionrequest.ue_Identity =  //!TODO 
 			encode_msg->message.choice.rrcConnectionrequest.establishmentCause = \
 										RRCConnectionRequest__establishmentCause_emergency; 
 			encode_msg->message.choice.rrcConnectionrequest.ue_Ip.buf = &ueip;
@@ -741,13 +744,15 @@ int EncodeD2dCcch(uint8_t  *encode_buffer, uint32_t buffersize,CCCH_MessageType_
 		default :break; 
 	}
 
-	ec = asn_encode_to_buffer(0,ATS_UNALIGNED_BASIC_PER,&asn_DEF_CCCH_Message, encode_msg,encode_buffer,buffersize); 
+	ec = asn_encode_to_buffer(0,ATS_UNALIGNED_BASIC_PER,&asn_DEF_CCCH_Message, encode_msg,encode_buffer,max_buffersize); 
   	if(ec.encoded == -1) {
    		fprintf(stderr, "Could not encode  (at %s)\n",
    		 ec.failed_type->name);  //ec.failed_type ? 
+   		 *encode_size  = 0;
    		return RRC_MESSAGE_EN_DECODE_ERROR;
    	} else {
-   		size = ec.encoded; 
+   		
+   		*encode_size = ec.encoded;
    	}
 		
 	return RRC_MESSAGE_EN_DECODE_OK; /* Encoding finished successfully */
@@ -1153,4 +1158,24 @@ int DecodeD2dCcch(CCCH_Message_t           *decode_msg,uint8_t *buf,uint32_t siz
 
 }
 
+
+
+
+ /*!   
+ * @brief:  
+ * @author:  bo.liu
+ * @Date:  2019年8月22日
+ * @param: message_func :     [pointer to message process function ]
+ */
+void rrc_Wrap_Message_Process(int (* message_func)(void *))
+{
+	
+	int ret = RRC_MESSAGE_EN_DECODE_ERROR; 
+
+	if((ret = message_func) != RRC_MESSAGE_EN_DECODE_OK)
+	{
+		AssertFatal(ret == RRC_MESSAGE_EN_DECODE_OK, RRC,"process RRC message error:%s", message_func); 
+	
+	}
+}
 

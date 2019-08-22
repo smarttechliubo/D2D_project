@@ -40,9 +40,9 @@ void rrc_Rlc_InitialConfig( )
  * @param: um_sm_field :      [param description ]
  * @param: um_t_recording :   [param description ]
  */
-rb_info rrc_Rlc_Rbinfo_Generate(uint8_t rb_type, uint8_t rb_id, 
+rb_info rrc_Rlc_Rbinfo_Generate(rb_type_e rb_type, uint8_t rb_id, 
                                         uint8_t logicch_type,uint8_t logicch_id,
-                                        uint8_t rlc_mode,
+                                        rlc_mode_e rlc_mode,
                                         uint16_t um_sm_field,
                                         uint16_t um_t_recording)
 {
@@ -74,7 +74,7 @@ rb_info rrc_Rlc_Rbinfo_Generate(uint8_t rb_type, uint8_t rb_id,
  * @param: srb_count :        [srb count  ]
  * @param: *rb_info_ptr :     [pointer to srb info array]
  */
-rrc_rlc_srb_addmod_req  rrc_Rlc_Srb_Config(uint8_t rb_type,uint16_t srb_count,rb_info *rb_info_ptr)
+rrc_rlc_srb_addmod_req  rrc_Rlc_Srb_Config(rb_type_e rb_type,uint16_t srb_count,rb_info *rb_info_ptr)
 {
 		rrc_rlc_srb_addmod_req  srb_info; 
 		uint16_t srb_index = 0; 
@@ -96,8 +96,7 @@ rrc_rlc_srb_addmod_req  rrc_Rlc_Srb_Config(uint8_t rb_type,uint16_t srb_count,rb
 		}
 
 		return  srb_info;
-		
-
+	
 }
 
 
@@ -129,7 +128,7 @@ void rrc_Rlc_BcchPara_Config(rrc_rlc_srb_addmod_req *srb_info)
  * @param: drb_conut :        [param description ]
  * @param: *rb_info_ptr :     [param description ]
  */
-rrc_rlc_drb_addmod_req  rrc_Rlc_Drb_Config(uint8_t rb_type,uint16_t drb_count,rb_info *rb_info_ptr)
+rrc_rlc_drb_addmod_req  rrc_Rlc_Drb_Config(rb_type_e rb_type,uint16_t drb_count,rb_info *rb_info_ptr)
 {
 		rrc_rlc_drb_addmod_req  drb_info; 
 		uint16_t rb_index = 0; 
