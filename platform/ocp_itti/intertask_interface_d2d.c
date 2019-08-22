@@ -8,7 +8,7 @@
 #include <pthread.h>
 
 #include <intertask_interface.h>
-
+#include <log.h>
 
 typedef struct timer_elm_s {
   timer_type_t      type;     ///< Timer type
@@ -34,10 +34,12 @@ task_list_t tasks[TASK_MAX];
     return 0;
   }
 
-  void free_mem_block (mem_block_t *leP, const char *caller) {
-    AssertFatal(leP!=NULL,"");
-    free(leP);
-  }
+void free_mem_block (mem_block_t *leP, const char *caller) {
+	AssertFatal(leP!=NULL,DRIVER,"free memory error");
+	free(leP);
+}
+
+
 #if 0
   mem_block_t *get_free_mem_block (uint32_t sizeP, const char *caller) {
     mem_block_t *ptr=(mem_block_t *)malloc(sizeP+sizeof(mem_block_t));
@@ -52,13 +54,13 @@ task_list_t tasks[TASK_MAX];
 
   void *itti_malloc(task_id_t origin_task_id, task_id_t destination_task_id, int size) {
     void *ptr = NULL;
-    AssertFatal ((ptr=malloc (size)) != NULL, "Memory allocation of %zu bytes failed (%d -> %d)!\n",
+    AssertFatal ((ptr=malloc (size)) != NULL, DRIVER,"Memory allocation of %zu bytes failed (%d -> %d)!\n",
                  size, origin_task_id, destination_task_id);
     return ptr;
   }
 
   int itti_free(task_id_t task_id, void *ptr) {
-    AssertFatal (ptr != NULL, "Trying to free a NULL pointer (%d)!\n", task_id);
+    AssertFatal (ptr != NULL,DRIVER, "Trying to free a NULL pointer (%d)!\n", task_id);
     free (ptr);
     return (EXIT_SUCCESS);
   }
@@ -101,10 +103,10 @@ task_list_t tasks[TASK_MAX];
     size_t s=t->message_queue.nb_elements;
 #if 0
     if ( s > t->admin.queue_size )
-      LOG_E(TMR,"Queue for %s task contains %ld messages\n", itti_get_task_name(destination_task_id), s );
+      LOG_ERROR(DRIVER,"Queue for %s task contains %ld messages\n", itti_get_task_name(destination_task_id), s );
 
     if ( s > 50 )
-      LOG_I(TMR,"Queue for %s task size: %ld\n",itti_get_task_name(destination_task_id), s+1);
+      LOG_I(DRIVER,"Queue for %s task size: %ld\n",itti_get_task_name(destination_task_id), s+1);
 #endif
     //！往队列中添加消息
    //t->message_queue.insert(t->message_queue.begin(), message);
@@ -112,9 +114,9 @@ task_list_t tasks[TASK_MAX];
 #if 0
     eventfd_t sem_counter = 1;
     AssertFatal ( sizeof(sem_counter) == write(t->sem_fd, &sem_counter, sizeof(sem_counter)), "");
-    LOG_D(TMR,"sent messages id=%d to %s\n",message_id, t->admin.name);
+    LOG_D(DRIVER,"sent messages id=%d to %s\n",message_id, t->admin.name);
 #endif 
-  //  printf("insert finished,message number = %d \n",t->message_queue.nb_elements);
+  // LOG_DEBUG(DRIVER,"insert finished,message number = %d \n",t->message_queue.nb_elements);
     return 0;
   }
 
@@ -126,7 +128,7 @@ task_list_t tasks[TASK_MAX];
 #if 0
     while ( t->message_queue.size()>0 && t->admin.func != NULL ) {
       if (t->message_queue.size()>1)
-	LOG_W(TMR,"queue in no thread mode is %ld\n", t->message_queue.size());
+	LOG_W(DRIVER,"queue in no thread mode is %ld\n", t->message_queue.size());
       pthread_mutex_unlock (&t->queue_cond_lock);
       t->admin.func(NULL); //!？直接调用目的task的主处理函数么？没有看到func的初始化？ 
       pthread_mutex_lock (&t->queue_cond_lock);
@@ -134,7 +136,7 @@ task_list_t tasks[TASK_MAX];
 #endif 
 
     
-    printf("task:%d send message:%d to task:%d ,msg_ptr = %ld\n", message->ittiMsgHeader.originTaskId,
+   LOG_INFO(DRIVER,"task:%d send message:%d to task:%d ,msg_ptr = %ld\n", message->ittiMsgHeader.originTaskId,
        message->ittiMsgHeader.messageId, message->ittiMsgHeader.destinationTaskId,
           (message->message_ptr));
     pthread_mutex_unlock (&t->queue_cond_lock);
@@ -185,7 +187,7 @@ task_list_t tasks[TASK_MAX];
               message->ittiMsg.timer_has_expired.arg=it->second.timer_arg;
 
               if (itti_send_msg_to_task_locked(task_id, it->second.instance, message) < 0) {
-                LOG_W(TMR,"Failed to send msg TIMER_HAS_EXPIRED to task %u\n", task_id);
+                LOG_W(DRIVER,"Failed to send msg TIMER_HAS_EXPIRED to task %u\n", task_id);
                 free(message);
                 t->timer_map.erase(it);
                 return -1;
@@ -210,7 +212,7 @@ task_list_t tasks[TASK_MAX];
         epoll_timeout = t->next_timer-current_time;
 
       pthread_mutex_unlock(&t->queue_cond_lock);
-      LOG_D(TMR,"enter blocking wait for %s\n", itti_get_task_name(task_id));
+      LOG_D(DRIVER,"enter blocking wait for %s\n", itti_get_task_name(task_id));
       t->nb_events = epoll_wait(t->epoll_fd,t->events,t->nb_fd_epoll, epoll_timeout);
       if ( t->nb_events  < 0 && (errno == EINTR || errno == EAGAIN ) )
 	pthread_mutex_lock(&t->queue_cond_lock);
@@ -219,7 +221,7 @@ task_list_t tasks[TASK_MAX];
     AssertFatal (t->nb_events >=0,
                  "epoll_wait failed for task %s, nb fds %d, timeout %lu: %s!\n",
                  itti_get_task_name(task_id), t->nb_fd_epoll, t->next_timer != UINT64_MAX ? t->next_timer-current_time : -1, strerror(errno));
-    LOG_D(TMR,"receive on %d descriptors for %s\n", t->nb_events, itti_get_task_name(task_id));
+    LOG_D(DRIVER,"receive on %d descriptors for %s\n", t->nb_events, itti_get_task_name(task_id));
 
     if (t->nb_events == 0)
       /* No data to read -> return */
@@ -251,7 +253,7 @@ task_list_t tasks[TASK_MAX];
     // Reception of one message, blocking caller
     task_list_t *t=&tasks[task_id];
     pthread_mutex_lock(&t->queue_cond_lock);
-    printf("fetch receive lock\n");
+   	LOG_DEBUG(DRIVER,"fetch receive lock\n");
 
 #if 0
     // Weird condition to deal with crap legacy itti interface
@@ -271,18 +273,18 @@ task_list_t tasks[TASK_MAX];
     // in this case, *received_msg is NULL
     if (0 == t->message_queue.nb_elements) {
       *received_msg=NULL;
-      printf("there is no message,error\n"); 
+     LOG_ERROR(DRIVER,"there is no message,error\n"); 
       return -1; 
-     // LOG_E(TMR,"task %s received even from other fd (total fds: %d), returning msg NULL\n",t->admin.name, t->nb_fd_epoll);
+     // LOG_ERRORRROR(DRIVER,"task %s received even from other fd (total fds: %d), returning msg NULL\n",t->admin.name, t->nb_fd_epoll);
     } else {
 	//！从队列中获取消息
      // *received_msg=t->message_queue.back();
      // t->message_queue.pop_back();
      //!取最新的消息
-
+     LOG_INFO(DRIVER,"receive new message,message number in queue = %d\n",t->message_queue.nb_elements);
      *received_msg = list_remove_head(&(t->message_queue));
-
-      printf("there is new message,message number = %d\n",t->message_queue.nb_elements);
+     //printf("receive new message,message number in queue = %d\n",t->message_queue.nb_elements);
+     
     }
 
     pthread_mutex_unlock (&t->queue_cond_lock);
@@ -302,7 +304,7 @@ task_list_t tasks[TASK_MAX];
     pthread_mutex_lock(&t->queue_cond_lock);
 
     if (!t->message_queue.empty()) {
-      LOG_D(TMR,"task %s received a message in polling mode\n",t->admin.name);
+      LOG_D(DRIVER,"task %s received a message in polling mode\n",t->admin.name);
       *received_msg=t->message_queue.back();
       t->message_queue.pop_back();
     } else
@@ -315,11 +317,11 @@ task_list_t tasks[TASK_MAX];
   int itti_create_task(task_id_t task_id, void *(*start_routine)(void *), void *args_p) {
     task_list_t *t=&tasks[task_id];
 	//!返回thread ip给t->pthread
-    AssertFatal ( pthread_create (&t->thread, NULL, start_routine, args_p) ==0,
+     AssertFatal( pthread_create (&t->thread, NULL, start_routine, args_p) ==0,DRIVER,
                   "Thread creation for task %d failed!\n", task_id);
 	//!给线程设置名字
     pthread_setname_np( t->thread, itti_get_task_name(task_id) );
-    //LOG_I(TMR,"Created Posix thread %s\n",  itti_get_task_name(task_id) );
+    //LOG_I(DRIVER,"Created Posix thread %s\n",  itti_get_task_name(task_id) );
 #if 1 // BMC test RT prio
     {
       int policy;
@@ -330,7 +332,7 @@ task_list_t tasks[TASK_MAX];
       policy = SCHED_FIFO ; 
 	  //!设置了同一个优先级
       if (pthread_setschedparam(t->thread, policy, &sparam) != 0) {
-	    LOG_E(TMR,"task %s : Failed to set pthread priority\n",  itti_get_task_name(task_id) );
+    	  LOG_ERROR(DRIVER,"task %s : Failed to set pthread priority\n",  itti_get_task_name(task_id) );
 	    //printf("task %s : Failed to set pthread priority\n",  itti_get_task_name(task_id));
       }
     }
@@ -354,7 +356,7 @@ task_list_t tasks[TASK_MAX];
     //！所有的task的参数初始化，
     //! 对互斥锁进行初始化
     for(int i=0; i<task_max; ++i) {
-      LOG_E(TMR,"Starting itti queue: %s as task %d\n", tasks_info[i].name, i);
+     LOG_DEBUG(DRIVER,"Starting itti queue: %s as task %d\n", tasks_info[i].name, i);
       pthread_mutex_init(&tasks[i].queue_cond_lock, NULL);
       memcpy(&tasks[i].admin, &tasks_info[i], sizeof(task_info_t));
     //  AssertFatal( ( tasks[i].epoll_fd = epoll_create1(0) ) >=0, "");
@@ -391,7 +393,7 @@ task_list_t tasks[TASK_MAX];
     clock_gettime(CLOCK_MONOTONIC, &tp);
 
     if (interval_us%1000 != 0)
-      LOG_W(TMR, "Can't set timer precision below 1ms, rounding it\n");
+      LOG_W(DRIVER, "Can't set timer precision below 1ms, rounding it\n");
 
     timer.duration  = interval_sec*1000+interval_us/1000;
     timer.timeout= ((uint64_t)tp.tv_sec*1000+tp.tv_nsec/(1000*1000)+timer.duration);
@@ -420,7 +422,7 @@ task_list_t tasks[TASK_MAX];
     if (ret==1)
       return 0;
     else {
-      LOG_W(TMR, "tried to remove a non existing timer\n");
+      LOG_W(DRIVER, "tried to remove a non existing timer\n");
       return 1;
     }
   }

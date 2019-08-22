@@ -3,6 +3,7 @@
 #include <interface_rrc_rlc.h>
 #include <stdio.h>
 #include<stdlib.h>
+#include <log.h>
 
 void * dummy_func(void *args)
 {
@@ -40,7 +41,6 @@ void *rrc_process_func(void * arg)
     char *msg_content_ptr;
     uint32_t requstid;
 
-    
     while (1)
     {
         
@@ -50,7 +50,7 @@ void *rrc_process_func(void * arg)
 			{
 				case TASK_D2D_DUMMY:
 					buffer_rpt= (rlc_rrc_buffer_rpt * )recv_msg->message_ptr;
-					printf("receive message from %d, msg_id =%d,msg_ptr = %ld,request_id = %d\n",
+					LOG_DEBUG(DRIVER,"receive message from %d, msg_id =%d,msg_ptr = %ld,request_id = %d\n",
 							recv_msg->ittiMsgHeader.originTaskId,
 							recv_msg->ittiMsgHeader.messageId,
 							(recv_msg->message_ptr),
@@ -58,12 +58,12 @@ void *rrc_process_func(void * arg)
 							);
 
 
-					//printf("requset_id = %d\n",requstid);
+					//LOG_DEBUG(DRIVER,("requset_id = %d\n",requstid);
 					//!process message 
 
 					itti_free_message(recv_msg);
 
-					printf("process received message success! \n\n\n");
+					LOG_DEBUG(DRIVER,"process received message success! \n\n\n");
 					break;
 
 
@@ -76,8 +76,8 @@ void *rrc_process_func(void * arg)
 
 }
 
-
-int thread_comm_demo()
+#if 0
+int main()
 {
 
      
@@ -86,11 +86,9 @@ int thread_comm_demo()
 
 	itti_create_task(TASK_D2D_DUMMY, dummy_func, NULL);
 	itti_create_task(TASK_D2D_RRC, rrc_process_func, NULL);
-
 	
-
     sleep(10);
 	return 0;
 }
-
+#endif 
 
