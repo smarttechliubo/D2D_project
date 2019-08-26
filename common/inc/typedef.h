@@ -10,6 +10,9 @@
 #ifndef INC_TYPEDEF_H_
 #define INC_TYPEDEF_H_
 
+#define true 1
+#define false 0
+
 typedef signed char		int8_t;
 typedef unsigned char	uint8_t;
 typedef signed short	int16_t;
