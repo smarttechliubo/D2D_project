@@ -13,26 +13,6 @@
 
 #define  TASK_MAX       10
 
-#define _Assert_Exit_                           \
-{                                               \
-    fprintf(stderr, "\nExiting execution\n");   \                
-}
-
-
-#define _Assert_(cOND, aCTION, fORMAT, aRGS...)             \
-do {                                                        \
-    if (!(cOND)) {                                          \
-        fprintf(stderr, "\nAssertion ("#cOND") failed!\n"   \
-                "In %s() %s:%d\n" fORMAT,                   \
-                __FUNCTION__, __FILE__, __LINE__, ##aRGS);  \
-        aCTION;                                             \
-    }						\
-} while(0)
-
-#define AssertFatal(cOND, fORMAT, aRGS...)          _Assert_(cOND, _Assert_Exit_, fORMAT, ##aRGS)
-
-#define LOG_E(c, x...)  printf(x)
-
 
 
 

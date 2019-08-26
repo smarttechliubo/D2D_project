@@ -11,6 +11,7 @@
 #include <string.h>
 #include <time.h>
 #include <sys/time.h>
+#include <stdint.h>
 
 #include "log.h"
 
@@ -29,6 +30,7 @@ static const char* s_loginfo[] = {
 
 static const char* s_comp[] = {
 	[MAIN] = "MAIN",
+	[DRIVER] = "DRIVER",
     [PHY] = "PHY",
     [MAC]  = "MAC",
     [RLC]  = "RLC",
@@ -61,8 +63,10 @@ static void get_timestamp(char *buffer)
 
 void log_info(const char* filename, int line, comp_name_t comp, LogLevel level, const char* fmt, ...)
 {
-    if(level > LOGLEVEL || comp > NAS)
+    if(level > LOGLEVEL)
         return;
+
+
 #if 0
 	int32_t fd, size;
 	fd = open("./file", O_CREAT|O_RDWR| O_SYNC);
@@ -82,10 +86,19 @@ void log_info(const char* filename, int line, comp_name_t comp, LogLevel level, 
     else tmp++;
     get_timestamp(time);
 
+
     //printf("%s, [%s], [%s:%d] %s\n", time, s_comp[comp], tmp, line, buf);
-    printf("%s, [%s], [%s] [%s:%d] %s\n", time, s_comp[comp], s_loginfo[level], tmp, line, buf);
+    #ifdef  LOG_PRINTF_ALL 
+    printf("%s [%s] [%s]  [%s:%d]  %s\n", time, s_comp[comp], s_loginfo[level], tmp, line, buf);
+	#else 
+	printf( "[%s] %s\n" ,  s_loginfo[level],  buf);
+	#endif 
 #endif
     va_end(arg_list);
+
 }
+
+
+
 
 
