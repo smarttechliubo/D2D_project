@@ -14,5 +14,9 @@
 #include "mac.h"
 
 context_s g_context;
+schedule_info sch;
+
+uint32_t get_rb_num(uint16_t bandwith);
+
 
 #endif  //_SMARTLOGICTECH_MAC_VARS_H

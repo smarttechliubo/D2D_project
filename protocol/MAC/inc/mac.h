@@ -14,6 +14,8 @@
 
 #include "mac_defs.h"
 #include "interface_rrc_mac.h"
+#include "interface_mac_phy.h"
+
 
 #define TIMING_SYNC_PERIOD 20
 
@@ -77,6 +79,16 @@ typedef struct
 #endif
 	mac_info_s *mac;
 }context_s;
+
+typedef struct
+{
+	uint16_t cellId;
+	uint16_t padding;
+	frame_t frame;
+	sub_frame_t subframe;
+	PHY_PdcchSendReq pdcch;
+	PHY_PuschSendReq pusch;
+}schedule_info;
 
 void init_mac();
 
