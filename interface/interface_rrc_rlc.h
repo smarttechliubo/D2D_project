@@ -29,7 +29,7 @@ typedef  enum
 
 typedef enum
 {/**1:tm_dl,2:tm_ul, 3:tm ul&dl, 3:um_dl,4:um_ul, 5:um_dl&ul **/
-   RLC_MODE_TM_DL,
+   RLC_MODE_TM_DL,      //!0
    RLC_MODE_TM_UL,
    RLC_MODE_TM_DL_AND_UL,
    RLC_MODE_UM_DL, 
@@ -39,16 +39,25 @@ typedef enum
 }rlc_mode_e; 
 
 
-typedef struct rlc_um_cfg_s
+typedef struct rlc_ul_um_cfg_s
 {
 	 /*um mode valid */
-	uint16_t  sn_field; /**sn field length:5 or 10 */
+	uint16_t  sn_field; /**0:5; 1:10 */
+}rlc_ul_um_cfg;
+
+
+
+typedef struct rlc_dl_um_cfg_s
+{
+	 /*um mode valid */
+	uint16_t  sn_field; /**0:5; 1:10 */
 	uint16_t  t_recordering; /** recordering timer expire time,unit:subsfn, [0~65535]*/
-}rlc_um_cfg;
+}rlc_dl_um_cfg;
 
 typedef union
 {
-	rlc_um_cfg   rlc_um;
+	rlc_ul_um_cfg   ul_um_cfg;
+	rlc_dl_um_cfg   dl_um_cfg; 
 }rlc_entity_cfg;
 
 typedef struct rb_info_s
@@ -124,14 +133,15 @@ typedef  rlc_rrc_initial_cfm   rrc_rlc_release_cfm;
 typedef struct rrc_rlc_buffer_req_s
 {
 	uint32_t request_id; /**record current request id*/
-	uint32_t data_size; /**rrc -> rlc data size */
+	uint32_t send_data_size; /**rrc -> rlc data size */
 }rrc_rlc_buffer_status_req;
 
 /**RLC_RRC_BUF_STATUS_RPT */
 typedef struct rlc_rrc_buffer_rpt_s
 {
 	uint32_t request_id;
-	uint32_t rlc_buffer_valid ; /**1:buffer is not full , 0:full */
+	uint32_t rlc_buffer_valid ; /**1:buffer have enough size for rrc message ,0: don't have enough space*/
+    uint32_t  send_data_size; 
 	uint32_t rlc_buffer_data_size; /**rlc buffer valid size for rrc data */
 }rlc_rrc_buffer_rpt; 
 
@@ -161,6 +171,8 @@ typedef struct rrc_rlc_connect_setup_cfg_s
 }rrc_rlc_connect_setup_cfg;
 
 typedef rlc_rrc_initial_cfm  rlc_rrc_connect_setup_cfg_cfm;
+
+
 
 #endif
 

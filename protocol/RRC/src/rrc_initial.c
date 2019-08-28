@@ -13,7 +13,7 @@
  #include <typedef.h>
  #include <d2d_system_global.h>
  #include <rrc_global_def.h>
- 
+ #include <dictionary.h>
  
  
 /**************************function******************************/
@@ -25,11 +25,12 @@
 void rrc_Initial()
 {
 	
+	memset((void *)&g_rrc_init_para,0,sizeof(g_rrc_init_para));
 	
 #ifdef RRC_SOURCE	
-	g_rrc_init_para.source_type = D2D_MODE_TYPE_SOURCE;    //! source
+	rrc_SetModeType(D2D_MODE_TYPE_SOURCE);    //! source
 #else 
-    g_rrc_init_para.source_type = D2D_MODE_TYPE_SOURCE;    //!destination
+    rrc_SetModeType(D2D_MODE_TYPE_DESTINATION);    //!destination
 #endif 
 
     g_rrc_init_para.cell_id = 0; 
@@ -47,7 +48,9 @@ void rrc_Initial()
 	g_rrc_init_para.mib_info.pdcch_rb_start = 2; 
 	g_rrc_init_para.mib_info.pdcch_rb_num = 2; 
 
-	rrc_StatusChange(RRC_STATUS_INITIAL);
+	g_rrc_ue_info_dict = dict_init(); 
+
+	rrc_SetStatus(RRC_STATUS_INITIAL);
 
 }
 
@@ -58,7 +61,7 @@ void rrc_Initial()
  * @Date:  2019年8月15日
  * @param: rrc_status :       [next valid rrc status ]
  */
-void rrc_StatusChange(rrc_status_e          rrc_next_status)
+void rrc_SetStatus(rrc_status_e          rrc_next_status)
 {
 	g_rrc_status = rrc_next_status; 
 }
@@ -73,5 +76,15 @@ rrc_status_e  rrc_GetCurrentStatus( )
 	return g_rrc_status; 
 }
 
+
+int rrc_SetModeType(int mode_type)
+{
+	g_rrc_init_para.source_type = mode_type; 
+}
+
+int rrc_GetModeType( )
+{
+	return g_rrc_init_para.source_type;
+}
 
  

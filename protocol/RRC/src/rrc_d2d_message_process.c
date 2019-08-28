@@ -50,7 +50,7 @@ int write_out(const void *buffer, size_t size, void *app_key) {
  * @param: *buf :             [mib encode output buffer]
  * @param: buffer_size#endif :[output buffer maximum size ]
  */
-int EncodeD2dMib(uint8_t *buf,uint32_t buffer_size)
+int EncodeD2dMib(uint8_t *buf,uint32_t max_buffersize, uint32_t *encode_size )
 {
 	MasterInformationBlock_t  *bch_msg; 
 
@@ -106,7 +106,7 @@ int EncodeD2dMib(uint8_t *buf,uint32_t buffer_size)
 
     //!<encode BCH 
 #ifdef UPER_ENCODE_TO_FILE
-   /ec = asn_encode(0,ATS_UNALIGNED_BASIC_PER,&asn_DEF_MasterInformationBlock, 
+   ec = asn_encode(0,ATS_UNALIGNED_BASIC_PER,&asn_DEF_MasterInformationBlock, 
                     bch_msg, 
                     write_out, 
                     fp); 
@@ -124,15 +124,14 @@ int EncodeD2dMib(uint8_t *buf,uint32_t buffer_size)
 #else 
     ec = asn_encode_to_buffer(0,ATS_UNALIGNED_BASIC_PER,
                                &asn_DEF_MasterInformationBlock, 
-                               bch_msg,buf,buffer_size); 
+                               bch_msg,buf,max_buffersize); 
 	if(ec.encoded == -1) {
 		fprintf(stderr, "Could not encode  (at %s)\n",
 		 ec.failed_type->name);  //ec.failed_type ? 
 		system("pause");
 		return RRC_MESSAGE_EN_DECODE_ERROR;
 	} else {
-		//!printf("encode to buffer \n");
-		//!printf("ec.encoded = %d bytes\n",ec.encoded); 
+		*encode_size = ec.encoded;
 	}
 #endif 
 
@@ -171,7 +170,7 @@ int EncodeD2dMib(uint8_t *buf,uint32_t buffer_size)
  * @param: *encode_buffer :   [encode sib1 message output buffer ]
  * @param: buffersize :       [maximum buffer_size  ]
  */
-int EncodeD2dSib1(uint8_t *encode_buffer,uint32_t buffersize)
+int EncodeD2dSib1(uint8_t *encode_buffer, uint32_t max_buffersize, uint32_t *encode_size )
 {
 	SystemInformationBlockType1_t  *sib1_msg; 
 	FILE *fp;
@@ -225,7 +224,8 @@ int EncodeD2dSib1(uint8_t *encode_buffer,uint32_t buffersize)
 	
     //!<encode BCH 
     //ec = asn_encode(0,ATS_UNALIGNED_BASIC_PER,&asn_DEF_SystemInformationBlockType1, sib1_msg, write_out, fp); 
-    ec = asn_encode_to_buffer(0,ATS_UNALIGNED_BASIC_PER,&asn_DEF_SystemInformationBlockType1, sib1_msg,encode_buffer,buffersize); 
+    ec = asn_encode_to_buffer(0,ATS_UNALIGNED_BASIC_PER,&asn_DEF_SystemInformationBlockType1, 
+                              sib1_msg,encode_buffer,max_buffersize); 
 #ifdef UPER_ENCODE_TO_FILE 
 	fclose(fp);
 	if(ec.encoded == -1) {
@@ -240,22 +240,13 @@ int EncodeD2dSib1(uint8_t *encode_buffer,uint32_t buffersize)
 		size = fread(buf, 1, sizeof(buf), fp); 
 		}
 #else 
-    if(ec.encoded == -1) {
-		fprintf(stderr, "Could not encode  (at %s)\n",
-		 ec.failed_type->name);  //ec.failed_type ? 
-		system("pause");
-		return RRC_MESSAGE_EN_DECODE_ERROR;
-	}   
-	else 
-	{
-		printf("ec.encoded = %d bytes\n",ec.encoded); 
-		fprintf(stderr, "Created %s with PER encoded success\n", filename);
-		size = ec.encoded;
-	}
+	AssertFatal((ec.encoded != -1), RRC , "function %s Could not encode  (at %s)\n", __func__, ec.failed_type->name);
+    *encode_size = ec.encoded;
+	
 		
 #endif 
 		
-		if (size !=0)
+		if (*encode_size !=0)
 		{
 			printf("encode output byte: ");
 		    for (i = 0; i < size;i++)
@@ -745,15 +736,8 @@ int EncodeD2dCcch(uint8_t  *encode_buffer, uint32_t max_buffersize,
 	}
 
 	ec = asn_encode_to_buffer(0,ATS_UNALIGNED_BASIC_PER,&asn_DEF_CCCH_Message, encode_msg,encode_buffer,max_buffersize); 
-  	if(ec.encoded == -1) {
-   		fprintf(stderr, "Could not encode  (at %s)\n",
-   		 ec.failed_type->name);  //ec.failed_type ? 
-   		 *encode_size  = 0;
-   		return RRC_MESSAGE_EN_DECODE_ERROR;
-   	} else {
-   		
-   		*encode_size = ec.encoded;
-   	}
+    AssertFatal((ec.encoded != -1), RRC , "function %s Could not encode  (at %s)\n", __func__, ec.failed_type->name);
+    *encode_size = ec.encoded;
 		
 	return RRC_MESSAGE_EN_DECODE_OK; /* Encoding finished successfully */
 
@@ -806,15 +790,7 @@ int DecodeD2dMib(MasterInformationBlock_t       *bch_msg,uint8_t *buf,uint32_t s
                     (void **)&bch_msg, buf, size); 
    
 	fclose(fp);
-	if(ec.code != RC_OK) {
-		fprintf(stderr, "%s: Broken  decoding at byte %ld\n", filename,
-		(long)ec.consumed);
-		return RRC_MESSAGE_EN_DECODE_ERROR;
-	} else {
-		//!TODO: use log to output the decode info
-		//!printf("ec.consumed = %d bytes\n",ec.consumed); 
-		//!fprintf(stderr, " %s with PER decode success\n", filename);
-	} 
+	AssertFatal(ec.code == RC_OK, RRC, "%s: Broken  decoding at byte %ld\n", __func__,(long)ec.consumed); 
 	
 	/* Also print the constructed Rectangle XER encoded (XML) */
 	//xer_fprint(stdout, &asn_DEF_BCCH_BCH_Message, bch_msg); //!<
@@ -874,15 +850,7 @@ int DecodeD2dSib1(SystemInformationBlockType1_t       *decode_msg,uint8_t *buf,u
                     (void **)&decode_msg, buf, size); 
    
 	fclose(fp);
-	if(ec.code != RC_OK) {
-		fprintf(stderr, "%s: Broken  decoding at byte %ld\n", filename,
-		(long)ec.consumed);
-		return RRC_MESSAGE_EN_DECODE_ERROR;
-	} else {
-		//!TODO: use log to output the decode info
-		//!printf("ec.consumed = %d bytes\n",ec.consumed); 
-		//!fprintf(stderr, " %s with PER decode success\n", filename);
-	} 
+	AssertFatal(ec.code == RC_OK, RRC, "%s: Broken  decoding at byte %ld\n", __func__,(long)ec.consumed); 
 	
 	/* Also print the constructed Rectangle XER encoded (XML) */
 	//xer_fprint(stdout, &asn_DEF_BCCH_BCH_Message, bch_msg); //!<
@@ -940,15 +908,7 @@ int DecodeD2dRrcConnectSetup(RRCConnectionSetup_t       *decode_msg,uint8_t *buf
                     (void **)&decode_msg, buf, size); 
    
 	fclose(fp);
-	if(ec.code != RC_OK) {
-		fprintf(stderr, "%s: Broken  decoding at byte %ld\n", filename,
-		(long)ec.consumed);
-		return RRC_MESSAGE_EN_DECODE_ERROR;
-	} else {
-		//!TODO: use log to output the decode info
-		//!printf("ec.consumed = %d bytes\n",ec.consumed); 
-		//!fprintf(stderr, " %s with PER decode success\n", filename);
-	} 
+	AssertFatal(ec.code == RC_OK, RRC, "%s: Broken  decoding at byte %ld\n", __func__,(long)ec.consumed); 
 	
 	/* Also print the constructed Rectangle XER encoded (XML) */
 	//xer_fprint(stdout, &asn_DEF_BCCH_BCH_Message, bch_msg); //!<
@@ -1006,15 +966,7 @@ int DecodeD2dRrcConnectRequest(RRCConnectionRequest_t           *decode_msg,uint
                     (void **)&decode_msg, buf, size); 
    
 	fclose(fp);
-	if(ec.code != RC_OK) {
-		fprintf(stderr, "%s: Broken  decoding at byte %ld\n", filename,
-		(long)ec.consumed);
-		return RRC_MESSAGE_EN_DECODE_ERROR;
-	} else {
-		//!TODO: use log to output the decode info
-		//!printf("ec.consumed = %d bytes\n",ec.consumed); 
-		//!fprintf(stderr, " %s with PER decode success\n", filename);
-	} 
+	AssertFatal(ec.code == RC_OK, RRC, "%s: Broken  decoding at byte %ld\n", __func__,(long)ec.consumed); 
 	
 	/* Also print the constructed Rectangle XER encoded (XML) */
 	//xer_fprint(stdout, &asn_DEF_BCCH_BCH_Message, bch_msg); //!<
@@ -1071,15 +1023,7 @@ int DecodeD2dRrcConnectRelease(RRCConnectionRelease_t           *decode_msg,uint
                     (void **)&decode_msg, buf, size); 
    
 	fclose(fp);
-	if(ec.code != RC_OK) {
-		fprintf(stderr, "%s: Broken  decoding at byte %ld\n", filename,
-		(long)ec.consumed);
-		return RRC_MESSAGE_EN_DECODE_ERROR;
-	} else {
-		//!TODO: use log to output the decode info
-		//!printf("ec.consumed = %d bytes\n",ec.consumed); 
-		//!fprintf(stderr, " %s with PER decode success\n", filename);
-	} 
+	AssertFatal(ec.code == RC_OK, RRC, "%s: Broken  decoding at byte %ld\n", __func__,(long)ec.consumed); 
 	
 	/* Also print the constructed Rectangle XER encoded (XML) */
 	//xer_fprint(stdout, &asn_DEF_BCCH_BCH_Message, bch_msg); //!<
@@ -1136,15 +1080,7 @@ int DecodeD2dCcch(CCCH_Message_t           *decode_msg,uint8_t *buf,uint32_t siz
                     (void **)&decode_msg, buf, size); 
    
 	fclose(fp);
-	if(ec.code != RC_OK) {
-		fprintf(stderr, "%s: Broken  decoding at byte %ld\n", filename,
-		(long)ec.consumed);
-		return RRC_MESSAGE_EN_DECODE_ERROR;
-	} else {
-		//!TODO: use log to output the decode info
-		//!printf("ec.consumed = %d bytes\n",ec.consumed); 
-		//!fprintf(stderr, " %s with PER decode success\n", filename);
-	} 
+	AssertFatal(ec.code == RC_OK, RRC, "%s: Broken  decoding at byte %ld\n", __func__,(long)ec.consumed); 
 	
 	/* Also print the constructed Rectangle XER encoded (XML) */
 	//xer_fprint(stdout, &asn_DEF_BCCH_BCH_Message, bch_msg); //!<

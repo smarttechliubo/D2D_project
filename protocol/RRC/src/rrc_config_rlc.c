@@ -13,18 +13,23 @@
 #include <typedef.h>
 #include <rrc_global_def.h>
 #include <interface_rrc_rlc.h> 
- 
- 
+#include <intertask_interface.h> 
+#include <d2d_message_type.h> 
  
  
 /**************************function******************************/
 void rrc_Rlc_InitialConfig( )
 {
-	rrc_rlc_initial_req rlc_req; 
+    MessageDef  *message; 
+	rrc_rlc_initial_req *rlc_req = calloc(1,sizeof(rrc_rlc_initial_req)); 
 
-	rlc_req.initial_flag = 1; 
+	rlc_req->initial_flag = 1; 
 
 	//!TODO
+	message = itti_alloc_new_message(TASK_D2D_RRC, RRC_RLC_INITIAL_REQ,
+	                       ( char *)rlc_req, sizeof(rrc_rlc_initial_req));
+
+	itti_send_msg_to_task(TASK_D2D_RLC,0, message);
 }
 
 
@@ -54,8 +59,9 @@ rb_info rrc_Rlc_Rbinfo_Generate(rb_type_e rb_type, uint8_t rb_id,
 	temp_rb.logicchannel_id = logicch_id; 
 	if ( rlc_mode > 3 ) /**1:tm_dl,2:tm_ul, 3:tm ul&dl, 3:um_dl,4:um_ul, 5:um_dl&ul **/
 	{
-		temp_rb.rlc_mode_cfg.rlc_um.sn_field = um_sm_field; 
-		temp_rb.rlc_mode_cfg.rlc_um.t_recordering = um_t_recording; 
+		temp_rb.rlc_mode_cfg.ul_um_cfg.sn_field = um_sm_field; 
+		temp_rb.rlc_mode_cfg.dl_um_cfg.sn_field = um_sm_field; 
+		temp_rb.rlc_mode_cfg.dl_um_cfg.t_recordering = um_t_recording; 
 	}
 	else 
 	{
@@ -169,11 +175,60 @@ rrc_rlc_drb_addmod_req  rrc_Rlc_Drb_Config(rb_type_e rb_type,uint16_t drb_count,
  */
 void rrc_Rlc_ConnectSetup_Config(rrc_rlc_drb_addmod_req *drb_info)
 {
-	rrc_rlc_connect_setup_cfg  connect_setup_req; 
+
+    MessageDef  *message; 
+	rrc_rlc_connect_setup_cfg  *connect_setup_req = calloc(1,sizeof(rrc_rlc_connect_setup_cfg)); 
 	
-	connect_setup_req.drb_cfg_req = *drb_info; 
+	
+	connect_setup_req->drb_cfg_req = *drb_info; 
 
 	//!TODO send msssage
+	message = itti_alloc_new_message(TASK_D2D_RRC, RRC_RLC_CONNECT_SETUP_CFG_REQ,
+	                       ( char *)connect_setup_req, sizeof(rrc_rlc_connect_setup_cfg));
+
+	itti_send_msg_to_task(TASK_D2D_RLC,  0, message);
 }
 
 
+ /*!   
+ * @brief:  send buffer status request message to rlc 
+ * @author:  bo.liu
+ * @Date:  2019年8月28日
+ * @param: data_size :        [size of the send message ]
+ */
+void rrc_Rlc_DataBuf_Sta_Req(uint32_t data_size)
+{
+	MessageDef  *message; 
+
+	rrc_rlc_buffer_status_req    *data_status_req = calloc(1,sizeof(rrc_rlc_buffer_status_req)); 
+
+	data_status_req->request_id = 0; 
+	data_status_req->send_data_size = data_size; 
+
+	//! there should be insert the requset to RRC_RLC_FIFO,  and delete the node when receive the buffer status report
+     
+
+    message = itti_alloc_new_message(TASK_D2D_RRC, RRC_RLC_BUF_STATUS_REQ,
+	                       ( char *)data_status_req, sizeof(rrc_rlc_buffer_status_req));
+
+	itti_send_msg_to_task(TASK_D2D_RLC,  0, message);
+
+}
+
+
+void rrc_Rlc_Data_Send(rb_type_e rb_type, uint32_t *data_buffer, uint32_t data_size)
+{
+	MessageDef  *message;  
+
+	rrc_rlc_data_ind  *data_ind_ptr = calloc(1,sizeof(rrc_rlc_data_ind)); 
+
+ 	data_ind_ptr->rb_type = rb_type; 
+ 	data_ind_ptr->data_addr_ptr = data_buffer; 
+ 	data_ind_ptr->data_size = data_size; 
+
+ 	
+    message = itti_alloc_new_message(TASK_D2D_RRC, RRC_RLC_DATA_IND,
+	                       ( char *)data_ind_ptr, sizeof(rrc_rlc_data_ind));
+
+	itti_send_msg_to_task(TASK_D2D_RLC,  0, message);
+}

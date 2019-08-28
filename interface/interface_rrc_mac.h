@@ -26,7 +26,14 @@ typedef struct mac_rrc_initial_cfm_s
 
 typedef mac_rrc_initial_cfm  mac_rrc_release_cfm;
 
-
+/**MAC_RRC_CONNECTION_CFM***/
+typedef struct mac_rrc_connection_cfm_s
+{
+	uint16_t ue_index;
+	rnti_t rnti;
+	uint16_t  status; /**1:pass; 0:error*/
+	uint16_t  error_code;     /**error code, self definition*/
+}mac_rrc_connection_cfm;
 
 /*****MIB & SIB1 message*******/
 
@@ -99,6 +106,16 @@ typedef struct
 	bcch_mib_info_s mib;
 	bcch_si_info_s sib;
 }rrc_mac_bcch_para_config_req;//RRC_MAC_BCCH_PARA_CFG_REQ
+
+typedef struct 
+{
+	bool  flag; // value: 0..2, 0: invalid, 1: mib, 2: sib
+    uint16_t  status; /**1:pass; 0:error*/
+	uint16_t  error_code;     /**error code, self definition*/
+}mac_rrc_bcch_para_config_cfm; //! MAC_RRC_BCCH_PARA_CFG_CFM; 
+
+
+
 
 typedef struct
 {
