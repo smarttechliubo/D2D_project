@@ -253,7 +253,7 @@ void free_mem_block (mem_block_t *leP, const char *caller) {
     // Reception of one message, blocking caller
     task_list_t *t=&tasks[task_id];
     pthread_mutex_lock(&t->queue_cond_lock);
-   	LOG_DEBUG(DRIVER,"fetch receive lock\n");
+   	//LOG_DEBUG(DRIVER,"fetch receive lock\n");
 
 #if 0
     // Weird condition to deal with crap legacy itti interface
@@ -281,7 +281,7 @@ void free_mem_block (mem_block_t *leP, const char *caller) {
      // *received_msg=t->message_queue.back();
      // t->message_queue.pop_back();
      //!取最新的消息
-     LOG_INFO(DRIVER,"receive new message,message number in queue = %d\n",t->message_queue.nb_elements);
+     LOG_INFO(DRIVER,"task: %d receive new message,message number in queue = %d\n",task_id,t->message_queue.nb_elements);
      *received_msg = list_remove_head(&(t->message_queue));
      //printf("receive new message,message number in queue = %d\n",t->message_queue.nb_elements);
      

@@ -123,7 +123,8 @@ typedef struct rlc_rrc_initial_cfm_s
 /**RRC_RLC_RELEASE_REQ */
 typedef struct rrc_rlc_release_req_s
 {
-	rrc_rlc_drb_release_req   drb_release_req;
+	uint32_t     cell_id;
+	uint32_t     ue_index; 
 }rrc_rlc_release_req;
 
 typedef  rlc_rrc_initial_cfm   rrc_rlc_release_cfm;
@@ -167,6 +168,7 @@ typedef rlc_rrc_initial_cfm  rlc_rrc_bcch_para_cfg_cfm;
 /**RRC_RLC_BCCH_PARA_CFG_REQ*/
 typedef struct rrc_rlc_connect_setup_cfg_s
 {
+    uint32_t  ue_index; 
 	rrc_rlc_drb_addmod_req   drb_cfg_req;  /**srb addmod request*/
 }rrc_rlc_connect_setup_cfg;
 

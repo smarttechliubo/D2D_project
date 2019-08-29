@@ -195,7 +195,7 @@ int  rrc_Receive_Signal_Msg(uint16_t mode_type, void *message, MessagesIds  msg_
     CCCH_Message_t   ccch_message; 
     mac_rrc_ccch_rpt  *ccch_message_rpt; 
     RRCConnectionRequest_t    rrc_connect_request; 
-    uint8_t            encode_buffer = g_rrc_messge_encode; 
+    uint8_t           *encode_buffer  = g_rrc_messge_encode; 
 
     rb_info            temp_rb;
     rb_info            rb_array[4] ; 
@@ -212,6 +212,7 @@ int  rrc_Receive_Signal_Msg(uint16_t mode_type, void *message, MessagesIds  msg_
     bcch_si_info_s  bcch_sib_info; 
     rlc_rrc_buffer_rpt  *rlc_buffer_rpt_ptr ; 
     mac_rrc_connection_cfm *mac_rrc_connection_cfm_ptr; 
+    mac_rrc_outsync_rpt    *outsync_rpt_ptr; 
 
     logical_channel_config_s     logic_channel_config[MAX_LOGICCHAN_NUM] = {0}; 
     uint32_t                     logic_ch_num = 0; 
@@ -219,10 +220,28 @@ int  rrc_Receive_Signal_Msg(uint16_t mode_type, void *message, MessagesIds  msg_
     uint32_t                     max_out_sync = 0; 
 
     uint32_t           encode_buffer_size = 0; 
-                                                
+    LOG_DEBUG(RRC, "RRC MODE: %d  receive message %d\n",mode_type, msg_type);                                            
     switch (msg_type)
 	{
+	    
+        case MAC_RRC_OUTSYNC_RPT:    //!out of sync report 
+        {
+			outsync_rpt_ptr = (mac_rrc_outsync_rpt *)message;
+			AssertFatal((1 == outsync_rpt_ptr->outsync_flag), RRC, "mac_rrc_outsync_rpt message flag error\n"); 
+			LOG_ERROR(RRC, "ERROR!OUT OF SYNC! OUT OF SYNC! \n"); 
 
+            ue_request_index = dict_GetValue(g_rrc_ue_info_dict, outsync_rpt_ptr->rnti); 
+			//!release MAC,
+			rrc_Mac_Release_Config(g_rrc_init_para.cell_id, (uint16_t)ue_request_index,0);
+            //!RLC
+			rrc_Rlc_Release_Req(g_rrc_init_para.cell_id,  ue_request_index);
+
+			//!TODO  PHY release 
+		
+
+
+
+        }
 		case PHY_RRC_INITIAL_CFM: 
 		{
 			initial_cfm = (rlc_rrc_initial_cfm *)message;  //!
@@ -308,8 +327,8 @@ int  rrc_Receive_Signal_Msg(uint16_t mode_type, void *message, MessagesIds  msg_
 			if (1 == mac_bcch_cfm_ptr)
 			{
 			    //!encode SIB1 
-                rrc_Wrap_Message_Process(EncodeD2dSib1(encode_buffer,ENCODE_MAX_SIZE, 
-				                                      &encode_buffer_size)); 
+                EncodeD2dSib1(encode_buffer,ENCODE_MAX_SIZE, 
+				                                      &encode_buffer_size); 
 		    	bcch_sib_info.sib_pdu = encode_buffer; 
 		    	bcch_sib_info.size = encode_buffer_size; 
 				//!notify MAC to schedule SIB1
@@ -335,7 +354,8 @@ int  rrc_Receive_Signal_Msg(uint16_t mode_type, void *message, MessagesIds  msg_
 		    //according to design spec, the desitination should send SIB1 config messge when receiving mib rpt
 		    //! rrc_phy_bcch_para_cfg
 
-            pusch_config.hop_mode = 0; 
+            //! the parameter of here is as same as the SIB1 IE 
+            pusch_config.hop_mode = 0;  
             pusch_config.pusch_hop_offset = 0; 
 
             
@@ -370,9 +390,7 @@ int  rrc_Receive_Signal_Msg(uint16_t mode_type, void *message, MessagesIds  msg_
 				return -1; 
             }
             #endif 
-            rrc_Wrap_Message_Process(DecodeD2dSib1(&sib1_decode, 
-                                                          (uint8_t *)(sib1_rpt->data_ptr),
-                                                          sib1_rpt->data_size));
+            DecodeD2dSib1(&sib1_decode, (uint8_t *)(sib1_rpt->data_ptr),sib1_rpt->data_size);
            
             //! config destination MAC & PHY SIB1 info 
             pusch_config.hop_mode = sib1_decode.radioResourceConfigCommon.psush_Hop_Config.hop_mode; 
@@ -392,12 +410,38 @@ int  rrc_Receive_Signal_Msg(uint16_t mode_type, void *message, MessagesIds  msg_
 			rrc_Phy_BcchPara_Config(pusch_config , ref_signal_pusch_config);
 			break; 
 		}	
+		case PHY_RRC_BCCH_PARA_CFG_CFM:
+		{
+			
+			if (D2D_MODE_TYPE_DESTINATION  == rrc_GetModeType())
+			{
+				//!generate rrc connect request message after BCCH_SIB1 CFG confirm 
+				
+ 				EncodeD2dCcch(encode_buffer,ENCODE_MAX_SIZE,
+				                                      &encode_buffer_size,
+				                                      CCCH_MessageType_PR_rrcConnectionrequest);
+				                                      
+          		LOG_DEBUG(RRC, "Destination generate RRC Connect Request Message \n"); 
+                //!send buffer_status require message to RLC 
+				rrc_Rlc_DataBuf_Sta_Req(encode_buffer_size); 
+
+				rrc_SetStatus(RRC_STATUS_CONNECT_REQUEST); 
+				
+				
+			}
+			else
+			{
+				LOG_DEBUG(RRC, "SOURCE receive the PHY_RRC_BCCH_PARA_CFG_CFM message! \n"); 
+			
+			}
+			break; 
+
+		}
 	    case MAC_RRC_CCCH_RPT: 
         {
  			ccch_message_rpt = (mac_rrc_ccch_rpt *)(message); 
- 			rrc_Wrap_Message_Process (DecodeD2dCcch(&ccch_message, 
- 			                                               (uint8_t *)(ccch_message_rpt->data_ptr),
- 			                                               ccch_message_rpt->data_size));
+ 			DecodeD2dCcch(&ccch_message,  (uint8_t *)(ccch_message_rpt->data_ptr), \
+ 			               ccch_message_rpt->data_size);
           
             if (CCCH_MessageType_PR_rrcConnectionrequest == ccch_message.message.present)
             {
@@ -406,15 +450,36 @@ int  rrc_Receive_Signal_Msg(uint16_t mode_type, void *message, MessagesIds  msg_
 			           RRC, 
 			           "only SOURCE can receive rrcConnectionrequest  message\n"); 
 
-			     rrc_SetStatus(RRC_STATUS_CONNECT_SETUP);       
-
+			         
+                rrc_SetStatus(RRC_STATUS_CONNECT_REQUEST);
+                
 				rrc_connect_request = ccch_message.message.choice.rrcConnectionrequest; 
 				if (RRCConnectionRequest__establishmentCause_normal == rrc_connect_request.establishmentCause)
 				{
-				
 
-			  
-					//!config RLC srb1 and drb here, not like LTE's 
+
+
+                    //!config PHY 
+                    rrc_Phy_ConnectSetup_Config(0);
+
+
+                    //!config MAC   
+                    ue_request_index = dict_GetNewUeIndex(g_rrc_ue_info_dict); //!Get new ue_index
+
+                    logic_channel_config[0].logical_channel_id = 1; 
+                    logic_channel_config[1].chan_type = LogicChannelConfig__channel_type_dtch; 
+                    logic_channel_config[1].priority = 2;  
+                    //!config MAC  DTCH
+                    rrc_Mac_ConnectSetup_Config(ue_request_index,
+                                                 4,
+                                                 4,
+                                                 1,
+                                                 logic_channel_config
+                                                );
+
+
+
+                   //!config RLC srb1 and drb here, not like LTE's 
 					//!TODO: whether generate SRB1 or not ? 
 					//!generate SRB1
 					temp_rb = rrc_Rlc_Rbinfo_Generate(RB_TYPE_SRB1,1,
@@ -439,36 +504,19 @@ int  rrc_Receive_Signal_Msg(uint16_t mode_type, void *message, MessagesIds  msg_
                     drb_add = rrc_Rlc_Drb_Config(RB_TYPE_DRB,1,&temp_rb);
 
                     //!TODO send message to RLC 
-                    rrc_Rlc_ConnectSetup_Config(&drb_add);
-
-                    //!Get new ue_index 
-                    ue_request_index = dict_GetNewUeIndex(g_rrc_ue_info_dict);
-
-                    logic_channel_config[0].logical_channel_id = 1; 
-                    logic_channel_config[1].chan_type = LogicChannelConfig__channel_type_dtch; 
-                    logic_channel_config[1].priority = 2;  
-                    //!config MAC  DTCH
-                    rrc_Mac_ConnectSetup_Config(ue_request_index,
-                                                 4,
-                                                 4,
-                                                 1,
-                                                 logic_channel_config
-                                                );
-
-                    //!config PHY 
-                    rrc_Phy_ConnectSetup_Config(0);
+                    rrc_Rlc_ConnectSetup_Config(ue_request_index, &drb_add);
 
                      //!generate connectsetup message, config MAC/RLC,PHY 
-				    rrc_Wrap_Message_Process(EncodeD2dCcch(encode_buffer,ENCODE_MAX_SIZE,
+				    EncodeD2dCcch(encode_buffer,ENCODE_MAX_SIZE,
 				                                      &encode_buffer_size,
-				                                      CCCH_MessageType_PR_rrcConnectionsetup)); 
-
-
-				    //!TODO send buffer_status require message to RLC 
+				                                      CCCH_MessageType_PR_rrcConnectionsetup); 
+                    
+                    LOG_DEBUG(RRC, "SOURCE generate RRC connect setup message!\n");
+				    //!send buffer_status require message to RLC 
 				    rrc_Rlc_DataBuf_Sta_Req(encode_buffer_size); 
 				    
 						 
-                    rrc_SetStatus(RRC_STATUS_CONNECT_SETUP);
+                    rrc_SetStatus(RRC_STATUS_CONNECTED);
 					
 				}
 
@@ -483,8 +531,20 @@ int  rrc_Receive_Signal_Msg(uint16_t mode_type, void *message, MessagesIds  msg_
 			           "only Destination can receive rrcConnectionsetup  message\n"); 
 				
 
-                rrc_SetStatus(RRC_STATUS_CONNECT_SETUP);    
-				 //! config RLC
+                rrc_SetStatus(RRC_STATUS_CONNECTED);    
+
+                 //! RRC CONFIG PHY 
+                RadioResourceConfigDedicate_ptr = \
+                	&ccch_message.message.choice.rrcConnectionsetup.radioResourceConfigCommon; 
+                
+                rrc_Phy_ConnectSetup_Config(RadioResourceConfigDedicate_ptr->pusch_dedi_config.beta_off_ack_ind); 
+
+
+
+                
+
+
+				  //! RRC CONFIG RLC and MAC 
                 rrc_rbinfo_decode_connect_setup(ccch_message.message.choice.rrcConnectionsetup,
                                                 &srb_add,
                                                 &drb_add,
@@ -496,36 +556,33 @@ int  rrc_Receive_Signal_Msg(uint16_t mode_type, void *message, MessagesIds  msg_
 
                 
 				
-                //!TODO rlc doesn't need config SRB ?
-                rrc_Rlc_ConnectSetup_Config(&drb_add);
+                //!destination's rlc ue_index fix to 0
+                rrc_Rlc_ConnectSetup_Config(0,&drb_add); 
 
+
+
+                 //! RRC CONFIG MAC 
+                
                 rrc_Mac_ConnectSetup_Config( 0, //!fix to 0 at destination mode 
                                              max_harq_tx,  
                                              max_out_sync,  
                                              logic_ch_num,  
                                              logic_channel_config);
-                
-
-                RadioResourceConfigDedicate_ptr = \
-                	&ccch_message.message.choice.rrcConnectionsetup.radioResourceConfigCommon; 
-                
-                rrc_Phy_ConnectSetup_Config(RadioResourceConfigDedicate_ptr->pusch_dedi_config.beta_off_ack_ind); 
-
-                
 
 
 				
 
 				//! generate  rrcconnectinocomplete message to send 
-				 rrc_Wrap_Message_Process(EncodeD2dCcch(encode_buffer,256,
-				                                      &encode_buffer_size,
-				                                      CCCH_MessageType_PR_rrcConectioncomplete)); 
+				 EncodeD2dCcch(encode_buffer,256,&encode_buffer_size,   \
+				               CCCH_MessageType_PR_rrcConectioncomplete);
+				 LOG_DEBUG(RRC, "DESTINATION generate RRC Connect Complete message !\n"); 
 
-				 //!TODO send encode buffer to RLC and send to air interface 
+				 //!send buffer_status require message to RLC 
+				 rrc_Rlc_DataBuf_Sta_Req(encode_buffer_size); 
 						                                      
 
-				//! update rrc status for destination 
-                rrc_SetStatus(RRC_STATUS_CONNECTED);
+				 //! update rrc status for destination 
+                 rrc_SetStatus(RRC_STATUS_CONNECTE_COMPLETE);
 				
             }
             else if (CCCH_MessageType_PR_rrcConectioncomplete == ccch_message.message.present)
@@ -535,7 +592,7 @@ int  rrc_Receive_Signal_Msg(uint16_t mode_type, void *message, MessagesIds  msg_
 			           "only SOURCE can receive rrcConectioncomplete  message\n");
 
 				//!update RRC status for source 
-                rrc_SetStatus(RRC_STATUS_CONNECTED);
+                rrc_SetStatus(RRC_STATUS_CONNECTE_COMPLETE);
 
             }
             else 
@@ -567,10 +624,14 @@ int  rrc_Receive_Signal_Msg(uint16_t mode_type, void *message, MessagesIds  msg_
 
 
 
-void  rrc_Sche_Task( )
+void  rrc_Sche_Task()
 {
-	rrc_Initial(); 
 
+    MessageDef *recv_msg;
+
+    
+	rrc_Initial(); 
+    
 
 	if (D2D_MODE_TYPE_SOURCE == rrc_GetModeType())
 	{
@@ -578,26 +639,31 @@ void  rrc_Sche_Task( )
 		rrc_Phy_InitialConfig(g_rrc_init_para); 
 		rrc_Mac_InitialConfig(rrc_GetModeType(), g_rrc_init_para);
  		rrc_Rlc_InitialConfig(); 
+
+ 		rrc_SetStatus(RRC_STATUS_INITIAL);
 	}
 	if ( D2D_MODE_TYPE_DESTINATION == rrc_GetModeType())
 	{
+	    rrc_SetStatus(RRC_STATUS_INITIAL);
 		//！config PHY to cell search 
 		rrc_Phy_CellSearch(g_rrc_init_para.ul_freq,g_rrc_init_para.dl_freq); 
 		//!TODO  start timer 
+
+		rrc_SetStatus(RRC_STATUS_CELL_SEARCH);
 	}
 
 
+    while(1)
+    {
+		MessageDef *recv_msg;
 
+        if (0 == itti_receive_msg(TASK_D2D_RRC, &recv_msg))
+        {
+			rrc_Receive_Signal_Msg(rrc_GetModeType(), 
+			                       recv_msg->message_ptr,
+			                       recv_msg->ittiMsgHeader.messageId); 
 
-
-
-
-
-
-
-
-
-
-
-
+			itti_free_message(recv_msg);
+        }
+    }
 }

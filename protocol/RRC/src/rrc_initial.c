@@ -50,7 +50,7 @@ void rrc_Initial()
 
 	g_rrc_ue_info_dict = dict_init(); 
 
-	rrc_SetStatus(RRC_STATUS_INITIAL);
+
 
 }
 
@@ -64,6 +64,7 @@ void rrc_Initial()
 void rrc_SetStatus(rrc_status_e          rrc_next_status)
 {
 	g_rrc_status = rrc_next_status; 
+	LOG_DEBUG(RRC, "MODE: %d, RRC STATUS = %d\n", rrc_GetModeType(),g_rrc_status);
 }
 
  /*!   

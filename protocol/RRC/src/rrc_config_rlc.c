@@ -15,9 +15,16 @@
 #include <interface_rrc_rlc.h> 
 #include <intertask_interface.h> 
 #include <d2d_message_type.h> 
+#include <log.h>
  
  
 /**************************function******************************/
+
+ /*!   
+ * @brief:  initial RLC 
+ * @author:  bo.liu
+ * @Date:  2019年8月29日
+ */
 void rrc_Rlc_InitialConfig( )
 {
     MessageDef  *message; 
@@ -142,9 +149,9 @@ rrc_rlc_drb_addmod_req  rrc_Rlc_Drb_Config(rb_type_e rb_type,uint16_t drb_count,
 	
 
 
- 		if ((rb_type != 2) ||  (drb_count > MAX_DRB_COUNT))
+ 		if ((rb_type != RB_TYPE_DRB) ||  (drb_count > MAX_DRB_COUNT))
 		{
-			//!TO ALARAM 
+			LOG_ERROR(RRC,"rrc_Rlc_Drb_Config rb_type error, or drb_count error!\n");
 		}
 
 
@@ -173,14 +180,15 @@ rrc_rlc_drb_addmod_req  rrc_Rlc_Drb_Config(rb_type_e rb_type,uint16_t drb_count,
  * @Date:  2019年8月15日
  * @param: *drb_info :        [param description ]
  */
-void rrc_Rlc_ConnectSetup_Config(rrc_rlc_drb_addmod_req *drb_info)
+void rrc_Rlc_ConnectSetup_Config(uint32_t ue_index ,rrc_rlc_drb_addmod_req *drb_info)
 {
 
     MessageDef  *message; 
 	rrc_rlc_connect_setup_cfg  *connect_setup_req = calloc(1,sizeof(rrc_rlc_connect_setup_cfg)); 
+
 	
-	
-	connect_setup_req->drb_cfg_req = *drb_info; 
+	connect_setup_req->ue_index = ue_index; 
+	memcpy((void *)&connect_setup_req->drb_cfg_req,(void *)drb_info,sizeof(rrc_rlc_drb_addmod_req)); 
 
 	//!TODO send msssage
 	message = itti_alloc_new_message(TASK_D2D_RRC, RRC_RLC_CONNECT_SETUP_CFG_REQ,
@@ -207,7 +215,7 @@ void rrc_Rlc_DataBuf_Sta_Req(uint32_t data_size)
 
 	//! there should be insert the requset to RRC_RLC_FIFO,  and delete the node when receive the buffer status report
      
-
+    LOG_DEBUG(RRC, "RRC send RLC buffer status inquiry:send data's size = %d\n", data_size);
     message = itti_alloc_new_message(TASK_D2D_RRC, RRC_RLC_BUF_STATUS_REQ,
 	                       ( char *)data_status_req, sizeof(rrc_rlc_buffer_status_req));
 
@@ -216,6 +224,14 @@ void rrc_Rlc_DataBuf_Sta_Req(uint32_t data_size)
 }
 
 
+ /*!   
+ * @brief:  send data to RLC 
+ * @author:  bo.liu
+ * @Date:  2019年8月29日
+ * @param: rb_type :          [param description ]
+ * @param: *data_buffer :     [param description ]
+ * @param: data_size :        [param description ]
+ */
 void rrc_Rlc_Data_Send(rb_type_e rb_type, uint32_t *data_buffer, uint32_t data_size)
 {
 	MessageDef  *message;  
@@ -231,4 +247,30 @@ void rrc_Rlc_Data_Send(rb_type_e rb_type, uint32_t *data_buffer, uint32_t data_s
 	                       ( char *)data_ind_ptr, sizeof(rrc_rlc_data_ind));
 
 	itti_send_msg_to_task(TASK_D2D_RLC,  0, message);
+}
+
+
+
+ /*!   
+ * @brief:  rrc_Rlc_Release_Req 
+ * @author:  bo.liu
+ * @Date:  2019年8月29日
+ * @param: cell_id :          [cell id  ]
+ * @param: ue_index :         [ue_index  ]
+ */
+void rrc_Rlc_Release_Req(uint32_t cell_id, uint32_t ue_index)
+{
+	MessageDef  *message;  
+
+	rrc_rlc_release_req   *data_ind_ptr = calloc(1,sizeof(rrc_rlc_release_req)); 
+
+    data_ind_ptr->cell_id = cell_id; 
+    data_ind_ptr->ue_index  = ue_index; 
+
+    message = itti_alloc_new_message(TASK_D2D_RRC, RRC_RLC_RELEASE_REQ,
+	                       ( char *)data_ind_ptr, sizeof(rrc_rlc_release_req));
+	                       
+	itti_send_msg_to_task(TASK_D2D_RLC,  0, message);
+
+
 }

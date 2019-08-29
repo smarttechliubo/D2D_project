@@ -25,6 +25,12 @@
 #include <interface_rrc_rlc.h>
 #include <log.h>
 #include <dictionary.h>
+
+
+
+#define RRC_SOURCE 
+
+
 #define  D2D_MODE_TYPE_SOURCE     1
 #define  D2D_MODE_TYPE_DESTINATION  0
 
@@ -32,19 +38,21 @@
 #define  RRC_MESSAGE_EN_DECODE_OK    0
 #define  RRC_MESSAGE_EN_DECODE_ERROR   -1
 
-#define  ENCODE_MAX_SIZE  256 
+#define  ENCODE_MAX_SIZE  1024 
 
 
 typedef  enum
 {
-	RRC_STATUS_INITIAL,
-	RRC_STATUS_INITIAL_CFM, 
-	RRC_STATUS_CELL_SEARCH,
-	RRC_STATUS_IDLE, 
-	RRC_STATUS_CONNECT_SETUP,
-	RRC_STATUS_CONNECTED, 
-    RRC_STATUS_RECONFIG,
-    RRC_STATUS_REESTABLISH
+    RRC_STATUS_NULL,     //!0
+	RRC_STATUS_INITIAL,   //!1
+	RRC_STATUS_INITIAL_CFM,  //!2
+	RRC_STATUS_CELL_SEARCH,   //!3
+	RRC_STATUS_IDLE,           //!4
+	RRC_STATUS_CONNECT_REQUEST,   //!5 
+	RRC_STATUS_CONNECTED,       //! 6
+	RRC_STATUS_CONNECTE_COMPLETE, //!7
+    RRC_STATUS_RECONFIG,        //!8
+    RRC_STATUS_REESTABLISH      //!9
 }rrc_status_e;
 
 
@@ -95,7 +103,7 @@ extern ue_info_dict  *g_rrc_ue_info_dict;
 extern uint8_t   g_rrc_messge_encode[ENCODE_MAX_SIZE];
 
 /*************************************extern function****************************/
-extern void rrc_Wrap_Message_Process(int (* message_func)(void *));
+extern void  rrc_Sche_Task();
 extern int EncodeD2dMib(uint8_t *encode_buffer, uint32_t max_buffersize, uint32_t *encode_size );
 extern int EncodeD2dSib1(uint8_t *encode_buffer, uint32_t max_buffersize, uint32_t *encode_size );
 extern int EncodeD2dRrcConnectionSetup(uint8_t  *encode_buffer, uint32_t buffersize); 
