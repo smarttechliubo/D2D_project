@@ -13,7 +13,8 @@
 #define     D2D_SYSTEM_GLOBAL_H
 
 
- 
+
+#define      D2D_MAX_USER_NUM    8 
  
 #define  MAX_LOGICCHAN_NUM    4
 

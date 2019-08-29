@@ -55,8 +55,8 @@ typedef struct mac_rrc_outsync_rpt_s
 {
 	uint16_t  sfn;
 	uint16_t  subsfn;
-
-    uint32_t  outsync_flag ; /**1:out_sync; 0:in_sync**/
+    uint16_t  rnti; 
+    uint16_t  outsync_flag ; /**1:out_sync; 0:in_sync**/
 }mac_rrc_outsync_rpt;
 
 
@@ -133,4 +133,10 @@ typedef struct
 	logical_channel_config_s logical_channel_config[MAX_LOGICCHAN_NUM];
 }rrc_mac_connnection_setup; //RRC_MAC_CONNECT_SETUP_CFG_REQ;
 
+typedef struct 
+{
+	uint16_t   SFN;    
+	uint16_t   subsfn; 
+    uint32_t   mib_receive_flag; //fixed to 1
+}mac_rrc_bcch_mib_rpt; 
 #endif /* INC_INTERFACE_RRC_MAC_H_ */
