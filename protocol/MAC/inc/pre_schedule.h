@@ -10,7 +10,7 @@
 #ifndef _SMARTLOGICTECH_PROTOCOL_MAC_INC_PRE_SCHEDULE_H_
 #define _SMARTLOGICTECH_PROTOCOL_MAC_INC_PRE_SCHEDULE_H_
 
-void pre_schedule(const frame_t frame, const sub_frame_t sub_frame, mac_info_s *mac);
+void pre_schedule(const frame_t frame, const sub_frame_t subframe, mac_info_s *mac);
 
 
 #endif /* _SMARTLOGICTECH_PROTOCOL_MAC_INC_PRE_SCHEDULE_H_ */

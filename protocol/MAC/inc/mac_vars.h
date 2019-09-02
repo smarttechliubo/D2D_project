@@ -14,9 +14,12 @@
 #include "mac.h"
 
 context_s g_context;
-schedule_info sch;
+schedule_result_s sch;
 
 uint32_t get_rb_num(uint16_t bandwith);
+uint32_t get_rb_start(const uint16_t bandwith);
+uint32_t get_tbs(const uint8_t mcs, const uint8_t num_rb);
+uint32_t get_rbg_size(const uint16_t bandwith);
 
 
 #endif  //_SMARTLOGICTECH_MAC_VARS_H

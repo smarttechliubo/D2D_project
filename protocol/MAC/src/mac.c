@@ -26,8 +26,7 @@
 bool g_run_enable = false;
 bool g_timing_sync = false;
 
-extern context_s g_context;
-rrc_status_e rrcStatus = RRC_IDL;
+//extern context_s g_context;
 
 
 void init_mac()
@@ -36,8 +35,10 @@ void init_mac()
 	mac_info_s *mac = (mac_info_s*) malloc(sizeof(mac_info_s));
     bzero(mac, sizeof(mac_info_s));
 
-	mac->frame = INVALID_VALUE_U32;
-	mac->subframe = INVALID_VALUE_U32;
+	mac->status = STATUS_NONE;
+	mac->frame = INVALID_U32;
+	mac->subframe = INVALID_U32;
+	mac->cce_bits = 0;
 
 	g_context.mac = mac;
 	g_timing_sync = false;
@@ -50,6 +51,11 @@ void init_mac()
 void mac_clean()
 {
 	free(g_context.mac);
+}
+
+bool mac_release()
+{
+
 }
 
 void stop_thread()
@@ -68,11 +74,27 @@ uint32_t syncT()
 void rrc_mac_config(const rrc_mac_initial_req *req)
 {
 	mac_info_s *mac = g_context.mac;
+	if(mac != NULL)
+	{
+		mac->mode = req->mode;
+		mac->cellId = req->cellId;
+		mac->bandwith = req->bandwith;
+		mac->subframe_config = req->subframe_config;
+		mac->pdcch_config = req->pdcch_config;
+		
+		mac->max_rbs_per_ue = MAX_RBS;
+		mac->status = STATUS_INIT;
+	}
+	else
+	{
+		LOG_ERROR(MAC, "MAC config error");
+	}
 
-	mac->mode = req->mode;
-	mac->cellId = req->cellId;
-	mac->bandwith = req->bandwith;
-	mac->subframe_config = req->subframe_config;
+	// as we have no rach, so here we add temp ue at rrc initial for destination
+	//if (mac->mode == 2)
+	{
+		init_ra(mac->cellId);
+	}
 }
 
 void rrc_mac_bcch_config(const rrc_mac_bcch_para_config_req *req)
@@ -118,7 +140,10 @@ void handle_rrc_msg()
 			break;
 		}
 		case RRC_MAC_RELEASE_REQ:
+		{
+			mac_release();
 			break;
+		}
 		case RRC_MAC_CONNECT_SETUP_CFG_REQ:
 			break;
 		case RRC_MAC_BCCH_PARA_CFG_REQ:
@@ -133,6 +158,7 @@ void handle_rrc_msg()
 	}
 }
 
+
 void *task_message_handler()
 {
 	handle_rrc_msg();
@@ -141,12 +167,12 @@ void *task_message_handler()
 	return 0;
 }
 
-void mac_main()
+void mac_pre_handler()
 {
 	frame_t frame;
 	sub_frame_t sub_frame;
 
-	if (g_timing_sync == false)
+	if (g_timing_sync == false || g_context.mac->status < STATUS_SYNC)
 		return;
 	
 	frame = g_context.frame;
@@ -214,9 +240,14 @@ void syncTime()//TODO: sync
 void run_period()
 {
 	syncTime();		
-	mac_main();
+	mac_pre_handler();
 }
 
+void run_scheduler()
+{
+	handle_phy_msg();
+
+}
 uint32_t make_periodic(uint32_t period_us, uint32_t* timer_fd)
 {
     int32_t ret = -1; 

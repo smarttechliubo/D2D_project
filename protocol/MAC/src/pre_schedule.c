@@ -10,17 +10,25 @@
 
 #include "mac.h"
 #include "typedef.h"
-#include "interface_mac_rlc.h"
 #include "common_channel.h"
+#include "mac_vars.h"
+#include "interface_mac_rlc.h"
 
 void handle_buffer_status(const rlc_mac_buf_status_rpt *buf)
 {
 	
 }
 
-void pre_schedule(const frame_t frame, const sub_frame_t sub_frame, mac_info_s *mac)
+void pre_schedule(const frame_t frame, const sub_frame_t subframe, mac_info_s *mac)
 {
+	sch.frame = frame;
+	sch.subframe = subframe;
+
 	//handle_buffer_status();
-	schedule_common(frame, sub_frame, mac);
+	if (mac->mode == 0)//source
+	{
+		schedule_common(frame, subframe, mac);
+	}
+	//schedule_ra(frame, subframe, mac);
 }
 

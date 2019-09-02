@@ -8,7 +8,9 @@
 * All rights reserved.
 **********************************************************/
 
+#include "log.h"
 #include "mac.h"
+#include "mac_vars.h"
 #include "typedef.h"
 
 void schedule_mib(const frame_t frame, mac_info_s *mac)
@@ -23,25 +25,76 @@ void schedule_mib(const frame_t frame, mac_info_s *mac)
 	common_channel->mib_pdu[2] = 0;
 }
 
-void schedule_sib(const frame_t frame, const sub_frame_t sub_frame, mac_info_s *mac)
+void schedule_sib(const frame_t frame, const sub_frame_t subframe, mac_info_s *mac)
 {
 	common_channel_s *common_channel = &mac->common_channel;
+	mac_tx_req *tx_req = &sch.tx_req;
 	uint32_t sib_len = common_channel->si.size;
 	uint32_t rb_max = get_rb_num(mac->bandwith);
 	uint32_t rb_start_index = get_rb_start(mac->bandwith);
+	uint32_t rbg_size = get_rbg_size(mac->bandwith);
+	uint32_t rbs_req = 0;
+	uint16_t aggregation_level = 2;
+	int32_t cce_offset = -1;
+
+	uint8_t mcs = 2; // for sib
+	uint32_t tbs = get_tbs(mcs, rbg_size);
 	
+	while (tbs < sib_len)
+	{
+	  rbs_req += rbg_size;
 	
+	  if (rbs_req > mac->max_rbs_per_ue) 
+	  {
+		tbs = get_tbs(mcs, rbg_size);
+		rbs_req = mac->max_rbs_per_ue;
+		break;
+	  }
+	  tbs = get_tbs(mcs, rbg_size);
+	} // end of while
+
+	tx_req->tx_info[tx_req->num_tx].sch.rb_start = rb_start_index;
+	tx_req->tx_info[tx_req->num_tx].sch.rb_num = rbs_req;
+	tx_req->tx_info[tx_req->num_tx].sch.modulation = 2;//QPSK
+	tx_req->tx_info[tx_req->num_tx].sch.rv = 0;
+	tx_req->tx_info[tx_req->num_tx].sch.data_ind = 2;
+	tx_req->tx_info[tx_req->num_tx].sch.ack = INVALID_U8;
+	tx_req->tx_info[tx_req->num_tx].sch.pdu_len = sib_len;
+	tx_req->tx_info[tx_req->num_tx].sch.data = common_channel->sib_pdu;
+
+	cce_offset = allocate_CCE(aggregation_level);
+	
+	if (cce_offset >= 0)
+	{
+		tx_req->tx_info[tx_req->num_tx].rnti = SI_RNTI;
+		tx_req->tx_info[tx_req->num_tx].ueIndex = INVALID_U16;
+
+		tx_req->tx_info[tx_req->num_tx].dci.cce_rb_num = aggregation_level;
+		tx_req->tx_info[tx_req->num_tx].dci.cce_rb = cce_offset;
+		tx_req->tx_info[tx_req->num_tx].dci.rb_num = rbs_req;
+		tx_req->tx_info[tx_req->num_tx].dci.rb_start = rb_start_index;
+		tx_req->tx_info[tx_req->num_tx].dci.mcs = mcs;
+		tx_req->tx_info[tx_req->num_tx].dci.data_ind = 2;
+		tx_req->tx_info[tx_req->num_tx].dci.ndi = 0;
+		tx_req->tx_info[tx_req->num_tx].dci.rv = 0;
+		tx_req->num_tx++;
+	}
+	else
+	{
+		LOG_WARN(MAC, "No CCE Resoure for SIB SFN:%", frame*4+subframe);
+	}
+
 }
 
-void schedule_common(const frame_t frame, const sub_frame_t sub_frame, mac_info_s *mac)
+void schedule_common(const frame_t frame, const sub_frame_t subframe, mac_info_s *mac)
 {
-	if ((mac->common_channel.mib_flag == true) && ((sub_frame == 0) && (frame % 4) == 0))
+	if ((mac->common_channel.mib_flag == true) && ((subframe == 0) && (frame % 4) == 0))
 	{
 		schedule_mib(frame, mac);
 	}
-	if ((mac->common_channel.sib_flag == true) && ((sub_frame == 1) && (frame % 2) == 0))
+	if ((mac->common_channel.sib_flag == true) && ((subframe == 1) && (frame % 2) == 0))
 	{
-		schedule_sib(frame, sub_frame, mac);
+		schedule_sib(frame, subframe, mac);
 	}
 }
 
