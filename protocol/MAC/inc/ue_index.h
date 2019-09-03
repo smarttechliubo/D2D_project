@@ -14,7 +14,7 @@
 
 void init_index();
 uint16_t new_index();
-uint16_t free_index(const uint16_t index);
+uint16_t release_index(const uint16_t index);
 
 
 #endif /* _SMARTLOGICTECH_PROTOCOL_MAC_INC_UE_INDEX_H_ */

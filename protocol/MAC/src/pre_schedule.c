@@ -21,8 +21,8 @@ void handle_buffer_status(const rlc_mac_buf_status_rpt *buf)
 
 void pre_schedule(const frame_t frame, const sub_frame_t subframe, mac_info_s *mac)
 {
-	sch.frame = frame;
-	sch.subframe = subframe;
+	g_sch.frame = frame;
+	g_sch.subframe = subframe;
 
 	//handle_buffer_status();
 	if (mac->mode == 0)//source

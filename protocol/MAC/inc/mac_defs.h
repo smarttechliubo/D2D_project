@@ -15,16 +15,20 @@
 
 typedef uint32_t message_type_t;
 typedef uint32_t message_size_t;
-typedef uint8_t pdu_t;
+
+#define MAX(a,b)  (((a)>(b)) ? (a) : (b))
+#define MIN(a,b)  (((a)<(b)) ? (a) : (b))
 
 #define INVALID_U8  0XFF
 #define INVALID_U16 0XFFFF
 #define INVALID_U32 0XFFFFFFFF
 
-#define MAX_SFN 1024
-#define MAX_SUBSFN 4
 
 #define TIMING_ADVANCE 1
+#define TIMING_SYNC_PERIOD 20
+
+#define MAX_SFN 1024
+#define MAX_SUBSFN 4
 
 #define MIB_PDU_SIZE 3
 #define SIB_PDU_SIZE 64 //TODO
@@ -34,7 +38,7 @@ typedef uint8_t pdu_t;
 #define MAX_RBS 40
 #define MAX_TX_NUM 2
 #define MAX_UE  16
-#define MAX_RA_NUM 
+#define MAX_RA_NUM 2
 
 
 #define SI_RNTI 0XFFFF

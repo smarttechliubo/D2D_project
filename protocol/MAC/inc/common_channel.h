@@ -10,6 +10,9 @@
 #ifndef _SMARTLOGICTECH_PROTOCOL_MAC_COMMON_CHANNEL_H_
 #define _SMARTLOGICTECH_PROTOCOL_MAC_COMMON_CHANNEL_H_
 
+#include "typedef.h"
+#include "smac_info.h"
+
 void schedule_mib(const frame_t frame, mac_info_s *mac);
 void schedule_sib(const frame_t frame, const sub_frame_t subframe, mac_info_s *mac);
 void schedule_common(const frame_t frame, const sub_frame_t subframe, mac_info_s *mac);

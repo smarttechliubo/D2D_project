@@ -17,13 +17,14 @@
 #include <string.h>
 
 #include "log.h"
-#include "mac.h"
 #include "mac_vars.h"
 #include "mac_defs.h"
+#include "mac_ra.h"
+#include "mac_rx.h"
 #include "pre_schedule.h"
 #include "d2d_message_type.h"
+#include "interface_rrc_mac.h"
 
-bool g_run_enable = false;
 bool g_timing_sync = false;
 
 //extern context_s g_context;
@@ -55,13 +56,9 @@ void mac_clean()
 
 bool mac_release()
 {
-
+	return true;
 }
 
-void stop_thread()
-{
-    //pthread_join(mac.thread, NULL);
-}
 /****************************************/
 //TODO: Temp define
 //bool syncTime(frame_t *frame, sub_frame_t *subframe);
@@ -80,7 +77,8 @@ void rrc_mac_config(const rrc_mac_initial_req *req)
 		mac->cellId = req->cellId;
 		mac->bandwith = req->bandwith;
 		mac->subframe_config = req->subframe_config;
-		mac->pdcch_config = req->pdcch_config;
+		mac->rb_num = req->pdcch_config.rb_num;
+		mac->rb_start_index = req->pdcch_config.rb_start_index;
 		
 		mac->max_rbs_per_ue = MAX_RBS;
 		mac->status = STATUS_INIT;
@@ -90,14 +88,10 @@ void rrc_mac_config(const rrc_mac_initial_req *req)
 		LOG_ERROR(MAC, "MAC config error");
 	}
 
-	// as we have no rach, so here we add temp ue at rrc initial for destination
-	//if (mac->mode == 2)
-	{
-		init_ra(mac->cellId);
-	}
+	init_ra(mac->cellId);
 }
 
-void rrc_mac_bcch_config(const rrc_mac_bcch_para_config_req *req)
+void rrc_mac_bcch_req(const rrc_mac_bcch_para_config_req *req)
 {
 	mac_info_s *mac = g_context.mac;
 	if (req->flag == 1)
@@ -105,8 +99,9 @@ void rrc_mac_bcch_config(const rrc_mac_bcch_para_config_req *req)
 		if (req->mib.pdcch_config.rb_num > 0 && 
 			(req->mib.pdcch_config.rb_start_index >= 0 && req->mib.pdcch_config.rb_start_index <= 3))
 		{
-			mac->common_channel.mib_flag = true;
-			mac->common_channel.mib = req->mib;
+			mac->common_channel.mib_size = MIB_PDU_SIZE;
+			mac->common_channel.bch_info.rb_num = req->mib.pdcch_config.rb_num;
+			mac->common_channel.bch_info.rb_start_index = req->mib.pdcch_config.rb_start_index;
 		}
 		else
 		{
@@ -116,9 +111,8 @@ void rrc_mac_bcch_config(const rrc_mac_bcch_para_config_req *req)
 	}
 	else if (req->flag == 2)
 	{
-		mac->common_channel.sib_flag = true;
-		mac->common_channel.si.size = req->sib.size;
-		memcpy(mac->common_channel.sib_pdu,req->sib.sib_pdu,req->sib.size);
+		mac->common_channel.sib_size = req->sib.size;
+		memcpy(mac->common_channel.sib_pdu, req->sib.sib_pdu, req->sib.size);
 	}
 	else
 	{
@@ -148,7 +142,7 @@ void handle_rrc_msg()
 			break;
 		case RRC_MAC_BCCH_PARA_CFG_REQ:
 		{
-			//rrc_mac_bcch_config(req);
+			//rrc_mac_bcch_req(req);
 			break;
 		}
 		case RRC_MAC_BCCH_SIB1_REQ:
@@ -158,15 +152,6 @@ void handle_rrc_msg()
 	}
 }
 
-
-void *task_message_handler()
-{
-	handle_rrc_msg();
-	//handle_rlc_msg();
-
-	return 0;
-}
-
 void mac_pre_handler()
 {
 	frame_t frame;
@@ -174,12 +159,14 @@ void mac_pre_handler()
 
 	if (g_timing_sync == false || g_context.mac->status < STATUS_SYNC)
 		return;
-	
+
 	frame = g_context.frame;
 	sub_frame = g_context.subframe;
 
 	frame = (frame + (sub_frame + TIMING_ADVANCE) / MAX_SUBSFN) % MAX_SFN;
 	sub_frame = (sub_frame + TIMING_ADVANCE) % MAX_SUBSFN;
+
+	handle_rrc_msg();
 
 	pre_schedule(frame, sub_frame, g_context.mac);
 
@@ -192,7 +179,7 @@ void syncTime()//TODO: sync
     //sub_frame_t subframe;
 	if (g_timing_sync == false)
     {
-		uint32_t time = syncT();
+		uint32_t time = syncT();// TODO: sync
 		if (time != 0xFFFFFFFF)
 		{
 			g_context.frame = time >> 16;
@@ -231,7 +218,6 @@ void syncTime()//TODO: sync
 				LOG_WARN(MAC, "Timing sync failed with PHY");
 			}
 		}
-
 	}
 }
 
@@ -246,73 +232,5 @@ void run_period()
 void run_scheduler()
 {
 	handle_phy_msg();
-
 }
-uint32_t make_periodic(uint32_t period_us, uint32_t* timer_fd)
-{
-    int32_t ret = -1; 
-    uint32_t ns;
-    uint32_t sec;
-    struct itimerspec itval;
-
-    /* Create the timer */
-    ret = timerfd_create (CLOCK_MONOTONIC, 0);
-    *timer_fd = ret;
-    if (ret > 0) {
-      /* Make the timer periodic */
-      sec = period_us/1e6;
-      ns = (period_us - (sec * 1000000)) * 1000;
-      itval.it_interval.tv_sec = sec;
-      itval.it_interval.tv_nsec = ns;
-      itval.it_value.tv_sec = sec;
-      itval.it_value.tv_nsec = ns;
-      ret = timerfd_settime (*timer_fd, 0, &itval, NULL); 
-      if (ret < 0) {
-        perror("timerfd_settime");
-      }
-    } else {
-      perror("timerfd_create");
-    }
-    return ret;
-}
-
-
-void wait_period(uint32_t timer_fd) 
-{
-    unsigned long long missed;
-    int ret;
-
-    /* Wait for the next timer event. If we have missed any the
-        number is written to "missed" */
-    ret = read (timer_fd, &missed, sizeof (missed));
-    if (ret == -1)
-    {
-      perror ("read timer");
-      return;
-    }
-
-    /* "missed" should always be >= 1, but just to be sure, check it is not 0 anyway */
-    if (missed > 0) {
-      //wakeups_missed += (missed - 1);
-    }
-}
-
-void *run_thread() 
-{
-    uint32_t timer_fd = 0;
-    uint32_t period_us = 1000;
-    //uint32_t wakeups_missed = 0;
-    if (make_periodic(period_us, &timer_fd))
-      return NULL;
-    
-    while(g_run_enable) {
-      run_period();
-      if (g_run_enable) {
-        wait_period(timer_fd);
-      }
-    }
-	return 0;
-}
-
-
 

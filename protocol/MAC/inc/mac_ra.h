@@ -43,4 +43,6 @@ typedef struct
 	ra_list  *tail;
 }ra_t;
 
+void init_ra(const uint16_t cellId);
+
 #endif /* _SMARTLOGICTECH_PROTOCOL_MAC_INC_RA_H_ */

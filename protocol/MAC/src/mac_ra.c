@@ -11,7 +11,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "ra.h"
+#include "mac_ra.h"
 #include "log.h"
 #include "mac_defs.h"
 #include "ue_index.h"
@@ -83,21 +83,49 @@ void ra_push_back(ra_list* ra)
 	}
 }
 
-void remove_ra(const rnti_t    rnti, const bool free)
+void remove_ra(const rnti_t    rnti, const bool release)
 {
-	ra_list *ra = g_ra.ra_list;
 	ra_list * node = NULL;
+	ra_list * pre = NULL;
+	ra_list * cur = g_ra.ra_list;
 
-	if (ra == NULL)
+	if (cur == NULL)
 	{
 		return;
 	}
+	else
+	{
+		while(cur)
+		{
+			if (cur->rnti == rnti)
+			{
+				node = cur;
+
+				if (release)
+					release_index(cur->ueIndex);
+
+				if (cur->next == NULL)
+					g_ra.tail = pre;
+				if (pre != NULL)
+					pre->next = cur->next;
+				else
+					cur = cur->next;
+				
+				free(node);
+				break;
+			}
+			pre = cur;
+			cur = cur->next;
+		}
+	}
+#if 0
 	else if (ra->rnti == rnti)
 	{
-		if (free)
-			free_index(ra->ueIndex);
+		if (release)
+			release_index(ra->ueIndex);
 		node = ra;
 		ra = ra->next;
+		g_ra.tail = ra->next;
 		free(node);
 	}
 	else 
@@ -111,8 +139,8 @@ void remove_ra(const rnti_t    rnti, const bool free)
 			}
 			if (ra->next->rnti == rnti)
 			{
-				if (free)
-					free_index(ra->next->ueIndex);
+				if (release)
+					release_index(ra->next->ueIndex);
 				node = ra->next->next;
 				free(ra->next);
 				ra->next = node;
@@ -123,11 +151,16 @@ void remove_ra(const rnti_t    rnti, const bool free)
 			ra = ra->next;
 		}
 	}
+#endif
 }
 
 bool add_ra(const uint16_t cellId)
 {
 	ra_list* ra = new_ra(cellId);
+
+	if (ra == NULL)
+		return false;
+	
 	if (g_ra.ra_num < MAX_RA_NUM && ra != NULL)
 	{
 		ra_push_back(ra);

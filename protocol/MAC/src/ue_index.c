@@ -47,7 +47,7 @@ uint16_t new_index()
 	return index;
 }
 
-uint16_t free_index(const uint16_t index)
+uint16_t release_index(const uint16_t index)
 {
 	if (index >= MAX_UE)
 	{

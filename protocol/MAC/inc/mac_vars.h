@@ -11,10 +11,11 @@
 #ifndef _SMARTLOGICTECH_MAC_VARS_H
 #define _SMARTLOGICTECH_MAC_VARS_H
 
-#include "mac.h"
+#include "smac_context.h"
+#include "smac_schedule_result.h"
 
 context_s g_context;
-schedule_result_s sch;
+schedule_result_s g_sch;
 
 uint32_t get_rb_num(uint16_t bandwith);
 uint32_t get_rb_start(const uint16_t bandwith);
