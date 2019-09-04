@@ -4,6 +4,7 @@
 */
 #ifndef INTERTASK_INTERFACE_H_
 #define INTERTASK_INTERFACE_H_
+#include <typedef.h>
 #include <stdint.h>
 #include <stdio.h>
 //#include <sys/epoll.h>
@@ -284,9 +285,14 @@ typedef struct {
 //TASK_DEF(TASK_UDP,      TASK_PRIORITY_MED,  1000, NULL, NULL)
 
 #define FOREACH_TASK(TASK_DEF)     \
-TASK_DEF(TASK_UNKNOWN,  TASK_PRIORITY_MED, 50,  NULL, NULL)   \
+TASK_DEF(TASK_UNKNOWN,	TASK_PRIORITY_MED, 200, NULL, NULL)   \
 TASK_DEF(TASK_D2D_RRC,	TASK_PRIORITY_MED, 200, NULL, NULL)   \
+TASK_DEF(TASK_D2D_RLC,TASK_PRIORITY_MED, 200, NULL, NULL)	\
+TASK_DEF(TASK_D2D_MAC,TASK_PRIORITY_MED, 200, NULL, NULL)   \
+TASK_DEF(TASK_D2D_PHY,TASK_PRIORITY_MED, 200, NULL, NULL)	\
 TASK_DEF(TASK_D2D_DUMMY,TASK_PRIORITY_MED, 200, NULL, NULL)   
+
+
 
 # if 0
   TASK_DEF(TASK_UNKNOWN,  TASK_PRIORITY_MED, 50, NULL, NULL)  \
@@ -388,8 +394,7 @@ static const message_info_t messages_info[] = {
 
 #endif 
 
-typedef   int   MessagesIds; 
-typedef   int   instance_t;
+
 
 #define  UINT16_MAX     65536
 
@@ -423,16 +428,16 @@ typedef struct message_list_t_s{
   MessageDef  *tail;
   int          nb_elements;
   char         name[LIST_NAME_MAX_CHAR];
-} list_t;
+} message_list_t;
 
 
-typedef MessageDef  mem_block_t;
+
 
 typedef struct task_list_s {
   task_info_t admin;
   pthread_t thread;
   pthread_mutex_t queue_cond_lock;
-  list_t message_queue;
+  message_list_t message_queue;
 //  std::map<long,timer_elm_t> timer_map;
  // uint64_t next_timer=UINT64_MAX;
 //  struct epoll_event  *events =NULL;
