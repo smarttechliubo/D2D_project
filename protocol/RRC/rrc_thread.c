@@ -19,12 +19,13 @@ int main()
 	itti_init(5, &tasks_info);
 
 	
+	itti_create_task(TASK_D2D_RRC, rrc_Sche_Task, NULL);
 #ifdef  RRC_SOURCE 
 	itti_create_task(TASK_D2D_DUMMY, dummy_rrc_test, D2D_MODE_TYPE_SOURCE);
 #else 
 	itti_create_task(TASK_D2D_DUMMY, dummy_rrc_test, D2D_MODE_TYPE_DESTINATION);
 #endif 
-	itti_create_task(TASK_D2D_RRC, rrc_Sche_Task, NULL);
+
 	while(1) {}
 	
 	return 0;

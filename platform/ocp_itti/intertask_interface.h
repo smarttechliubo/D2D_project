@@ -4,6 +4,7 @@
 */
 #ifndef INTERTASK_INTERFACE_H_
 #define INTERTASK_INTERFACE_H_
+#include <typedef.h>
 #include <stdint.h>
 #include <stdio.h>
 //#include <sys/epoll.h>
@@ -393,8 +394,7 @@ static const message_info_t messages_info[] = {
 
 #endif 
 
-typedef   int   MessagesIds; 
-typedef   int   instance_t;
+
 
 #define  UINT16_MAX     65536
 
@@ -428,16 +428,16 @@ typedef struct message_list_t_s{
   MessageDef  *tail;
   int          nb_elements;
   char         name[LIST_NAME_MAX_CHAR];
-} list_t;
+} message_list_t;
 
 
-typedef MessageDef  mem_block_t;
+
 
 typedef struct task_list_s {
   task_info_t admin;
   pthread_t thread;
   pthread_mutex_t queue_cond_lock;
-  list_t message_queue;
+  message_list_t message_queue;
 //  std::map<long,timer_elm_t> timer_map;
  // uint64_t next_timer=UINT64_MAX;
 //  struct epoll_event  *events =NULL;

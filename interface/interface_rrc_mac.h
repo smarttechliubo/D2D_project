@@ -140,7 +140,7 @@ typedef struct
 {
 	uint16_t   SFN;    
 	uint16_t   subsfn; 
-    uint32_t   mib_receive_flag; //
+    uint32_t   mib_receive_flag; //fixed to 1
 }mac_rrc_bcch_mib_rpt; 
 
 #endif /* INC_INTERFACE_RRC_MAC_H_ */

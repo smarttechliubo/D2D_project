@@ -89,7 +89,7 @@
 				LOG_ERROR(RRC, "DESTINATION RECEIVE CONNECT SETUP message, SRB RLC mode config ERROR\n");
 			}
 
-			LOG_DEBUG(RRC, "DESTINATION CONNECT SETUP : SRB:index = %d,rb_id = %d, logicid = %d,logictype = \
+			LOG_DEBUG(RRC, "RRC CONNECT SETUP : SRB:index = %d,rb_id = %d, logicid = %d,logictype = \
 							%d,rlc_mode = %d, rlc_ul_sn = %d, rlc_dl_sn = %d, rlc_dl_trecorder = %d\n", \
 							srb_add->srb_count,
 			                srb_add->srb_list[rb_cnt].rb_id, 
@@ -145,7 +145,7 @@
             }
 
 
-            LOG_DEBUG(RRC, "DESTINATION CONNECT SETUP : DRB:index = %d,rb_id = %d, logicid = %d,logictype = \
+            LOG_DEBUG(RRC, "RRC CONNECT SETUP : DRB:index = %d,rb_id = %d, logicid = %d,logictype = \
 							%d,rlc_mode = %d, rlc_ul_sn = %d, rlc_dl_sn = %d, rlc_dl_trecorder = %d\n", \
 							drb_add->drb_count,
 			                drb_add->drb_list[rb_cnt].rb_id, 
@@ -458,7 +458,9 @@ int  rrc_Receive_Signal_Msg(uint16_t mode_type, void *message, MessagesIds  msg_
 				{
 
 
-
+					LOG_INFO(RRC,"RRC CONNECT REQUEST:ue_Identity=%d, request_cause = %d\n",
+								rrc_connect_request.ue_Identity,
+								rrc_connect_request.establishmentCause);
                     //!config PHY 
                     rrc_Phy_ConnectSetup_Config(0);
 
@@ -533,10 +535,15 @@ int  rrc_Receive_Signal_Msg(uint16_t mode_type, void *message, MessagesIds  msg_
 
                 rrc_SetStatus(RRC_STATUS_CONNECTED);    
 
+               
                  //! RRC CONFIG PHY 
                 RadioResourceConfigDedicate_ptr = \
                 	&ccch_message.message.choice.rrcConnectionsetup.radioResourceConfigCommon; 
+
                 
+				LOG_INFO(RRC,"RRC CONNECT SETUP:PHY info:beta_off_ack_ind = %d\n",\
+											RadioResourceConfigDedicate_ptr->pusch_dedi_config.beta_off_ack_ind);
+											
                 rrc_Phy_ConnectSetup_Config(RadioResourceConfigDedicate_ptr->pusch_dedi_config.beta_off_ack_ind); 
 
 
@@ -593,6 +600,7 @@ int  rrc_Receive_Signal_Msg(uint16_t mode_type, void *message, MessagesIds  msg_
 
 				//!update RRC status for source 
                 rrc_SetStatus(RRC_STATUS_CONNECTE_COMPLETE);
+               
 
             }
             else 

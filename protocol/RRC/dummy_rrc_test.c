@@ -202,7 +202,7 @@ void dummy_rrc_test(uint32_t rrc_mode)
 
 		while (RRC_STATUS_IDLE != rrc_GetCurrentStatus())
 		{
-			LOG_DEBUG(RRC, "DESTINATION wait for MIB report"); 
+			LOG_DEBUG(RRC, "DESTINATION wait for PHY_RRC_BCCH_PARA_CFG_CFM report"); 
 		}
 
         dummy_rrc_confirm_message(PHY_RRC_BCCH_PARA_CFG_CFM);

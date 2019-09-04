@@ -28,7 +28,7 @@
 
 
 
-#define RRC_SOURCE 
+//#define RRC_SOURCE 
 
 
 #define  D2D_MODE_TYPE_SOURCE     1
