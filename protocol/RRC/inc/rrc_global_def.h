@@ -28,7 +28,7 @@
 
 
 
-//#define RRC_SOURCE 
+#define RRC_SOURCE 
 
 
 #define  D2D_MODE_TYPE_SOURCE     1
@@ -101,6 +101,7 @@ extern  rrc_init_var  g_rrc_init_para;
 extern rrc_status_e  g_rrc_status;
 extern ue_info_dict  *g_rrc_ue_info_dict;
 extern uint8_t   g_rrc_messge_encode[ENCODE_MAX_SIZE];
+extern uint16_t  g_rrc_mac_report_rnti; 
 
 /*************************************extern function****************************/
 extern void  rrc_Sche_Task();

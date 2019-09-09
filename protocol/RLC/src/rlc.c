@@ -17,10 +17,11 @@
 #include <rlc.h>
 
 
+#if 0
 
 void rb_free_rlc_union (void *rlcu_pP)
 {
-#if 0
+
   //-----------------------------------------------------------------------------
   rlc_union_t * rlcu_p;
 
@@ -50,7 +51,7 @@ void rb_free_rlc_union (void *rlcu_pP)
 	      break;
     }
   }
-#endif
+
 }
 
 
@@ -68,11 +69,8 @@ void rlc_module_initial( )
  
     pool_buffer_init(); 
 
-
-
-
 }
- 
+#endif  
  
  
 /**************************function******************************/

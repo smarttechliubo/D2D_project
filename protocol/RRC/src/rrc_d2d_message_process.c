@@ -487,7 +487,7 @@ int EncodeD2dCcch(uint8_t      *encode_buffer, uint32_t max_buffersize,
 
 			rrc_connect_setup = calloc(1, sizeof(RRCConnectionSetup_t));
 			
-
+			rrc_connect_setup->radioResourceConfigCommon.pusch_dedi_config.c_rnti= g_rrc_mac_report_rnti; 
 			rrc_connect_setup->radioResourceConfigCommon.pusch_dedi_config.beta_off_ack_ind = 0;
 	    	rrc_connect_setup->mac_config.maxharq_tx = 4;
 	    	rrc_connect_setup->mac_config.max_out_sync	 = 4 ;
@@ -496,21 +496,26 @@ int EncodeD2dCcch(uint8_t      *encode_buffer, uint32_t max_buffersize,
 	    
 	    	srb_addmod = (calloc(1,sizeof(SRB_ToAddMod_t)));
 	    
-	    	  //! step1:srb_add
-	    	(srb_addmod)->srb_Identity = 1; //SRB1
-	    	(srb_addmod)->rlc_config.present = RLC_Config_PR_um_bi_direction; 
-	    	//!尤其注意ASN1C中的定义的枚举，要使用枚举值，而不能自己写int值
+	    	  //! step1:srb_add,srb0 设置为Nothing
+	    	(srb_addmod)->srb_Identity = RB_TYPE_SRB0; //SRB0
+		     /*!modify begin:  by bo.liu, Date: 2019/9/6
+		       modify cause:SRB0 change to TM mode */ 
+	    	(srb_addmod)->rlc_config.present = RLC_Config_PR_NOTHING; 
+	    	
+	    	#if 0
 	    	(srb_addmod)->rlc_config.choice.um_bi_direction.ul_um_rlc.sn_FieldLength = SN_FieldLength_size10;
 	    	(srb_addmod)->rlc_config.choice.um_bi_direction.dl_um_rlc.sn_FieldLength = SN_FieldLength_size10; 
 	    	(srb_addmod)->rlc_config.choice.um_bi_direction.dl_um_rlc.t_Reordering = T_Reordering_ms200; 
-	    
+	       
+	        
 	    	(srb_addmod)->logicChannelConfig.logicch_id = 0; //![0-4]
 	    	(srb_addmod)->logicChannelConfig.priority = 1; //![1-16]
 	    	(srb_addmod)->logicChannelConfig.channel_type = LogicChannelConfig__channel_type_ccch; 
 	    	rrc_connect_setup->srb_ToAddModList = calloc(1,sizeof(SRB_ToAddModList_t)); 
 	    	
 	    	ASN_SEQUENCE_ADD(&(rrc_connect_setup->srb_ToAddModList->list),srb_addmod);
-	    
+	        #endif 
+	        
 	    	//!step2: drb add 
 	    	drb_addmod = calloc(1,sizeof(DRB_ToAddMod_t)); 
 	    	rrc_connect_setup->drb_ToAddModList = calloc(1,sizeof(DRB_ToAddModList_t)); 

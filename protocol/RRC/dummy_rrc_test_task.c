@@ -20,6 +20,7 @@
 #include <log.h>
 #include <rrc_global_def.h>
 #include <CCCH-Message.h> 
+#include <unistd.h>
  
  
  
@@ -28,7 +29,11 @@ void dummy_rrc_confirm_message(uint16_t msg_id)
 {
     MessageDef * message; 
 	phy_rrc_initial_cfm *initial_cfm = calloc(1,sizeof(phy_rrc_initial_cfm)); 
-
+    mac_rrc_connection_cfm *mac_connect_setup_ptr = calloc(1,sizeof(mac_rrc_connection_cfm)); 
+    rlc_rrc_connect_setup_cfg_cfm *rlc_connect_setup_ptr = calloc(1,sizeof(rlc_rrc_connect_setup_cfg_cfm));
+    mac_rrc_bcch_para_config_cfm  *mac_bcch_para_cfm_ptr = calloc(1,sizeof(mac_rrc_bcch_para_config_cfm)) ; 
+    
+    static int mac_bcch_para_cfg_flag = 1; 
 	
 	switch (msg_id)
 	{
@@ -69,7 +74,58 @@ void dummy_rrc_confirm_message(uint16_t msg_id)
 			message = itti_alloc_new_message(TASK_D2D_PHY, PHY_RRC_BCCH_PARA_CFG_CFM, 
 			                      (char *) initial_cfm, sizeof(phy_rrc_initial_cfm)); 
 			itti_send_msg_to_task(TASK_D2D_RRC, 0,  message);
+			break; 
 
+
+ 		}
+ 		case  RLC_RRC_BCCH_PARA_CFG_CFM: 
+ 		{
+			initial_cfm->status = 1; 
+			initial_cfm->error_code =0; 
+			message = itti_alloc_new_message(TASK_D2D_RLC, RLC_RRC_BCCH_PARA_CFG_CFM, 
+			                      (char *) initial_cfm, sizeof(phy_rrc_initial_cfm)); 
+			itti_send_msg_to_task(TASK_D2D_RRC, 0,  message);
+			break; 
+
+
+ 		}
+ 		case MAC_RRC_CONNECT_SETUP_CFG_CFM:
+ 		{
+			mac_connect_setup_ptr->status = 1; 
+			mac_connect_setup_ptr->error_code = 0; 
+			mac_connect_setup_ptr->rnti = 0x65; 
+			mac_connect_setup_ptr->ue_index = 0; 
+
+			message = itti_alloc_new_message(TASK_D2D_MAC, MAC_RRC_CONNECT_SETUP_CFG_CFM, 
+			                      (char *) mac_connect_setup_ptr, sizeof(mac_rrc_connection_cfm)); 
+			itti_send_msg_to_task(TASK_D2D_RRC, 0,  message);
+
+			break; 
+ 		}
+ 		case RLC_RRC_CONNECT_SETUP_CFG_CFM:
+ 		{
+
+			rlc_connect_setup_ptr->status = 1; 
+			rlc_connect_setup_ptr->error_code = 0; 
+
+
+			message = itti_alloc_new_message(TASK_D2D_RLC, RLC_RRC_CONNECT_SETUP_CFG_CFM, 
+			                      (char *) mac_connect_setup_ptr, sizeof(mac_rrc_connection_cfm)); 
+			itti_send_msg_to_task(TASK_D2D_RRC, 0,  message);
+
+			break; 
+ 		}
+ 		case MAC_RRC_BCCH_PARA_CFG_CFM:
+ 		{
+ 			mac_bcch_para_cfm_ptr->status = 1;
+			mac_bcch_para_cfm_ptr->error_code = 0; 
+			mac_bcch_para_cfm_ptr->flag = mac_bcch_para_cfg_flag; 
+			mac_bcch_para_cfg_flag++;
+
+
+			message = itti_alloc_new_message(TASK_D2D_MAC, MAC_RRC_BCCH_PARA_CFG_CFM, 
+			                      (char *) mac_bcch_para_cfm_ptr, sizeof(mac_rrc_bcch_para_config_cfm));
+			itti_send_msg_to_task(TASK_D2D_RRC, 0,  message);
 
  		}
  			
@@ -177,9 +233,18 @@ void dummy_rrc_test(uint32_t rrc_mode)
 
 		dummy_rrc_confirm_message(RLC_RRC_INITIAL_CFM); 
 
+        dummy_rrc_confirm_message(MAC_RRC_BCCH_PARA_CFG_CFM); //!mib schedule cfm 
+ 
+        dummy_rrc_confirm_message(MAC_RRC_BCCH_PARA_CFG_CFM); //!sib1 schedule cfm 
 
 		//! send rrc connect request message to source 
 		dummy_rrc_rpt_message(MAC_RRC_CCCH_RPT,CCCH_MessageType_PR_rrcConnectionrequest); 
+
+
+		dummy_rrc_confirm_message(MAC_RRC_CONNECT_SETUP_CFG_CFM);
+		
+
+		dummy_rrc_confirm_message(RLC_RRC_CONNECT_SETUP_CFG_CFM);
 
 		while (RRC_STATUS_CONNECTED !=  rrc_GetCurrentStatus()) 
 		{
@@ -207,6 +272,8 @@ void dummy_rrc_test(uint32_t rrc_mode)
 
         dummy_rrc_confirm_message(PHY_RRC_BCCH_PARA_CFG_CFM);
 
+
+        dummy_rrc_confirm_message(RLC_RRC_BCCH_PARA_CFG_CFM); //srb 0 established
         while(RRC_STATUS_CONNECT_REQUEST != rrc_GetCurrentStatus())
         {
 			LOG_DEBUG(RRC, "DESTINATION wait for CONNECT SETUP message \n"); 

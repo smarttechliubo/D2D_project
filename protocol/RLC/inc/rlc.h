@@ -103,9 +103,10 @@ typedef struct {
 //-----------------------------------------------------------------------------
 //   PRIVATE INTERNALS OF RLC
 //-----------------------------------------------------------------------------
-
+#if 0
 #define  RLC_MAX_MBMS_LC (LTE_maxSessionPerPMCH * LTE_maxServiceCount)
 #define  RLC_MAX_LC  ((max_val_LTE_DRB_Identity+1)* MAX_MOBILES_PER_ENB)
+#endif
 
 void (*rlc_rrc_data_ind)(
                 const protocol_ctxt_t* const ctxtP,
@@ -193,6 +194,15 @@ typedef struct rlc_union_s {
     (((hash_key_t)(sERVICE_ID)) << 32) | \
     (((hash_key_t)(sESSION_ID)) << 37) | \
     (((hash_key_t)(0x0000000000000001))  << 63))
+
+#if 0
+#define PROTOCOL_CTXT_FMT "[FRAME %05u][%s][MOD %02u][RNTI %" PRIx16 "]"
+#define PROTOCOL_CTXT_ARGS(CTXT_Pp) \
+  (CTXT_Pp)->frame, \
+  ((CTXT_Pp)->enb_flag == ENB_FLAG_YES) ? "eNB":" UE", \
+  (CTXT_Pp)->module_id, \
+  (CTXT_Pp)->rnti
+#endif
 
 hash_table_t  *rlc_coll_p;
 
@@ -646,5 +656,9 @@ int rlc_module_init(void);
 #define RLC_NORMAL_VIDEO              "\e[27m"
 
 #endif
+
+
+/************************************global variable declare ********************/
+extern protocol_ctxt_t    g_rlc_protocol_ctxt;
  
 #endif

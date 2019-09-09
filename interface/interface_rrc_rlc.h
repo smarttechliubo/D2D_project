@@ -29,9 +29,11 @@ typedef  enum
 
 typedef enum
 {/**1:tm_dl,2:tm_ul, 3:tm ul&dl, 3:um_dl,4:um_ul, 5:um_dl&ul **/
+   RLC_MODE_TM, 
    RLC_MODE_TM_DL,      //!0
    RLC_MODE_TM_UL,
    RLC_MODE_TM_DL_AND_UL,
+   RLC_MODE_UM, 
    RLC_MODE_UM_DL, 
    RLC_MODE_UM_UL, 
    RLC_MODE_UM_DL_AND_UL,
@@ -111,6 +113,7 @@ typedef struct rrc_rlc_initial_req_s
 {
 
 	uint32_t   initial_flag; //!initial,rlc initial ,buffer,hash table establish
+	uint32_t   mode; 
 }rrc_rlc_initial_req;
 
 /**RLC_RRC_INITIAL_CFM **/
@@ -134,6 +137,8 @@ typedef  rlc_rrc_initial_cfm   rrc_rlc_release_cfm;
 typedef struct rrc_rlc_buffer_req_s
 {
 	uint32_t request_id; /**record current request id*/
+	rb_type_e  rb_type; 
+	uint32_t   rb_id; 
 	uint32_t send_data_size; /**rrc -> rlc data size */
 }rrc_rlc_buffer_status_req;
 
@@ -159,7 +164,7 @@ typedef struct rrc_rlc_data_ind_s
 /**RRC_RLC_BCCH_PARA_CFG_REQ*/
 typedef struct rrc_rlc_bcch_para_cfg_s
 {
-	rrc_rlc_srb_addmod_req   srb_cfg_req;  /**srb addmod request*/
+	rrc_rlc_srb_addmod_req   srb_cfg_req;  //!srb0 addmod request
 }rrc_rlc_bcch_para_cfg;
 
 typedef rlc_rrc_initial_cfm  rlc_rrc_bcch_para_cfg_cfm;
@@ -169,6 +174,8 @@ typedef rlc_rrc_initial_cfm  rlc_rrc_bcch_para_cfg_cfm;
 typedef struct rrc_rlc_connect_setup_cfg_s
 {
     uint32_t  ue_index; 
+    uint32_t  ue_rnit; 
+    rrc_rlc_srb_addmod_req   srb_cfg_req;  //!srb1 addmod_request
 	rrc_rlc_drb_addmod_req   drb_cfg_req;  /**srb addmod request*/
 }rrc_rlc_connect_setup_cfg;
 

@@ -21,6 +21,7 @@ extern "C" {
 
 /* PdschDedicateConfig */
 typedef struct PdschDedicateConfig {
+	long	 c_rnti;
 	long	 beta_off_ack_ind;
 	
 	/* Context for parsing across buffer boundaries */
@@ -30,7 +31,7 @@ typedef struct PdschDedicateConfig {
 /* Implementation */
 extern asn_TYPE_descriptor_t asn_DEF_PdschDedicateConfig;
 extern asn_SEQUENCE_specifics_t asn_SPC_PdschDedicateConfig_specs_1;
-extern asn_TYPE_member_t asn_MBR_PdschDedicateConfig_1[1];
+extern asn_TYPE_member_t asn_MBR_PdschDedicateConfig_1[2];
 
 #ifdef __cplusplus
 }

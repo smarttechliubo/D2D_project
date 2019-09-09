@@ -80,6 +80,17 @@ typedef struct protocol_ctxt_s {
   boolean_t   configured;  /*!< \brief  flag indicating whether the instance is configured or not  */
 } protocol_ctxt_t;
 
+
+typedef enum config_action_e {
+  CONFIG_ACTION_NULL              = 0,
+  CONFIG_ACTION_ADD               = 1,
+  CONFIG_ACTION_REMOVE            = 2,
+  CONFIG_ACTION_MODIFY            = 3,
+  CONFIG_ACTION_SET_SECURITY_MODE = 4,
+  CONFIG_ACTION_MBMS_ADD          = 10,
+  CONFIG_ACTION_MBMS_MODIFY       = 11
+} config_action_t;
+
  
  
  

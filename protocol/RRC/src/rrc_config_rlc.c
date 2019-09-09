@@ -25,12 +25,13 @@
  * @author:  bo.liu
  * @Date:  2019年8月29日
  */
-void rrc_Rlc_InitialConfig( )
+void rrc_Rlc_InitialConfig(uint32_t        mode )
 {
     MessageDef  *message; 
 	rrc_rlc_initial_req *rlc_req = calloc(1,sizeof(rrc_rlc_initial_req)); 
 
 	rlc_req->initial_flag = 1; 
+	rlc_req->mode = mode;
 
 	//!TODO
 	message = itti_alloc_new_message(TASK_D2D_RRC, RRC_RLC_INITIAL_REQ,
@@ -64,17 +65,19 @@ rb_info rrc_Rlc_Rbinfo_Generate(rb_type_e rb_type, uint8_t rb_id,
 	temp_rb.rlc_mode = rlc_mode; 
 	temp_rb.logicchannel_type = logicch_type; 
 	temp_rb.logicchannel_id = logicch_id; 
-	if ( rlc_mode > 3 ) /**1:tm_dl,2:tm_ul, 3:tm ul&dl, 3:um_dl,4:um_ul, 5:um_dl&ul **/
+	AssertFatal(rlc_mode != RLC_MODE_AM, RRC,"RRC can't support AM mode for this version\n"); 
+	if ( rlc_mode >= RLC_MODE_UM ) /**1:tm_dl,2:tm_ul, 3:tm ul&dl, 3:um_dl,4:um_ul, 5:um_dl&ul **/
 	{
 		temp_rb.rlc_mode_cfg.ul_um_cfg.sn_field = um_sm_field; 
 		temp_rb.rlc_mode_cfg.dl_um_cfg.sn_field = um_sm_field; 
 		temp_rb.rlc_mode_cfg.dl_um_cfg.t_recordering = um_t_recording; 
 	}
-	else 
+	else //!TM 
 	{
-		//!TODO ALARM ,just support um 
+		
 	}
 
+    
 	return temp_rb;
 
 }
@@ -92,11 +95,9 @@ rrc_rlc_srb_addmod_req  rrc_Rlc_Srb_Config(rb_type_e rb_type,uint16_t srb_count,
 		rrc_rlc_srb_addmod_req  srb_info; 
 		uint16_t srb_index = 0; 
 
-
-		if ((rb_type != 1) || (srb_count > MAX_SRB_COUNT))
-		{
-			//! TODO ALARM 
-		}
+		AssertFatal(srb_count <= MAX_SRB_COUNT, RRC, "RRC %d   SRB config error,count exceed the max limit\n",\
+						rrc_GetModeType(), srb_count); 
+		
         	
         srb_info.srb_count = srb_count;
         srb_info.requset_id = 0; //!TODO,maybe useless 
@@ -121,11 +122,34 @@ rrc_rlc_srb_addmod_req  rrc_Rlc_Srb_Config(rb_type_e rb_type,uint16_t srb_count,
  */
 void rrc_Rlc_BcchPara_Config(rrc_rlc_srb_addmod_req *srb_info)
 {
-	rrc_rlc_bcch_para_cfg  bcch_req; 
+	rrc_rlc_bcch_para_cfg  *bcch_req; 
+	MessageDef  *message; 
+    uint32_t rb_index = 0; 
 
-	bcch_req.srb_cfg_req = *srb_info; 
+	bcch_req =  calloc(1,sizeof(rrc_rlc_bcch_para_cfg)); 
 
-	//!TODO
+	bcch_req->srb_cfg_req = *srb_info;
+
+	LOG_DEBUG(RRC, "RRC config RLC SRB info: srb_type = %d,srb_count = %d\n",srb_info->rb_type, srb_info->srb_count); 
+
+	for (rb_index = 0; rb_index < srb_info->srb_count; rb_index++)
+	{
+		LOG_DEBUG(RRC, "RRC MODE:%d, srb index =%d, rb_id = %d, rb_rlc_mode = %d\n", rrc_GetModeType(),
+			rb_index, srb_info->srb_list[rb_index].rb_id, srb_info->srb_list[rb_index].rlc_mode); 
+		if (srb_info->srb_list[rb_index].rlc_mode >= RLC_MODE_UM)
+		{
+			LOG_DEBUG(RRC, "srb index =%d, UM mode para: sn_field = %d, t_recordering = %d\n",
+			rb_index, srb_info->srb_list[rb_index].rlc_mode_cfg.dl_um_cfg.sn_field,
+			srb_info->srb_list[rb_index].rlc_mode_cfg.dl_um_cfg.t_recordering); 
+		}
+	}
+
+	
+	//!TODO send msssage
+	message = itti_alloc_new_message(TASK_D2D_RRC, RRC_RLC_BCCH_PARA_CFG_REQ,
+	                       ( char *)bcch_req, sizeof(rrc_rlc_bcch_para_cfg));
+
+	itti_send_msg_to_task(TASK_D2D_RLC,  0, message);
 }
 
 
@@ -180,7 +204,9 @@ rrc_rlc_drb_addmod_req  rrc_Rlc_Drb_Config(rb_type_e rb_type,uint16_t drb_count,
  * @Date:  2019年8月15日
  * @param: *drb_info :        [param description ]
  */
-void rrc_Rlc_ConnectSetup_Config(uint32_t ue_index ,rrc_rlc_drb_addmod_req *drb_info)
+void rrc_Rlc_ConnectSetup_Config(uint32_t ue_rnti, uint32_t ue_index ,
+										  rrc_rlc_srb_addmod_req * srb_info,
+										  rrc_rlc_drb_addmod_req *drb_info)
 {
 
     MessageDef  *message; 
@@ -188,7 +214,9 @@ void rrc_Rlc_ConnectSetup_Config(uint32_t ue_index ,rrc_rlc_drb_addmod_req *drb_
 
 	
 	connect_setup_req->ue_index = ue_index; 
+	connect_setup_req->ue_rnit = ue_rnti; 
 	memcpy((void *)&connect_setup_req->drb_cfg_req,(void *)drb_info,sizeof(rrc_rlc_drb_addmod_req)); 
+	memcpy((void *)&connect_setup_req->srb_cfg_req,(void *)srb_info,sizeof(rrc_rlc_srb_addmod_req));
 
 	//!TODO send msssage
 	message = itti_alloc_new_message(TASK_D2D_RRC, RRC_RLC_CONNECT_SETUP_CFG_REQ,
@@ -204,13 +232,15 @@ void rrc_Rlc_ConnectSetup_Config(uint32_t ue_index ,rrc_rlc_drb_addmod_req *drb_
  * @Date:  2019年8月28日
  * @param: data_size :        [size of the send message ]
  */
-void rrc_Rlc_DataBuf_Sta_Req(uint32_t data_size)
+void rrc_Rlc_DataBuf_Sta_Req(rb_type_e         rb_type,uint32_t rb_id,uint32_t data_size)
 {
 	MessageDef  *message; 
 
 	rrc_rlc_buffer_status_req    *data_status_req = calloc(1,sizeof(rrc_rlc_buffer_status_req)); 
 
 	data_status_req->request_id = 0; 
+	data_status_req->rb_type = rb_type; 
+	data_status_req->rb_id = rb_id;
 	data_status_req->send_data_size = data_size; 
 
 	//! there should be insert the requset to RRC_RLC_FIFO,  and delete the node when receive the buffer status report
