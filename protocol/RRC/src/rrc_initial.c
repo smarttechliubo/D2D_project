@@ -22,7 +22,7 @@
  * @author:  bo.liu
  * @Date:  2019年8月15日
  */
-void rrc_Initial()
+void rrc_module_Initial()
 {
 	
 	memset((void *)&g_rrc_init_para,0,sizeof(g_rrc_init_para));

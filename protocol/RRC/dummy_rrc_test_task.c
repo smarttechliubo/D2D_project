@@ -22,8 +22,8 @@
 #include <CCCH-Message.h> 
 #include <unistd.h>
  
- 
- 
+
+#define   RLC_MODULE_TEST
 /**************************function******************************/
 void dummy_rrc_confirm_message(uint16_t msg_id)
 {
@@ -126,6 +126,7 @@ void dummy_rrc_confirm_message(uint16_t msg_id)
 			message = itti_alloc_new_message(TASK_D2D_MAC, MAC_RRC_BCCH_PARA_CFG_CFM, 
 			                      (char *) mac_bcch_para_cfm_ptr, sizeof(mac_rrc_bcch_para_config_cfm));
 			itti_send_msg_to_task(TASK_D2D_RRC, 0,  message);
+			break;
 
  		}
  			
@@ -230,9 +231,11 @@ void dummy_rrc_test(uint32_t rrc_mode)
 		dummy_rrc_confirm_message(PHY_RRC_INITIAL_CFM); 
 
 		dummy_rrc_confirm_message(MAC_RRC_INITIAL_CFM); 
-
+		
+#ifndef RLC_MODULE_TEST
 		dummy_rrc_confirm_message(RLC_RRC_INITIAL_CFM); 
-
+#endif 
+		while (RRC_STATUS_INITIAL_CFM != rrc_GetCurrentStatus()) { }
         dummy_rrc_confirm_message(MAC_RRC_BCCH_PARA_CFG_CFM); //!mib schedule cfm 
  
         dummy_rrc_confirm_message(MAC_RRC_BCCH_PARA_CFG_CFM); //!sib1 schedule cfm 
@@ -243,9 +246,10 @@ void dummy_rrc_test(uint32_t rrc_mode)
 
 		dummy_rrc_confirm_message(MAC_RRC_CONNECT_SETUP_CFG_CFM);
 		
+#ifndef RLC_MODULE_TEST
 
 		dummy_rrc_confirm_message(RLC_RRC_CONNECT_SETUP_CFG_CFM);
-
+#endif 
 		while (RRC_STATUS_CONNECTED !=  rrc_GetCurrentStatus()) 
 		{
 			LOG_DEBUG(RRC, "SOURCE wait for connect complete message  \n");

@@ -132,9 +132,9 @@ LOG_W(DRIVER,"queue in no thread mode is %ld\n", t->message_queue.size());
 int itti_receive_msg(task_id_t task_id, MessageDef **received_msg) {
 // Reception of one message, blocking caller
 	task_list_t *t=&tasks[task_id];
-	//LOG_DEBUG(DRIVER,"start to fetch receive lock\n");
+	LOG_DEBUG(DRIVER,"task_id:%d start to fetch receive lock\n",task_id);
 	pthread_mutex_lock(&t->queue_cond_lock);
-		LOG_DEBUG(DRIVER,"fetch receive lock\n");
+	LOG_DEBUG(DRIVER,"task_id:%d fetch receive lock\n",task_id);
 
 #if 0
 	// Weird condition to deal with crap legacy itti interface
@@ -154,18 +154,18 @@ int itti_receive_msg(task_id_t task_id, MessageDef **received_msg) {
 	// in this case, *received_msg is NULL
 	if (0 == t->message_queue.nb_elements) {
 	  *received_msg=NULL;
-	 LOG_ERROR(DRIVER,"there is no message,error\n"); 
-	  return -1; 
+	 	LOG_ERROR(DRIVER,"task_id:%d:there is no message,error\n",task_id);
+	 	pthread_mutex_unlock (&t->queue_cond_lock);//！release the lock 
+	  	return -1; 
 	 
 	} else {
 	//！从队列中获取消息
 	 // *received_msg=t->message_queue.back();
 	 // t->message_queue.pop_back();
 	 //!取最新的消息
-	 LOG_INFO(DRIVER,"task: %d receive new message,message number in queue = %d\n",task_id,t->message_queue.nb_elements);
+	 LOG_DEBUG(DRIVER,"task: %d receive new message,message number in queue = %d\n",task_id,t->message_queue.nb_elements);
 	 *received_msg = message_list_remove_head(&(t->message_queue));
-
-		 
+ 
 	}
 
 	pthread_mutex_unlock (&t->queue_cond_lock);
@@ -196,7 +196,24 @@ int itti_create_task(task_id_t task_id, void *(*start_routine)(void *), void *ar
 	  struct sched_param sparam;
 	  memset(&sparam, 0, sizeof(sparam));
 	  //!设置调度类型为sched_fifo,先入先出，高优先级抢占低优先级
-	  sparam.sched_priority = sched_get_priority_max(SCHED_FIFO)-10;
+	  #if 0
+	  if (task_id == 1)
+	  {
+		sparam.sched_priority = sched_get_priority_max(SCHED_FIFO)-11;
+	  }
+	  else if (task_id == 2)
+	  {
+		sparam.sched_priority = sched_get_priority_max(SCHED_FIFO)-10;
+	  }
+	  else 
+	  {
+		sparam.sched_priority = sched_get_priority_max(SCHED_FIFO)-13;
+	  }
+	  
+	  #else 
+		sparam.sched_priority = sched_get_priority_max(SCHED_FIFO)-10;
+	  #endif 
+	  LOG_INFO(DRIVER,"taskid =%d,priority = %d\n",task_id,sparam.sched_priority );
 	  policy = SCHED_FIFO ; 
 	  //!设置了同一个优先级
 	  if (pthread_setschedparam(t->thread, policy, &sparam) != 0) {

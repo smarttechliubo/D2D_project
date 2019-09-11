@@ -265,6 +265,15 @@ int  rrc_Receive_Signal_Msg(uint16_t mode_type, void *message, MessagesIds  msg_
 
 			if (g_rrc_init_para.phy_initial_cfm & g_rrc_init_para.mac_initial_cfm & g_rrc_init_para.rlc_initial_cfm)
 			{
+				//!TODO using timer interrupt to judge this condition and send this message for future.
+				if (D2D_MODE_TYPE_SOURCE  == rrc_GetModeType() && (RRC_STATUS_INITIAL_CFM == rrc_GetCurrentStatus()))
+				{
+					bcch_mib_info.systemFrameNumber = 0xff; 
+					bcch_mib_info.pdcch_config.rb_start_index = g_rrc_init_para.mib_info.pdcch_rb_start; 
+					bcch_mib_info.pdcch_config.rb_num = g_rrc_init_para.mib_info.pdcch_rb_num; 
+					//!notify MAC to schedule MIB 
+					rrc_Mac_BcchPara_Config(1, &bcch_mib_info);
+				}
 				rrc_SetStatus(RRC_STATUS_INITIAL_CFM);
 			}
 			break; 
@@ -287,17 +296,19 @@ int  rrc_Receive_Signal_Msg(uint16_t mode_type, void *message, MessagesIds  msg_
 
 			if (g_rrc_init_para.phy_initial_cfm & g_rrc_init_para.mac_initial_cfm & g_rrc_init_para.rlc_initial_cfm)
 			{
+				//!TODO using timer interrupt to judge this condition and send this message for future.
+				if (D2D_MODE_TYPE_SOURCE  == rrc_GetModeType() && (RRC_STATUS_INITIAL_CFM == rrc_GetCurrentStatus()))
+				{
+					bcch_mib_info.systemFrameNumber = 0xff; 
+					bcch_mib_info.pdcch_config.rb_start_index = g_rrc_init_para.mib_info.pdcch_rb_start; 
+					bcch_mib_info.pdcch_config.rb_num = g_rrc_init_para.mib_info.pdcch_rb_num; 
+					//!notify MAC to schedule MIB 
+					rrc_Mac_BcchPara_Config(1, &bcch_mib_info);
+				}
 				rrc_SetStatus(RRC_STATUS_INITIAL_CFM);
 			}
 
-			if (D2D_MODE_TYPE_SOURCE  == rrc_GetModeType() && (RRC_STATUS_INITIAL_CFM == rrc_GetCurrentStatus()))
-			{
-				bcch_mib_info.systemFrameNumber = 0xff; 
-				bcch_mib_info.pdcch_config.rb_start_index = g_rrc_init_para.mib_info.pdcch_rb_start; 
-				bcch_mib_info.pdcch_config.rb_num = g_rrc_init_para.mib_info.pdcch_rb_num; 
-				//!notify MAC to schedule MIB 
-				rrc_Mac_BcchPara_Config(1, &bcch_mib_info);
-			}
+			
 			break; 
 		}
 		case RLC_RRC_INITIAL_CFM: 
@@ -318,6 +329,15 @@ int  rrc_Receive_Signal_Msg(uint16_t mode_type, void *message, MessagesIds  msg_
 
 			if (g_rrc_init_para.phy_initial_cfm & g_rrc_init_para.mac_initial_cfm & g_rrc_init_para.rlc_initial_cfm)
 			{
+					//!TODO using timer interrupt to judge this condition and send this message for future.
+				if (D2D_MODE_TYPE_SOURCE  == rrc_GetModeType() && (RRC_STATUS_INITIAL_CFM == rrc_GetCurrentStatus()))
+				{
+					bcch_mib_info.systemFrameNumber = 0xff; 
+					bcch_mib_info.pdcch_config.rb_start_index = g_rrc_init_para.mib_info.pdcch_rb_start; 
+					bcch_mib_info.pdcch_config.rb_num = g_rrc_init_para.mib_info.pdcch_rb_num; 
+					//!notify MAC to schedule MIB 
+					rrc_Mac_BcchPara_Config(1, &bcch_mib_info);
+				}
 				rrc_SetStatus(RRC_STATUS_INITIAL_CFM);
 			}
 			break; 
@@ -394,16 +414,16 @@ int  rrc_Receive_Signal_Msg(uint16_t mode_type, void *message, MessagesIds  msg_
 			if (D2D_MODE_TYPE_DESTINATION  == rrc_GetModeType())
 			{
 
-			 	//!config RLC SRB1 establish 
-			 	temp_rb = rrc_Rlc_Rbinfo_Generate(RB_TYPE_SRB1,1,
+			 	//!DESTINATION config RLC SRB0 establish 
+			 	temp_rb = rrc_Rlc_Rbinfo_Generate(RB_TYPE_SRB0,0,
 					                       LogicChannelConfig__channel_type_ccch,0,
 					                       RLC_MODE_TM ,SN_FieldLength_size10,
 					                       T_Reordering_ms200); 
 
 
-                srb_add =  rrc_Rlc_Srb_Config(RB_TYPE_SRB1,1,&temp_rb); 
+                srb_add =  rrc_Rlc_Srb_Config(RB_TYPE_SRB0,1,&temp_rb); 
 
-                //! send RLC SRB0 establish request
+                //!DESTINATION send RLC SRB0 establish request
 				rrc_Rlc_BcchPara_Config(&srb_add);
 
 				
@@ -473,7 +493,7 @@ int  rrc_Receive_Signal_Msg(uint16_t mode_type, void *message, MessagesIds  msg_
 				                              &encode_buffer_size,
 				                              CCCH_MessageType_PR_rrcConnectionrequest);
 				                              
-				LOG_DEBUG(RRC, "Destination generate RRC Connect Request Message after SRB0 eatablished\n"); 
+				LOG_INFO(RRC, "Destination generate RRC Connect Request Message after SRB0 eatablished\n"); 
 				//!send buffer_status require message to RLC SRB0 
 				rrc_Rlc_DataBuf_Sta_Req(RB_TYPE_SRB0, 0,encode_buffer_size); 
 
@@ -533,7 +553,7 @@ int  rrc_Receive_Signal_Msg(uint16_t mode_type, void *message, MessagesIds  msg_
 			                                      &encode_buffer_size,
 			                                      CCCH_MessageType_PR_rrcConnectionsetup); 
 	            
-	            LOG_DEBUG(RRC, "SOURCE generate RRC connect setup message!\n");
+	            LOG_INFO(RRC, "SOURCE generate RRC connect setup message!\n");
 			    //!send buffer_status require message to RLC  srb1 
 			    rrc_Rlc_DataBuf_Sta_Req(RB_TYPE_SRB1,1, encode_buffer_size); 
 			    
@@ -547,7 +567,7 @@ int  rrc_Receive_Signal_Msg(uint16_t mode_type, void *message, MessagesIds  msg_
 			    //! generate  rrcconnectinocomplete message to send 
 				 EncodeD2dCcch(encode_buffer,256,&encode_buffer_size,   \
 				               CCCH_MessageType_PR_rrcConectioncomplete);
-				 LOG_DEBUG(RRC, "DESTINATION generate RRC Connect Complete message !\n"); 
+				 LOG_INFO(RRC, "DESTINATION generate RRC Connect Complete message !\n"); 
 
 				 //!send buffer_status require message to RLC SRB1
 				 rrc_Rlc_DataBuf_Sta_Req(RB_TYPE_SRB1,1,encode_buffer_size); 
@@ -719,14 +739,13 @@ int  rrc_Receive_Signal_Msg(uint16_t mode_type, void *message, MessagesIds  msg_
 
 
 
-void  rrc_Sche_Task()
+void * rrc_Sche_Task()
 {
 
     MessageDef *recv_msg;
 
     
-	rrc_Initial(); 
-    
+
 
 	if (D2D_MODE_TYPE_SOURCE == rrc_GetModeType())
 	{

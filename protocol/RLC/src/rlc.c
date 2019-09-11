@@ -17,7 +17,7 @@
 #include <rlc.h>
 
 
-#if 0
+
 
 void rb_free_rlc_union (void *rlcu_pP)
 {
@@ -61,7 +61,7 @@ void rlc_module_initial( )
 {
 
 	//!step1:initial HASH TABLE 
-	rlc_coll_p = hashtable_create ((MAX_DRB_COUNT + 2) *D2D_MAX_USER_NUM , NULL, rb_free_rlc_union);
+	rlc_coll_p = hashtable_create ((MAX_SRB_COUNT + MAX_DRB_COUNT + 2) *D2D_MAX_USER_NUM , NULL, rb_free_rlc_union);
 
 	AssertFatal(rlc_coll_p != NULL, RLC, "RLC initial HASH TABLE failed\n"); 
 
@@ -69,8 +69,14 @@ void rlc_module_initial( )
  
     pool_buffer_init(); 
 
+    //!initial  g_rlc_protocol_ctxt as destination 
+    g_rlc_protocol_ctxt.enb_flag = 0; 
+    g_rlc_protocol_ctxt.eNB_index = 0; 
+    g_rlc_protocol_ctxt.module_id = 0; 
+    g_rlc_protocol_ctxt.rnti = 0xffff;  //!initial value ; 
+    g_rlc_protocol_ctxt.configured = FALSE; 
+
 }
-#endif  
  
  
 /**************************function******************************/

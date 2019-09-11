@@ -44,7 +44,8 @@
  * Commenting this define removes the protection,
  * so be careful with it.
  */
-#define MEMBLOCK_BIG_LOCK
+
+#define MEMBLOCK_BIG_LOCK //!TODO  delete the macro 
 
 #ifdef MEMBLOCK_BIG_LOCK
 static pthread_mutex_t mtex = PTHREAD_MUTEX_INITIALIZER;
@@ -63,14 +64,16 @@ uint32_t             counters[14] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
  * initialize all ures
  */
 extern mem_pool  *memBlockVar;
-void           *
-pool_buffer_init (void)
+void  *pool_buffer_init (void)
 {
   //-----------------------------------------------------------------------------
 
   uint32_t             index, mb_index, pool_index;
-  mem_pool       *memory = (mem_pool *) &mem_block_var;
-  memBlockVar=malloc(sizeof(mem_pool));  //！申请一片内存
+  mem_pool       *memory = NULL; 
+
+  memBlockVar=malloc(sizeof(mem_pool));  
+
+  memory  = (mem_pool *) &mem_block_var;
   //！14中块大小
   int             pool_sizes[14] = { MEM_MNGT_MB0_NB_BLOCKS, MEM_MNGT_MB1_NB_BLOCKS,
                                      MEM_MNGT_MB2_NB_BLOCKS, MEM_MNGT_MB3_NB_BLOCKS,
@@ -85,8 +88,8 @@ pool_buffer_init (void)
   if (pthread_mutex_lock(&mtex)) abort();
 #endif
 
-  memset (memory, 0, sizeof (mem_pool));
-  mb_index = 0;
+	memset (memory, 0, sizeof (mem_pool));
+	mb_index = 0;
 
   // LG_TEST
   for (pool_index = 0; pool_index <= MEM_MNGT_POOL_ID_COPY; pool_index++) {
@@ -172,15 +175,13 @@ pool_buffer_init (void)
 }
 
 //-----------------------------------------------------------------------------
-void           *
-pool_buffer_clean (void *arg)
+void   *pool_buffer_clean (void *arg)
 {
   //-----------------------------------------------------------------------------
   return 0;
 }
 //-----------------------------------------------------------------------------
-void
-free_mem_block (mem_block_t * leP, const char* caller)
+void  free_mem_block (mem_block_t * leP, const char* caller)
 {
   //-----------------------------------------------------------------------------
 
@@ -222,8 +223,7 @@ free_mem_block (mem_block_t * leP, const char* caller)
 }
 
 //-----------------------------------------------------------------------------
-mem_block_t      *
-get_free_mem_block (uint32_t sizeP, const char* caller)
+mem_block_t   *get_free_mem_block (uint32_t sizeP, const char* caller)
 {
   //-----------------------------------------------------------------------------
   mem_block_t      *le = NULL;
@@ -241,7 +241,7 @@ get_free_mem_block (uint32_t sizeP, const char* caller)
   if (pthread_mutex_lock(&mtex)) abort();
 #endif
 
-  size = sizeP >> 6;  //！这里的sizeP的单位是什么？ bit? byte? 
+  size = sizeP >> 6;  //！memory's minimal size = 64byte
   pool_selected = 0;
 
   while ((size)) {
@@ -267,6 +267,7 @@ get_free_mem_block (uint32_t sizeP, const char* caller)
       LOG_DEBUG (RLC,"[MEM_MNGT][INFO] ALLOC MEM_BLOCK SIZE %d bytes pool %d (%p)\n", sizeP, pool_selected,le);
 #endif
 
+      LOG_DEBUG(DRIVER, "%s: size= %d,pool_id =%d,le->poolid = %d\n", __func__,sizeP,pool_selected,le->pool_id);
       AssertFatal(le->pool_id == pool_selected,DRIVER, "Unexpected pool ID!");
 
 #ifdef MEMBLOCK_BIG_LOCK

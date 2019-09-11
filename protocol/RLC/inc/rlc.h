@@ -12,15 +12,17 @@
 #ifndef     RLC_H
 #define     RLC_H
  
-
+#include <inttypes.h>
+#include <stdint.h>
 #include "typedef.h"
 #include <rlc_type.h>
-#include "hashtable.h"
+#include <hashtable.h>
 #include <log.h>
 #include <interface_rrc_rlc.h>
 #include <rlc_tm_init.h>
 #include <rlc_um_control_primitives.h>
 #include <rlc_um_entity.h>
+#include <rlc_um.h>
 #include <rlc_tm_entity.h>
 
 
@@ -30,9 +32,8 @@
 
 
 
+//#define  AM_ENABLE   1
 
-typedef uint64_t hash_key_t;
-#define HASHTABLE_NOT_A_KEY_VALUE ((uint64_t)-1)
 
 //-----------------------------------------------------------------------------
 #define  RLC_OP_STATUS_OK                1
@@ -44,12 +45,13 @@ typedef uint64_t hash_key_t;
 
 #define  RLC_RB_UNALLOCATED    (rb_id_t)0
 #define  RLC_LC_UNALLOCATED    (logical_chan_id_t)0
-
-//-----------------------------------------------------------------------------
-//   PUBLIC RLC CONSTANTS
-//-----------------------------------------------------------------------------
-
-
+//! 采用字符串串接的方式组成printf的格式符 
+#define PROTOCOL_CTXT_FMT        "[FRAME %05u][%s][MOD %02u][RNTI %d]"   //!# define PRIx64  __PRI64_PREFIX "x"
+#define PROTOCOL_CTXT_ARGS(CTXT_Pp) \
+  (CTXT_Pp)->frame, \
+  ((CTXT_Pp)->enb_flag == ENB_FLAG_YES) ? "eNB":" UE", \
+  (CTXT_Pp)->module_id, \
+  (CTXT_Pp)->rnti 
 
 
 typedef enum rlc_confirm_e {
@@ -195,14 +197,6 @@ typedef struct rlc_union_s {
     (((hash_key_t)(sESSION_ID)) << 37) | \
     (((hash_key_t)(0x0000000000000001))  << 63))
 
-#if 0
-#define PROTOCOL_CTXT_FMT "[FRAME %05u][%s][MOD %02u][RNTI %" PRIx16 "]"
-#define PROTOCOL_CTXT_ARGS(CTXT_Pp) \
-  (CTXT_Pp)->frame, \
-  ((CTXT_Pp)->enb_flag == ENB_FLAG_YES) ? "eNB":" UE", \
-  (CTXT_Pp)->module_id, \
-  (CTXT_Pp)->rnti
-#endif
 
 hash_table_t  *rlc_coll_p;
 
@@ -660,5 +654,9 @@ int rlc_module_init(void);
 
 /************************************global variable declare ********************/
 extern protocol_ctxt_t    g_rlc_protocol_ctxt;
- 
+extern const uint32_t t_Reordering_tab[31] ;
+
+
+/************************************function declaration*************************/
+extern void *rlc_rrc_config_task( );
 #endif

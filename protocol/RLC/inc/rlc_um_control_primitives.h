@@ -78,28 +78,7 @@ void rlc_um_reset_state_variables (
 void rlc_um_cleanup(
                                       rlc_um_entity_t * const rlc_pP);
 
-/*! \fn void rlc_um_configure(
- *     const protocol_ctxt_t* const ctxt_pP,
- *     rlc_um_entity_t * const rlc_pP,
- *     const uint32_t timer_reorderingP,
- *     const uint32_t rx_sn_field_lengthP,
- *     const uint32_t tx_sn_field_lengthP,
- *     const uint32_t is_mXchP)
-* \brief    Configure RLC UM protocol parameters.
-* \param[in]  ctxtP                     Running context.
-* \param[in]  rlc_pP                    RLC UM protocol instance pointer.
-* \param[in]  timer_reorderingP         t-Reordering timer initialization value, units in frameP.
-* \param[in]  rx_sn_field_lengthP       Length of the sequence number, 5 or 10 bits in reception.
-* \param[in]  tx_sn_field_lengthP       Length of the sequence number, 5 or 10 bits in transmission.
-* \param[in]  is_mXchP                  Is the radio bearer for MCCH, MTCH.
-*/
-void rlc_um_configure(
-                                      const protocol_ctxt_t* const ctxt_pP,
-                                      rlc_um_entity_t *const  rlc_pP,
-                                      const uint32_t timer_reorderingP,
-                                      const uint32_t rx_sn_field_lengthP,
-                                      const uint32_t tx_sn_field_lengthP,
-                                      const uint32_t is_mXchP);
+
 
 /*! \fn void rlc_um_set_debug_infos(
 *     const protocol_ctxt_t* const ctxt_pP,

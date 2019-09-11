@@ -14,12 +14,12 @@
 #include <rlc_type.h>
 #include <interface_rrc_rlc.h>
 #include <interface_mac_rlc.h>
-
+#include <intertask_interface.h>
 
 
 void rlc_Rrc_Configure_Cfm(uint32_t        message_id)
 {
-#if 0
+
     MessageDef  *message; 
 	rlc_rrc_initial_cfm *rlc_cfm = calloc(1,sizeof(rlc_rrc_initial_cfm)); 
 
@@ -27,11 +27,10 @@ void rlc_Rrc_Configure_Cfm(uint32_t        message_id)
 	rlc_cfm->status = 1; //！pass
 
 	//!TODO
-	message = itti_alloc_new_message(TASK_D2D_RLC message_id,
-	                       ( char *)rlc_cfm, sizeof(rrc_rlc_initial_req));
+	message = itti_alloc_new_message(TASK_D2D_RLC, message_id,
+	                       ( char *)rlc_cfm, sizeof(rlc_rrc_initial_cfm ));
 
 	itti_send_msg_to_task(TASK_D2D_RRC,0, message);
-#endif
 
 }
 

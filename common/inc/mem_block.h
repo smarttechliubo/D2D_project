@@ -29,7 +29,7 @@
 
  ***************************************************************************/
 #ifndef __MEM_BLOCK_H__
-#    define __MEM_BLOCK_H__
+#define __MEM_BLOCK_H__
 
 #include <stdint.h>
 #include <stddef.h>
@@ -61,82 +61,82 @@ void         display_mem_load (void);
 
 void         check_mem_area (void);
 void        check_free_mem_block (mem_block_t * leP);
-#    define MEM_SCALE D2D_MAX_USER_NUM
+#define MEM_SCALE D2D_MAX_USER_NUM
 // definition of the size of the allocated memory area
-#    define MEM_MNGT_MB0_BLOCK_SIZE     64
+#define MEM_MNGT_MB0_BLOCK_SIZE     64
 // 64
-#    define MEM_MNGT_MB0_NB_BLOCKS      4096 * MEM_SCALE
-#    define MEM_MNGT_POOL_ID0           0
+#define MEM_MNGT_MB0_NB_BLOCKS      4096 * MEM_SCALE
+#define MEM_MNGT_POOL_ID0           0
 
-#    define MEM_MNGT_MB1_BLOCK_SIZE     MEM_MNGT_MB0_BLOCK_SIZE*2
+#define MEM_MNGT_MB1_BLOCK_SIZE     MEM_MNGT_MB0_BLOCK_SIZE*2
 // 128
-#    define MEM_MNGT_MB1_NB_BLOCKS      4096 * MEM_SCALE
-#    define MEM_MNGT_POOL_ID1           1
+#define MEM_MNGT_MB1_NB_BLOCKS      4096 * MEM_SCALE
+#define MEM_MNGT_POOL_ID1           1
 
-#    define MEM_MNGT_MB2_BLOCK_SIZE     MEM_MNGT_MB0_BLOCK_SIZE*4
+#define MEM_MNGT_MB2_BLOCK_SIZE     MEM_MNGT_MB0_BLOCK_SIZE*4
 // 256
-#    define MEM_MNGT_MB2_NB_BLOCKS      2048 * MEM_SCALE
-#    define MEM_MNGT_POOL_ID2           2
+#define MEM_MNGT_MB2_NB_BLOCKS      2048 * MEM_SCALE
+#define MEM_MNGT_POOL_ID2           2
 
-#    define MEM_MNGT_MB3_BLOCK_SIZE     MEM_MNGT_MB0_BLOCK_SIZE*8
+#define MEM_MNGT_MB3_BLOCK_SIZE     MEM_MNGT_MB0_BLOCK_SIZE*8
 // 512
-#    define MEM_MNGT_MB3_NB_BLOCKS      2048 * MEM_SCALE
-#    define MEM_MNGT_POOL_ID3           3
+#define MEM_MNGT_MB3_NB_BLOCKS      2048 * MEM_SCALE
+#define MEM_MNGT_POOL_ID3           3
 
-#    define MEM_MNGT_MB4_BLOCK_SIZE     MEM_MNGT_MB0_BLOCK_SIZE*16
+#define MEM_MNGT_MB4_BLOCK_SIZE     MEM_MNGT_MB0_BLOCK_SIZE*16
 // 1024
-#    define MEM_MNGT_MB4_NB_BLOCKS      1024 * MEM_SCALE
-#    define MEM_MNGT_POOL_ID4           4
+#define MEM_MNGT_MB4_NB_BLOCKS      1024 * MEM_SCALE
+#define MEM_MNGT_POOL_ID4           4
 
-#    define MEM_MNGT_MB5_BLOCK_SIZE     MEM_MNGT_MB0_BLOCK_SIZE*32
+#define MEM_MNGT_MB5_BLOCK_SIZE     MEM_MNGT_MB0_BLOCK_SIZE*32
 // 2048
-#    define MEM_MNGT_MB5_NB_BLOCKS      1024 * MEM_SCALE // LG WAS 1024
-#    define MEM_MNGT_POOL_ID5           5
+#define MEM_MNGT_MB5_NB_BLOCKS      1024 * MEM_SCALE // LG WAS 1024
+#define MEM_MNGT_POOL_ID5           5
 
-#    define MEM_MNGT_MB6_BLOCK_SIZE     MEM_MNGT_MB0_BLOCK_SIZE*64
+#define MEM_MNGT_MB6_BLOCK_SIZE     MEM_MNGT_MB0_BLOCK_SIZE*64
 // 4096
-#    define MEM_MNGT_MB6_NB_BLOCKS      1024 * MEM_SCALE  // LG WAS 256
-#    define MEM_MNGT_POOL_ID6           6
+#define MEM_MNGT_MB6_NB_BLOCKS      1024 * MEM_SCALE  // LG WAS 256
+#define MEM_MNGT_POOL_ID6           6
 
-#    define MEM_MNGT_MB7_BLOCK_SIZE     MEM_MNGT_MB0_BLOCK_SIZE*128
+#define MEM_MNGT_MB7_BLOCK_SIZE     MEM_MNGT_MB0_BLOCK_SIZE*128
 // 8192
-#    define MEM_MNGT_MB7_NB_BLOCKS      64* MEM_SCALE   // LG WAS 32
-#    define MEM_MNGT_POOL_ID7           7
+#define MEM_MNGT_MB7_NB_BLOCKS      64* MEM_SCALE   // LG WAS 32
+#define MEM_MNGT_POOL_ID7           7
 
-#    define MEM_MNGT_MB8_BLOCK_SIZE     MEM_MNGT_MB0_BLOCK_SIZE*256
+#define MEM_MNGT_MB8_BLOCK_SIZE     MEM_MNGT_MB0_BLOCK_SIZE*256
 
 #ifdef JUMBO_FRAMES
-#    define MEM_MNGT_MB8_NB_BLOCKS      256 * MEM_SCALE
+#define MEM_MNGT_MB8_NB_BLOCKS      256 * MEM_SCALE
 #else
-#    define MEM_MNGT_MB8_NB_BLOCKS      16 * MEM_SCALE
+#define MEM_MNGT_MB8_NB_BLOCKS      16 * MEM_SCALE
 // 16384
 #endif
-#    define MEM_MNGT_POOL_ID8           8
+#define MEM_MNGT_POOL_ID8           8
 
-#    define MEM_MNGT_MB9_BLOCK_SIZE     MEM_MNGT_MB0_BLOCK_SIZE*512
+#define MEM_MNGT_MB9_BLOCK_SIZE     MEM_MNGT_MB0_BLOCK_SIZE*512
 // 32768
-#    define MEM_MNGT_MB9_NB_BLOCKS      8 * MEM_SCALE
-#    define MEM_MNGT_POOL_ID9           9
+#define MEM_MNGT_MB9_NB_BLOCKS      8 * MEM_SCALE
+#define MEM_MNGT_POOL_ID9           9
 
-#    define MEM_MNGT_MB10_BLOCK_SIZE    MEM_MNGT_MB0_BLOCK_SIZE*1024
+#define MEM_MNGT_MB10_BLOCK_SIZE    MEM_MNGT_MB0_BLOCK_SIZE*1024
 // 65536
-#    define MEM_MNGT_MB10_NB_BLOCKS     0 * MEM_SCALE
-#    define MEM_MNGT_POOL_ID10          10
+#define MEM_MNGT_MB10_NB_BLOCKS     0 * MEM_SCALE
+#define MEM_MNGT_POOL_ID10          10
 
-#    define MEM_MNGT_MB11_BLOCK_SIZE    MEM_MNGT_MB0_BLOCK_SIZE*2048
+#define MEM_MNGT_MB11_BLOCK_SIZE    MEM_MNGT_MB0_BLOCK_SIZE*2048
 // 131072
-#    define MEM_MNGT_MB11_NB_BLOCKS     0 * MEM_SCALE
-#    define MEM_MNGT_POOL_ID11          11
+#define MEM_MNGT_MB11_NB_BLOCKS     0 * MEM_SCALE
+#define MEM_MNGT_POOL_ID11          11
 
-#    define MEM_MNGT_MB12_BLOCK_SIZE    MEM_MNGT_MB0_BLOCK_SIZE*4096
+#define MEM_MNGT_MB12_BLOCK_SIZE    MEM_MNGT_MB0_BLOCK_SIZE*4096
 // 262144
-#    define MEM_MNGT_MB12_NB_BLOCKS     32 * MEM_SCALE
-#    define MEM_MNGT_POOL_ID12          12
+#define MEM_MNGT_MB12_NB_BLOCKS     32 * MEM_SCALE
+#define MEM_MNGT_POOL_ID12          12
 
 
-#    define MEM_MNGT_MBCOPY_NB_BLOCKS   1024
-#    define MEM_MNGT_NB_ELEMENTS        MEM_MNGT_MB0_NB_BLOCKS + MEM_MNGT_MB1_NB_BLOCKS + MEM_MNGT_MB2_NB_BLOCKS + MEM_MNGT_MB3_NB_BLOCKS + MEM_MNGT_MB4_NB_BLOCKS + MEM_MNGT_MB5_NB_BLOCKS + MEM_MNGT_MB6_NB_BLOCKS + MEM_MNGT_MB7_NB_BLOCKS + MEM_MNGT_MB8_NB_BLOCKS + MEM_MNGT_MB9_NB_BLOCKS + MEM_MNGT_MB10_NB_BLOCKS + MEM_MNGT_MB11_NB_BLOCKS + MEM_MNGT_MB12_NB_BLOCKS + MEM_MNGT_MBCOPY_NB_BLOCKS
-#    define MEM_MNGT_POOL_ID_COPY        13
+#define MEM_MNGT_MBCOPY_NB_BLOCKS   1024
+#define MEM_MNGT_NB_ELEMENTS        MEM_MNGT_MB0_NB_BLOCKS + MEM_MNGT_MB1_NB_BLOCKS + MEM_MNGT_MB2_NB_BLOCKS + MEM_MNGT_MB3_NB_BLOCKS + MEM_MNGT_MB4_NB_BLOCKS + MEM_MNGT_MB5_NB_BLOCKS + MEM_MNGT_MB6_NB_BLOCKS + MEM_MNGT_MB7_NB_BLOCKS + MEM_MNGT_MB8_NB_BLOCKS + MEM_MNGT_MB9_NB_BLOCKS + MEM_MNGT_MB10_NB_BLOCKS + MEM_MNGT_MB11_NB_BLOCKS + MEM_MNGT_MB12_NB_BLOCKS + MEM_MNGT_MBCOPY_NB_BLOCKS
+#define MEM_MNGT_POOL_ID_COPY        13
 
 #define LIST_NAME_MAX_CHAR 32
 
@@ -183,7 +183,7 @@ typedef struct {
 
 } mem_pool;
 
-mem_pool  *memBlockVar;
+mem_pool  *memBlockVar ;
 #define mem_block_var (*memBlockVar)
 
 #ifdef __cplusplus
