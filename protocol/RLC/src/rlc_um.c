@@ -50,7 +50,9 @@ void rlc_um_cleanup ( rlc_um_entity_t * const rlc_pP)
 
 
 void  rlc_um_init (const protocol_ctxt_t* const ctxt_pP,
-  				rlc_um_entity_t * const rlc_pP )
+  				rlc_um_entity_t * const rlc_pP,
+  				 const srb_flag_t  srb_flagP,
+  				const rb_id_t rb_idP)
 {
 
   //AssertFatal(rlc_pP, "Bad RLC UM pointer (NULL)");
@@ -59,12 +61,12 @@ void  rlc_um_init (const protocol_ctxt_t* const ctxt_pP,
     return;
   }
 
+
+
   if (rlc_pP->initialized) {
     LOG_DEBUG(RLC,PROTOCOL_RLC_UM_CTXT_FMT" [INIT] ALREADY DONE, DOING NOTHING\n",
           PROTOCOL_RLC_UM_CTXT_ARGS(ctxt_pP,rlc_pP));
   } else {
-    LOG_DEBUG(RLC, PROTOCOL_RLC_UM_CTXT_FMT" [INIT] STATE VARIABLES, BUFFERS, LISTS\n",
-          PROTOCOL_RLC_UM_CTXT_ARGS(ctxt_pP,rlc_pP));
     memset (rlc_pP, 0, sizeof (rlc_um_entity_t));  //实体全部清0 
     // TX SIDE
     list_init (&rlc_pP->pdus_to_mac_layer, NULL); //!<pdus_to_mac_layer 头尾指针都清0 
@@ -74,6 +76,17 @@ void  rlc_um_init (const protocol_ctxt_t* const ctxt_pP,
     rlc_pP->protocol_state = RLC_NULL_STATE;
 
     //rlc_pP->vt_us = 0;
+
+	if (srb_flagP)
+	{
+		rlc_pP->is_data_plane = 0;
+	}
+	else
+	{
+		rlc_pP->is_data_plane = 1;
+	}
+
+	rlc_pP->rb_id = rb_idP;
 
     // RX SIDE
     list_init (&rlc_pP->pdus_from_mac_layer, NULL); //！pdus_from_mac_layer链表清0
@@ -97,6 +110,9 @@ void  rlc_um_init (const protocol_ctxt_t* const ctxt_pP,
 
     rlc_pP->first_pdu = 1;
     rlc_pP->initialized = TRUE;
+
+    LOG_DEBUG(RLC, PROTOCOL_RLC_UM_CTXT_FMT" [INIT DONE!] STATE VARIABLES, BUFFERS, LISTS\n",
+            PROTOCOL_RLC_UM_CTXT_ARGS(ctxt_pP,rlc_pP));
   }
 }
 
@@ -215,19 +231,13 @@ void  rlc_um_reset_state_variables (
 
 void rlc_um_configure(
 							const protocol_ctxt_t* const ctxt_pP,
-							const srb_flag_t      srb_flagP,
 							rlc_um_entity_t * const rlc_pP,
 							const uint32_t		   timer_reorderingP,
 							const uint32_t		   rx_sn_field_lengthP,
 							const uint32_t		   tx_sn_field_lengthP,
 							const uint32_t		   is_mXchP)
 {
-	if (srb_flagP) {
-	 rlc_pP->is_data_plane = 0;
-	} else {
-	 rlc_pP->is_data_plane = 1;
-	}
-
+	
 	if (rx_sn_field_lengthP == 10) {
 	  rlc_pP->rx_sn_length					= 10;
 	  rlc_pP->rx_sn_modulo					= RLC_UM_SN_10_BITS_MODULO;
@@ -306,25 +316,31 @@ void config_req_rlc_um (
 
   if (h_rc == HASH_TABLE_OK) {
     rlc_p = &rlc_union_p->rlc.um;
-    LOG_DEBUG(RLC, PROTOCOL_RLC_UM_CTXT_FMT" CONFIG_REQ timer_reordering=%d sn_field_length=%d is_mXch=%d RB %u\n",
-          PROTOCOL_RLC_UM_CTXT_ARGS(ctxt_pP,rlc_p),
-          config_um_pP->timer_reordering,
-          config_um_pP->sn_field_length,
-          config_um_pP->is_mXch,
-          rb_idP);
 
-    rlc_um_init(ctxt_pP, rlc_p); //！初始化
+    rlc_um_init(ctxt_pP, rlc_p,srb_flagP,rb_idP); //！初始化
+
+    
+   
  
     if (rlc_um_fsm_notify_event (ctxt_pP, rlc_p, RLC_UM_RECEIVE_CRLC_CONFIG_REQ_ENTER_DATA_TRANSFER_READY_STATE_EVENT)) {
       
       rlc_um_configure(
         ctxt_pP,
-        srb_flagP,
         rlc_p,
         config_um_pP->timer_reordering,
         config_um_pP->sn_field_length,
         config_um_pP->sn_field_length,
         config_um_pP->is_mXch);
+
+       LOG_DEBUG(RLC, PROTOCOL_RLC_UM_CTXT_FMT" CONFIG_REQ timer_reordering=%d \
+       rx_sn_field_length=%d,tx_sn_field_length=%d,\
+       is_mXch=%d RB %u\n",
+          PROTOCOL_RLC_UM_CTXT_ARGS(ctxt_pP,rlc_p),
+          rlc_p->t_reordering.ms_duration,
+          rlc_p->rx_sn_length,
+          rlc_p->tx_sn_length,
+          rlc_p->is_mxch,
+          rlc_p->rb_id);
     }
   } else {
     LOG_ERROR(RLC, PROTOCOL_RLC_UM_CTXT_FMT"  CONFIG_REQ RB %u  RLC UM NOT FOUND\n",

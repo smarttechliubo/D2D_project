@@ -93,7 +93,7 @@ void dummy_rrc_confirm_message(uint16_t msg_id)
  		{
 			mac_connect_setup_ptr->status = 1; 
 			mac_connect_setup_ptr->error_code = 0; 
-			mac_connect_setup_ptr->rnti = 0x65; 
+			mac_connect_setup_ptr->rnti = 0x65; //!rnti from MAC 
 			mac_connect_setup_ptr->ue_index = 0; 
 
 			message = itti_alloc_new_message(TASK_D2D_MAC, MAC_RRC_CONNECT_SETUP_CFG_CFM, 

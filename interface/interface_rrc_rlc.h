@@ -32,11 +32,9 @@ typedef enum
    RLC_MODE_TM, 
    RLC_MODE_TM_DL,      //!0
    RLC_MODE_TM_UL,
-   RLC_MODE_TM_DL_AND_UL,
    RLC_MODE_UM, 
    RLC_MODE_UM_DL, 
    RLC_MODE_UM_UL, 
-   RLC_MODE_UM_DL_AND_UL,
    RLC_MODE_AM
 }rlc_mode_e; 
 

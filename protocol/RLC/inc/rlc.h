@@ -31,8 +31,8 @@
 
 
 
-
 //#define  AM_ENABLE   1
+
 
 
 //-----------------------------------------------------------------------------
@@ -655,6 +655,7 @@ int rlc_module_init(void);
 /************************************global variable declare ********************/
 extern protocol_ctxt_t    g_rlc_protocol_ctxt;
 extern const uint32_t t_Reordering_tab[31] ;
+extern char *g_rlc_mode_str[];
 
 
 /************************************function declaration*************************/

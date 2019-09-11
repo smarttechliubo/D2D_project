@@ -141,10 +141,12 @@ rlc_union_t *rrc_rlc_add_rlc   (const protocol_ctxt_t* const ctxt_pP,
 
 		if ((h_rc == HASH_TABLE_OK) && (h_lcid_rc == HASH_TABLE_OK)) {  //!<如果插入成功
 		  //!<打印log
-			LOG_INFO(RLC, PROTOCOL_CTXT_FMT"[%s %u] rrc_rlc_add_rlc\n",
+			LOG_INFO(RLC, PROTOCOL_CTXT_FMT"[%s %u] rrc_rlc_add_rlc:key =%lld,lc_key=%lld, insert rlc entity\n",
 			      PROTOCOL_CTXT_ARGS(ctxt_pP),
 			      (srb_flagP) ? "SRB" : "DRB",
-			      rb_idP);
+			      rb_idP,
+			      key,
+			      key_lcid);
 
 		      rlc_union_p->mode = rlc_modeP; 	//!<更新mode,
 		      return rlc_union_p;
@@ -188,6 +190,10 @@ rlc_op_status_t rrc_rlc_config_req	 (
 		case CONFIG_ACTION_ADD:
 		{
 			
+			LOG_INFO(RLC, PROTOCOL_CTXT_FMT"[RB %u] ADD RLC MODE: %s\n",
+						   PROTOCOL_CTXT_ARGS(ctxt_pP),
+						   rb_idP,
+						   g_rlc_mode_str[ rlc_infoP.rlc_mode]);
 			rrc_rlc_add_rlc(ctxt_pP, srb_flagP, MBMS_FLAG_NO, rb_idP, logic_ch_id , rlc_infoP.rlc_mode); 
 			break; 
 		}
@@ -208,7 +214,6 @@ rlc_op_status_t rrc_rlc_config_req	 (
 				rb_idP, rb_idP);
 			  break;
    #endif 
-	   
 			case RLC_MODE_UM:
 			  LOG_INFO(RLC, PROTOCOL_CTXT_FMT"[RB %u] MODIFY RB UM\n",
 					PROTOCOL_CTXT_ARGS(ctxt_pP),
@@ -332,8 +337,8 @@ void  rlc_rrc_config_process(void *message, MessagesIds         msg_type)
 									logic_ch_id,
 									temp_rlc_info); 
 			     LOG_INFO(RLC,"RRC_RLC_BCCH_PARA_CFG_REQ: SRB add and modify, rb_indx = %d,rb_id = %d, lc_id = %d,\
-			     			rlc_mode = %d\n", \
-			     			rb_index,rb_id,logic_ch_id,temp_rlc_info.rlc_mode); 
+			     			rlc_mode = %s\n", \
+			     			rb_index,rb_id,logic_ch_id,g_rlc_mode_str[temp_rlc_info.rlc_mode]); 
 			}
 
             //! response to rrc 
@@ -344,8 +349,9 @@ void  rlc_rrc_config_process(void *message, MessagesIds         msg_type)
 		case RRC_RLC_CONNECT_SETUP_CFG_REQ: 
 		{
 			connect_req = (rrc_rlc_connect_setup_cfg *)message; 
-
-			
+ 
+			 //! update ue's rnti 
+			g_rlc_protocol_ctxt.rnti = connect_req->ue_rnit; 
 			for (rb_index = 0; rb_index < connect_req->srb_cfg_req.srb_count; rb_index++)
 			{
 				
@@ -372,8 +378,8 @@ void  rlc_rrc_config_process(void *message, MessagesIds         msg_type)
 									logic_ch_id,
 									temp_rlc_info); 
 				LOG_INFO(RLC,"RRC_RLC_CONNECT_SETUP_CFG_REQ :SRB add and modify, rb_indx = %d,rb_id = %d, lc_id = %d,\
-							rlc_mode = %d\n",  \
-			     			rb_index,rb_id,logic_ch_id,temp_rlc_info.rlc_mode); 					
+							rlc_mode = %s\n",  \
+			     			rb_index,rb_id,logic_ch_id,g_rlc_mode_str[temp_rlc_info.rlc_mode]); 					
 			}
 
 			
@@ -388,7 +394,7 @@ void  rlc_rrc_config_process(void *message, MessagesIds         msg_type)
 				}
 				else 
 				{
-					AssertFatal(temp_rlc_info.rlc_mode == RLC_MODE_UM_DL_AND_UL, RLC, "RRC_RLC_CONNECT_SETUP_CFG_REQ \
+					AssertFatal(temp_rlc_info.rlc_mode == RLC_MODE_UM, RLC, "RRC_RLC_CONNECT_SETUP_CFG_REQ \
 					mesasge with error rlc mode \n "); 
 					temp_rlc_info.rlc.rlc_um_info.is_uplink_downlink = 1; 
 					temp_rlc_info.rlc.rlc_um_info.is_mXch = 0; 
@@ -429,8 +435,8 @@ void  rlc_rrc_config_process(void *message, MessagesIds         msg_type)
 									temp_rlc_info); 
 
 				LOG_INFO(RLC,"RRC_RLC_CONNECT_SETUP_CFG_REQ :DRB add and modify, rb_indx = %d,rb_id = %d, lc_id = %d,\
-							rlc_mode = %d\n",  \
-			     			rb_index,rb_id,logic_ch_id,temp_rlc_info.rlc_mode); 					
+							rlc_mode = %s\n",  \
+			     			rb_index,rb_id,logic_ch_id,g_rlc_mode_str[temp_rlc_info.rlc_mode]); 					
 			}
 			rlc_Rrc_Configure_Cfm(RLC_RRC_CONNECT_SETUP_CFG_CFM); 	
 			break; 

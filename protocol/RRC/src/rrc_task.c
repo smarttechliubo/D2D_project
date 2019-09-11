@@ -82,7 +82,7 @@
 
             }
 			else if (RLC_Config_PR_um_bi_direction == srb_addmod_ptr->rlc_config.present)  {
-				srb_add->srb_list[rb_cnt].rlc_mode = RLC_MODE_UM_DL_AND_UL; 
+				srb_add->srb_list[rb_cnt].rlc_mode = RLC_MODE_UM; 
 				srb_add->srb_list[rb_cnt].rlc_mode_cfg.ul_um_cfg.sn_field =  \
 					srb_addmod_ptr->rlc_config.choice.um_bi_direction.ul_um_rlc.sn_FieldLength; //! 1:SN = 10
 
@@ -137,7 +137,7 @@
 
             if (RLC_Config_PR_um_bi_direction == drb_addmod_ptr->rlc_config.present) {
 
-				drb_add->drb_list[rb_cnt].rlc_mode = RLC_MODE_UM_DL_AND_UL; 
+				drb_add->drb_list[rb_cnt].rlc_mode = RLC_MODE_UM; 
 				drb_add->drb_list[rb_cnt].rlc_mode_cfg.dl_um_cfg.sn_field = \
 					drb_addmod_ptr->rlc_config.choice.um_bi_direction.dl_um_rlc.sn_FieldLength;
 					
@@ -523,7 +523,7 @@ int  rrc_Receive_Signal_Msg(uint16_t mode_type, void *message, MessagesIds  msg_
 		 	   //！RRC source generate DRB to RLC    
 				temp_rb = rrc_Rlc_Rbinfo_Generate(RB_TYPE_DRB,3,
 										 LogicChannelConfig__channel_type_dtch,1,
-										 RLC_MODE_UM_DL_AND_UL,SN_FieldLength_size10,
+										 RLC_MODE_UM,SN_FieldLength_size10,
 										  T_Reordering_ms200); 
 	            
 	            drb_add = rrc_Rlc_Drb_Config(RB_TYPE_DRB,1,&temp_rb);
