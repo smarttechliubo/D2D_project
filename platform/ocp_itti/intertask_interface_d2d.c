@@ -154,7 +154,8 @@ int itti_receive_msg(task_id_t task_id, MessageDef **received_msg) {
 	// in this case, *received_msg is NULL
 	if (0 == t->message_queue.nb_elements) {
 	  *received_msg=NULL;
-	 LOG_ERROR(DRIVER,"there is no message,error\n"); 
+		 LOG_ERROR(DRIVER,"there is no message,error\n"); 
+		 pthread_mutex_unlock (&t->queue_cond_lock); //!release the lock 
 	  return -1; 
 	 
 	} else {
