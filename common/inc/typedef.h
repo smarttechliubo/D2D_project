@@ -20,10 +20,18 @@ typedef unsigned short	uint16_t;
 typedef signed int		int32_t;
 typedef unsigned int	uint32_t;
 
+typedef   int   MessagesIds; 
+typedef   int   instance_t;
+
+
 typedef int                bool;
 typedef uint32_t           frame_t;
 typedef uint32_t           sub_frame_t;
 typedef uint16_t           rnti_t;
+
+
+
+
 
 
 #endif /* INC_TYPEDEF_H_ */
