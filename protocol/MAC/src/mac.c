@@ -9,9 +9,7 @@
 **********************************************************/
 
 #include <stdlib.h>
-#include <pthread.h>
 #include <stdint.h>
-#include <sys/timerfd.h>
 #include <unistd.h>
 #include <stdio.h>
 #include <string.h>
@@ -24,6 +22,8 @@
 #include "pre_schedule.h"
 #include "d2d_message_type.h"
 #include "interface_rrc_mac.h"
+#include "messageDefine.h"
+#include "msg_queue.h"
 
 bool g_timing_sync = false;
 
@@ -44,9 +44,6 @@ void init_mac()
 	g_context.mac = mac;
 	g_timing_sync = false;
 
-#ifdef TASK_MAC
-    //pthread_create(&g_mac.thread, NULL, run_thread, g_mac.arg);
-#endif
 }
 
 void mac_clean()
@@ -59,21 +56,12 @@ bool mac_release()
 	return true;
 }
 
-/****************************************/
-//TODO: Temp define
-//bool syncTime(frame_t *frame, sub_frame_t *subframe);
-uint32_t syncT()
-{
-	return 0;
-}
-
-/****************************************/
 void rrc_mac_config(const rrc_mac_initial_req *req)
 {
 	mac_info_s *mac = g_context.mac;
 	if(mac != NULL)
 	{
-		mac->mode = req->mode;
+		mac->mode = (mode_e)req->mode;
 		mac->cellId = req->cellId;
 		mac->bandwith = req->bandwith;
 		mac->subframe_config = req->subframe_config;
@@ -123,14 +111,24 @@ void rrc_mac_bcch_req(const rrc_mac_bcch_para_config_req *req)
 
 void handle_rrc_msg()
 {
-	message_type_t msg_type = RRC_MAC_INITIAL_REQ; // TODO: add msg header handler function
-	rrc_mac_initial_req *req; //TODO: add msg body handler function
+	msgDef *msg = (msgDef *)malloc(MQ_MSGSIZE);
+	uint32_t msg_len = msgRecv(MAC_TASK, (char *)msg, MQ_MSGSIZE);
 
-	switch (msg_type)
+	if (msg_len == 0)
+	{
+		LOG_INFO(MAC, "NO MSG");
+		return;
+	}
+	
+	switch (msg->header.msgId)
 	{
 		case RRC_MAC_INITIAL_REQ:
 		{
+			rrc_mac_initial_req *req = (rrc_mac_initial_req *)msg->data; //TODO: add msg body handler function
+
 			rrc_mac_config(req);
+			LOG_INFO(MAC, "rrc_mac_initial_req");
+			free(msg);
 			break;
 		}
 		case RRC_MAC_RELEASE_REQ:
@@ -157,7 +155,7 @@ void mac_pre_handler()
 	frame_t frame;
 	sub_frame_t sub_frame;
 
-	if (g_timing_sync == false || g_context.mac->status < STATUS_SYNC)
+	if (g_timing_sync == false)
 		return;
 
 	frame = g_context.frame;
@@ -166,17 +164,19 @@ void mac_pre_handler()
 	frame = (frame + (sub_frame + TIMING_ADVANCE) / MAX_SUBSFN) % MAX_SFN;
 	sub_frame = (sub_frame + TIMING_ADVANCE) % MAX_SUBSFN;
 
+	LOG_INFO(MAC, "[TEST] mac_pre_handler frame:%u, sub_frame:%u", frame, sub_frame);
+
 	handle_rrc_msg();
 
-	pre_schedule(frame, sub_frame, g_context.mac);
+	//pre_schedule(frame, sub_frame, g_context.mac);
 
 }
+
+extern uint32_t syncT();
 
 void syncTime()//TODO: sync
 {
     // 1. get timing sync with PHY	
-    //frame_t frame;
-    //sub_frame_t subframe;
 	if (g_timing_sync == false)
     {
 		uint32_t time = syncT();// TODO: sync
@@ -185,6 +185,7 @@ void syncTime()//TODO: sync
 			g_context.frame = time >> 16;
 			g_context.subframe = time&0xFFFF;
 			g_timing_sync = true;
+			LOG_INFO(MAC, "[TEST] mac_pre_handler frame:%u, sub_frame:%u", g_context.frame, g_context.subframe);
 		}
 		else
 	    {
@@ -225,12 +226,14 @@ void syncTime()//TODO: sync
 // interrupt function
 void run_period()
 {
+	LOG_INFO(MAC, "[TEST]: run_period");
 	syncTime();		
 	mac_pre_handler();
 }
 
 void run_scheduler()
 {
+	LOG_INFO(MAC, "[TEST]: run_scheduler");
 	handle_phy_msg();
 }
 

@@ -14,7 +14,8 @@
 void init_mac();
 
 void mac_reset();
-void *run_thread();
+void run_period();
+void run_scheduler();
 
 
 #endif //_SMARTLOGICTECH_MAC_H

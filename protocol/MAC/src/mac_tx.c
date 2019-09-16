@@ -12,7 +12,7 @@
 #include "mac.h"
 #include "mac_vars.h"
 
-int init_mac_tx()
+void init_mac_tx()
 {
 
 }
