@@ -8,6 +8,8 @@
 * All rights reserved.
 **********************************************************/
 
+#include <stdlib.h>
+
 #include "rrc_sim.h"
 #include "mytask.h"
 #include "msg_queue.h"
@@ -27,21 +29,23 @@ void msgHandler()
 
 void rrcStatusHandler()
 {
-	rrc_mac_initial_req *req;
-	LOG_INFO(MAC, "[TEST]: rrcStatusHandler! 0");
 
 	if (g_rrc.status == RRC_NONE)
 	{
-		msgSize msg_size = sizeof(rrc_mac_initial_req);
-		msgDef* msg = (msgDef*)new_msg(msg_size);
-		if (msg != NULL)
-		{
-			msg->header.msgId = RRC_MAC_INITIAL_REQ;
-			msg->header.source = RRC_TASK;
-			msg->header.destination = MAC_TASK;
-			msg->header.msgSize = msg_size;
+		msgDef msg;
+		rrc_mac_initial_req *req;
 
-			req = (rrc_mac_initial_req*)msg->data;
+		msgSize msg_size = sizeof(rrc_mac_initial_req);
+		msg.data = (uint8_t*)msg_malloc(msg_size);
+
+		if (msg.data != NULL)
+		{
+			msg.header.msgId = RRC_MAC_INITIAL_REQ;
+			msg.header.source = RRC_TASK;
+			msg.header.destination = MAC_TASK;
+			msg.header.msgSize = msg_size;
+
+			req = (rrc_mac_initial_req*)msg.data;
 			req->cellId = 0;
 			req->bandwith = 1;
 			req->pdcch_config.rb_num = 2;
@@ -49,7 +53,48 @@ void rrcStatusHandler()
 			req->subframe_config = 0;
 			req->mode = 0;
 
-			msgSend(MAC_QUEUE, (char *)msg, msg_size + sizeof(msgDef));
+			if (msgSend(MAC_QUEUE, (char *)&msg, sizeof(msgDef)))
+			{
+				g_rrc.status = RRC_INITAIL;
+			}
+
+			//msg_free(msg);
+		}
+		else
+		{
+			LOG_ERROR(MAC, "[TEST]: new rrc message fail!");
+		}
+	}
+
+	if (g_rrc.status == RRC_INITAIL_CFM)
+	{
+		msgDef msg;
+		rrc_mac_bcch_para_config_req *req;
+
+		msgSize msg_size = sizeof(rrc_mac_bcch_para_config_req);
+		msg.data = (uint8_t*)msg_malloc(msg_size);
+
+		if (msg.data != NULL)
+		{
+			msg.header.msgId = RRC_MAC_INITIAL_REQ;
+			msg.header.source = RRC_TASK;
+			msg.header.destination = MAC_TASK;
+			msg.header.msgSize = msg_size;
+
+			req = (rrc_mac_bcch_para_config_req*)msg.data;
+			req->flag = 3;
+			req->mib.systemFrameNumber = 0;
+			req->mib.pdcch_config.rb_num = 2;
+			req->mib.pdcch_config.rb_start_index = 2;
+			req->sib.size = 8;
+			req->sib.sib_pdu = 0;
+
+			if (msgSend(MAC_QUEUE, (char *)&msg, sizeof(msgDef)))
+			{
+				g_rrc.status = RRC_INITAIL;
+			}
+
+			//msg_free(msg);
 		}
 		else
 		{
@@ -58,6 +103,49 @@ void rrcStatusHandler()
 	}
 }
 
+void rrcMsgHandler()
+{
+	msgDef *msg = (msgDef *)malloc(MQ_MSGSIZE);
+	uint32_t msg_len = msgRecv(MAC_QUEUE, (char *)msg, MQ_MSGSIZE);
+	if (msg_len == 0)
+	{
+		LOG_INFO(MAC, "[TEST] NO RRC MSG");
+		return;
+	}
+
+	switch (msg->header.msgId)
+	{
+		case MAC_RRC_INITIAL_CFM:
+		{
+			mac_rrc_initial_cfm *req = (mac_rrc_initial_cfm *)msg->data; //TODO: add msg body handler function
+
+			LOG_INFO(MAC, "[TEST] mac_rrc_initial_cfm, status:%u",req->status);
+
+			g_rrc.status = RRC_INITAIL_CFM;
+			free(msg);
+			break;
+		}
+		case MAC_RRC_RELEASE_CFM:
+		{
+			mac_rrc_release_cfm *req = (mac_rrc_release_cfm *)msg->data; //TODO: add msg body handler function
+
+			LOG_INFO(MAC, "[TEST] mac_rrc_release_cfm, status:%u",req->status);
+			free(msg);
+			break;
+		}
+		case MAC_RRC_CONNECT_SETUP_CFG_CFM:
+		{
+			mac_rrc_connection_cfm *req = (mac_rrc_connection_cfm *)msg->data; //TODO: add msg body handler function
+
+			LOG_INFO(MAC, "[TEST] mac_rrc_connection_cfm, status:%u,ue_index:%u,rnti:%u,error:%u",
+				req->status,req->ue_index,req->rnti,req->error_code);
+			free(msg);
+			break;
+		}
+		default:
+			break;
+	}
+}
 
 void *rrc_thread()
 {
@@ -96,7 +184,7 @@ void init_rrc_sim()
 	g_rrc.mode = 0;//source
 	g_rrc.status = RRC_NONE;
 	
-	//msgq_init(RRC_QUEUE);
+	msgq_init(RRC_QUEUE);
 }
 
 

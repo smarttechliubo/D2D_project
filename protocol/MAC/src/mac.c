@@ -54,25 +54,27 @@ void mac_clean()
 
 void mac_release_cfm()
 {
+	msgDef msg;
 	mac_rrc_release_cfm *cfm;
 	msgSize msg_size = sizeof(mac_rrc_release_cfm);
-	msgDef* msg = (msgDef*)new_msg(msg_size);
-	if (msg != NULL)
-	{
-		msg->header.msgId = MAC_RRC_INITIAL_CFM;
-		msg->header.source = MAC_TASK;
-		msg->header.destination = RRC_TASK;
-		msg->header.msgSize = msg_size;
+	msg.data = (uint8_t*)msg_malloc(msg_size);
 
-		cfm = (mac_rrc_release_cfm*)msg->data;
+	if (msg.data != NULL)
+	{
+		msg.header.msgId = MAC_RRC_INITIAL_CFM;
+		msg.header.source = MAC_TASK;
+		msg.header.destination = RRC_TASK;
+		msg.header.msgSize = msg_size;
+
+		cfm = (mac_rrc_release_cfm*)msg.data;
 		cfm->status = 1;
 		cfm->error_code = 0;
 
-		if (msgSend(RRC_QUEUE, (char *)msg, msg_size + sizeof(msgDef)))
+		if (msgSend(RRC_QUEUE, (char *)&msg, sizeof(msgDef)))
 		{
 		}
 
-		msg_free(msg);
+		//msg_free(msg);
 	}
 	else
 	{
@@ -90,25 +92,27 @@ void mac_release(const rrc_mac_release_req *req)//TODO: mac reset ue release
 // MAC_TEST
 void mac_config_cfm()
 {
+	msgDef msg;
 	mac_rrc_initial_cfm *cfm;
 	msgSize msg_size = sizeof(mac_rrc_initial_cfm);
-	msgDef* msg = (msgDef*)new_msg(msg_size);
-	if (msg != NULL)
-	{
-		msg->header.msgId = MAC_RRC_INITIAL_CFM;
-		msg->header.source = MAC_TASK;
-		msg->header.destination = RRC_TASK;
-		msg->header.msgSize = msg_size;
+	msg.data = (uint8_t*)msg_malloc(msg_size);
 
-		cfm = (mac_rrc_initial_cfm*)msg->data;
+	if (msg.data != NULL)
+	{
+		msg.header.msgId = MAC_RRC_INITIAL_CFM;
+		msg.header.source = MAC_TASK;
+		msg.header.destination = RRC_TASK;
+		msg.header.msgSize = msg_size;
+
+		cfm = (mac_rrc_initial_cfm*)msg.data;
 		cfm->status = 1;
 		cfm->error_code = 0;
 
-		if (msgSend(RRC_QUEUE, (char *)msg, msg_size + sizeof(msgDef)))
+		if (msgSend(RRC_QUEUE, (char *)&msg, sizeof(msgDef)))
 		{
 		}
 
-		msg_free(msg);
+		//msg_free(msg);
 	}
 	else
 	{
@@ -174,8 +178,8 @@ void rrc_mac_bcch_req(const rrc_mac_bcch_para_config_req *req)
 void handle_rrc_msg()
 {
 //MAC_TEST
-	msgDef *msg = (msgDef *)malloc(MQ_MSGSIZE);
-	uint32_t msg_len = msgRecv(MAC_QUEUE, (char *)msg, MQ_MSGSIZE);
+	msgDef msg;
+	uint32_t msg_len = msgRecv(MAC_QUEUE, (char *)&msg, MQ_MSGSIZE);
 
 	if (msg_len == 0)
 	{
@@ -183,46 +187,46 @@ void handle_rrc_msg()
 		return;
 	}
 
-	switch (msg->header.msgId)
+	switch (msg.header.msgId)
 	{
 		case RRC_MAC_INITIAL_REQ:
 		{
-			rrc_mac_initial_req *req = (rrc_mac_initial_req *)msg->data; //TODO: add msg body handler function
+			rrc_mac_initial_req *req = (rrc_mac_initial_req *)msg.data; //TODO: add msg body handler function
 
-			LOG_INFO(MAC, "mac initial, cellId:%u, mode:%u, bw:%u", 
+			LOG_INFO(MAC, "mac initial, msgId:%u,source:%u, dest:%u, cellId:%u, mode:%u, bw:%u", msg.header.msgId,msg.header.source,msg.header.destination,
 				req->cellId,req->mode,req->bandwith);
 
 			mac_config(req);
-			free(msg);
+			msg_free(req);
 			break;
 		}
 		case RRC_MAC_RELEASE_REQ:
 		{
-			rrc_mac_release_req *req = (rrc_mac_release_req *)msg->data; //TODO: add msg body handler function
+			rrc_mac_release_req *req = (rrc_mac_release_req *)msg.data; //TODO: add msg body handler function
 
 			LOG_INFO(MAC, "mac release, cellId:%u, ue_index:%u, releaseCause:%u", 
 				req->cellId,req->ue_index,req->releaseCause);
 
 			mac_release(req);
-			free(msg);
+			msg_free(req);
 			break;
 		}
 		case RRC_MAC_CONNECT_SETUP_CFG_REQ:
 		{
-			rrc_mac_connnection_setup *req = (rrc_mac_connnection_setup *)msg->data;
+			rrc_mac_connnection_setup *req = (rrc_mac_connnection_setup *)msg.data;
 
 			LOG_INFO(MAC, "mac connect setup, ue_index:%u, maxHARQ_Tx:%u", 
 				req->ue_index,req->maxHARQ_Tx);
 
-			free(msg);
+			msg_free(req);
 			break;
 		}
 		case RRC_MAC_BCCH_PARA_CFG_REQ:
 		{
-			rrc_mac_bcch_para_config_req *req = (rrc_mac_bcch_para_config_req *)msg->data;
+			rrc_mac_bcch_para_config_req *req = (rrc_mac_bcch_para_config_req *)msg.data;
 			
 			rrc_mac_bcch_req(req);
-			free(msg);
+			msg_free(req);
 			break;
 		}
 		case RRC_MAC_BCCH_SIB1_REQ:

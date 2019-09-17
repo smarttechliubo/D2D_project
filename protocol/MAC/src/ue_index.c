@@ -8,6 +8,8 @@
 * All rights reserved.
 **********************************************************/
 
+#include <stdlib.h>
+
 #include "ue_index.h"
 #include "mac_defs.h"
 
