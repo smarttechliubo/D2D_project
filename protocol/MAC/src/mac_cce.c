@@ -41,7 +41,7 @@ int32_t allocate_CCE(const uint16_t      aggregation_level)
 	mac_info_s *mac = g_context.mac;
 	uint16_t rb_num = mac->rb_num;
 	uint16_t rb_start_index = mac->rb_start_index;
-	uint16_t candidates = rb_num/aggregation_level;
+	//uint16_t candidates = rb_num/aggregation_level;
 	
 	int32_t cce_offset = get_cce_offset(rb_num, aggregation_level, rb_start_index);
 	if (cce_offset >= 0)

@@ -22,7 +22,8 @@
 #include "pre_schedule.h"
 #include "d2d_message_type.h"
 #include "interface_rrc_mac.h"
-#include "messageDefine.h"
+
+#include "messageDefine.h"//MAC_TEST
 #include "msg_queue.h"
 
 bool g_timing_sync = false;
@@ -51,12 +52,71 @@ void mac_clean()
 	free(g_context.mac);
 }
 
-bool mac_release()
+void mac_release_cfm()
 {
-	return true;
+	mac_rrc_release_cfm *cfm;
+	msgSize msg_size = sizeof(mac_rrc_release_cfm);
+	msgDef* msg = (msgDef*)new_msg(msg_size);
+	if (msg != NULL)
+	{
+		msg->header.msgId = MAC_RRC_INITIAL_CFM;
+		msg->header.source = MAC_TASK;
+		msg->header.destination = RRC_TASK;
+		msg->header.msgSize = msg_size;
+
+		cfm = (mac_rrc_release_cfm*)msg->data;
+		cfm->status = 1;
+		cfm->error_code = 0;
+
+		if (msgSend(RRC_QUEUE, (char *)msg, msg_size + sizeof(msgDef)))
+		{
+		}
+
+		msg_free(msg);
+	}
+	else
+	{
+		LOG_ERROR(MAC, "[TEST]: new mac message fail!");
+	}
 }
 
-void rrc_mac_config(const rrc_mac_initial_req *req)
+void mac_release(const rrc_mac_release_req *req)//TODO: mac reset ue release
+{
+	
+	mac_release_cfm();
+}
+
+
+// MAC_TEST
+void mac_config_cfm()
+{
+	mac_rrc_initial_cfm *cfm;
+	msgSize msg_size = sizeof(mac_rrc_initial_cfm);
+	msgDef* msg = (msgDef*)new_msg(msg_size);
+	if (msg != NULL)
+	{
+		msg->header.msgId = MAC_RRC_INITIAL_CFM;
+		msg->header.source = MAC_TASK;
+		msg->header.destination = RRC_TASK;
+		msg->header.msgSize = msg_size;
+
+		cfm = (mac_rrc_initial_cfm*)msg->data;
+		cfm->status = 1;
+		cfm->error_code = 0;
+
+		if (msgSend(RRC_QUEUE, (char *)msg, msg_size + sizeof(msgDef)))
+		{
+		}
+
+		msg_free(msg);
+	}
+	else
+	{
+		LOG_ERROR(MAC, "[TEST]: new mac message fail!");
+	}
+}
+
+void mac_config(const rrc_mac_initial_req *req)
 {
 	mac_info_s *mac = g_context.mac;
 	if(mac != NULL)
@@ -70,6 +130,8 @@ void rrc_mac_config(const rrc_mac_initial_req *req)
 		
 		mac->max_rbs_per_ue = MAX_RBS;
 		mac->status = STATUS_INIT;
+		
+		mac_config_cfm();
 	}
 	else
 	{
@@ -111,36 +173,56 @@ void rrc_mac_bcch_req(const rrc_mac_bcch_para_config_req *req)
 
 void handle_rrc_msg()
 {
+//MAC_TEST
 	msgDef *msg = (msgDef *)malloc(MQ_MSGSIZE);
-	uint32_t msg_len = msgRecv(MAC_TASK, (char *)msg, MQ_MSGSIZE);
+	uint32_t msg_len = msgRecv(MAC_QUEUE, (char *)msg, MQ_MSGSIZE);
 
 	if (msg_len == 0)
 	{
-		LOG_INFO(MAC, "NO MSG");
+		LOG_INFO(MAC, "[TEST] NO RRC MSG");
 		return;
 	}
-	
+
 	switch (msg->header.msgId)
 	{
 		case RRC_MAC_INITIAL_REQ:
 		{
 			rrc_mac_initial_req *req = (rrc_mac_initial_req *)msg->data; //TODO: add msg body handler function
 
-			rrc_mac_config(req);
-			LOG_INFO(MAC, "rrc_mac_initial_req");
+			LOG_INFO(MAC, "mac initial, cellId:%u, mode:%u, bw:%u", 
+				req->cellId,req->mode,req->bandwith);
+
+			mac_config(req);
 			free(msg);
 			break;
 		}
 		case RRC_MAC_RELEASE_REQ:
 		{
-			mac_release();
+			rrc_mac_release_req *req = (rrc_mac_release_req *)msg->data; //TODO: add msg body handler function
+
+			LOG_INFO(MAC, "mac release, cellId:%u, ue_index:%u, releaseCause:%u", 
+				req->cellId,req->ue_index,req->releaseCause);
+
+			mac_release(req);
+			free(msg);
 			break;
 		}
 		case RRC_MAC_CONNECT_SETUP_CFG_REQ:
+		{
+			rrc_mac_connnection_setup *req = (rrc_mac_connnection_setup *)msg->data;
+
+			LOG_INFO(MAC, "mac connect setup, ue_index:%u, maxHARQ_Tx:%u", 
+				req->ue_index,req->maxHARQ_Tx);
+
+			free(msg);
 			break;
+		}
 		case RRC_MAC_BCCH_PARA_CFG_REQ:
 		{
-			//rrc_mac_bcch_req(req);
+			rrc_mac_bcch_para_config_req *req = (rrc_mac_bcch_para_config_req *)msg->data;
+			
+			rrc_mac_bcch_req(req);
+			free(msg);
 			break;
 		}
 		case RRC_MAC_BCCH_SIB1_REQ:
@@ -234,6 +316,6 @@ void run_period()
 void run_scheduler()
 {
 	LOG_INFO(MAC, "[TEST]: run_scheduler");
-	handle_phy_msg();
+	//handle_phy_msg();
 }
 

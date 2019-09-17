@@ -37,26 +37,29 @@ uint16_t new_index()
 	uint16_t index = ringBuffer[free_start];
 	
 	free_start++;
-	if (free_start == MAX_UE_2)
+	if (free_start == MAX_UE)
 	{
 		free_start = 0;
 	}
 
 	ue_num++;
-
+	if (abs(free_start-free_end) != ue_num)
+	{
+		return INVALID_U16;
+	}
 	return index;
 }
 
 uint16_t release_index(const uint16_t index)
 {
-	if (index >= MAX_UE)
+	if (index >= MAX_UE && ue_num > 0)
 	{
 		return INVALID_U16;
 	}
 
 	ringBuffer[free_end] = index;
 	free_end++;
-	if (free_end == MAX_UE_2)
+	if (free_end == MAX_UE)
 	{
 		free_end = 0;
 	}

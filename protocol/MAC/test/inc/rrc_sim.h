@@ -16,7 +16,9 @@ typedef enum
 {
 	RRC_NONE,
 	RRC_INITAIL,
-	RRC_SETUP
+	RRC_INITAIL_CFM,
+	RRC_BCCH,
+	RRC_SETUP	
 }rrc_status;
 
 typedef enum

@@ -28,8 +28,9 @@ typedef enum
 
 mqd_t msgq_init(msgq_type type);
 bool msgSend(msgq_type type, const char *msg_ptr, int msg_len);
-int msgRecv(msgq_type type, char *msg_ptr, int msg_len);
+uint32_t msgRecv(msgq_type type, char *msg_ptr, int msg_len);
 msgDef *new_msg(msgSize msg_size);
+int msg_free(void *ptr);
 
 
 #endif /* _SMARTLOGICTECH_PROTOCOL_MAC_TEST_MSG_QUEUE_H_ */

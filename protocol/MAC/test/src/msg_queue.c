@@ -52,7 +52,7 @@ mqd_t msgq_init(msgq_type type)
     msgq_attr.mq_maxmsg = QUE_DEP;
     msgq_attr.mq_msgsize = MQ_MSGSIZE;
 
-    msgq_id = mq_open(file, O_RDWR | O_CREAT, S_IRWXU | S_IRWXG, &msgq_attr);
+    msgq_id = mq_open(file, O_RDWR | O_CREAT | O_NONBLOCK , S_IRWXU | S_IRWXG, &msgq_attr);
     if(msgq_id == (mqd_t)-1)
     {
         perror("mq_open");
@@ -94,22 +94,31 @@ bool msgSend(msgq_type type, const char *msg_ptr, int msg_len)
 		LOG_ERROR(MAC, "msgSend fail msgType:%u,msg_len:%u,errno:%d",type,msg_len, errno);
 		return false;
 	}
-	else
-	{
-		return true;
-	}
+
+	return true;
 }
 
-int msgRecv(msgq_type type, char *msg_ptr, int msg_len)
+uint32_t msgRecv(msgq_type type, char *msg_ptr, int msg_len)
 {
-	int ret;
-	unsigned msg_prio = 1;
+	uint32_t ret;
+	//unsigned msg_prio = 1;
 	mqd_t msgq_id = q_info[type].msgq_id;
 
-	if (type >= MAX_QUEUE)
+	if (type >= MAX_QUEUE || msg_ptr == NULL)
 		return -1;
 
-	ret = mq_receive(msgq_id, msg_ptr, msg_len, &msg_prio);
+	ret = mq_receive(msgq_id, msg_ptr, msg_len, NULL);
+	
+	if (ret == -1)
+	{
+		if (errno != EAGAIN)// TODO: how to handle O_NONBLOCK
+		{
+			perror("mq_receive");
+			LOG_ERROR(MAC, "msgSend fail msgType:%u,msg_len:%u,errno:%d",type,msg_len, errno);
+		}
+		return 0;
+	}
+
 	return ret;
 }
 

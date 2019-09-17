@@ -23,14 +23,14 @@ typedef enum {
    // RA_MSGCRNTI_ACK
 } ra_state;
 
-typedef struct
+typedef struct node
 {
 	uint16_t ueIndex;
 	rnti_t   rnti;     
 	uint16_t ra_rnti;
 	uint16_t padding;
 	ra_state state;
-	struct ra_list *next;
+	struct node *next;
 }ra_list;
 
 typedef struct
