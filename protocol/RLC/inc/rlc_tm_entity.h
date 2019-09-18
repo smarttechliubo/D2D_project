@@ -45,6 +45,7 @@ typedef struct rlc_tm_entity {
   uint16_t             nb_sdu;                  /*!< \brief Total number of SDUs in input_sdus[] */
   uint16_t             next_sdu_index;          /*!< \brief Next SDU index for a new incomin SDU in input_sdus[]. */
   uint16_t             current_sdu_index;       /*!< \brief Current SDU index in input_sdus array to be segmented. */
+  uint32_t             sdu_allocated_buffer_size;   //! allocated buffer size for tm entity 
   list_t            pdus_to_mac_layer;       /*!< \brief PDUs buffered for transmission to MAC layer. */
   sdu_size_t        rlc_pdu_size;
   rlc_buffer_occupancy_t buffer_occupancy;        /*!< \brief Number of bytes contained in input_sdus buffer.*/

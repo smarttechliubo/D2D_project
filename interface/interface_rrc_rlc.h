@@ -10,6 +10,7 @@
 #define INTERFACE_RRC_RLC_H_
 
 #include <typedef.h>
+#include <rlc_type.h>
 
 #define MAX_SRB_COUNT    3
 #define MAX_DRB_COUNT    32
@@ -137,6 +138,7 @@ typedef struct rrc_rlc_buffer_req_s
 	uint32_t request_id; /**record current request id*/
 	rb_type_e  rb_type; 
 	uint32_t   rb_id; 
+	rnti_t     rnti; 
 	uint32_t send_data_size; /**rrc -> rlc data size */
 }rrc_rlc_buffer_status_req;
 
@@ -144,6 +146,9 @@ typedef struct rrc_rlc_buffer_req_s
 typedef struct rlc_rrc_buffer_rpt_s
 {
 	uint32_t request_id;
+	rb_type_e  rb_type; 
+	uint32_t   rb_id; 
+	rnti_t     rnti; 
 	uint32_t rlc_buffer_valid ; /**1:buffer have enough size for rrc message ,0: don't have enough space*/
     uint32_t  send_data_size; 
 	uint32_t rlc_buffer_data_size; /**rlc buffer valid size for rrc data */
@@ -154,6 +159,8 @@ typedef struct rlc_rrc_buffer_rpt_s
 typedef struct rrc_rlc_data_ind_s
 {
 	rb_type_e   rb_type;  /** 0:srb0; 1:srb1; 3:drb */
+	rb_id_t     rb_id; 
+	rnti_t      rnti;
 	uint16_t   data_size; /**unit: byte*/
 	uint32_t   *data_addr_ptr; /**data address*/
 }rrc_rlc_data_ind;

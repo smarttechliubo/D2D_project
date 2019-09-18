@@ -232,7 +232,7 @@ void rrc_Rlc_ConnectSetup_Config(uint32_t ue_rnti, uint32_t ue_index ,
  * @Date:  2019年8月28日
  * @param: data_size :        [size of the send message ]
  */
-void rrc_Rlc_DataBuf_Sta_Req(rb_type_e         rb_type,uint32_t rb_id,uint32_t data_size)
+void rrc_Rlc_DataBuf_Sta_Req(rb_type_e         rb_type,uint32_t rb_id,rnti_t rnti, uint32_t data_size)
 {
 	MessageDef  *message; 
 
@@ -241,6 +241,7 @@ void rrc_Rlc_DataBuf_Sta_Req(rb_type_e         rb_type,uint32_t rb_id,uint32_t d
 	data_status_req->request_id = 0; 
 	data_status_req->rb_type = rb_type; 
 	data_status_req->rb_id = rb_id;
+	data_status_req->rnti  = rnti; 
 	data_status_req->send_data_size = data_size; 
 
 	//! there should be insert the requset to RRC_RLC_FIFO,  and delete the node when receive the buffer status report
@@ -262,13 +263,15 @@ void rrc_Rlc_DataBuf_Sta_Req(rb_type_e         rb_type,uint32_t rb_id,uint32_t d
  * @param: *data_buffer :     [param description ]
  * @param: data_size :        [param description ]
  */
-void rrc_Rlc_Data_Send(rb_type_e rb_type, uint32_t *data_buffer, uint32_t data_size)
+void rrc_Rlc_Data_Send(rb_type_e rb_type, rb_id_t rb_id, rnti_t rnti, uint32_t *data_buffer, uint32_t data_size)
 {
 	MessageDef  *message;  
 
 	rrc_rlc_data_ind  *data_ind_ptr = calloc(1,sizeof(rrc_rlc_data_ind)); 
 
  	data_ind_ptr->rb_type = rb_type; 
+ 	data_ind_ptr->rb_id = rb_id; 
+ 	data_ind_ptr->rnti = rnti; 
  	data_ind_ptr->data_addr_ptr = data_buffer; 
  	data_ind_ptr->data_size = data_size; 
 

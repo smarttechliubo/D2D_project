@@ -315,12 +315,11 @@ void config_req_rlc_um (
   h_rc = hashtable_get(rlc_coll_p, key, (void**)&rlc_union_p);
 
   if (h_rc == HASH_TABLE_OK) {
+    pthread_mutex_lock(&(rlc_union_p->rlc_union_mtex));
     rlc_p = &rlc_union_p->rlc.um;
 
     rlc_um_init(ctxt_pP, rlc_p,srb_flagP,rb_idP); //！初始化
 
-    
-   
  
     if (rlc_um_fsm_notify_event (ctxt_pP, rlc_p, RLC_UM_RECEIVE_CRLC_CONFIG_REQ_ENTER_DATA_TRANSFER_READY_STATE_EVENT)) {
       
@@ -342,6 +341,7 @@ void config_req_rlc_um (
           rlc_p->is_mxch,
           rlc_p->rb_id);
     }
+    pthread_mutex_unlock(&(rlc_union_p->rlc_union_mtex));
   } else {
     LOG_ERROR(RLC, PROTOCOL_RLC_UM_CTXT_FMT"  CONFIG_REQ RB %u  RLC UM NOT FOUND\n",
           PROTOCOL_RLC_UM_CTXT_ARGS(ctxt_pP,rlc_p),

@@ -18,12 +18,14 @@ void rlc_tm_init (
   const protocol_ctxt_t* const  ctxt_pP,
   rlc_tm_entity_t * const rlcP,
   const srb_flag_t  srb_flagP,
-  const rb_id_t rb_idP
+  const rb_id_t rb_idP,
+  const logical_chan_id_t chan_id
 )
 {
-  int saved_allocation = rlcP->allocation;
+  //int saved_allocation = rlcP->allocation;
   memset (rlcP, 0, sizeof (struct rlc_tm_entity));
-  rlcP->allocation = saved_allocation;
+//  rlcP->allocation = saved_allocation;
+ 
   // TX SIDE
   list_init (&rlcP->pdus_to_mac_layer, NULL);
 
@@ -44,12 +46,17 @@ void rlc_tm_init (
 	rlcP->is_data_plane = 0; 
   }
   rlcP->rb_id = rb_idP;
+  rlcP->channel_id = chan_id; 
+
+  
   // SPARE : not 3GPP
   rlcP->size_input_sdus_buffer = 16; //!TM 最大16个buffer
-
   if ((rlcP->input_sdus_alloc == NULL) && (rlcP->size_input_sdus_buffer > 0)) {
     rlcP->input_sdus_alloc = get_free_mem_block (rlcP->size_input_sdus_buffer * sizeof (void *), __func__);
     if(rlcP->input_sdus_alloc == NULL) return;
+	
+    rlcP->allocation = TRUE; 
+    rlcP->sdu_allocated_buffer_size = rlcP->size_input_sdus_buffer * sizeof (void *); 
     rlcP->input_sdus = (mem_block_t **) (rlcP->input_sdus_alloc->data); //！input buffer 地址
     memset (rlcP->input_sdus, 0, rlcP->size_input_sdus_buffer * sizeof (void *)); //！清0
   }
@@ -72,16 +79,21 @@ void config_req_rlc_tm (
   key = RLC_COLL_KEY_VALUE(ctxt_pP->module_id, ctxt_pP->rnti, ctxt_pP->enb_flag, rb_idP, srb_flagP);
   h_rc = hashtable_get(rlc_coll_p, key, (void**)&rlc_union_p);
 
+  
+  
   if (h_rc == HASH_TABLE_OK) {
+  	pthread_mutex_lock(&(rlc_union_p->rlc_union_mtex)); 
     rlc_p = &rlc_union_p->rlc.tm;
     LOG_DEBUG(RLC, PROTOCOL_RLC_TM_CTXT_FMT" CONFIG_REQ (is_uplink_downlink=%d) RB %u\n",
           PROTOCOL_RLC_TM_CTXT_ARGS(ctxt_pP, rlc_p),
           config_tmP->is_uplink_downlink,
           rb_idP);
 
-    rlc_tm_init(ctxt_pP, rlc_p,srb_flagP,rb_idP);
+    rlc_tm_init(ctxt_pP, rlc_p,srb_flagP,rb_idP,chan_idP);
     rlc_p->protocol_state = RLC_DATA_TRANSFER_READY_STATE;
-    rlc_tm_configure(ctxt_pP, rlc_p, config_tmP->is_uplink_downlink);
+    rlc_tm_configure(ctxt_pP, rlc_p, config_tmP->is_uplink_downlink);
+
+    pthread_mutex_unlock(&(rlc_union_p->rlc_union_mtex)); 
   } else {
     LOG_ERROR(RLC, PROTOCOL_RLC_TM_CTXT_FMT" CONFIG_REQ RB %u RLC NOT FOUND\n",
           PROTOCOL_RLC_TM_CTXT_ARGS(ctxt_pP, rlc_p),

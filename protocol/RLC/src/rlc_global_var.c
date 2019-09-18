@@ -12,8 +12,17 @@
 /**************************include******************************/
 #include <typedef.h>
 #include <rlc_type.h> 
+#include <pthread.h>
+#include <rlc.h>
  
  
- protocol_ctxt_t    g_rlc_protocol_ctxt; 
+protocol_ctxt_t    g_rlc_protocol_ctxt; 
+
+pthread_mutex_t    g_rlc_buffer_mutex = PTHREAD_MUTEX_INITIALIZER; 
+
+
+
+rlc_buffer_status   g_rlc_buffer_status[D2D_MAX_USER_NUM+1]; 
+
  
 /**************************function******************************/

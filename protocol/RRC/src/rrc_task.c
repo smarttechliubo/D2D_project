@@ -228,6 +228,9 @@ int  rrc_Receive_Signal_Msg(uint16_t mode_type, void *message, MessagesIds  msg_
     uint32_t                     max_out_sync = 0; 
 
     uint32_t           encode_buffer_size = 0; 
+    rb_id_t            rb_id; 
+    rb_type_e          rb_type; 
+    rnti_t             rnti; 
     LOG_DEBUG(RRC, "RRC MODE: %d  receive message %d\n",mode_type, msg_type);                                            
     switch (msg_type)
 	{
@@ -494,8 +497,8 @@ int  rrc_Receive_Signal_Msg(uint16_t mode_type, void *message, MessagesIds  msg_
 				                              CCCH_MessageType_PR_rrcConnectionrequest);
 				                              
 				LOG_INFO(RRC, "Destination generate RRC Connect Request Message after SRB0 eatablished\n"); 
-				//!send buffer_status require message to RLC SRB0 
-				rrc_Rlc_DataBuf_Sta_Req(RB_TYPE_SRB0, 0,encode_buffer_size); 
+				//!send buffer_status require message to RLC SRB0 for connect queset message 
+				rrc_Rlc_DataBuf_Sta_Req(RB_TYPE_SRB0, 0,0xffff, encode_buffer_size); 
 
 				rrc_SetStatus(RRC_STATUS_CONNECT_REQUEST); 
 			}
@@ -518,6 +521,16 @@ int  rrc_Receive_Signal_Msg(uint16_t mode_type, void *message, MessagesIds  msg_
 
                 g_rrc_mac_report_rnti = mac_rrc_connection_cfm_ptr->rnti; 
 
+                //!add SRB1 to RLC 
+                temp_rb = rrc_Rlc_Rbinfo_Generate(RB_TYPE_SRB1, 1,
+					                       LogicChannelConfig__channel_type_ccch,0,
+					                       RLC_MODE_TM ,SN_FieldLength_size10,
+					                       T_Reordering_ms200); 
+
+
+                srb_add =  rrc_Rlc_Srb_Config(RB_TYPE_SRB1,1,&temp_rb); 
+
+                
 
                //!accordding to RNTI,send RLC DRB message to RLC 
 		 	   //！RRC source generate DRB to RLC    
@@ -528,7 +541,7 @@ int  rrc_Receive_Signal_Msg(uint16_t mode_type, void *message, MessagesIds  msg_
 	            
 	            drb_add = rrc_Rlc_Drb_Config(RB_TYPE_DRB,1,&temp_rb);
 
-	            //!RRC source send message to RLC 
+	            //!RRC source send message to RLC ,add SRB1 and DRB to RLC 
 	            rrc_Rlc_ConnectSetup_Config(g_rrc_mac_report_rnti,ue_request_index,&srb_add, &drb_add);	
 	            LOG_DEBUG(RRC,"RRC SOURCEl:MAC allocate RNTI = %d, connect setup config for MAC/RLC \n",g_rrc_mac_report_rnti); 
 	        }
@@ -554,8 +567,8 @@ int  rrc_Receive_Signal_Msg(uint16_t mode_type, void *message, MessagesIds  msg_
 			                                      CCCH_MessageType_PR_rrcConnectionsetup); 
 	            
 	            LOG_INFO(RRC, "SOURCE generate RRC connect setup message!\n");
-			    //!send buffer_status require message to RLC  srb1 
-			    rrc_Rlc_DataBuf_Sta_Req(RB_TYPE_SRB1,1, encode_buffer_size); 
+			    //!send buffer_status require message to RLC  srb1 for connect setup message 
+			    rrc_Rlc_DataBuf_Sta_Req(RB_TYPE_SRB1,1, g_rrc_mac_report_rnti,encode_buffer_size); 
 			    
 					 
 	            rrc_SetStatus(RRC_STATUS_CONNECTED);
@@ -569,8 +582,8 @@ int  rrc_Receive_Signal_Msg(uint16_t mode_type, void *message, MessagesIds  msg_
 				               CCCH_MessageType_PR_rrcConectioncomplete);
 				 LOG_INFO(RRC, "DESTINATION generate RRC Connect Complete message !\n"); 
 
-				 //!send buffer_status require message to RLC SRB1
-				 rrc_Rlc_DataBuf_Sta_Req(RB_TYPE_SRB1,1,encode_buffer_size); 
+				 //!send buffer_status require message to RLC SRB1 for connect complete message 
+				 rrc_Rlc_DataBuf_Sta_Req(RB_TYPE_SRB1,1,g_rrc_mac_report_rnti,encode_buffer_size); 
 						                                      
 
 				 //! update rrc status for destination 
@@ -721,11 +734,14 @@ int  rrc_Receive_Signal_Msg(uint16_t mode_type, void *message, MessagesIds  msg_
         {
 			//!according to RLC's BUFFER SIZE ,decide to send message to rlc or not 
 			rlc_buffer_rpt_ptr = (rlc_rrc_buffer_rpt *)message; 
-			AssertFatal((1 == rlc_buffer_rpt_ptr->rlc_buffer_valid),RRC, "RLC BUFFER is full,can't send message !\n"); 
+			AssertFatal((1 == rlc_buffer_rpt_ptr->rlc_buffer_valid),RRC, "RLC BUFFER is full,can't send message !\n");
 			
-
+			rb_id  = rlc_buffer_rpt_ptr->rb_id; 
+			rb_type = rlc_buffer_rpt_ptr->rb_type; 
+			rnti    = rlc_buffer_rpt_ptr->rnti; 
+			
 			//!send DATA_IND message to RLC 
-			rrc_Rlc_Data_Send(RB_TYPE_SRB0, g_rrc_messge_encode,rlc_buffer_rpt_ptr->send_data_size); 
+			rrc_Rlc_Data_Send(rb_type,rb_id, rnti, g_rrc_messge_encode,rlc_buffer_rpt_ptr->send_data_size); 
 
 			break ;
         }

@@ -15,7 +15,7 @@
 #include <intertask_interface.h>
 #include <d2d_message_type.h>
 #include <rrc_global_def.h>
-
+#include <pthread.h>
 
 
 
@@ -136,6 +136,8 @@ rlc_union_t *rrc_rlc_add_rlc   (const protocol_ctxt_t* const ctxt_pP,
 	else if (h_rc == HASH_TABLE_KEY_NOT_EXISTS) {
 		rlc_union_p = calloc(1, sizeof(rlc_union_t));
 		//! 在RRC 信令中，当需要增加RLC 实体时，进行hashtable 的insert, 使得插入key对应的节点
+		rlc_union_p->rlc_union_mtex = PTHREAD_MUTEX_INITIALIZER;  //! add mutex
+		
 		h_rc = hashtable_insert(rlc_coll_p, key, rlc_union_p);  //!rb_id生成的h_rc
 		h_lcid_rc = hashtable_insert(rlc_coll_p, key_lcid, rlc_union_p); //！logic chid 生成的h_lcid_rc
 
@@ -148,7 +150,8 @@ rlc_union_t *rrc_rlc_add_rlc   (const protocol_ctxt_t* const ctxt_pP,
 			      key,
 			      key_lcid);
 
-		      rlc_union_p->mode = rlc_modeP; 	//!<更新mode,
+		      rlc_union_p->mode = rlc_modeP; 	//!<更新mode
+		      
 		      return rlc_union_p;
 		}
 		else {
@@ -222,7 +225,7 @@ rlc_op_status_t rrc_rlc_config_req	 (
 				ctxt_pP,
 				srb_flagP,
 				&rlc_infoP.rlc.rlc_um_info,
-				rb_idP, rb_idP);
+				rb_idP, logic_ch_id);
 			  break;
 
 			case RLC_MODE_TM:
@@ -233,7 +236,7 @@ rlc_op_status_t rrc_rlc_config_req	 (
 					ctxt_pP,
 					srb_flagP,
 					&rlc_infoP.rlc.rlc_tm_info,
-					rb_idP, rb_idP);
+					rb_idP, logic_ch_id);
 			  break;
 
 			default:
@@ -449,31 +452,6 @@ void  rlc_rrc_config_process(void *message, MessagesIds         msg_type)
 
 
 
-void rlc_tx_process(void *message, MessagesIds      msg_type)
-{
-
-	switch (msg_type)
-	{
-		case RRC_RLC_BUF_STATUS_REQ: 
-		{
-
-
-
-			break; 
-		}
-		case RRC_RLC_DATA_IND: 
-		{
-
-
-
-			break; 
-		}
-		//!TODO  IP DATA transfer message 
-		default: break;
-	}
-
-}
-
  /*!   
  * @brief: rlc receive rrc config message  
  * @author:  bo.liu
@@ -483,7 +461,6 @@ void *rlc_rrc_config_task( )
 {
 
 	MessageDef *recv_msg;
-	//rlc_module_initial();
 
 	while(1)
 	{
