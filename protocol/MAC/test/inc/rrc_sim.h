@@ -17,7 +17,7 @@ typedef enum
 	RRC_NONE,
 	RRC_INITAIL,
 	RRC_INITAIL_CFM,
-	RRC_BCCH,
+	RRC_BCCH_SEND,
 	RRC_SETUP	
 }rrc_status;
 

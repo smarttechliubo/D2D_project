@@ -27,6 +27,9 @@
 static const char* s_msgq_file[] = {
     [PHY_QUEUE] = "/phyQ",
     [MAC_QUEUE] = "/macQ",
+	[RRC_MAC_QUEUE] = "/rrc-macQ",
+	[RLC_MAC_QUEUE] = "/rlc-macQ",
+	[PHY_MAC_QUEUE] = "/phy-macQ",
     [RLC_QUEUE] = "/rlcQ",
     [RRC_QUEUE] = "/rrcQ"
 };
@@ -105,7 +108,7 @@ uint32_t msgRecv(msgq_type type, char *msg_ptr, int msg_len)
 	mqd_t msgq_id = q_info[type].msgq_id;
 
 	if (type >= MAX_QUEUE || msg_ptr == NULL)
-		return -1;
+		return 0;
 
 	ret = mq_receive(msgq_id, msg_ptr, msg_len, NULL);
 	

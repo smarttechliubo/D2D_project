@@ -21,13 +21,13 @@ typedef struct
 	msgId msgId;
 	task_id source;
 	task_id destination;
-	msgSize msgSize;		   /**< Message size (not including header size) */
+	msgSize msgSize;
 }msgHeader;
 
 typedef struct
 {
 	msgHeader header;
-	uint8_t data[0];
+	uint8_t *data;
 }msgDef;
 
 #endif /* _SMARTLOGICTECH_PROTOCOL_MAC_TEST_MESSAGEDEFINE_H_ */

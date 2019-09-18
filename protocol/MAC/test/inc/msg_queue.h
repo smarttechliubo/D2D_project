@@ -21,6 +21,9 @@ typedef enum
 {
 	PHY_QUEUE,
 	MAC_QUEUE,
+	RRC_MAC_QUEUE,
+	RLC_MAC_QUEUE,
+	PHY_MAC_QUEUE,
 	RLC_QUEUE,
 	RRC_QUEUE,
 	MAX_QUEUE
@@ -31,6 +34,7 @@ bool msgSend(msgq_type type, const char *msg_ptr, int msg_len);
 uint32_t msgRecv(msgq_type type, char *msg_ptr, int msg_len);
 msgDef *new_msg(msgSize msg_size);
 int msg_free(void *ptr);
+void *msg_malloc(uint32_t size);
 
 
 #endif /* _SMARTLOGICTECH_PROTOCOL_MAC_TEST_MSG_QUEUE_H_ */

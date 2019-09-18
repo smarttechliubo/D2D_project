@@ -66,7 +66,7 @@ void *mac_thread()
 
 
 		run_time++;
-		if (run_time >= 100)
+		if (run_time >= 20)
 		{
 			g_run_enable = false;
 			break;
@@ -89,7 +89,6 @@ void create_task()
 void init_mac_sim()
 {
 	init_mac();
-	msgq_init(MAC_QUEUE);
 }
 
 void init_sim()
@@ -98,6 +97,11 @@ void init_sim()
 	run_time = 0;
 	init_mac_sim();
 	init_rrc_sim();
+	
+	for (uint32_t i = 0; i < MAX_QUEUE; i++)
+	{
+		msgq_init((msgq_type)i);
+	}
 }
 
 int main()
