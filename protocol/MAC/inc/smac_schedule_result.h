@@ -49,7 +49,7 @@ typedef struct
 typedef struct
 {
 	uint32_t num_tx;
-	tx_req_info tx_info[MAX_TX_NUM];
+	tx_req_info tx_info[MAX_TX_UE];
 }mac_tx_req;
 
 typedef struct

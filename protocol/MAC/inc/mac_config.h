@@ -8,5 +8,9 @@
 * All rights reserved.
 **********************************************************/
 
+#ifndef _SMARTLOGICTECH_MAC_CONFIG_H
+#define _SMARTLOGICTECH_MAC_CONFIG_H
+
 void handle_rrc_msg();
 
+#endif //_SMARTLOGICTECH_MAC_CONFIG_H

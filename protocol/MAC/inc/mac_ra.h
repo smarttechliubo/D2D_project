@@ -11,13 +11,19 @@
 #define _SMARTLOGICTECH_PROTOCOL_MAC_INC_RA_H_
 
 #include "typedef.h"
+#include "smac_info.h"
+#include "emac_mode.h"
 
 typedef enum {
     RA_IDLE = 0,
-    RA_MSG1,
-	RA_MSG2,
-    RA_MSG3,
-    RA_MSG4
+    RA_MSG1_SEND,
+	RA_MSG1_RECEIVED,
+	RA_MSG2_SEND,
+	RA_MSG2_RECEIVED,
+    RA_MSG3_SEND,
+	RA_MSG3_RECEIVED,
+    RA_MSG4_SEND,
+	RA_MSG4_RECEIVED,
    // RA_WAITMSG4ACK,
    // RA_MSGCRNTI,
    // RA_MSGCRNTI_ACK
@@ -28,7 +34,7 @@ typedef struct node
 	uint16_t ueIndex;
 	rnti_t   rnti;     
 	uint16_t ra_rnti;
-	uint16_t padding;
+	uint16_t ra_timer;
 	ra_state state;
 	struct node *next;
 }ra_list;
@@ -44,5 +50,7 @@ typedef struct
 }ra_t;
 
 void init_ra(const uint16_t cellId);
+bool add_ra(const uint16_t cellId, mode_e mode);
+void schedule_ra(const frame_t frame, const sub_frame_t subframe, mac_info_s *mac);
 
 #endif /* _SMARTLOGICTECH_PROTOCOL_MAC_INC_RA_H_ */

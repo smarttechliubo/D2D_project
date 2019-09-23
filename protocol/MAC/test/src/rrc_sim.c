@@ -165,6 +165,15 @@ void rrcMsgHandler()
 				msg_free(cfm);
 				break;
 			}
+			case MAC_RRC_CCCH_RPT:
+			{
+				mac_rrc_ccch_rpt *cfm = (mac_rrc_ccch_rpt *)msg.data; //TODO: add msg body handler function
+
+				LOG_INFO(MAC, "[TEST] mac_rrc_ccch_rpt");
+				msg_free(cfm);
+
+				break;
+			}
 			default:
 				break;
 		}

@@ -154,13 +154,13 @@ void remove_ra(const rnti_t    rnti, const bool release)
 #endif
 }
 
-bool add_ra(const uint16_t cellId)
+bool add_ra(const uint16_t cellId, mode_e mode)
 {
 	ra_list* ra = new_ra(cellId);
 
 	if (ra == NULL)
 		return false;
-	
+
 	if (g_ra.ra_num < MAX_RA_NUM && ra != NULL)
 	{
 		ra_push_back(ra);
@@ -171,13 +171,52 @@ bool add_ra(const uint16_t cellId)
 		LOG_ERROR(MAC, "add new ra fail! ra_num:%u, ra:%u", g_ra.ra_num, ra != NULL);
 		return false;
 	}
+
+	ra->state = (mode == MAC_SRC) ? RA_MSG1_RECEIVED : RA_MSG1_SEND;
+	ra->ra_timer = 0;
+
 	return true;
 }
 
 
-//void schedule_ra(const frame_t frame, const sub_frame_t subframe, mac_info_s *mac)
-//{
-	
-//}
+void schedule_ra(const frame_t frame, const sub_frame_t subframe, mac_info_s *mac)
+{
+	ra_list *ra = g_ra.ra_list;
+
+	while (ra != NULL)
+	{
+		switch (ra->state)
+		{
+			case RA_MSG1_SEND:
+			{
+				break;
+			}
+			case RA_MSG1_RECEIVED:
+			{
+				if (ra->ra_timer >= MAX_RA_TIMER)
+				{
+					remove_ra(ra->rnti, true);
+					LOG_ERROR(MAC, "Ra timer expired! RA fail");
+					break;
+				}
+
+				ra->ra_timer++;
+				
+				break;
+			}
+			case RA_MSG2_SEND:
+			case RA_MSG2_RECEIVED:
+			case RA_MSG3_SEND:
+			case RA_MSG3_RECEIVED:
+			case RA_MSG4_SEND:
+			case RA_MSG4_RECEIVED:
+				break;
+			default:
+				break;
+		}
+
+		ra = ra->next;
+	}
+}
 
 

@@ -14,6 +14,7 @@
 #include "d2d_message_type.h"
 #include "smac_context.h"
 #include "mac_ra.h"
+#include "mac_tx.h"
 
 #include "messageDefine.h"//MAC_TEST
 #include "msg_queue.h"
@@ -59,7 +60,7 @@ void mac_release(const rrc_mac_release_req *req)//TODO: mac reset ue release
 }
 
 // MAC_TEST
-void mac_config_cfm(bool success)
+bool mac_config_cfm(bool success)
 {
 	msgDef msg;
 	mac_rrc_initial_cfm *cfm;
@@ -79,6 +80,7 @@ void mac_config_cfm(bool success)
 
 		if (msgSend(RRC_QUEUE, (char *)&msg, sizeof(msgDef)))
 		{
+			return true;
 		}
 
 		//msg_free(msg);
@@ -86,7 +88,9 @@ void mac_config_cfm(bool success)
 	else
 	{
 		LOG_ERROR(MAC, "[TEST]: new mac message fail!");
+		return false;
 	}
+	return false;
 }
 
 void mac_config(const rrc_mac_initial_req *req)
@@ -104,16 +108,20 @@ void mac_config(const rrc_mac_initial_req *req)
 		mac->rb_start_index = req->pdcch_config.rb_start_index;
 		
 		mac->max_rbs_per_ue = MAX_RBS;
-		mac->status = STATUS_INIT;
 
 		success = true;
+		
+		if (mac_config_cfm(success))
+		{
+			mac->status = STATUS_ACTIVE;
+			init_mac_tx(mac->cellId);
+		}
 	}
 	else
 	{
 		LOG_ERROR(MAC, "MAC config error");
 	}
 
-	mac_config_cfm(success);
 
 	init_ra(mac->cellId);
 }
@@ -133,7 +141,7 @@ void rrc_mac_bcch_cfm(bool success)
 		msg.header.msgSize = msg_size;
 
 		cfm = (mac_rrc_bcch_para_config_cfm*)msg.data;
-		cfm->flag = 
+		cfm->flag = 3;
 		cfm->status = 1;
 		cfm->error_code = success;
 

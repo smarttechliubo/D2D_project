@@ -18,6 +18,7 @@
 #include "mac_vars.h"
 #include "mac_defs.h"
 #include "mac_rx.h"
+#include "mac_tx.h"
 #include "mac_config.h"
 #include "pre_schedule.h"
 #include "d2d_message_type.h"
@@ -135,6 +136,7 @@ void run_period()
 void run_scheduler()
 {
 	LOG_INFO(MAC, "[TEST]: run_scheduler");
-	//handle_phy_msg();
+	handle_phy_msg();
+	mac_scheduler();
 }
 

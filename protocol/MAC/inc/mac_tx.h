@@ -10,6 +10,8 @@
 #ifndef _SMARTLOGICTECH_PROTOCOL_MAC_INC_MAC_TX_H_
 #define _SMARTLOGICTECH_PROTOCOL_MAC_INC_MAC_TX_H_
 
+void init_mac_tx(uint16_t cellId);
+void mac_scheduler();
 
 
 #endif /* _SMARTLOGICTECH_PROTOCOL_MAC_INC_MAC_TX_H_ */
