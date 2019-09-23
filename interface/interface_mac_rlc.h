@@ -30,7 +30,8 @@ typedef  struct rlc_status_rpt_s
 	uint8_t valid_flag;
 	uint8_t logic_chan_num;
 	rnti_t  rnti; 
-	
+
+	rlc_mode_e   rlc_mode_for_logicchan[MAX_LOGICCHAN_NUM]; 
 	uint8_t logicchannel_id[MAX_LOGICCHAN_NUM];
 	uint32_t buffer_byte_size[MAX_LOGICCHAN_NUM];
 
@@ -54,6 +55,7 @@ typedef struct rlc_data_req_s
     
 	uint8_t  logicchannel_id[MAX_LOGICCHAN_NUM];
 	uint32_t mac_pdu_byte_size[MAX_LOGICCHAN_NUM] ; /**PDU size ,unit:byte*/
+	
 }rlc_data_req;
 
 
@@ -65,6 +67,7 @@ typedef struct mac_rlc_data_req_s
 	uint16_t sub_sfn;  /**subsfn number*/
 	uint16_t sfn;     /**sfn number*/
 
+	uint32_t  ue_num; 
     rlc_data_req  rlc_data_request[D2D_MAX_USER_NUM]; 
 }mac_rlc_data_req;
 
@@ -99,7 +102,7 @@ typedef  struct mac_rlc_data_info_s
 	
 	uint16_t logicchannel_id[MAX_LOGICCHAN_NUM];
 	uint32_t mac_pdu_size[MAX_LOGICCHAN_NUM] ; /**PDU size ,unit:byte*/
-	uint32_t *mac_pdu_buffer_ptr[MAX_LOGICCHAN_NUM; /**PDU buffer address */
+	uint32_t *mac_pdu_buffer_ptr[MAX_LOGICCHAN_NUM]; /**PDU buffer address */
 
 }mac_rlc_data_info;
 /**MAC_RLC_DATA_RPT*/
@@ -115,4 +118,3 @@ typedef struct mac_rlc_data_rpt_s
 
 
 #endif /* INC_INTERFACE_MAC_RLC_H_ */
-

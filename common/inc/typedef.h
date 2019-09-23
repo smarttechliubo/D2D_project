@@ -32,6 +32,17 @@ typedef uint16_t           rnti_t;
 
 
 
+typedef enum
+{/**1:tm_dl,2:tm_ul, 3:tm ul&dl, 3:um_dl,4:um_ul, 5:um_dl&ul **/
+   RLC_MODE_NONE,
+   RLC_MODE_TM, 
+   RLC_MODE_TM_DL,      //!0
+   RLC_MODE_TM_UL,
+   RLC_MODE_UM, 
+   RLC_MODE_UM_DL, 
+   RLC_MODE_UM_UL, 
+   RLC_MODE_AM
+}rlc_mode_e; 
 
 
 #endif /* INC_TYPEDEF_H_ */

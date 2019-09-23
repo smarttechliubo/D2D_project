@@ -119,7 +119,7 @@ uint32_t  dict_GetValue(ue_info_dict *dict, uint16_t key_rnti)
 	{
 		if (temp->ue_info.key_ue_rnti == key_rnti)
 		{
-		    LOG_DEBUG(RRC, "find right node in dictionary,change the value of element\n"); 
+		    LOG_DEBUG(RRC, "find right node in dictionary,return the value of element\n"); 
 			return temp->ue_info.value_ue_index ;
 		}
 		temp = temp->next;
