@@ -29,6 +29,7 @@ typedef struct
 	uint32_t    cce_bits;//1: in use, 0: available
 	uint16_t    rb_num;//pdcch rb num
 	uint16_t    rb_start_index; // pdcch rb start
+	uint8_t     rb_available[MAX_RBS];
 	common_channel_s common_channel;
 	ue_info_s ue;
 }mac_info_s;//cell

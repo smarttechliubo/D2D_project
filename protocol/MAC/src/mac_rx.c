@@ -211,7 +211,7 @@ void handleCrcFail(const pusch_result result)
 
 void handlePuschReceivedcInd(const PHY_PuschReceivedInd *req)
 {
-	uint16_t cellId = req->cellId;
+	uint16_t cellId = 0;//g_sch.cellId;//TODO:
 	frame_t frame = req->frame;
 	sub_frame_t subframe = req->subframe;
 	uint16_t num_ue = req->num_ue;

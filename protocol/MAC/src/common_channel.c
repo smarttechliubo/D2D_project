@@ -33,9 +33,9 @@ void schedule_sib(const frame_t frame, const sub_frame_t subframe, mac_info_s *m
 {
 	common_channel_s *common_channel = &mac->common_channel;
 	mac_tx_req *tx_req = &g_sch.tx_req;
-	uint32_t sib_len = common_channel->sib_size;
+	uint16_t sib_len = common_channel->sib_size;
 	uint32_t rb_max = get_rb_num(mac->bandwith);
-	uint32_t rb_start_index = get_rb_start(mac->bandwith);
+	uint16_t rb_start_index = get_rb_start(mac->bandwith);
 	uint32_t rbg_size = get_rbg_size(mac->bandwith);
 	uint32_t rbs_req = 0;
 	uint16_t aggregation_level = 2;
@@ -46,25 +46,41 @@ void schedule_sib(const frame_t frame, const sub_frame_t subframe, mac_info_s *m
 	
 	while (tbs < sib_len)
 	{
-	  rbs_req += rbg_size;
+		rbs_req += rbg_size;
 	
-	  if (rbs_req > mac->max_rbs_per_ue || rbs_req > rb_max) 
-	  {
-		rbs_req = MIN(mac->max_rbs_per_ue,rb_max);
+		if (rbs_req > mac->max_rbs_per_ue || rbs_req > rb_max) 
+		{
+			rbs_req = MIN(mac->max_rbs_per_ue,rb_max);
+			tbs = get_tbs(mcs, rbs_req);
+			break;
+		}
 		tbs = get_tbs(mcs, rbs_req);
-		break;
-	  }
-	  tbs = get_tbs(mcs, rbs_req);
-	} // end of while
+	}
 
 	tx_req->tx_info[tx_req->num_tx].sch.rb_start = rb_start_index;
 	tx_req->tx_info[tx_req->num_tx].sch.rb_num = rbs_req;
+	tx_req->tx_info[tx_req->num_tx].sch.mcs = mcs;
+	tx_req->tx_info[tx_req->num_tx].sch.data_ind = 2;
 	tx_req->tx_info[tx_req->num_tx].sch.modulation = 2;//QPSK
 	tx_req->tx_info[tx_req->num_tx].sch.rv = 0;
-	tx_req->tx_info[tx_req->num_tx].sch.data_ind = 2;
+	tx_req->tx_info[tx_req->num_tx].sch.harqId = INVALID_U8;
 	tx_req->tx_info[tx_req->num_tx].sch.ack = INVALID_U8;
 	tx_req->tx_info[tx_req->num_tx].sch.pdu_len = sib_len;
 	tx_req->tx_info[tx_req->num_tx].sch.data = common_channel->sib_pdu;
+
+	if (tbs == sib_len)
+	{
+		tx_req->tx_info[tx_req->num_tx].sch.padding_len = 0;
+	}
+	else
+	{
+		tx_req->tx_info[tx_req->num_tx].sch.padding_len = tbs - sib_len;
+	}
+	
+	for (uint32_t i = rb_start_index; i < rbs_req; i++)
+	{
+		mac->rb_available[i] = 0;
+	}
 
 	cce_offset = allocate_CCE(aggregation_level);
 	
@@ -87,7 +103,6 @@ void schedule_sib(const frame_t frame, const sub_frame_t subframe, mac_info_s *m
 	{
 		LOG_WARN(MAC, "No CCE Resoure for SIB SFN:%u", frame*4+subframe);
 	}
-
 }
 
 void schedule_common(const frame_t frame, const sub_frame_t subframe, mac_info_s *mac)

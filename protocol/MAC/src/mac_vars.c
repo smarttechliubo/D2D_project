@@ -89,3 +89,60 @@ uint32_t get_rb_start(const uint16_t bandwith)
 	return 4;// d2d case, first rb is 4.
 }
 
+uint32_t get_first_rb(uint16_t bandwith)
+{
+	mac_info_s *mac = g_context.mac;
+	uint32_t rb_start_index = get_rb_start(bandwith);
+	uint32_t i = 0;
+	
+	for (i = rb_start_index; i < MAX_RBS; i++)
+	{
+		if (mac->rb_available[i] == 1)
+			break;
+	}
+
+	if (i >= MAX_RBS)
+	{
+		LOG_ERROR(MAC, "No availabe rb!");
+	}
+
+	return i;
+}
+
+uint8_t get_harqId(const sub_frame_t subframe)
+{
+	uint8_t harqId = INVALID_U8;
+	mac_info_s *mac = g_context.mac;
+	mode_e mode = mac->mode;
+	if (mode == MAC_SRC)
+	{
+		harqId = subframe % MAX_SUBSFN;
+	}
+	else
+	{
+		harqId = (subframe % MAX_SUBSFN) - 2;
+	}
+	return harqId;
+}
+
+bool pre_check(const sub_frame_t subframe)
+{
+	mac_info_s *mac = g_context.mac;
+
+	if (mac->status != STATUS_ACTIVE)
+	{
+		return false;
+	}
+
+	if ((mac->mode == MAC_SRC) && (subframe == 0 || subframe == 1))
+	{
+		return true;
+	}
+	else if((mac->mode == MAC_DEST) && (subframe == 2 || subframe == 3))
+	{
+		return true;
+	}
+
+	return false;
+}
+

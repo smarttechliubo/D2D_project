@@ -60,11 +60,11 @@ void pre_schedule(const frame_t frame, const sub_frame_t subframe, mac_info_s *m
 
 	handle_buffer_status_req(frame, subframe);
 
-	if (mac->mode == 0 && mac->status == STATUS_ACTIVE)//source
+	if (mac->mode == 0)//source
 	{
 		schedule_common(frame, subframe, mac);
 	}
-	
+
 	//schedule_ra(frame, subframe, mac);
 }
 

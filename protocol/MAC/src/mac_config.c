@@ -98,7 +98,7 @@ void mac_config(const rrc_mac_initial_req *req)
 	bool success = false;
 	mac_info_s *mac = g_context.mac;
 
-	if(mac != NULL)
+	if(mac != NULL && mac->status == STATUS_NONE)
 	{
 		mac->mode = (mode_e)req->mode;
 		mac->cellId = req->cellId;
@@ -110,7 +110,12 @@ void mac_config(const rrc_mac_initial_req *req)
 		mac->max_rbs_per_ue = MAX_RBS;
 
 		success = true;
-		
+
+		for (uint32_t i = mac->rb_start_index; i < (mac->rb_start_index + mac->rb_num); i++)
+		{
+			mac->rb_available[i] = 0;
+		}
+
 		if (mac_config_cfm(success))
 		{
 			mac->status = STATUS_ACTIVE;

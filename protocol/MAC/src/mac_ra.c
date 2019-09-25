@@ -15,6 +15,7 @@
 #include "log.h"
 #include "mac_defs.h"
 #include "ue_index.h"
+#include "mac_vars.h"
 
 ra_t g_ra;
 
@@ -53,7 +54,7 @@ ra_list* new_ra(const uint16_t cellId)
 
 	if (node != NULL)
 	{
-		node->ra_rnti = RA_RNTI;//set a default value for D2D
+		node->ra_rnti = RA_RNTI;//TODO: set a default value for D2D
 		ueIndex = new_index();
 		if (ueIndex == INVALID_U16)
 		{
@@ -63,6 +64,7 @@ ra_list* new_ra(const uint16_t cellId)
 		node->ueIndex = ueIndex;
 		node->rnti = new_rnti(cellId, ueIndex);
 		node->state = RA_IDLE;
+		node->dataSize = 0;
 		node->next = NULL;
 	}
 	return node;
@@ -156,12 +158,17 @@ void remove_ra(const rnti_t    rnti, const bool release)
 
 bool add_ra(const uint16_t cellId, mode_e mode)
 {
-	ra_list* ra = new_ra(cellId);
-
-	if (ra == NULL)
+	ra_list* ra = NULL;
+	
+	if (g_ra.ra_num >= MAX_RA_NUM)
+	{
+		LOG_ERROR(MAC, "Too much ra ue! add new fail ra_num:%u, ra:%u", g_ra.ra_num, ra != NULL);
 		return false;
+	}
+	
+	ra = new_ra(cellId);
 
-	if (g_ra.ra_num < MAX_RA_NUM && ra != NULL)
+	if (ra != NULL)
 	{
 		ra_push_back(ra);
 		g_ra.ra_num++;
@@ -172,14 +179,96 @@ bool add_ra(const uint16_t cellId, mode_e mode)
 		return false;
 	}
 
-	ra->state = (mode == MAC_SRC) ? RA_MSG1_RECEIVED : RA_MSG1_SEND;
+	ra->state = (mode == MAC_SRC) ? RA_MSG1_RECEIVED : RA_ADDED;
 	ra->ra_timer = 0;
 
 	return true;
 }
 
+ra_list* find_ra(rnti_t rnti)
+{
+	ra_list * ra = g_ra.ra_list;
 
-void schedule_ra(const frame_t frame, const sub_frame_t subframe, mac_info_s *mac)
+	while(ra != NULL)
+	{
+		if (ra->ra_rnti == rnti)
+			break;
+
+		ra = ra->next;
+	}
+	return ra;
+}
+
+void update_ra_buffer(rlc_buffer_rpt buffer)
+{
+	ra_list* ra = NULL;
+	rnti_t rnti = buffer.rnti;
+	uint8_t logic_chan_num = buffer.logic_chan_num;
+
+	if ((ra = find_ra(rnti)) == NULL)
+	{
+		LOG_ERROR(MAC, "ra does not exist!");
+		return;
+	}
+
+	for(uint32_t i = 0; i < logic_chan_num; i++)// TODO: for ra ue, chan_num == 1
+	{
+		ra->dataSize += buffer.buffer_byte_size[i];
+	}
+}
+
+void ra_msg1(const frame_t frame, const sub_frame_t subframe, ra_list *ra)
+{
+	mac_info_s *mac = g_context.mac;
+	uint16_t bandwith = mac->bandwith;
+	mac_tx_req *tx_req = &g_sch.tx_req;
+	uint32_t msg1_len = ra->dataSize;
+	uint32_t rb_max = get_rb_num(bandwith);
+	//uint32_t rb_start_index = get_rb_start(bandwith);
+	uint32_t rbg_size = get_rbg_size(bandwith);
+	uint32_t rbs_req = 0;
+	uint8_t mcs = 2;// TODO: for msg1, mcs=?
+	uint32_t tbs = get_tbs(mcs, rbg_size);
+	uint32_t first_rb = get_first_rb(bandwith);
+	uint8_t harqId = get_harqId(subframe);
+
+	if (first_rb > MAX_RBS)
+	{
+		LOG_ERROR(MAC, "No availabe resource for msg1!");
+		return;
+	}
+		
+	while (tbs < msg1_len)
+	{
+		rbs_req += rbg_size;
+	
+		if (rbs_req > mac->max_rbs_per_ue || rbs_req > rb_max) 
+		{
+			rbs_req = MIN(mac->max_rbs_per_ue,rb_max);
+			tbs = get_tbs(mcs, rbs_req);
+			break;
+		}
+		tbs = get_tbs(mcs, rbs_req);
+	}
+	
+	tx_req->tx_info[tx_req->num_tx].sch.rb_start = first_rb;
+	tx_req->tx_info[tx_req->num_tx].sch.rb_num = rbs_req;
+	tx_req->tx_info[tx_req->num_tx].sch.mcs = mcs;
+	tx_req->tx_info[tx_req->num_tx].sch.data_ind = 2;
+	tx_req->tx_info[tx_req->num_tx].sch.modulation = 2;//QPSK
+	tx_req->tx_info[tx_req->num_tx].sch.rv = 0;
+	tx_req->tx_info[tx_req->num_tx].sch.harqId = harqId;
+	tx_req->tx_info[tx_req->num_tx].sch.ack = INVALID_U8;
+	tx_req->tx_info[tx_req->num_tx].sch.pdu_len = msg1_len;
+	tx_req->tx_info[tx_req->num_tx].sch.data = NULL;
+
+	for (uint32_t i = first_rb; i < rbs_req; i++)
+	{
+		mac->rb_available[i] = 0;
+	}
+}
+
+void schedule_ra(const frame_t frame, const sub_frame_t subframe)
 {
 	ra_list *ra = g_ra.ra_list;
 
@@ -187,6 +276,23 @@ void schedule_ra(const frame_t frame, const sub_frame_t subframe, mac_info_s *ma
 	{
 		switch (ra->state)
 		{
+			case RA_ADDED:
+			{
+				if (ra->ra_timer >= MAX_RA_TIMER)
+				{
+					remove_ra(ra->rnti, true);
+					LOG_ERROR(MAC, "Ra timer expired! RA fail");
+					break;
+				}
+
+				ra->ra_timer++;
+
+				if (ra->dataSize != 0)
+				{
+					ra_msg1(frame, subframe, ra);
+				}
+				break;
+			}
 			case RA_MSG1_SEND:
 			{
 				break;

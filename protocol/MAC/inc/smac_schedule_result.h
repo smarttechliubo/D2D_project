@@ -14,14 +14,18 @@
 
 typedef struct
 {
-	uint8_t rb_start;
-	uint8_t rb_num;
+	uint32_t rb_start;
+	uint32_t rb_num;
+	uint8_t mcs;
+	uint8_t data_ind;// 1:ack/nack, 2:data, 3:ack/nack + data
+
 	uint8_t modulation;
 	uint8_t rv;
-
-	uint8_t data_ind;// 1:ack/nack, 2:data, 3:ack/nack + data
+	uint8_t harqId;
 	uint8_t ack;
-	uint8_t pdu_len;
+
+	uint16_t padding_len;
+	uint16_t pdu_len;
 	uint8_t *data;
 }sch_ind;
 
@@ -29,9 +33,10 @@ typedef struct
 {
 	uint8_t cce_rb;
 	uint8_t cce_rb_num;
-
-    uint8_t rb_start;
-	uint8_t rb_num;
+	uint16_t padding;
+	
+    uint32_t rb_start;
+	uint32_t rb_num;
 	uint8_t mcs;
 	uint8_t data_ind;
 	uint8_t ndi;

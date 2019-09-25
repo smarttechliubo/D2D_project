@@ -34,7 +34,8 @@ bool g_timing_sync = false;
 
 void init_mac()
 {
-	
+	uint32_t i = 0;
+
 	mac_info_s *mac = (mac_info_s*) malloc(sizeof(mac_info_s));
     bzero(mac, sizeof(mac_info_s));
 
@@ -42,6 +43,14 @@ void init_mac()
 	mac->frame = INVALID_U32;
 	mac->subframe = INVALID_U32;
 	mac->cce_bits = 0;
+
+	mac->rb_available[i++] = 0;
+	mac->rb_available[i++] = 0;
+
+	for (; i < MAX_RBS; i++)
+	{
+		mac->rb_available[i] = 1;
+	}
 
 	g_context.mac = mac;
 	g_timing_sync = false;
@@ -56,22 +65,29 @@ void mac_clean()
 void mac_pre_handler()
 {
 	frame_t frame;
-	sub_frame_t sub_frame;
+	sub_frame_t subframe;
 
 	if (g_timing_sync == false)
 		return;
 
 	frame = g_context.frame;
-	sub_frame = g_context.subframe;
+	subframe = g_context.subframe;
 
-	frame = (frame + (sub_frame + TIMING_ADVANCE) / MAX_SUBSFN) % MAX_SFN;
-	sub_frame = (sub_frame + TIMING_ADVANCE) % MAX_SUBSFN;
+	frame = (frame + (subframe + TIMING_ADVANCE) / MAX_SUBSFN) % MAX_SFN;
+	subframe = (subframe + TIMING_ADVANCE) % MAX_SUBSFN;
 
+	g_context.mac->frame = frame;
+	g_context.mac->subframe = subframe;
 	g_context.mac->cce_bits = 0;
 
 	handle_rrc_msg();
 
-	pre_schedule(frame, sub_frame, g_context.mac);
+	if (!pre_check(subframe))
+	{
+		return;
+	}
+
+	pre_schedule(frame, subframe, g_context.mac);
 
 }
 
@@ -136,7 +152,14 @@ void run_period()
 void run_scheduler()
 {
 	LOG_INFO(MAC, "[TEST]: run_scheduler");
+
 	handle_phy_msg();
+
+	if (!pre_check(g_context.mac->subframe))
+	{
+		return;
+	}
+
 	mac_scheduler();
 }
 
