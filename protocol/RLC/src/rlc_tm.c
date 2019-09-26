@@ -144,7 +144,139 @@ void rlc_tm_configure(
   rlcP->next_sdu_index = 0;
   rlcP->current_sdu_index = 0;
 } 
- 
+
+
+void  rlc_tm_no_segment (const protocol_ctxt_t* const  ctxt_pP,
+								rlc_tm_entity_t *const rlc_pP)
+{
+	mem_block_t 					*pdu_p				 = NULL;
+	struct rlc_tm_tx_sdu_management *sdu_mngt_p 		 = NULL;
+	struct rlc_tm_tx_pdu_management *pdu_mngt_p 		 = NULL;
+	int 							 nb_pdu_to_transmit  = 1;
+	uint32_t                         tm_sdu_size; 
+
+	// only one SDU per TTI
+	while ((rlc_pP->input_sdus[rlc_pP->current_sdu_index]) && (nb_pdu_to_transmit > 0)) {
+		//!指向了memory的首地址
+		sdu_mngt_p = ((struct rlc_tm_tx_sdu_management *) (rlc_pP->input_sdus[rlc_pP->current_sdu_index]->data));
+		//!<从pool中free mem block ，并将其赋给pdu_p,如果释放失败，则return
+		//！从pool中申请一块MAC PDU 的大小，PDU 之前加上一个Header rlc_tm_tx_data_pdu_struct + GUARD_CRC_LIH_SIZE;
+		
+        //!PDU size for TM SDU must >= sdu size 
+        tm_sdu_size = sdu_mngt_p->sdu_size; 
+		AssertFatal(rlc_pP->rlc_pdu_size >= tm_sdu_size, RLC,
+				"RLC TM SDU: rnti:%d,frame:%d,subsfn:%d,PDU size:%d < SDU size:%d !\n",
+				ctxt_pP->rnti,
+				ctxt_pP->frame,
+				ctxt_pP->subframe,
+				rlc_pP->rlc_pdu_size,
+				tm_sdu_size); 
+
+		//！每次处理一个SDU 都要申请一个PDU memory		
+		if (!(pdu_p = get_free_mem_block (((rlc_pP->rlc_pdu_size + 7) >> 3) + \
+						sizeof (struct rlc_tm_tx_data_pdu_struct) + GUARD_CRC_LIH_SIZE, __func__))) {
+			LOG_DEBUG(RLC, PROTOCOL_RLC_TM_CTXT_FMT"[SEGMENT] ERROR COULD NOT GET NEW PDU, EXIT\n",
+				  PROTOCOL_RLC_TM_CTXT_ARGS(ctxt_pP, rlc_pP));
+			return;
+		}
+
+		// SHOULD BE OPTIMIZED...SOON
+		pdu_mngt_p = (struct rlc_tm_tx_pdu_management *) (pdu_p->data);
+		memset (pdu_p->data, 0, sizeof (struct rlc_tm_tx_pdu_management));
+		//!指向buffer中的data地址，加上一个偏移
+		pdu_mngt_p->first_byte = (uint8_t*)&pdu_p->data[sizeof (struct rlc_tm_tx_data_pdu_struct)];
+
+		//从sdu 的首地址 向pdu的首地址copy 数据，byte对齐的
+		memcpy (pdu_mngt_p->first_byte, sdu_mngt_p->first_byte, ((rlc_pP->rlc_pdu_size + 7) >> 3));
+		((struct mac_tb_req *) (pdu_p->data))->rlc = NULL; //!tx 发送时，等于NULL
+		((struct mac_tb_req *) (pdu_p->data))->data_ptr = pdu_mngt_p->first_byte; //!数据首地址,TM模式下没有header，直接就是数据
+		((struct mac_tb_req *) (pdu_p->data))->first_bit = 0;
+		((struct mac_tb_req *) (pdu_p->data))->tb_size = rlc_pP->rlc_pdu_size ;
+
+		//!将当前的pdu_p的指针加入到pdus_to_mac_layer 这个链表中去
+		list_add_tail_eurecom (pdu_p, &rlc_pP->pdus_to_mac_layer);
+
+		rlc_pP->buffer_occupancy -= (rlc_pP->rlc_pdu_size);	//!<RLC 层维护的buffer大小需要减去已经给MAC的大小
+		
+		free_mem_block (rlc_pP->input_sdus[rlc_pP->current_sdu_index], __func__);
+		rlc_pP->input_sdus[rlc_pP->current_sdu_index] = NULL;
+
+		rlc_pP->current_sdu_index = (rlc_pP->current_sdu_index + 1) % rlc_pP->size_input_sdus_buffer;
+		rlc_pP->nb_sdu -= 1; 
+	}
+}
+
+
+void  rlc_tm_data_req (
+							  const protocol_ctxt_t* const	ctxt_pP,
+							  void *const rlc_pP,
+							  mem_block_t *const sdu_pP)
+{
+	rlc_tm_entity_t *rlc_p = (rlc_tm_entity_t *) rlc_pP;
+
+
+	LOG_DEBUG(RLC, PROTOCOL_RLC_TM_CTXT_FMT" RLC_TM_DATA_REQ size %d Bytes, BO %ld , NB SDU %d current_sdu_index=%d \
+			next_sdu_index=%d\n",
+		 PROTOCOL_RLC_TM_CTXT_ARGS(ctxt_pP, rlc_p),
+		 ((struct rlc_um_data_req *) (sdu_pP->data))->data_size,
+		 rlc_p->buffer_occupancy,
+		 rlc_p->nb_sdu,
+		 rlc_p->current_sdu_index,
+		 rlc_p->next_sdu_index);
+
+
+	// not in 3GPP specification but the buffer may be full if not correctly configured
+	if (rlc_p->input_sdus[rlc_p->next_sdu_index] == NULL) { //！下一个memory没有被占用
+	((struct rlc_tm_tx_sdu_management *) (sdu_pP->data))->sdu_size = ((struct rlc_tm_data_req *) (sdu_pP->data))->data_size;
+	//!这里有问题，tm的buffer_occupancy 增加时，sdu_size不应该>>3吧？ 
+	rlc_p->buffer_occupancy += ((struct rlc_tm_tx_sdu_management *) (sdu_pP->data))->sdu_size;
+	rlc_p->nb_sdu += 1;
+	((struct rlc_tm_tx_sdu_management *) (sdu_pP->data))->first_byte = \
+									 (uint8_t*)&sdu_pP->data[sizeof (struct rlc_tm_data_req_alloc)];
+	rlc_p->input_sdus[rlc_p->next_sdu_index] = sdu_pP;
+	rlc_p->next_sdu_index = (rlc_p->next_sdu_index + 1) % rlc_p->size_input_sdus_buffer;
+
+	rlc_Set_Buffer_Status(ctxt_pP->rnti, RLC_MODE_TM,rlc_p->channel_id,
+						((struct rlc_tm_tx_sdu_management *) (sdu_pP->data))->sdu_size);
+						
+	} else {
+	free_mem_block (sdu_pP, __func__); //!否则找不到合适的Input buffer,则将其从Memblock中删除掉
+	}
+}
+
+
+
+struct mac_data_req rlc_tm_mac_data_request ( const protocol_ctxt_t* const  ctxt_pP,
+													  void * const rlc_pP,
+													  tbs_size_t   tbs_size)
+{
+  rlc_tm_entity_t*    rlc_p = (rlc_tm_entity_t*) rlc_pP;
+  struct mac_data_req data_req;
+
+  rlc_p->rlc_pdu_size = tbs_size; //!update pdu size; 
+  //！将SDU中的data copy到PDU中，tm模式下没有分段，直接copy 
+  rlc_tm_no_segment (ctxt_pP, rlc_p);
+  
+  list_init (&data_req.data, NULL);  //！将mac_data_req.data这个链表初始化
+   //！将pdus_to_mac_layer的list添加到data_req.data 这个list之后
+  list_add_list (&rlc_p->pdus_to_mac_layer, &data_req.data);
+  
+  data_req.buffer_occupancy_in_bytes = rlc_p->buffer_occupancy;
+  //！计算PDU 个数
+ // data_req.buffer_occupancy_in_pdus = data_req.buffer_occupancy_in_bytes / rlc_p->rlc_pdu_size;
+//  data_req.rlc_info.rlc_protocol_state = rlc_p->protocol_state; //更新状态
+
+   //nb_elements 等同于tb 个数
+  if (data_req.data.nb_elements > 0) {
+    LOG_DEBUG(RLC, PROTOCOL_RLC_TM_CTXT_FMT" MAC_DATA_REQUEST %d TBs\n",
+          PROTOCOL_RLC_TM_CTXT_ARGS(ctxt_pP, rlc_p),
+          data_req.data.nb_elements);
+  }
+
+  
+
+  return data_req;
+} 
  
  
 /**************************function******************************/

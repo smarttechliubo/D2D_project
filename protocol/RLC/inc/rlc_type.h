@@ -31,6 +31,7 @@ typedef uint16_t              srb_id_t;
 typedef unsigned int          mui_t;
 typedef unsigned int       logical_chan_id_t;
 typedef sdu_size_t         tb_size_t;
+typedef sdu_size_t         tbs_size_t; 
 
 typedef unsigned int       rlc_tx_status_t;
 
@@ -73,7 +74,7 @@ typedef struct protocol_ctxt_s {
   module_id_t module_id;     /*!< \brief  Virtualized module identifier      */
   eNB_flag_t  enb_flag;      /*!< \brief  Flag to indicate eNB (1) or UE (0) */
   instance_t  instance;      /*!< \brief  ITTI or OTG module identifier      */
-  rnti_t      rnti;
+  rnti_t      rnti; 
   frame_t     frame;         /*!< \brief  LTE frame number.*/
   sub_frame_t subframe;      /*!< \brief  LTE sub frame number.*/
   eNB_index_t eNB_index;     /*!< \brief  valid for UE indicating the index of connected eNB(s)      */

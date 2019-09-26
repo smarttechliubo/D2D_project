@@ -35,6 +35,10 @@
 
 //#define  AM_ENABLE   1
 
+#define MAX_NUM_DLSCH_SEGMENTS 16
+#define MAX_NUM_ULSCH_SEGMENTS MAX_NUM_DLSCH_SEGMENTS
+#define MAX_DLSCH_PAYLOAD_BYTES (MAX_NUM_DLSCH_SEGMENTS*768)
+#define MAX_ULSCH_PAYLOAD_BYTES (MAX_NUM_ULSCH_SEGMENTS*768)
 
 
 //-----------------------------------------------------------------------------
@@ -48,12 +52,23 @@
 #define  RLC_RB_UNALLOCATED    (rb_id_t)0
 #define  RLC_LC_UNALLOCATED    (logical_chan_id_t)0
 //! 采用字符串串接的方式组成printf的格式符 
-#define PROTOCOL_CTXT_FMT        "[FRAME %05u][%s][MOD %02u][RNTI %d]"   //!# define PRIx64  __PRI64_PREFIX "x"
+#define PROTOCOL_CTXT_FMT        "[FRAME %05u][SUBFRAME %05][%s][MOD %02u][RNTI %d]"   //!# define PRIx64  __PRI64_PREFIX "x"
 #define PROTOCOL_CTXT_ARGS(CTXT_Pp) \
   (CTXT_Pp)->frame, \
+  (CTXT_Pp)->subframe,   \
   ((CTXT_Pp)->enb_flag == ENB_FLAG_YES) ? "eNB":" UE", \
   (CTXT_Pp)->module_id, \
   (CTXT_Pp)->rnti 
+
+
+#define PROTOCOL_CTXT_SET_BY_MODULE_ID(Ctxt_Pp, mODULE_iD, eNB_fLAG, rNTI, fRAME, sUBfRAME, eNB_iNDEX) \
+  (Ctxt_Pp)->module_id = mODULE_iD; \
+  (Ctxt_Pp)->enb_flag  = eNB_fLAG; \
+  (Ctxt_Pp)->rnti      = rNTI; \
+  (Ctxt_Pp)->frame     = fRAME; \
+  (Ctxt_Pp)->subframe  = sUBfRAME; \
+  (Ctxt_Pp)->eNB_index  = eNB_iNDEX; \
+
 
 
 typedef enum rlc_confirm_e {
@@ -223,6 +238,8 @@ extern char *g_rlc_mode_str[];
 extern rlc_buffer_status   g_rlc_buffer_status[D2D_MAX_USER_NUM+1];
 
 extern pthread_mutex_t    g_rlc_buffer_mutex; 
+
+extern uint8_t            g_rlc_pdu_buffer[D2D_MAX_USER_NUM * MAX_DLSCH_PAYLOAD_BYTES];
 
 
 /************************************function declaration*************************/

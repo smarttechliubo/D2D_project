@@ -178,7 +178,17 @@ struct mac_tb_ind {
   unsigned char              first_bit;    // 0 if data starts on byte boundary(b7), 1 if b6, 2 if b5, etc
 };
 
-// MAC-DATA-Req/Ind:
+
+//! mac sub header 
+typedef  struct  mac_subheader_s
+{
+	uint8_t  e;
+	uint8_t  f; 
+	uint16_t  lcid; 
+	uint16_t length; 
+
+}mac_datapdu_subheader; 
+
 
 
 
@@ -233,6 +243,13 @@ struct mac_primitive {
 };
 
 
+
+
+
+/***********************************************function declare*******************************************/
+extern struct mac_data_req rlc_tm_mac_data_request ( const protocol_ctxt_t* const  ctxt_pP,
+													  void * const rlc_pP,
+													  tbs_size_t   tbs_size);
  
  
 #endif

@@ -17,7 +17,6 @@
 #include <interface_mac_rlc.h>
 #include <rlc.h>
 
-#if 0
 rlc_union_t 	*rlc_Get_HashNode(const protocol_ctxt_t* const ctxt_pP,
 									   boolean_t  srb_flagP,
 									   rb_id_t rb_idP)
@@ -40,9 +39,8 @@ rlc_union_t 	*rlc_Get_HashNode(const protocol_ctxt_t* const ctxt_pP,
 
 	if (HASH_TABLE_OK == h_rc)
 	{
-		LOG_DEBUG(RLC,PROTOCOL_CTXT_FMT"[%s,rb_id:%d] Get hashnode OK!\n",
-						   PROTOCOL_CTXT_ARGS(ctxt_pP),
-						   srb_flagP?"SRB","DRB",
+		LOG_DEBUG(RLC,PROTOCOL_CTXT_FMT"[%s,rb_id:%d] Get hashnode OK!\n", PROTOCOL_CTXT_ARGS(ctxt_pP),
+						   srb_flagP?"SRB":"DRB",
 						   rb_idP);
 		return rlc_union_p; 
 	}
@@ -50,7 +48,7 @@ rlc_union_t 	*rlc_Get_HashNode(const protocol_ctxt_t* const ctxt_pP,
 	{
 		LOG_ERROR(RLC, PROTOCOL_CTXT_FMT"[%s,rb_id:%d] Get hashnode ERROR!\n",
 						   PROTOCOL_CTXT_ARGS(ctxt_pP),
-						   srb_flagP?"SRB","DRB",
+						   srb_flagP?"SRB":"DRB",
 						   rb_idP);
 		AssertFatal(HASH_TABLE_OK == h_rc, RLC,"Get hashnode ERROR\n"); 
 		return NULL; 
@@ -58,7 +56,6 @@ rlc_union_t 	*rlc_Get_HashNode(const protocol_ctxt_t* const ctxt_pP,
 
 }
 
-#endif
 
 
 void rlc_util_print_hex_octets(comp_name_t componentP, unsigned char *dataP, const signed long sizeP)

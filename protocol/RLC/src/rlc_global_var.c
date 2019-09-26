@@ -24,5 +24,8 @@ pthread_mutex_t    g_rlc_buffer_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 rlc_buffer_status   g_rlc_buffer_status[D2D_MAX_USER_NUM+1]; 
 
+
+uint8_t            g_rlc_pdu_buffer[D2D_MAX_USER_NUM *  MAX_DLSCH_PAYLOAD_BYTES]; 
+
  
 /**************************function******************************/

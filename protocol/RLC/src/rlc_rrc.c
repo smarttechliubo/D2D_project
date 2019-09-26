@@ -64,8 +64,4 @@ void rlc_Rrc_BufStatus_Rpt(uint32_t send_data_size, rb_id_t rb_id, rb_type_e rb_
 }
 
  
- 
- 
- 
- 
 /**************************function******************************/
