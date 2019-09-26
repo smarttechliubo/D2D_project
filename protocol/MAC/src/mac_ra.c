@@ -185,7 +185,7 @@ bool add_ra(const uint16_t cellId, mode_e mode)
 	return true;
 }
 
-ra_list* find_ra(rnti_t rnti)
+ra_list* find_ra(const rnti_t rnti)
 {
 	ra_list * ra = g_ra.ra_list;
 
@@ -199,30 +199,87 @@ ra_list* find_ra(rnti_t rnti)
 	return ra;
 }
 
+bool update_ra_state(const rnti_t rnti)
+{
+	ra_list* ra = NULL;
+	ra_state state = RA_IDLE;
+
+	if ((ra = find_ra(rnti)) == NULL)
+	{
+		LOG_ERROR(MAC, "ra does not exist!");
+		return false;
+	}
+
+	state = ra->state;
+
+	if (state == RA_ADDED)
+	{
+		ra->state = RA_MSG1_SEND;
+	}
+	
+	else if (state == RA_MSG1_SEND)
+	{
+		ra->state = RA_MSG2_RECEIVED;
+	}
+	else if (state == RA_MSG2_RECEIVED)
+	{
+		ra->state = RA_MSG3_SEND;
+		remove_ra(rnti, false);
+	}
+	else if (state == RA_MSG1_RECEIVED)
+	{
+		ra->state = RA_MSG2_SEND;
+	}
+	else if(state == RA_MSG2_SEND)
+	{
+		ra->state = RA_MSG3_RECEIVED;
+		remove_ra(rnti, false);
+	}
+	else
+	{
+		LOG_ERROR(MAC, "ra state incorrect, State:%u:", state);
+		return false;
+	}
+
+	return true;	
+}
+
 void update_ra_buffer(rlc_buffer_rpt buffer)
 {
 	ra_list* ra = NULL;
 	rnti_t rnti = buffer.rnti;
 	uint8_t logic_chan_num = buffer.logic_chan_num;
 
-	if ((ra = find_ra(rnti)) == NULL)
+	if (buffer.rnti == RA_RNTI)// dest
 	{
-		LOG_ERROR(MAC, "ra does not exist!");
-		return;
+		if (!add_ra(g_sch.cellId, MAC_DEST))
+		{
+			LOG_ERROR(MAC, "add new ra ue fail! cellId:%u", g_sch.cellId);
+		}	
 	}
 
-	for(uint32_t i = 0; i < logic_chan_num; i++)// TODO: for ra ue, chan_num == 1
+	ra = find_ra(rnti);
+
+	if (ra != NULL && (ra->state == RA_ADDED ||  ra->state == RA_MSG1_RECEIVED ||  ra->state == RA_MSG2_RECEIVED))
+	{	
+		for(uint32_t i = 0; i < logic_chan_num; i++)// TODO: for ra ue, chan_num == 1
+		{
+			ra->dataSize += buffer.buffer_byte_size[i];
+		}
+	}
+	else
 	{
-		ra->dataSize += buffer.buffer_byte_size[i];
+		LOG_ERROR(MAC, "ra does not exist!");
 	}
 }
 
-void ra_msg1(const frame_t frame, const sub_frame_t subframe, ra_list *ra)
+void ra_msg(const frame_t frame, const sub_frame_t subframe, ra_list *ra)
 {
 	mac_info_s *mac = g_context.mac;
 	uint16_t bandwith = mac->bandwith;
-	mac_tx_req *tx_req = &g_sch.tx_req;
-	uint32_t msg1_len = ra->dataSize;
+	tx_req_info *tx_info = &g_sch.tx_info;
+	uint16_t sch_num = tx_info->sch_num;
+	uint32_t msg_len = ra->dataSize;
 	uint32_t rb_max = get_rb_num(bandwith);
 	//uint32_t rb_start_index = get_rb_start(bandwith);
 	uint32_t rbg_size = get_rbg_size(bandwith);
@@ -238,7 +295,7 @@ void ra_msg1(const frame_t frame, const sub_frame_t subframe, ra_list *ra)
 		return;
 	}
 		
-	while (tbs < msg1_len)
+	while (tbs < msg_len)
 	{
 		rbs_req += rbg_size;
 	
@@ -250,22 +307,44 @@ void ra_msg1(const frame_t frame, const sub_frame_t subframe, ra_list *ra)
 		}
 		tbs = get_tbs(mcs, rbs_req);
 	}
-	
-	tx_req->tx_info[tx_req->num_tx].sch.rb_start = first_rb;
-	tx_req->tx_info[tx_req->num_tx].sch.rb_num = rbs_req;
-	tx_req->tx_info[tx_req->num_tx].sch.mcs = mcs;
-	tx_req->tx_info[tx_req->num_tx].sch.data_ind = 2;
-	tx_req->tx_info[tx_req->num_tx].sch.modulation = 2;//QPSK
-	tx_req->tx_info[tx_req->num_tx].sch.rv = 0;
-	tx_req->tx_info[tx_req->num_tx].sch.harqId = harqId;
-	tx_req->tx_info[tx_req->num_tx].sch.ack = INVALID_U8;
-	tx_req->tx_info[tx_req->num_tx].sch.pdu_len = msg1_len;
-	tx_req->tx_info[tx_req->num_tx].sch.data = NULL;
+
+	tx_info->sch[sch_num].ueIndex = ra->ueIndex;
+	tx_info->sch[sch_num].rnti = (ra->state == RA_ADDED) ? ra->ra_rnti : ra->rnti;
+
+	tx_info->sch[sch_num].rb_start = first_rb;
+	tx_info->sch[sch_num].rb_num = rbs_req;
+	tx_info->sch[sch_num].mcs = mcs;
+	tx_info->sch[sch_num].data_ind = 2;
+	tx_info->sch[sch_num].modulation = 2;//QPSK
+	tx_info->sch[sch_num].rv = 0;
+	tx_info->sch[sch_num].harqId = harqId;
+	tx_info->sch[sch_num].ack = INVALID_U8;
+	tx_info->sch[sch_num].pdu_len = msg_len;
+	tx_info->sch[sch_num].data = NULL;
+	tx_info->sch_num++;
 
 	for (uint32_t i = first_rb; i < rbs_req; i++)
 	{
 		mac->rb_available[i] = 0;
 	}
+
+	ra->dataSize = 0;
+
+	LOG_INFO(MAC, "RA msg resource alloc, rnti:%u, ueIndex:%u, state:%u",ra->rnti, ra->ueIndex, ra->state);
+}
+
+bool check_ra_timer(ra_list *ra)
+{
+	if (ra->ra_timer >= MAX_RA_TIMER)
+	{
+		LOG_ERROR(MAC, "Ra timer expired! RA fail, rnti:&=%u, state:%u", ra->rnti, ra->state);
+		remove_ra(ra->rnti, true);
+		return false;
+	}
+
+	ra->ra_timer++;
+
+	return true;
 }
 
 void schedule_ra(const frame_t frame, const sub_frame_t subframe)
@@ -274,53 +353,18 @@ void schedule_ra(const frame_t frame, const sub_frame_t subframe)
 
 	while (ra != NULL)
 	{
-		switch (ra->state)
+		if (ra->state > RA_IDLE)
 		{
-			case RA_ADDED:
+			if (!check_ra_timer(ra))
 			{
-				if (ra->ra_timer >= MAX_RA_TIMER)
-				{
-					remove_ra(ra->rnti, true);
-					LOG_ERROR(MAC, "Ra timer expired! RA fail");
-					break;
-				}
-
-				ra->ra_timer++;
-
-				if (ra->dataSize != 0)
-				{
-					ra_msg1(frame, subframe, ra);
-				}
-				break;
+			
 			}
-			case RA_MSG1_SEND:
+
+			if (ra->dataSize > 0)
 			{
-				break;
+				ra_msg(frame, subframe, ra);
 			}
-			case RA_MSG1_RECEIVED:
-			{
-				if (ra->ra_timer >= MAX_RA_TIMER)
-				{
-					remove_ra(ra->rnti, true);
-					LOG_ERROR(MAC, "Ra timer expired! RA fail");
-					break;
-				}
-
-				ra->ra_timer++;
-				
-				break;
-			}
-			case RA_MSG2_SEND:
-			case RA_MSG2_RECEIVED:
-			case RA_MSG3_SEND:
-			case RA_MSG3_RECEIVED:
-			case RA_MSG4_SEND:
-			case RA_MSG4_RECEIVED:
-				break;
-			default:
-				break;
 		}
-
 		ra = ra->next;
 	}
 }

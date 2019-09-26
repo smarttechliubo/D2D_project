@@ -55,6 +55,7 @@ typedef struct
 void init_ra(const uint16_t cellId);
 bool add_ra(const uint16_t cellId, mode_e mode);
 void schedule_ra(const frame_t frame, const sub_frame_t subframe);
+bool update_ra_state(const rnti_t rnti);
 void update_ra_buffer(rlc_buffer_rpt buffer);
 
 #endif /* _SMARTLOGICTECH_PROTOCOL_MAC_INC_RA_H_ */

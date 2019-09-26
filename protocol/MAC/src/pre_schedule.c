@@ -42,7 +42,7 @@ void handle_buffer_status_req(const frame_t frame, const sub_frame_t subframe)
 	
 		if (msgSend(RLC_QUEUE, (char *)&msg, sizeof(msgDef)))
 		{
-			LOG_ERROR(MAC, "mac_rlc_buf_status_req send");
+			//LOG_ERROR(MAC, "mac_rlc_buf_status_req send");
 		}
 	
 		//msg_free(msg);

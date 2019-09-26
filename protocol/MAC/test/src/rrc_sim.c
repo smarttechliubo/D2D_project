@@ -19,11 +19,15 @@
 #include "log.h"
 
 rrc_info g_rrc;
-uint32_t g_runtime = 0;
+static uint32_t g_runtime = 0;
 
-
-void msgHandler()
+void init_rrc_sim()
 {
+	g_runtime = 0;
+
+	g_rrc.cellId = 0;
+	g_rrc.mode = 0;//source
+	g_rrc.status = RRC_NONE;
 	
 }
 
@@ -207,17 +211,4 @@ void *rrc_thread()
 	}
 	return 0;
 }
-
-
-void init_rrc_sim()
-{
-	g_runtime = 0;
-
-	g_rrc.cellId = 0;
-	g_rrc.mode = 0;//source
-	g_rrc.status = RRC_NONE;
-	
-}
-
-
 

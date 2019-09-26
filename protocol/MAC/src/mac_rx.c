@@ -192,9 +192,15 @@ void handlePuschSdu(const frame_t frame, const sub_frame_t subframe, const uint1
 						LOG_ERROR(MAC, "add new ra ue fail! cellId:%u", cellId);
 					}
 
-					mac_rrc_data_ind(frame, subframe, result);
 					//return;
 				}
+				else if(update_ra_state(result.rnti))
+				{
+
+				}
+
+				mac_rrc_data_ind(frame, subframe, result);
+
 				break;
 			}
 			default:

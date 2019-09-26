@@ -97,7 +97,7 @@ void init_sim()
 	run_time = 0;
 	init_mac_sim();
 	init_rrc_sim();
-	
+
 	for (uint32_t i = 0; i < MAX_QUEUE; i++)
 	{
 		msgq_init((msgq_type)i);

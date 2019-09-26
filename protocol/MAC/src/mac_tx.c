@@ -30,21 +30,21 @@ void handle_buffer_status(const frame_t frame, const sub_frame_t subframe, const
 {
 	uint32_t ue_num = rpt->valid_ue_num; 
 	rlc_buffer_rpt buffer;
-	uint16_t cellId = g_sch.cellId;
+	//uint16_t cellId = g_sch.cellId;
+	uint8_t logic_chan_num = 0;
 
 	for (uint32_t i = 0; i < ue_num; i++)
 	{
 		buffer = rpt->rlc_buffer_rpt[i];
+		logic_chan_num = buffer.logic_chan_num;
 
-		if (buffer.rnti == RA_RNTI)// dest
+		for(uint8_t i = 0; i < logic_chan_num; i++)
 		{
-			if (!add_ra(cellId, MAC_DEST))
+			if (buffer.logicchannel_id[i] == CCCH_)// TODO: no data should be transmit before ue get connection setup.
 			{
-				LOG_ERROR(MAC, "add new ra ue fail! cellId:%u", cellId);
-				continue;
+				update_ra_buffer(buffer);
+				break;
 			}
-
-			update_ra_buffer(buffer);
 		}
 	}
 }

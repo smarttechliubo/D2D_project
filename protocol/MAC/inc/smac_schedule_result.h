@@ -14,6 +14,9 @@
 
 typedef struct
 {
+	uint16_t ueIndex;
+	rnti_t rnti;
+
 	uint32_t rb_start;
 	uint32_t rb_num;
 	uint8_t mcs;
@@ -31,6 +34,9 @@ typedef struct
 
 typedef struct
 {
+	uint16_t ueIndex;
+	rnti_t rnti;
+
 	uint8_t cce_rb;
 	uint8_t cce_rb_num;
 	uint16_t padding;
@@ -45,17 +51,11 @@ typedef struct
 
 typedef struct
 {
-	uint16_t ueIndex;
-	rnti_t rnti;
-	dci_ind dci;
-	sch_ind sch;
+	uint16_t dci_num;
+	uint16_t sch_num;
+	dci_ind dci[MAX_TX_UE];
+	sch_ind sch[MAX_TX_UE];
 }tx_req_info;
-
-typedef struct
-{
-	uint32_t num_tx;
-	tx_req_info tx_info[MAX_TX_UE];
-}mac_tx_req;
 
 typedef struct
 {
@@ -63,7 +63,7 @@ typedef struct
 	sub_frame_t subframe;
 	uint16_t cellId;
 	uint16_t padding;
-	mac_tx_req tx_req;
+	tx_req_info tx_info;
 }schedule_result_s;
 
 #endif /* _SMARTLOGICTECH_PROTOCOL_MAC_INC_SMAC_SCHEDULE_RESULT_H_ */
