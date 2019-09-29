@@ -247,4 +247,15 @@ extern void *rlc_rrc_config_task( );
 extern rlc_union_t 	*rlc_Get_HashNode(const protocol_ctxt_t* const ctxt_pP,
 									   boolean_t  srb_flagP,
 									   rb_id_t rb_idP);
+
+extern void mac_rlc_data_ind	  (
+							const module_id_t 		module_idP,
+							const rnti_t				rntiP,
+							const eNB_index_t 		eNB_index,
+							const frame_t 			frameP,
+							const eNB_flag_t			enb_flagP,
+							const logical_chan_id_t	channel_idP,
+							char					   *buffer_pP,
+							const tb_size_t			tb_sizeP,
+							uint32_t					num_tbP);
 #endif

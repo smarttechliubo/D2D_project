@@ -15,7 +15,7 @@
 #include <typedef.h>
 #include <list.h>
 #include <rlc_type.h>
-//#    include "LAYER2/MAC/defs.h"
+#include <rlc_tm_structs.h>
 
 #define MAC_DCCH                              0xCC
 #define MAC_DTCH                              0xDC
@@ -188,6 +188,35 @@ typedef  struct  mac_subheader_s
 	uint16_t length; 
 
 }mac_datapdu_subheader; 
+
+
+typedef enum rlc_am_rx_segment_reassemble_info
+{
+    /** No Reassembly scheduled */
+    RLC_AM_RX_PDU_SEGMENT_REASSEMBLE_NO           = 0,
+    /** Reassembly scheduled */
+	RLC_AM_RX_PDU_SEGMENT_REASSEMBLE_PENDING      = 1,
+    /** Reassembly done */
+	RLC_AM_RX_PDU_SEGMENT_REASSEMBLED             = 2
+
+} rlc_am_rx_segment_reassemble_info_t;
+
+/*! \struct  rlc_am_rx_pdu_management_t
+* \brief Structure for storing decoded informations from the header of a AMD PDU or AMD PDU segment and information on reassembly.
+*/
+
+
+
+typedef struct {
+  union {
+   // struct rlc_am_rx_pdu_management dummy1;
+   // struct rlc_tm_rx_pdu_management dummy2;
+   //struct rlc_um_rx_pdu_management dummy3;
+    struct mac_tb_ind dummy4;
+    struct mac_rx_tb_management dummy5;
+  } dummy;
+} mac_rlc_max_rx_header_size_t;   //!< MAC->RLC的数据头定义
+
 
 
 

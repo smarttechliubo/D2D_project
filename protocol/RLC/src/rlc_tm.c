@@ -277,6 +277,84 @@ struct mac_data_req rlc_tm_mac_data_request ( const protocol_ctxt_t* const  ctxt
 
   return data_req;
 } 
+
+
+
+void  rlc_tm_send_sdu(const protocol_ctxt_t* const  ctxt_pP,
+							rlc_tm_entity_t * const rlc_pP,
+							uint8_t * const 		srcP,
+							const sdu_size_t		length_in_bitsP)
+{
+	int 			length_in_bytes;
+
+	length_in_bytes = (length_in_bitsP + 7) >> 3;
+
+	 //！ output_sdu_in_construction 是在上报SDU之前，重组SDU时需要使用的Buffer
+	if (rlc_pP->output_sdu_in_construction == NULL) {
+	  rlc_pP->output_sdu_in_construction = get_free_mem_block (length_in_bytes, __func__);
+	}
+
+	if ((rlc_pP->output_sdu_in_construction)) {
+	 
+	  memcpy (&rlc_pP->output_sdu_in_construction->data[rlc_pP->output_sdu_size_to_write], srcP, length_in_bytes);
+     #if 0
+	  rlc_data_ind (
+		ctxt_pP,
+		BOOL_NOT(rlc_pP->is_data_plane),
+		MBMS_FLAG_NO,
+		rlc_pP->rb_id,
+		length_in_bytes,
+		rlc_pP->output_sdu_in_construction);  //！在这个函数中上报给上层，并且释放
+	#endif 
+	  rlc_pP->output_sdu_in_construction = NULL;
+	} else {
+	  LOG_DEBUG(RLC,"[RLC_TM %p][SEND_SDU] ERROR  OUTPUT SDU IS NULL\n", rlc_pP);
+}
+}
+
+
+
+
+void   rlc_tm_rx (const protocol_ctxt_t* const  ctxt_pP,
+					 void * const		 argP,
+					 struct mac_data_ind data_indP)
+{
+
+	rlc_tm_entity_t 	* const rlc_p = (rlc_tm_entity_t *) argP;
+	mem_block_t 		*tb_p;
+	uint8_t 			*first_byte_p;
+
+	rlc_p->output_sdu_size_to_write = 0;	  // size of sdu reassemblied
+	//！从data_ind.data 的链表中，依次处理
+	while ((tb_p = list_remove_head(&data_indP.data))) 
+	{
+		
+		first_byte_p = ((struct mac_tb_ind *) (tb_p->data))->data_ptr;
+		((struct rlc_tm_rx_pdu_management *) (tb_p->data))->first_byte = first_byte_p;
+		rlc_tm_send_sdu(ctxt_pP, rlc_p, first_byte_p, data_indP.tb_size);
+		free_mem_block (tb_p, __func__); 
+	}
+}
+
+
+
+
+void  rlc_tm_mac_data_indication (const protocol_ctxt_t* const  ctxt_pP,
+											void * const		rlc_pP,
+											struct mac_data_ind data_indP)
+{
+
+	if (data_indP.data.nb_elements > 0) {
+	  LOG_DEBUG(RLC, PROTOCOL_RLC_TM_CTXT_FMT" MAC_DATA_IND %d TBs\n",
+			PROTOCOL_RLC_TM_CTXT_ARGS(ctxt_pP, ((rlc_tm_entity_t*) rlc_pP)),
+			data_indP.data.nb_elements);
+	}
+
+	rlc_tm_rx (ctxt_pP, rlc_pP, data_indP);
+}
+
+
+
  
  
 /**************************function******************************/
