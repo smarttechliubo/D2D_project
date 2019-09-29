@@ -83,7 +83,8 @@
 #define  MAC_RLC_BUF_STATUS_REQ     (MAC_RLC_MESSAGE_BASE + 0)
 #define  RLC_MAC_BUF_STATUS_RPT     (MAC_RLC_MESSAGE_BASE + 1)
 #define  MAC_RLC_DATA_REQ           (MAC_RLC_MESSAGE_BASE + 2)
-#define  RLC_MAC_DATA_IND           (MAC_RLC_MESSAGE_BASE + 3)
+#define  RLC_MAC_DATA_IND           (MAC_RLC_MESSAGE_BASE + 3) 
+#define  MAC_RLC_DATA_RPT           (MAC_RLC_MESSAGE_BASE + 4) 
 
 /*************************************MAC<--> PHY message***************************/
 #define  MAC_PHY_MESSAGE_BASE   (D2D_PROTOCOL_MESSAGE_BASE + 5 * MESSAGE_GAP)  /**base+500*/
