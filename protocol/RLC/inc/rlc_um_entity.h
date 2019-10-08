@@ -145,6 +145,8 @@ window. */
   unsigned int stat_rx_data_bytes_out_of_window;         /*!< \brief Number of data bytes received out of the receive 
 window. */
   unsigned int stat_timer_reordering_timed_out;
+
+  unsigned int rlc_header_size; 
 } rlc_um_entity_t;
 /** @} */
 

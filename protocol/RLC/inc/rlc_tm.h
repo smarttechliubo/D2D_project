@@ -88,16 +88,6 @@ rlc_tm_mac_status_indication (
   struct mac_status_ind         tx_statusP);
 
 
-/*! \fn struct mac_data_req rlc_tm_mac_data_request (const protocol_ctxt_t* const  ctxt_pP, void * const rlcP)
-* \brief    Gives PDUs to lower layer MAC.
-* \param[in]  ctxtP                     Running context.
-* \param[in]  rlcP                      RLC TM protocol instance pointer.
-* \return     A PDU of the previously requested number of bytes, and the updated maximum number of bytes that can be 
-served by RLC instance to MAC for next RLC transmission.
-*/
-struct mac_data_req  rlc_tm_mac_data_request (
-                 const protocol_ctxt_t* const  ctxt_pP,
-                 void * const rlcP);
 
 
 /*! \fn void     rlc_tm_mac_data_indication (const protocol_ctxt_t* const  ctxt_pP,void * const rlcP, struct 

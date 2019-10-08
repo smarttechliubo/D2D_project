@@ -178,6 +178,7 @@ int   rlc_Get_Buffer_Status(rlc_buffer_rpt *buffer_status)
 	uint32_t  rnti_index = 0; 
     rnti_t    temp_rnti = 0; 
     uint16_t  ue_have_data_send = 0; 
+    uint32_t  logic_ch_index = 0; 
 
     rlc_buffer_rpt   rlc_buffer_stat; 
 
@@ -192,6 +193,12 @@ int   rlc_Get_Buffer_Status(rlc_buffer_rpt *buffer_status)
 		{
 			buffer_status[ue_num].valid_flag = 1; 
 			buffer_status[ue_num].logic_chan_num = g_rlc_buffer_status[ue_index].latest_logic_ch_num; 
+
+            //!data_size include the rlc header size , then report to MAC Layer 
+			for (logic_ch_index = 0; logic_ch_index < buffer_status[ue_num].logic_chan_num; logic_ch_index++)
+			{
+				g_rlc_buffer_status[ue_index].data_size[logic_ch_index] += g_rlc_buffer_status[ue_index].rlc_header_size[logic_ch_index]; 
+			}
 			
 			memcpy((void *)buffer_status[ue_num].logicchannel_id,
 					(void *)g_rlc_buffer_status[ue_index].logicchannel_id,
@@ -216,12 +223,36 @@ int   rlc_Get_Buffer_Status(rlc_buffer_rpt *buffer_status)
 }
 
 
-uint32_t  rlc_Set_Buffer_Status(rlc_mode_e rlc_mode,logical_chan_id_t logical_chan_id_t, rnti_t rnti, uint32_t data_size)
+void   rlc_Set_Buffer_Status(rnti_t rnti,
+									   rlc_mode_e rlc_mode,
+									   uint32_t input_sdu_num,
+									   logical_chan_id_t logical_chan_id_t, 
+									   uint32_t data_size)
 {
 	uint32_t   ue_index ; 
 	uint32_t   lch_index = 0; 
+	uint32_t   rlc_header_size = 0; 
 	
 	pthread_mutex_lock(&g_rlc_buffer_mutex); 
+
+	 //!calculate rlc header size for all of the SDU for UM
+	if (RLC_MODE_UM == rlc_mode)
+	{
+		rlc_header_size  = input_sdu_num;
+
+		 if (input_sdu_num <= 1) 
+		 {
+			rlc_header_size = 0;  
+		  } else 
+		  { 
+			rlc_header_size = (((input_sdu_num - 1) * 3) / 2) + ((input_sdu_num - 1) % 2);
+          }
+
+	}
+	else 
+	{
+		rlc_header_size = 0; 
+	}
 
 	ue_index = dict_GetValue(g_rrc_ue_info_dict,rnti);
 	AssertFatal((ue_index < (D2D_MAX_USER_NUM + 1)), RLC, "ue num exceed max limit!!\n"); 
@@ -236,6 +267,8 @@ uint32_t  rlc_Set_Buffer_Status(rlc_mode_e rlc_mode,logical_chan_id_t logical_ch
 		lch_index = 0; 
 		g_rlc_buffer_status[ue_index].logicchannel_id[lch_index] = logical_chan_id_t; 
 		g_rlc_buffer_status[ue_index].data_size[lch_index] = data_size; 
+		
+		g_rlc_buffer_status[ue_index].rlc_header_size[lch_index] = rlc_header_size; //!update rlc header size   
 		g_rlc_buffer_status[ue_index].latest_logic_ch_num++; 
 		g_rlc_buffer_status[ue_index].valid_flag = 1; 
 	}
@@ -252,7 +285,10 @@ uint32_t  rlc_Set_Buffer_Status(rlc_mode_e rlc_mode,logical_chan_id_t logical_ch
 		g_rlc_buffer_status[ue_index].logicchannel_id[lch_index] = logical_chan_id_t; 
 		g_rlc_buffer_status[ue_index].data_size[lch_index] += data_size; 
 		g_rlc_buffer_status[ue_index].latest_logic_ch_num = lch_index+1; 
+		g_rlc_buffer_status[ue_index].rlc_header_size[lch_index] = rlc_header_size; //!update rlc header size   
 	}
+
+   
 
 	pthread_mutex_unlock(&g_rlc_buffer_mutex); 
 

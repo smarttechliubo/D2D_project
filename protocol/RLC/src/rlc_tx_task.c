@@ -249,6 +249,8 @@ void rlc_tx_process(void *message, MessagesIds      msg_type)
 	uint32_t     ue_num; 
 	uint32_t     ue_index; 
 
+	tb_size_t    tb_size; 
+
 	int        ret_value = 0; 
 	uint32_t   empty_size = 0; 
 	
@@ -320,12 +322,16 @@ void rlc_tx_process(void *message, MessagesIds      msg_type)
 			for (ue_index = 0; ue_index < ue_num; ue_index++)
 			{
 				rlc_data_req_ptr = (rlc_data_req * )&mac_rlc_data_req_ptr->rlc_data_request[ue_index];
+
 				
 				rlc_mac_ue_data_process(sfn,
 				 						subsfn,
 				 						rlc_data_req_ptr,
 				 						&g_rlc_protocol_ctxt,
-				 						&g_rlc_pdu_buffer[ue_index * MAX_DLSCH_PAYLOAD_BYTES]); 
+				 						&g_rlc_pdu_size_para[ue_index],
+				 						&g_rlc_pdu_buffer[ue_index * MAX_DLSCH_PAYLOAD_BYTES],
+				 						&g_rlc_mac_subheader[ue_index *((MAX_LOGICCHAN_NUM  + 1)* 3)]); 
+				 					 
 			}
 			
 

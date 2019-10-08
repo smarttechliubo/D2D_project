@@ -19,6 +19,7 @@
 #include <hashtable.h>
 #include <log.h>
 #include <interface_rrc_rlc.h>
+#include <interface_mac_rlc.h>
 #include <rlc_tm_init.h>
 #include <rlc_um_control_primitives.h>
 #include <rlc_um_entity.h>
@@ -223,9 +224,10 @@ typedef struct buffer_status_s
     uint32_t  valid_flag;
 	rnti_t    rnti;
 	uint32_t  latest_logic_ch_num; //!index for the logic chan in the following arrays
-	uint32_t  data_size[MAX_LOGICCHAN_NUM];
+	uint32_t  data_size[MAX_LOGICCHAN_NUM]; //!include the rlc header size.
 
 	uint16_t logicchannel_id[MAX_LOGICCHAN_NUM];
+	uint32_t rlc_header_size[MAX_LOGICCHAN_NUM];
 
 }rlc_buffer_status;
 
@@ -240,6 +242,13 @@ extern rlc_buffer_status   g_rlc_buffer_status[D2D_MAX_USER_NUM+1];
 extern pthread_mutex_t    g_rlc_buffer_mutex; 
 
 extern uint8_t            g_rlc_pdu_buffer[D2D_MAX_USER_NUM * MAX_DLSCH_PAYLOAD_BYTES];
+
+extern mac_pdu_size_para  g_rlc_pdu_size_para[D2D_MAX_USER_NUM];
+extern uint8_t            g_rlc_mac_subheader[D2D_MAX_USER_NUM * ((MAX_LOGICCHAN_NUM  + 1)* 3)]; 
+extern mac_pdu_size_para  g_rlc_pdu_size_para[D2D_MAX_USER_NUM]; 
+
+extern struct mac_data_req g_rlc_mac_data_req;
+
 
 
 /************************************function declaration*************************/
@@ -258,4 +267,10 @@ extern void mac_rlc_data_ind	  (
 							char					   *buffer_pP,
 							const tb_size_t			tb_sizeP,
 							uint32_t					num_tbP);
+extern void   rlc_Set_Buffer_Status(rnti_t rnti,
+									   rlc_mode_e rlc_mode,
+									   uint32_t input_sdu_num,
+									   logical_chan_id_t logical_chan_id_t,
+									   uint32_t data_size);
+extern int   rlc_Get_Buffer_Status(rlc_buffer_rpt *buffer_status);
 #endif

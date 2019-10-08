@@ -218,7 +218,43 @@ typedef struct {
 } mac_rlc_max_rx_header_size_t;   //!< MAC->RLC的数据头定义
 
 
+typedef struct {
 
+    
+    logical_chan_id_t    logic_ch_index; 
+              
+    
+    uint8_t     is_last_sub_header_flag;
+    uint8_t     mac_subheader_length_type; //! 1:last sub header;2: short header with L ; 3: long header with L; 
+	uint8_t     mac_subheader_length; 
+	uint8_t     rlc_header_length; 
+
+	uint32_t    mac_reqeust_tb_size;    //! mac request tb size 
+	uint32_t    final_mac_sdu_size;  //! the final pdu size after the previous logic channel has allocated 
+
+	uint8_t    occupy_by_previous_lc_flag;  //!1:occupied by the previous logic channel 
+	uint8_t    occupy_by_previous_lc_idx; 
+	uint8_t      valid_flag; 
+	uint8_t     invalid_pad; 
+	
+	
+    uint32_t    remain_mac_pdu_size;    
+    
+	uint32_t   rlc_data_length; 
+	uint32_t   padding_byte; 
+}logic_channel_pdu_component; 
+
+
+typedef struct {
+	tbs_size_t     total_pdu_size; 
+	tbs_size_t     remain_pdu_size; 
+
+	uint32_t       total_mac_subheader_size; 
+	uint32_t       total_mac_sdu_size; 
+	uint32_t       total_mac_ce_size; 
+	uint32_t       padding_size; 
+
+}mac_pdu_size_para; 
 
 
 //---------------------
@@ -276,9 +312,11 @@ struct mac_primitive {
 
 
 /***********************************************function declare*******************************************/
-extern struct mac_data_req rlc_tm_mac_data_request ( const protocol_ctxt_t* const  ctxt_pP,
-													  void * const rlc_pP,
-													  tbs_size_t   tbs_size);
+extern void  rlc_tm_mac_data_request ( const protocol_ctxt_t* const  ctxt_pP,
+										  void * const rlc_pP,
+										  tbs_size_t   tbs_size,
+										  logic_channel_pdu_component *lc_pdu_component_ptr,
+										  struct mac_data_req * data_req);
  
  
 #endif
