@@ -185,6 +185,7 @@ void handlePuschSdu(const frame_t frame, const sub_frame_t subframe, const uint1
 		{
 			case CCCH_:
 			{
+#if 0
 				if(result.rnti == RA_RNTI)//source ue
 				{
 					if (!add_ra(cellId, MAC_SRC))
@@ -198,7 +199,7 @@ void handlePuschSdu(const frame_t frame, const sub_frame_t subframe, const uint1
 				{
 
 				}
-
+#endif
 				mac_rrc_data_ind(frame, subframe, result);
 
 				break;

@@ -13,9 +13,7 @@
 #include "ue_index.h"
 #include "mac_defs.h"
 
-#define MAX_UE_2 MAX_UE*2
-
-static uint16_t ringBuffer[MAX_UE_2] = {0,};
+static uint16_t ringBuffer[MAX_UE] = {0,};
 static uint16_t free_start = 0;
 static uint16_t free_end = MAX_UE;
 static uint16_t ue_num;
@@ -32,11 +30,14 @@ void init_index()
 
 uint16_t new_index()
 {
+	uint16_t index = INVALID_U16;
+
 	if (ue_num >= MAX_UE)
 	{
 		return INVALID_U16;
 	}
-	uint16_t index = ringBuffer[free_start];
+
+	index = ringBuffer[free_start];
 	
 	free_start++;
 	if (free_start == MAX_UE)

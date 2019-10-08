@@ -33,8 +33,7 @@ typedef enum {
 
 typedef struct node
 {
-	uint16_t ueIndex;
-	rnti_t   rnti;     
+	uint16_t   raId;     
 	uint16_t ra_rnti;
 	uint16_t ra_timer;
 	ra_state state;

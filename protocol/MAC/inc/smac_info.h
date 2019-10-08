@@ -31,7 +31,8 @@ typedef struct
 	uint16_t    rb_start_index; // pdcch rb start
 	uint8_t     rb_available[MAX_RBS];
 	common_channel_s common_channel;
-	ue_info_s ue;
+	uint32_t num_ue;
+	ueContext ue[MAX_UE];
 }mac_info_s;//cell
 
 #endif /* _SMARTLOGICTECH_PROTOCOL_MAC_INC_STRUCT_MAC_INFO_H_ */

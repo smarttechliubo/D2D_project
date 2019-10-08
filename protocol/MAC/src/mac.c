@@ -42,6 +42,7 @@ void init_mac()
 	mac->status = STATUS_NONE;
 	mac->frame = INVALID_U32;
 	mac->subframe = INVALID_U32;
+	mac->num_ue = 0;
 	mac->cce_bits = 0;
 
 	mac->rb_available[i++] = 0;
@@ -52,9 +53,15 @@ void init_mac()
 		mac->rb_available[i] = 1;
 	}
 
+	for(uint32_t j = 0; j < MAX_UE; j++)
+	{
+		mac->ue[j].active = false;
+		mac->ue[j].ueIndex = INVALID_U16;
+		mac->ue[j].ue = NULL;
+	}
+
 	g_context.mac = mac;
 	g_timing_sync = false;
-
 }
 
 void mac_clean()

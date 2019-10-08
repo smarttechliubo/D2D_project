@@ -18,6 +18,7 @@
 #include "mac_vars.h"
 
 ra_t g_ra;
+uint16_t g_raId = 0;
 
 void init_ra(const uint16_t cellId)
 {
@@ -32,7 +33,7 @@ void init_ra(const uint16_t cellId)
 
 ra_list* createNode()
 {
-	ra_list*node = (ra_list*)malloc(sizeof(ra_list));
+	ra_list* node = (ra_list*)malloc(sizeof(ra_list));
 	if (node == NULL)
 	{
 		LOG_ERROR(MAC, "memory alloc for new ra ue fail!");
@@ -42,27 +43,27 @@ ra_list* createNode()
 	return node;
 }
 
-rnti_t new_rnti(const uint16_t cellId, const uint16_t ueIndex)
+rnti_t new_raId()
 {
-	return (cellId + 1) * 1000 + ueIndex;
+	for (uint16_t i = 0; i < 16; i++) // i <= MAX_RA_NUM
+	{
+		if ((g_raId & (0x01 << i)) == 0)
+		{
+			g_raId |= (0x01 << i);
+			return i;
+		}
+	}
+	return INVALID_U16;
 }
 
 ra_list* new_ra(const uint16_t cellId)
 {
 	ra_list *node = createNode();
-	uint16_t ueIndex = INVALID_U16;
 
 	if (node != NULL)
 	{
 		node->ra_rnti = RA_RNTI;//TODO: set a default value for D2D
-		ueIndex = new_index();
-		if (ueIndex == INVALID_U16)
-		{
-			LOG_ERROR(MAC, "no invalid ue index");
-			return NULL;
-		}
-		node->ueIndex = ueIndex;
-		node->rnti = new_rnti(cellId, ueIndex);
+		node->raId = new_raId();
 		node->state = RA_IDLE;
 		node->dataSize = 0;
 		node->next = NULL;
@@ -85,7 +86,7 @@ void ra_push_back(ra_list* ra)
 	}
 }
 
-void remove_ra(const rnti_t    rnti, const bool release)
+void remove_ra(const uint16_t    raId)
 {
 	ra_list * node = NULL;
 	ra_list * pre = NULL;
@@ -99,12 +100,9 @@ void remove_ra(const rnti_t    rnti, const bool release)
 	{
 		while(cur)
 		{
-			if (cur->rnti == rnti)
+			if (cur->raId == raId)
 			{
 				node = cur;
-
-				if (release)
-					release_index(cur->ueIndex);
 
 				if (cur->next == NULL)
 					g_ra.tail = pre;
@@ -224,7 +222,7 @@ bool update_ra_state(const rnti_t rnti)
 	else if (state == RA_MSG2_RECEIVED)
 	{
 		ra->state = RA_MSG3_SEND;
-		remove_ra(rnti, false);
+		//remove_ra(rnti, false);
 	}
 	else if (state == RA_MSG1_RECEIVED)
 	{
@@ -233,7 +231,8 @@ bool update_ra_state(const rnti_t rnti)
 	else if(state == RA_MSG2_SEND)
 	{
 		ra->state = RA_MSG3_RECEIVED;
-		remove_ra(rnti, false);
+		//remove_ra(rnti, false);
+		//add_ue(rnti, ra->ueIndex);
 	}
 	else
 	{
@@ -294,7 +293,7 @@ void ra_msg(const frame_t frame, const sub_frame_t subframe, ra_list *ra)
 		LOG_ERROR(MAC, "No availabe resource for msg1!");
 		return;
 	}
-		
+
 	while (tbs < msg_len)
 	{
 		rbs_req += rbg_size;
@@ -308,8 +307,8 @@ void ra_msg(const frame_t frame, const sub_frame_t subframe, ra_list *ra)
 		tbs = get_tbs(mcs, rbs_req);
 	}
 
-	tx_info->sch[sch_num].ueIndex = ra->ueIndex;
-	tx_info->sch[sch_num].rnti = (ra->state == RA_ADDED) ? ra->ra_rnti : ra->rnti;
+	tx_info->sch[sch_num].ueIndex = INVALID_U16;
+	tx_info->sch[sch_num].rnti = ra->ra_rnti;
 
 	tx_info->sch[sch_num].rb_start = first_rb;
 	tx_info->sch[sch_num].rb_num = rbs_req;
@@ -330,15 +329,15 @@ void ra_msg(const frame_t frame, const sub_frame_t subframe, ra_list *ra)
 
 	ra->dataSize = 0;
 
-	LOG_INFO(MAC, "RA msg resource alloc, rnti:%u, ueIndex:%u, state:%u",ra->rnti, ra->ueIndex, ra->state);
+	LOG_INFO(MAC, "RA msg resource alloc, raId:%u, state:%u",ra->raId, ra->state);
 }
 
 bool check_ra_timer(ra_list *ra)
 {
 	if (ra->ra_timer >= MAX_RA_TIMER)
 	{
-		LOG_ERROR(MAC, "Ra timer expired! RA fail, rnti:&=%u, state:%u", ra->rnti, ra->state);
-		remove_ra(ra->rnti, true);
+		LOG_ERROR(MAC, "Ra timer expired! RA fail, raId:&=%u, state:%u", ra->raId, ra->state);
+		remove_ra(ra->raId);
 		return false;
 	}
 

@@ -12,9 +12,17 @@
 
 typedef struct
 {
+	rnti_t rnti;
+	uint16_t maxHARQ_Tx;
+	uint16_t max_out_sync;
+}ueInfo;//ue
+
+typedef struct
+{
+	bool active;
 	uint16_t ueId;
 	uint16_t ueIndex;
-	uint16_t rnti;
-}ue_info_s;//ue
+	ueInfo *ue;
+}ueContext;
 
 #endif /* _SMARTLOGICTECH_PROTOCOL_MAC_INC_SMAC_UE_INFO_H_ */

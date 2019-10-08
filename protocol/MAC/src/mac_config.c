@@ -15,49 +15,12 @@
 #include "smac_context.h"
 #include "mac_ra.h"
 #include "mac_tx.h"
+#include "mac_ue.h"
 
 #include "messageDefine.h"//MAC_TEST
 #include "msg_queue.h"
 
 extern context_s g_context;
-
-
-void mac_release_cfm(bool success)
-{
-	msgDef msg;
-	mac_rrc_release_cfm *cfm;
-	msgSize msg_size = sizeof(mac_rrc_release_cfm);
-	msg.data = (uint8_t*)msg_malloc(msg_size);
-
-	if (msg.data != NULL)
-	{
-		msg.header.msgId = MAC_RRC_INITIAL_CFM;
-		msg.header.source = MAC_TASK;
-		msg.header.destination = RRC_TASK;
-		msg.header.msgSize = msg_size;
-
-		cfm = (mac_rrc_release_cfm*)msg.data;
-		cfm->status = 1;
-		cfm->error_code = success;
-
-		if (msgSend(RRC_QUEUE, (char *)&msg, sizeof(msgDef)))
-		{
-		}
-
-		//msg_free(msg);
-	}
-	else
-	{
-		LOG_ERROR(MAC, "[TEST]: new mac message fail!");
-	}
-}
-
-void mac_release(const rrc_mac_release_req *req)//TODO: mac reset ue release
-{
-	bool success = false;
-
-	mac_release_cfm(success);
-}
 
 // MAC_TEST
 bool mac_config_cfm(bool success)
@@ -235,7 +198,7 @@ void handle_rrc_msg()
 				LOG_INFO(MAC, "RRC_MAC_RELEASE_REQ, cellId:%u, ue_index:%u, releaseCause:%u", 
 					req->cellId,req->ue_index,req->releaseCause);
 
-				mac_release(req);
+				mac_user_release(req);
 				msg_free(req);
 				break;
 			}
@@ -246,6 +209,7 @@ void handle_rrc_msg()
 				LOG_INFO(MAC, "RRC_MAC_CONNECT_SETUP_CFG_REQ, ue_index:%u, maxHARQ_Tx:%u", 
 					req->ue_index,req->maxHARQ_Tx);
 
+				mac_user_setup(req);
 				msg_free(req);
 				break;
 			}
