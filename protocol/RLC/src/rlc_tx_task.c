@@ -20,6 +20,44 @@
 
 
 
+void  rlc_mac_data_ind_message(uint32_t         *ue_pdu_buffer_ptr, uint32_t *ue_tb_size_ptr,uint32_t *rnti_array, uint32_t ue_num )
+{
+   
+	   rlc_mac_data_ind  *rlc_mac_data_send_ptr ; 
+       uint32_t  ue_index  = 0; 
+       
+
+	   MessageDef	*message; 
+	   rlc_mac_data_send_ptr = calloc(1,sizeof(rlc_mac_data_ind)); 
+
+
+	   rlc_mac_data_send_ptr->sfn = 0; 
+	   rlc_mac_data_send_ptr->sub_sfn = 0; 
+
+	   rlc_mac_data_send_ptr->ue_num = ue_num; 
+
+	   for (ue_index = 0; ue_index < ue_num ; ue_index++)
+	   {
+			
+			rlc_mac_data_send_ptr->sdu_pdu_info[ue_index].data_buffer_adder_ptr = ue_pdu_buffer_ptr[ue_index];
+			rlc_mac_data_send_ptr->sdu_pdu_info[ue_index].tb_byte_size = ue_tb_size_ptr[ue_index]; 
+			rlc_mac_data_send_ptr->sdu_pdu_info[ue_index].rnti = rnti_array[ue_index]; 
+            rlc_mac_data_send_ptr->sdu_pdu_info[ue_index].valid_flag = 1; 
+			
+	   }
+	   
+
+	
+	   message = itti_alloc_new_message(TASK_D2D_RLC, RLC_MAC_DATA_IND,
+							  ( char *)rlc_mac_data_send_ptr, sizeof(rlc_mac_data_ind ));
+	
+	   itti_send_msg_to_task(TASK_D2D_MAC,0, message);
+
+
+
+}
+
+
 rlc_op_status_t rlc_get_tx_data(const protocol_ctxt_t *const ctxt_pP,
 								const srb_flag_t   srb_flagP,
 								const rb_id_t	   rb_idP,
@@ -244,15 +282,20 @@ void rlc_tx_process(void *message, MessagesIds      msg_type)
 
 	rnti_t     rnti; 
 	rlc_buffer_rpt    rlc_buf_sta[D2D_MAX_USER_NUM]; 
-	uint16_t     sfn; 
+
+
+	int        ret_value = 0; 
+	uint32_t   empty_size = 0; 
+    uint16_t     sfn; 
 	uint16_t     subsfn; 
 	uint32_t     ue_num; 
 	uint32_t     ue_index; 
 
 	tb_size_t    tb_size; 
-
-	int        ret_value = 0; 
-	uint32_t   empty_size = 0; 
+	uint32_t   ue_pdu_buffer_array[D2D_MAX_USER_NUM]; 
+	uint32_t   ue_pdu_size_array[D2D_MAX_USER_NUM]; 
+	uint32_t   ue_rnti_array[D2D_MAX_USER_NUM]; 
+	
 	
 	switch (msg_type)
 	{
@@ -331,13 +374,18 @@ void rlc_tx_process(void *message, MessagesIds      msg_type)
 				 						&g_rlc_pdu_size_para[ue_index],
 				 						&g_rlc_pdu_buffer[ue_index * MAX_DLSCH_PAYLOAD_BYTES],
 				 						&g_rlc_mac_subheader[ue_index *((MAX_LOGICCHAN_NUM  + 1)* 3)]); 
-				 					 
+
+				ue_pdu_buffer_array[ue_index] = (uint32_t )&g_rlc_pdu_buffer[ue_index * MAX_DLSCH_PAYLOAD_BYTES]; 
+				ue_pdu_size_array[ue_index] = (uint32_t )rlc_data_req_ptr->tb_size; 
+				ue_rnti_array[ue_index] =  	rlc_data_req_ptr->rnti; 
+				
 			}
 			
-
+            rlc_mac_data_ind_message(ue_pdu_buffer_array,ue_pdu_size_array,ue_rnti_array,ue_num); 
 			break; 
 		}
 
+        
 		default: break;
 	}
 

@@ -153,10 +153,14 @@ void rlc_mac_ue_data_process(frame_t frameP,
     uint32_t     mac_subheader_length = 0; 
     uint32_t     mac_sdu_tb_size = 0; 
 
-    
+    uint8_t      *mac_pdu_buffer_ptr = ue_pdu_buffer; 
     
 	ue_rnti = rlc_data_ptr->rnti; 
-	logic_num = rlc_data_ptr->logic_chan_num; 
+	logic_num = rlc_data_ptr->logic_chan_num; 	
+	pdu_total_size = rlc_data_ptr->tb_size; 
+	AssertFatal(pdu_total_size <= MAX_DLSCH_PAYLOAD_BYTES , RLC, "mac request pdu size exceed the maximum bytes of RLC buffer !\n"); 
+
+	
 
 	//！initial ctxt
     PROTOCOL_CTXT_SET_BY_MODULE_ID(&temp_ctxt, 
@@ -170,7 +174,6 @@ void rlc_mac_ue_data_process(frame_t frameP,
 	
 
 	
-	pdu_total_size = rlc_data_ptr->tb_size; 
 	insert_tb_size = 0; 
 	memset((void *)subheader,0,sizeof(subheader)); 
 	memset((void *)lc_pdu_component,0,sizeof(lc_pdu_component)); 
@@ -289,19 +292,20 @@ void rlc_mac_ue_data_process(frame_t frameP,
     }
 
     //!copy mac subheader to ue_tb_buffer 
-    memcpy((void *)ue_pdu_buffer, subheader_ptr, mac_subheader_length); 
-    ue_pdu_buffer += mac_subheader_length; 
+    memcpy((void *)mac_pdu_buffer_ptr, subheader_ptr, mac_subheader_length); 
+    mac_pdu_buffer_ptr += mac_subheader_length; 
 
     //!copy rlc sdu to ue_tb_bubfer ,after the mac subheader 
-	mac_sdu_tb_size = mac_rlc_serialize_tb(ue_pdu_buffer, g_rlc_mac_data_req.data);
-	ue_pdu_buffer += mac_sdu_tb_size; 
+	mac_sdu_tb_size = mac_rlc_serialize_tb(mac_pdu_buffer_ptr, g_rlc_mac_data_req.data);
+	mac_pdu_buffer_ptr += mac_sdu_tb_size; 
 
     //!add padding 
     if (ue_pdu_size_para_ptr->remain_pdu_size > 2)
     {
-		memset(ue_pdu_buffer,0,ue_pdu_size_para_ptr->remain_pdu_size);
+		memset(mac_pdu_buffer_ptr,0,ue_pdu_size_para_ptr->remain_pdu_size);
     }
 	
+
    
 }
 
