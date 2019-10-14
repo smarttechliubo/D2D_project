@@ -15,6 +15,7 @@
 
 void mac_user_setup(const rrc_mac_connnection_setup *req);
 void mac_user_release(const rrc_mac_release_req *req);
+uint16_t find_ue(const rnti_t rnti);
 
 
 #endif /* _SMARTLOGICTECH_PROTOCOL_MAC_INC_MAC_UE_H_ */

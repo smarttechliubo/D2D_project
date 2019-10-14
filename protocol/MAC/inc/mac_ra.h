@@ -12,7 +12,7 @@
 
 #include "typedef.h"
 #include "smac_info.h"
-#include "emac_mode.h"
+#include "emac_enum_def.h"
 #include "interface_mac_rlc.h"
 
 typedef enum {

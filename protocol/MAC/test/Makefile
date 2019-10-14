@@ -17,7 +17,7 @@ INCFLAGS = -I. -I../../../common/inc/ -I../../../interface/ -I./../inc -I./inc/
 mac:$(MAC_OBJS)
 	@echo "Compiling start"
 	gcc $^ -o $@  -g  -lrt -ldl -lpthread
-	rm -f  *$(MAC_OBJS) *$(MAC_DEPS)
+	rm -f  $(MAC_OBJS) $(MAC_DEPS)
 
 clean:
 	@echo "Make clean"

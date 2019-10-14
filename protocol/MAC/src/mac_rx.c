@@ -188,7 +188,7 @@ void handlePuschSdu(const frame_t frame, const sub_frame_t subframe, const uint1
 #if 0
 				if(result.rnti == RA_RNTI)//source ue
 				{
-					if (!add_ra(cellId, MAC_SRC))
+					if (!add_ra(cellId, EMAC_SRC))
 					{
 						LOG_ERROR(MAC, "add new ra ue fail! cellId:%u", cellId);
 					}

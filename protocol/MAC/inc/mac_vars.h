@@ -14,8 +14,8 @@
 #include "smac_context.h"
 #include "smac_schedule_result.h"
 
-context_s g_context;
-schedule_result_s g_sch;
+extern context_s g_context;
+extern schedule_result_s g_sch;
 
 uint32_t get_rb_num(uint16_t bandwith);
 uint32_t get_rb_start(const uint16_t bandwith);
@@ -23,6 +23,7 @@ uint32_t get_tbs(const uint8_t mcs, const uint8_t num_rb);
 uint32_t get_rbg_size(const uint16_t bandwith);
 uint32_t get_first_rb(uint16_t bandwith);
 uint8_t get_harqId(const sub_frame_t subframe);
+uint16_t cqi_to_mcs(const uint16_t cqi);
 bool pre_check(const sub_frame_t subframe);
 
 

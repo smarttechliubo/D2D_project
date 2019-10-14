@@ -49,8 +49,18 @@ void handle_buffer_status_req(const frame_t frame, const sub_frame_t subframe)
 	}
 	else
 	{
-		LOG_ERROR(MAC, " new rlc message fail!");
+		LOG_ERROR(MAC, "handle_buffer_status_req new rlc message fail!");
 	}
+}
+
+void select_cs0(const frame_t frame, const sub_frame_t subframe, mac_info_s *mac)
+{
+	
+}
+
+void handle_ue_status(const frame_t frame, const sub_frame_t subframe, mac_info_s *mac)
+{
+	select_cs0(frame, subframe, mac);
 }
 
 void pre_schedule(const frame_t frame, const sub_frame_t subframe, mac_info_s *mac)
@@ -65,6 +75,7 @@ void pre_schedule(const frame_t frame, const sub_frame_t subframe, mac_info_s *m
 		schedule_common(frame, subframe, mac);
 	}
 
+	handle_ue_status(frame, subframe, mac);
 	//schedule_ra(frame, subframe, mac);
 }
 

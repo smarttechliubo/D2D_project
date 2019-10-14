@@ -36,20 +36,23 @@ ueInfo* createPtr()
 
 	return node;
 }
-void remove_ue(uint16_t ueIndex)
+bool remove_ue(uint16_t ueIndex)
 {
-	ueContext* ueContext;
+	ueInfo* ue;
 
 	if (ueIndex >= MAX_UE)
 	{
 		LOG_ERROR(MAC, "remove ue fail, Invalid ueIndex:%u", ueIndex);
-		return;
+		return false;
 	}
 
-	ueContext = &g_context.mac->ue[ueIndex];
-	ueContext->active = false;
-	ueContext->ueIndex = INVALID_U16;
-	free(ueContext->ue);
+	ue = &g_context.mac->ue[ueIndex];
+	release_index(ue->ueIndex);
+	ue->active = false;
+	ue->ueIndex = INVALID_U16;
+	free(ue);
+
+	return true;
 }
 
 ueInfo* new_ue(const uint16_t cellId, const uint16_t ueIndex)
@@ -75,18 +78,17 @@ ueInfo* new_ue(const uint16_t cellId, const uint16_t ueIndex)
 
 uint16_t find_ue(const rnti_t rnti)
 {
-	ueContext ueContext;
+	ueInfo ue;
 	uint16_t ueIndex = INVALID_U16;
 
 	for(uint32_t i = 0; i < MAX_UE; i++)
 	{
-		ueContext = g_context.mac->ue[i];
+		ue = g_context.mac->ue[i];
 
-		if(ueContext.ue != NULL &&
-			ueContext.active == true &&
-			ueContext.ue->rnti == rnti)
+		if(ue.active == true &&
+			ue.rnti == rnti)
 		{
-			return ueContext.ueIndex;
+			return ue.ueIndex;
 		}
 	}
 
@@ -100,18 +102,17 @@ uint16_t find_ue(const rnti_t rnti)
 
 uint16_t find_ue_by_ueId(const uint16_t ue_index)
 {
-	ueContext ueContext;
+	ueInfo ue;
 	uint16_t ueIndex = INVALID_U16;
 
 	for(uint32_t i = 0; i < MAX_UE; i++)
 	{
-		ueContext = g_context.mac->ue[i];
+		ue = g_context.mac->ue[i];
 
-		if(ueContext.ue != NULL &&
-			ueContext.active == true &&
-			ueContext.ueId == ue_index)
+		if(ue.active == true &&
+			ue.ueId == ue_index)
 		{
-			return ueContext.ueIndex;
+			return ue.ueIndex;
 		}
 	}
 
@@ -158,7 +159,6 @@ void mac_user_setup_cfm(const rrc_mac_connnection_setup *req, const bool result,
 void mac_user_setup(const rrc_mac_connnection_setup *req)
 {
 	mac_info_s *mac = g_context.mac;
-	ueContext *ueContext = NULL;
 	ueInfo *ue = NULL;
 	uint16_t ueIndex = INVALID_U16;
 	rnti_t rnti = INVALID_U16;
@@ -167,7 +167,7 @@ void mac_user_setup(const rrc_mac_connnection_setup *req)
 
 	ueIndex = new_index();
 
-	if(g_context.mac->num_ue >= MAX_UE || ueIndex >= MAX_UE)
+	if(g_context.mac->count_ue >= MAX_UE || ueIndex >= MAX_UE)
 	{
 		LOG_ERROR(MAC, "mac user setup fail!");
 	}
@@ -177,18 +177,24 @@ void mac_user_setup(const rrc_mac_connnection_setup *req)
 
 		if (ue != NULL)
 		{
-			ueContext = &mac->ue[ueIndex];
-			ueContext->active = true;
-			ueContext->ueId = req->ue_index;
-			ueContext->ueIndex = ueIndex;
-			ueContext->ue = ue;
+			ue = &mac->ue[ueIndex];
+			ue->active = true;
+			ue->ueId = req->ue_index;
+			ue->ueIndex = ueIndex;
 
 			ue->maxHARQ_Tx = req->maxHARQ_Tx;
 			ue->max_out_sync = req->max_out_sync;
+			ue->lc_num = req->logical_channel_num;
+
+			for(uint32_t i = 0; i < req->logical_channel_num; i++)
+			{
+				ue->lc_config[i].lc_id = req->logical_channel_config[i].logical_channel_id;
+				ue->lc_config[i].priority = req->logical_channel_config[i].priority;
+			}
 
 			rnti = ue->rnti;
 			result = true;
-			g_context.mac->num_ue++;
+			g_context.mac->count_ue++;
 
 			//ue_push_back(ue);
 		}
@@ -232,9 +238,11 @@ void mac_release_cfm(const rrc_mac_release_req *req, bool success)
 void mac_user_release(const rrc_mac_release_req *req)//TODO: mac reset ue release
 {
 	uint16_t ueIndex;
-	
+	bool ret;
+
 	ueIndex = find_ue_by_ueId(req->ue_index);
-	remove_ue(ueIndex);
-	mac_release_cfm(req, true);
+	ret = remove_ue(ueIndex);
+
+	mac_release_cfm(req, ret);
 }
 

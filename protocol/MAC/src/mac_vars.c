@@ -10,12 +10,19 @@
 
 //context_s *context = NULL;
 #include "log.h"
-#include "mac_vars.h"
+//#include "mac_vars.h"
 #include "mac_defs.h"
+#include "smac_context.h"
+#include "smac_schedule_result.h"
+
+context_s g_context;
+schedule_result_s g_sch;
 
 uint32_t g_prbmap[5] = {54, 108, 216, 432, 720}; //0: 1.5M, 1: 3M, 2: 6M, 3: 12M, 4:20M
 
 uint32_t g_rbg_size[5] = {1, 1, 1, 1, 1}; //0: 1.5M, 1: 3M, 2: 6M, 3: 12M, 4:20M
+
+uint32_t cqi_2_mcs[16]= {0, 0, 1, 2, 4, 6, 8, 11, 13, 16, 18, 20, 23, 25, 27, 28};
 
 uint16_t tbs_table[MAX_MCS][MAX_RBS] = {// TODO: MAX_RBS need to be clarify.
 	{16,24,32,40,72,88,104,120,136,144,176,176,208,208,256,256,280,280,296,328,328,344,376,376,408,424,440,456,472,488,504,520,536,552,568,584,600,616,632,648},
@@ -114,7 +121,7 @@ uint8_t get_harqId(const sub_frame_t subframe)
 	uint8_t harqId = INVALID_U8;
 	mac_info_s *mac = g_context.mac;
 	mode_e mode = mac->mode;
-	if (mode == MAC_SRC)
+	if (mode == EMAC_SRC)
 	{
 		harqId = subframe % MAX_SUBSFN;
 	}
@@ -125,20 +132,30 @@ uint8_t get_harqId(const sub_frame_t subframe)
 	return harqId;
 }
 
+uint16_t cqi_to_mcs(const uint16_t cqi)
+{
+	uint16_t i = cqi;
+
+	if (i >= 16)
+		i = 15;
+
+	return cqi_2_mcs[i];
+}
+
 bool pre_check(const sub_frame_t subframe)
 {
 	mac_info_s *mac = g_context.mac;
 
-	if (mac->status != STATUS_ACTIVE)
+	if (mac->status != ESTATUS_ACTIVE)
 	{
 		return false;
 	}
 
-	if ((mac->mode == MAC_SRC) && (subframe == 0 || subframe == 1))
+	if ((mac->mode == EMAC_SRC) && (subframe == 0 || subframe == 1))
 	{
 		return true;
 	}
-	else if((mac->mode == MAC_DEST) && (subframe == 2 || subframe == 3))
+	else if((mac->mode == EMAC_DEST) && (subframe == 2 || subframe == 3))
 	{
 		return true;
 	}

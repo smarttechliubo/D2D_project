@@ -177,7 +177,7 @@ bool add_ra(const uint16_t cellId, mode_e mode)
 		return false;
 	}
 
-	ra->state = (mode == MAC_SRC) ? RA_MSG1_RECEIVED : RA_ADDED;
+	ra->state = (mode == EMAC_SRC) ? RA_MSG1_RECEIVED : RA_ADDED;
 	ra->ra_timer = 0;
 
 	return true;
@@ -251,7 +251,7 @@ void update_ra_buffer(rlc_buffer_rpt buffer)
 
 	if (buffer.rnti == RA_RNTI)// dest
 	{
-		if (!add_ra(g_sch.cellId, MAC_DEST))
+		if (!add_ra(g_sch.cellId, EMAC_DEST))
 		{
 			LOG_ERROR(MAC, "add new ra ue fail! cellId:%u", g_sch.cellId);
 		}	

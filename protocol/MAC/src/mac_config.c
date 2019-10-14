@@ -61,7 +61,7 @@ void mac_config(const rrc_mac_initial_req *req)
 	bool success = false;
 	mac_info_s *mac = g_context.mac;
 
-	if(mac != NULL && mac->status == STATUS_NONE)
+	if(mac != NULL && mac->status == ESTATUS_NONE)
 	{
 		mac->mode = (mode_e)req->mode;
 		mac->cellId = req->cellId;
@@ -71,6 +71,7 @@ void mac_config(const rrc_mac_initial_req *req)
 		mac->rb_start_index = req->pdcch_config.rb_start_index;
 		
 		mac->max_rbs_per_ue = MAX_RBS;
+		mac->max_rbs_per_ue = 1;
 
 		success = true;
 
@@ -81,7 +82,7 @@ void mac_config(const rrc_mac_initial_req *req)
 
 		if (mac_config_cfm(success))
 		{
-			mac->status = STATUS_ACTIVE;
+			mac->status = ESTATUS_ACTIVE;
 			init_mac_tx(mac->cellId);
 		}
 	}

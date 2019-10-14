@@ -32,6 +32,7 @@ typedef uint32_t message_size_t;
 #define MAX_UE  D2D_MAX_USER_NUM
 #define MAX_RA_NUM 2
 #define MAX_RA_TIMER 10
+#define MAX_HARQ_NUM 2
 
 #define CCCH_ 0  // CCCH / SRB0 logical channel
 //#define DCCH 1  // DCCH / SRB1 logical channel
