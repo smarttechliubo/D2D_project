@@ -308,12 +308,13 @@ void  rlc_tm_mac_data_request ( const protocol_ctxt_t* const  ctxt_pP,
 
 } 
 
+							  
 
 
 void  rlc_tm_send_sdu(const protocol_ctxt_t* const  ctxt_pP,
 							rlc_tm_entity_t * const rlc_pP,
 							uint8_t * const 		srcP,
-							const sdu_size_t		length_in_bitsP)
+							const sdu_size_t		length_in_bitsP) //unit:bit
 {
 	int 			length_in_bytes;
 
@@ -345,7 +346,7 @@ void  rlc_tm_send_sdu(const protocol_ctxt_t* const  ctxt_pP,
 
 
 
-void   rlc_tm_rx (const protocol_ctxt_t* const  ctxt_pP,
+void   rlc_tm_rx(const protocol_ctxt_t* const  ctxt_pP,
 					 void * const		 argP,
 					 struct mac_data_ind data_indP)
 {
@@ -358,9 +359,9 @@ void   rlc_tm_rx (const protocol_ctxt_t* const  ctxt_pP,
 	//！从data_ind.data 的链表中，依次处理
 	while ((tb_p = list_remove_head(&data_indP.data))) 
 	{
-		
 		first_byte_p = ((struct mac_tb_ind *) (tb_p->data))->data_ptr;
 		((struct rlc_tm_rx_pdu_management *) (tb_p->data))->first_byte = first_byte_p;
+	    //!由于目前的需求里，TM模式下，直接从MAC 到RRC，所以TM 模式基本没有用。
 		rlc_tm_send_sdu(ctxt_pP, rlc_p, first_byte_p, data_indP.tb_size);
 		free_mem_block (tb_p, __func__); 
 	}
@@ -380,7 +381,7 @@ void  rlc_tm_mac_data_indication (const protocol_ctxt_t* const  ctxt_pP,
 			data_indP.data.nb_elements);
 	}
 
-	rlc_tm_rx (ctxt_pP, rlc_pP, data_indP);
+	rlc_tm_rx(ctxt_pP, rlc_pP, data_indP);
 }
 
 

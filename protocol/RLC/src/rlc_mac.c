@@ -113,7 +113,7 @@ struct mac_data_ind mac_rlc_deserialize_tb (char	   *buffer_pP,
 	}
 
 	data_ind.no_tb			= nb_tb_read;
-	data_ind.tb_size		= tb_sizeP << 3;
+	data_ind.tb_size		= tb_sizeP << 3; //!unit:bit 
 
 	return data_ind;
 }
@@ -451,30 +451,33 @@ void mac_rlc_data_ind	  (
 	struct mac_data_ind data_ind = mac_rlc_deserialize_tb(buffer_pP, tb_sizeP, num_tbP);
 
 	switch (rlc_mode) {
-	case RLC_MODE_NONE:
-		list_free (&data_ind.data);
-	break;
-	//！将数据加载完之后，再根据不同的模式进行处理
+		case RLC_MODE_NONE:
+		{
+			list_free (&data_ind.data);
+		    break;
+		}
+		//！将数据加载完之后，再根据不同的模式进行处理
 #if AM_ENABLE 	
-	case RLC_MODE_AM:
-	rlc_am_mac_data_indication(&ctxt, &rlc_union_p->rlc.am, data_ind);
-	break;
+		case RLC_MODE_AM:
+		rlc_am_mac_data_indication(&ctxt, &rlc_union_p->rlc.am, data_ind);
+		break;
 #endif 
 
-#if 0
-	case RLC_MODE_UM:
-		rlc_um_mac_data_indication(&ctxt, &rlc_union_p->rlc.um, data_ind);
-		pthread_mutex_unlock(rlc_union_p->rlc_union_mtex);
-	break;
-#endif 
+		case RLC_MODE_UM:
+	    {
+			rlc_um_mac_data_indication(&ctxt, &rlc_union_p->rlc.um, data_ind);
+			pthread_mutex_unlock(rlc_union_p->rlc_union_mtex);
+		    break;
+		}
+		
+		case RLC_MODE_TM:
+		{
+			rlc_tm_mac_data_indication(&ctxt, &rlc_union_p->rlc.tm, data_ind);
+			pthread_mutex_unlock(rlc_union_p->rlc_union_mtex);
+		    break;
+		}
 
-
-	case RLC_MODE_TM:
-		rlc_tm_mac_data_indication(&ctxt, &rlc_union_p->rlc.tm, data_ind);
-		pthread_mutex_unlock(rlc_union_p->rlc_union_mtex);
-	break;
-	}
-
+    }
 	
 
 }

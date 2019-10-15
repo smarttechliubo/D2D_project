@@ -70,6 +70,7 @@
   (Ctxt_Pp)->subframe  = sUBfRAME; \
   (Ctxt_Pp)->eNB_index  = eNB_iNDEX; \
 
+#define PROTOCOL_CTXT_TIME_MILLI_SECONDS(CtXt_h) ((CtXt_h)->frame*10+(CtXt_h)->subframe)
 
 
 typedef enum rlc_confirm_e {
@@ -165,6 +166,13 @@ typedef struct rlc_union_s {
     rlc_tm_entity_t  tm;
   } rlc;
 } rlc_union_t;
+
+
+typedef struct rlc_am_e_li {
+  uint8_t  b1; /*!< \brief 1st byte. */
+  uint8_t  b2; /*!< \brief 2nd byte. */
+  uint8_t  b3; /*!< \brief 3rd byte. */
+} rlc_am_e_li_t;
 
 
 
@@ -273,4 +281,7 @@ extern void   rlc_Set_Buffer_Status(rnti_t rnti,
 									   logical_chan_id_t logical_chan_id_t,
 									   uint32_t data_size);
 extern int   rlc_Get_Buffer_Status(rlc_buffer_rpt *buffer_status);
+
+extern void  rlc_um_mac_data_indication (const protocol_ctxt_t *const ctxt_pP, void *rlc_pP, struct mac_data_ind data_indP); 
+
 #endif
