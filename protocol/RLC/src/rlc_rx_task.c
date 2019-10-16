@@ -26,7 +26,7 @@ void rlc_mac_data_process(mac_rlc_data_info *ue_data_info,frame_t frame, sub_fra
 
 	
 	rnti_t  ue_rnti;
-	logical_chan_id_t  logic_ch; 
+	logical_chan_id_t  logic_ch_id; 
 	uint32_t logic_index; 
 	uint32_t mac_tb_size; 
 	uint32_t *mac_data_addr; 
@@ -41,7 +41,7 @@ void rlc_mac_data_process(mac_rlc_data_info *ue_data_info,frame_t frame, sub_fra
 
 	for (logic_index = 0; logic_index < ue_data_info->logic_chan_num;logic_index++)
 	{
-		logic_ch = ue_data_info->logicchannel_id[logic_index]; 
+		logic_ch_id = ue_data_info->logicchannel_id[logic_index]; 
 		buffer_pP = (char *)ue_data_info->mac_pdu_buffer_ptr[logic_index]; 
 		tb_sizeP = ue_data_info->mac_pdu_size[logic_index]; 
 		
@@ -50,7 +50,7 @@ void rlc_mac_data_process(mac_rlc_data_info *ue_data_info,frame_t frame, sub_fra
 								g_rlc_protocol_ctxt.eNB_index,
 								frame,
 								g_rlc_protocol_ctxt.enb_flag,
-								logic_ch,
+								logic_ch_id,
 								buffer_pP,
 								tb_sizeP,
 								1);

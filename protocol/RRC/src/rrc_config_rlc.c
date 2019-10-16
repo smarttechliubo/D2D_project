@@ -95,7 +95,7 @@ rrc_rlc_srb_addmod_req  rrc_Rlc_Srb_Config(rb_type_e rb_type,uint16_t srb_count,
 		rrc_rlc_srb_addmod_req  srb_info; 
 		uint16_t srb_index = 0; 
 
-		AssertFatal(srb_count <= MAX_SRB_COUNT, RRC, "RRC %d   SRB config error,count exceed the max limit\n",\
+		AssertFatal(srb_count <= MAX_SRB_COUNT, RRC, "RRC %d ,  SRB config error,count:%d exceed the max limit\n",
 						rrc_GetModeType(), srb_count); 
 		
         	

@@ -86,6 +86,8 @@ struct mac_data_ind mac_rlc_deserialize_tb (char	   *buffer_pP,
 	tbs_size	 = 0;
 	list_init(&data_ind.data, NULL); //!初始化链表
 
+
+    //!按照逻辑信道的TB 块进行搬移，如果逻辑信道有2个TB块，则会有2个节点添加到list中去。
 	while (num_tbP > 0) {
 		//！get 一块大为mem_block_t + sizeof (mac_rlc_max_rx_header_size_t) + tb_sizeP 大小的memory 
 		tb_p = get_free_mem_block(sizeof (mac_rlc_max_rx_header_size_t) + tb_sizeP, __func__);
@@ -112,8 +114,8 @@ struct mac_data_ind mac_rlc_deserialize_tb (char	   *buffer_pP,
 		num_tbP = num_tbP - 1;
 	}
 
-	data_ind.no_tb			= nb_tb_read;
-	data_ind.tb_size		= tb_sizeP << 3; //!unit:bit 
+	data_ind.no_tb		= nb_tb_read;
+	data_ind.tb_size	= tb_sizeP << 3; //!unit:bit 
 
 	return data_ind;
 }
@@ -423,12 +425,13 @@ void mac_rlc_data_ind	  (
 							uint32_t					num_tbP)
 {
 	//-----------------------------------------------------------------------------
-	rlc_mode_e			 rlc_mode	= RLC_MODE_NONE;
+	rlc_mode_e			 rlc_mode	     = RLC_MODE_NONE;
 	rlc_union_t			*rlc_union_p	 = NULL;
 	hash_key_t			 key			 = HASHTABLE_NOT_A_KEY_VALUE;
-	hashtable_rc_t		 h_rc;
-	srb_flag_t			 srb_flag		 = (channel_idP <= 2) ? SRB_FLAG_YES : SRB_FLAG_NO;
+
+	srb_flag_t			 srb_flag		 = (channel_idP <= 2) ? SRB_FLAG_YES : SRB_FLAG_NO;//!SRB0/1/2's ID = 0/1/2; 
 	protocol_ctxt_t	  ctxt;
+	hashtable_rc_t		 h_rc;
 
 
 	PROTOCOL_CTXT_SET_BY_MODULE_ID(&ctxt, module_idP, enb_flagP, rntiP, frameP, 0, eNB_index);
@@ -446,8 +449,8 @@ void mac_rlc_data_ind	  (
 	rlc_mode = RLC_MODE_NONE;
 	
 	}
-	//！从MAC Buffer 中分割PDU出来，这里的tb_sizeP 是MAC 给过来的
-	//!根据MAC给过来的TB块，将TB 块加入到data_ind.data链表中
+
+	//!按照逻辑信道，对逻辑信道的数据搬移到申请出来的buffer中，进行后续处理，在后续处理中，要及时的free掉buffer，防止内存泄露
 	struct mac_data_ind data_ind = mac_rlc_deserialize_tb(buffer_pP, tb_sizeP, num_tbP);
 
 	switch (rlc_mode) {

@@ -53,7 +53,7 @@
 #define  RLC_RB_UNALLOCATED    (rb_id_t)0
 #define  RLC_LC_UNALLOCATED    (logical_chan_id_t)0
 //! 采用字符串串接的方式组成printf的格式符 
-#define PROTOCOL_CTXT_FMT        "[FRAME %05u][SUBFRAME %05][%s][MOD %02u][RNTI %d]"   //!# define PRIx64  __PRI64_PREFIX "x"
+#define PROTOCOL_CTXT_FMT        "[FRAME %05u][SUBFRAME %05u][%s][MOD %02u][RNTI %d]"   //!# define PRIx64  __PRI64_PREFIX "x"
 #define PROTOCOL_CTXT_ARGS(CTXT_Pp) \
   (CTXT_Pp)->frame, \
   (CTXT_Pp)->subframe,   \
