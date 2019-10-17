@@ -146,9 +146,9 @@ void rb_free_rlc_union (void *rlcu_pP)
 void rlc_module_initial( )
 {
 
-	//!step1:initial HASH TABLE 
+  
 	rlc_coll_p = hashtable_create ((MAX_SRB_COUNT + MAX_DRB_COUNT + 2) *D2D_MAX_USER_NUM , NULL, rb_free_rlc_union);
-
+   
 	AssertFatal(rlc_coll_p != NULL, RLC, "RLC initial HASH TABLE failed\n"); 
 
     //!memory pool initial 
@@ -161,9 +161,13 @@ void rlc_module_initial( )
     g_rlc_protocol_ctxt.module_id = 0; 
     g_rlc_protocol_ctxt.rnti = 0xffff;  //!initial value ; 
     g_rlc_protocol_ctxt.configured = FALSE; 
-
-
+ 
+   
     memset((void *)g_rlc_buffer_status,0,sizeof(g_rlc_buffer_status));
+
+    
+
+
 }
  
 

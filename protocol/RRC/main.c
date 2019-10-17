@@ -12,14 +12,25 @@
 #include <dummy_test_rrc.h>
 #include <rrc_global_def.h>
 #include <rlc.h>
-
+#include <test_time.h>
 int main()
 {
 
+  
+    unsigned long start_time; 
+    unsigned long end_time ;
 
+    
+ 
+   
+    
 	itti_init(6, &tasks_info);
+	
     rrc_module_Initial(); 
+    
+    
     rlc_module_initial(); 
+    
     
 	
 	itti_create_task(TASK_D2D_RRC, rrc_Sche_Task, NULL);

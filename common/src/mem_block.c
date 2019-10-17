@@ -71,11 +71,11 @@ void  *pool_buffer_init (void)
   uint32_t             index, mb_index, pool_index;
   mem_pool       *memory = NULL; 
 
-  memBlockVar=malloc(sizeof(mem_pool));  
+  memBlockVar = malloc(sizeof(mem_pool));  
 
   memory  = (mem_pool *) &mem_block_var;
   //！14中块大小
-  int             pool_sizes[14] = { MEM_MNGT_MB0_NB_BLOCKS, MEM_MNGT_MB1_NB_BLOCKS,
+  int   pool_sizes[14] = { MEM_MNGT_MB0_NB_BLOCKS, MEM_MNGT_MB1_NB_BLOCKS,
                                      MEM_MNGT_MB2_NB_BLOCKS, MEM_MNGT_MB3_NB_BLOCKS,
                                      MEM_MNGT_MB4_NB_BLOCKS, MEM_MNGT_MB5_NB_BLOCKS,
                                      MEM_MNGT_MB6_NB_BLOCKS, MEM_MNGT_MB7_NB_BLOCKS,
