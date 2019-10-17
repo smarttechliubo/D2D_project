@@ -29,6 +29,20 @@ void init_mac_tx(const uint16_t cellId)
 	g_sch.subframe = INVALID_U32;
 }
 
+uint32_t calculate_available_rbs()
+{
+	uint16_t sch_num = 0;
+	sch_ind *sch;
+	uint32_t available_rbs = get_available_rbs(g_context.mac->bandwith);
+
+	for (uint32_t i = 0; i < sch_num; i++)
+	{
+		sch = &g_sch.tx_info.sch[i];
+		available_rbs = available_rbs - sch->rb_num;
+	}
+	return available_rbs;
+}
+
 void add_to_scheduling_list0(uint16_t ueIndex)
 {
 	if (ueIndex >= MAX_UE || g_context.mac->num0 >= MAX_UE)
@@ -207,22 +221,7 @@ int32_t ue_compare(const void *_a, const void *_b, void *_p)
 			break;
 		}
 	}
-	
-/*
-	switch (params->pri)
-	{
-		case EPRI_RETX:
-		{
-			break;
-		}
-		case EPRI_CQI:
-		{
-			break;
-		}
-		default:
-			break;
-	}
-*/
+
 	return 0;
 }
 
@@ -234,13 +233,13 @@ void sort_ues(uint16_t list[MAX_UE], uint16_t size)
 
 }
 
-void pre_assign_rbs()
+void pre_assign_rbs(const frame_t frame, const sub_frame_t subframe)
 {
 	//uint16_t ueIndex = INVALID_U16;
 	uint16_t mcs = 0;
 	uint16_t cqi = 0;
 	mac_info_s *mac = g_context.mac;
-	uint8_t harqId = get_harqId(mac->subframe);
+	uint8_t harqId = get_harqId(subframe);
 	ueInfo* ue = NULL;
 	uint32_t rbg_size = get_rbg_size(mac->bandwith);
 	uint32_t rb_max = get_rb_num(mac->bandwith);
@@ -296,12 +295,218 @@ void pre_schedule_reset()
 	g_context.mac->num0 = 0;
 }
 
-void scheduler_pre_handler()
+void scheduler_pre_handler(const frame_t frame, const sub_frame_t subframe)
 {
 	pre_schedule_reset();
 
-	pre_assign_rbs();
+	pre_assign_rbs(frame, subframe);
 
+}
+
+void scheduler_resouce_calc_greedy(const frame_t frame, const sub_frame_t subframe)
+{
+	uint32_t totalUe = 0;
+	uint32_t newTxUe = 0;
+	uint32_t reTxUe = 0;
+	uint32_t rbs_reTx = 0;
+	uint32_t rbs_newTx = 0;
+	uint16_t num0 = 0;
+	uint8_t harqId = get_harqId(subframe);
+
+	mac_info_s *mac = g_context.mac;
+	ueInfo *ue = &mac->ue[0];
+	uint32_t available_rbs = calculate_available_rbs();
+
+	num0 = mac->num0;
+	uint16_t ueIndex = INVALID_U16;
+
+	for (uint32_t i = 0; i < num0; i++)
+	{
+		ueIndex = mac->scheduling_list0[i];
+
+		if (ueIndex >= MAX_UE ||
+			mac->ue[ueIndex].active == false ||
+			mac->ue[ueIndex].out_of_sync == true) 
+		{
+			LOG_ERROR(MAC, "ue is not available, ueIndex:%u, active:%u, outOfSync:%u", 
+				ueIndex, mac->ue[ueIndex].active, mac->ue[ueIndex].out_of_sync);
+			continue;
+		}
+
+		ue = &mac->ue[ueIndex];
+
+		if (ue->harq[harqId].reTx)
+		{
+			reTxUe++;
+			totalUe++;
+			rbs_reTx += ue->harq[harqId].rbs_alloc;
+			available_rbs = available_rbs - ue->harq[harqId].rbs_alloc;
+		}
+		else if (ue->buffer.buffer_total > 0)
+		{
+			newTxUe++;
+			totalUe++;
+			ue->sch_info.pre_rbs_alloc = MIN(ue->sch_info.pre_rbs_alloc, available_rbs);
+			available_rbs = available_rbs - ue->sch_info.pre_rbs_alloc;
+			rbs_newTx += ue->sch_info.pre_rbs_alloc;
+		}
+	}
+}
+
+void scheduler_resouce_calc_fair(const frame_t frame, const sub_frame_t subframe)
+{
+	uint16_t ueIndex = INVALID_U16;
+	uint32_t totalUe = 0;
+	uint32_t newTxUe = 0;
+	uint16_t newTxUe_list[MAX_UE];
+	uint32_t reTxUe = 0;
+	uint32_t rbs_reTx = 0;
+	uint32_t rbs_newTx = 0;
+	uint16_t num0 = 0;
+	uint8_t harqId = get_harqId(subframe);
+
+	mac_info_s *mac = g_context.mac;
+	ueInfo *ue = &mac->ue[0];
+	uint32_t available_rbs = calculate_available_rbs();
+	uint32_t average_rbs_per_ue = 0;
+	uint32_t rbg_size = get_rbg_size(mac->bandwith);
+
+	num0 = mac->num0;
+
+	for (uint32_t i = 0; i < num0; i++)
+	{
+		ueIndex = mac->scheduling_list0[i];
+
+		if (ueIndex >= MAX_UE ||
+			mac->ue[ueIndex].active == false ||
+			mac->ue[ueIndex].out_of_sync == true) 
+		{
+			LOG_ERROR(MAC, "ue is not available, ueIndex:%u, active:%u, outOfSync:%u", 
+				ueIndex, mac->ue[ueIndex].active, mac->ue[ueIndex].out_of_sync);
+			continue;
+		}
+
+		ue = &mac->ue[ueIndex];
+
+		if (ue->harq[harqId].reTx)
+		{
+			reTxUe++;
+			totalUe++;
+			rbs_reTx += ue->harq[harqId].rbs_alloc;
+		}
+		else if (ue->buffer.buffer_total > 0)
+		{
+			totalUe++;
+			newTxUe_list[newTxUe++] = ueIndex;
+			rbs_newTx += ue->sch_info.pre_rbs_alloc;
+		}
+	}
+
+	available_rbs = available_rbs - rbs_reTx;
+
+	if (newTxUe == 0)
+	{
+		average_rbs_per_ue = 0;
+	}
+	else if (rbg_size*newTxUe <= available_rbs)
+	{
+		average_rbs_per_ue = available_rbs/newTxUe;
+	}
+	else
+	{
+		average_rbs_per_ue = rbg_size;
+	}
+
+	for (uint32_t i = 0; i < newTxUe; i++)
+	{
+		ue = &mac->ue[newTxUe_list[i]];
+		ue->sch_info.pre_rbs_alloc = MIN(average_rbs_per_ue, ue->sch_info.pre_rbs_alloc);
+		available_rbs = available_rbs - ue->sch_info.pre_rbs_alloc;
+	}
+}
+
+uint32_t rballoc(mac_info_s *mac, const uint16_t ueIndex, const uint32_t first_rb, const uint32_t total_rb_num)
+{
+    //uint32_t rb_start = first_rb;
+	uint32_t rb_num = 0;
+	uint32_t pre_rbs_alloc = 0;
+	ueInfo* ue = &mac->ue[ueIndex];
+	uint8_t harqId = get_harqId(mac->subframe);
+
+	if (ue->harq[harqId].reTx)
+	{
+		pre_rbs_alloc = ue->harq[harqId].rbs_alloc;
+	}
+	else
+	{
+		pre_rbs_alloc = ue->sch_info.pre_rbs_alloc;
+	}
+
+	for(uint32_t i = first_rb; i < total_rb_num && pre_rbs_alloc > 0; i++)
+	{
+		if (mac->rb_available[i] == 1)
+		{
+			rb_num++;
+			pre_rbs_alloc--;
+			mac->rb_available[i] = 0;
+		}
+		else
+		{
+			break;
+		}
+	}
+
+	if (ue->harq[harqId].reTx)
+	{
+		if (rb_num != ue->harq[harqId].rbs_alloc)
+		{
+			LOG_ERROR(MAC, "rballoc, no enough rbs for ue:%u reTx", ue->ueIndex);
+		}
+		ue->harq[harqId].rbs_alloc = rb_num;//TODO: reTx should be transmmited if no enough rbs for reTx?
+		ue->harq[harqId].rb_start = first_rb;
+	}
+	else
+	{
+		ue->sch_info.rb_start = first_rb;
+		ue->sch_info.pre_rbs_alloc = rb_num;
+		ue->harq[harqId].rbs_alloc = rb_num;
+		ue->harq[harqId].rb_start = first_rb;
+	}
+
+	return rb_num;
+}
+
+void scheduler_resource_locate()
+{
+	uint16_t ueIndex = INVALID_U16;
+	uint16_t num0 = 0;
+	//uint16_t *scheduling_list0;
+	mac_info_s *mac = g_context.mac;
+	//ueInfo *ue = &mac->ue[0];
+	uint32_t first_rb = get_first_rb(mac->bandwith);
+	uint32_t rb_num = get_rb_num(mac->bandwith);
+	uint32_t rb_alloc_count = 0;
+
+	num0 = mac->num0;
+
+	for (uint32_t i = 0; i < num0; i++)
+	{
+		ueIndex = mac->scheduling_list0[i];
+
+		if (ueIndex >= MAX_UE ||
+			mac->ue[ueIndex].active == false ||
+			mac->ue[ueIndex].out_of_sync == true) 
+		{
+			LOG_ERROR(MAC, "ue is not available, ueIndex:%u, active:%u, outOfSync:%u", 
+				ueIndex, mac->ue[ueIndex].active, mac->ue[ueIndex].out_of_sync);
+			continue;
+		}
+
+		//ue = &mac->ue[ueIndex];
+		first_rb = first_rb + rb_alloc_count;
+
+		rb_alloc_count = rballoc(mac, ueIndex, first_rb, rb_num);
+	}
 }
 
 void schedule_ue(const frame_t frame, const sub_frame_t subframe)
@@ -310,11 +515,26 @@ void schedule_ue(const frame_t frame, const sub_frame_t subframe)
 	uint16_t *scheduling_list0;
 	mac_info_s *mac = g_context.mac;
 
-	scheduler_pre_handler();
+	scheduler_pre_handler(frame, subframe);
+
 	num0 = mac->num0;
 	scheduling_list0 = &mac->scheduling_list0[0];
 
-	sort_ues(scheduling_list0, num0);
+	if(num0 > 0)
+	{
+		sort_ues(scheduling_list0, num0);
+	}
+
+	if (mac->alloc_pattern)
+	{
+		scheduler_resouce_calc_greedy(frame, subframe);
+	}
+	else
+	{
+		scheduler_resouce_calc_fair(frame, subframe);
+	}
+
+	scheduler_resource_locate();
 }
 
 void mac_scheduler()

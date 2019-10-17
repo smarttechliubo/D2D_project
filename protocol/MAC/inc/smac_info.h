@@ -31,6 +31,7 @@ typedef struct
 	uint16_t    rb_num;//pdcch rb num
 	uint16_t    rb_start_index; // pdcch rb start
 	uint8_t     rb_available[MAX_RBS];
+	allocation_pattern_e alloc_pattern;
 
 	common_channel_s common_channel;
 

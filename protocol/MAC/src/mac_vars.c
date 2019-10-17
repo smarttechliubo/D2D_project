@@ -74,7 +74,6 @@ uint32_t get_tbs(const uint8_t mcs, const uint8_t num_rb)
 	return tbs;
 }
 
-
 uint32_t get_rb_num(const uint16_t bandwith)
 {
 	if (bandwith >= 5)
@@ -114,6 +113,16 @@ uint32_t get_first_rb(uint16_t bandwith)
 	}
 
 	return i;
+}
+
+uint32_t get_available_rbs(const uint16_t bandwith)
+{
+	uint32_t available_rbs = 0;
+	uint32_t rb_num = get_rb_num(bandwith);
+
+	available_rbs = rb_num - get_rb_start(bandwith);
+
+	return available_rbs;
 }
 
 uint8_t get_harqId(const sub_frame_t subframe)

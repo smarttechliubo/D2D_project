@@ -30,4 +30,9 @@ typedef enum
 	ESORTING_UNSUPPORT
 }sorting_policy_e;
 
+typedef enum
+{
+	EPATTERN_GREEDY,
+	EPATTERN_FAIR
+}allocation_pattern_e;
 #endif /* _SMARTLOGICTECH_PROTOCOL_MAC_INC_EMAC_ENUM_H_ */

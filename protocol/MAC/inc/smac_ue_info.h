@@ -21,6 +21,10 @@ typedef struct
 	uint8_t harqId;
 	uint8_t reTx_num;
 
+    uint32_t rb_start;
+	uint32_t rb_num;
+	uint32_t rbs_alloc;//pre alloc
+
 	uint16_t cqi;
 	uint16_t mcs;
 }harq_info;
@@ -30,6 +34,9 @@ typedef struct
 	uint16_t cqi;
 	uint16_t mcs;
 	uint16_t coefficient;
+
+	uint32_t rb_start;
+	uint32_t rb_num;
 
 	uint32_t pre_rbs_alloc;
 }schedule_info;

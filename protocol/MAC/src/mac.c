@@ -49,6 +49,8 @@ void init_mac()
 	mac->rb_available[i++] = 0;
 	mac->rb_available[i++] = 0;
 
+	mac->alloc_pattern = EPATTERN_GREEDY;
+
 	for (; i < MAX_RBS; i++)
 	{
 		mac->rb_available[i] = 1;
