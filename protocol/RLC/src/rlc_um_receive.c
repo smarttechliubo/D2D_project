@@ -501,13 +501,6 @@ CONTIGUOUS WITH LAST REASSEMBLIED SN (%03d) (%s:%u)\n",
 	  
 	   //!按照SN = 10进行处理，得到e和FI,以及扩展部分的E+LI的部分 
 	  if (rlc_pP->rx_sn_length == 10) {
-#if TRACE_RLC_UM_DAR
-		LOG_DEBUG(RLC, PROTOCOL_RLC_UM_CTXT_FMT" TRY REASSEMBLY 10 PDU SN=%03d\n (%s:%u)",
-			  PROTOCOL_RLC_UM_CTXT_ARGS(ctxt_pP, rlc_pP),
-			  sn,
-			  __FILE__,
-			  __LINE__);
-#endif  
 	
 		e  = (((rlc_um_pdu_sn_10_t*)(tb_ind_p->data_ptr))->b1 & 0x04) >> 2; //bit2
 		fi = (((rlc_um_pdu_sn_10_t*)(tb_ind_p->data_ptr))->b1 & 0x18) >> 3; //bit3,bit4 
@@ -815,12 +808,12 @@ CONTIGUOUS WITH LAST REASSEMBLIED SN (%03d) (%s:%u)\n",
 	          }
 			  default:
 			  {
-#if TRACE_RLC_UM_DAR
+
 						LOG_WARN(RLC, PROTOCOL_RLC_UM_CTXT_FMT" Missing SN detected (%s:%u)\n",
 							  PROTOCOL_RLC_UM_CTXT_ARGS(ctxt_pP, rlc_pP),
 							  __FILE__,
 							  __LINE__);
-#endif
+
 						rlc_pP->stat_rx_data_pdu_dropped += 1;
 						rlc_pP->stat_rx_data_bytes_dropped += tb_ind_p->size;
 
@@ -854,23 +847,15 @@ CONTIGUOUS WITH LAST REASSEMBLIED SN (%03d) (%s:%u)\n",
 	{
 		 //！如果从dar_buffer中没有找到SN对应的data,则认为丢失了data 
 		  rlc_pP->last_reassemblied_missing_sn = sn;
-#if TRACE_RLC_UM_DAR
-		  LOG_DEBUG(RLC, PROTOCOL_RLC_UM_CTXT_FMT" Missing SN %04d detected, clearing RX SDU (%s:%u)\n",
-				PROTOCOL_RLC_UM_CTXT_ARGS(ctxt_pP, rlc_pP),
-				sn,
-				__FILE__,
-				__LINE__);
-#endif
 		  rlc_pP->reassembly_missing_sn_detected = 1;  //!置位flag 
 		  rlc_um_clear_rx_sdu(ctxt_pP, rlc_pP);
-#if RLC_STOP_ON_LOST_PDU
-		  AssertFatal( rlc_pP->reassembly_missing_sn_detected == 1,
-					   PROTOCOL_RLC_UM_CTXT_FMT" MISSING PDU DETECTED (%s:%u)\n",
-					   PROTOCOL_RLC_UM_CTXT_ARGS(ctxt_pP, rlc_pP),
-					   __FILE__,
-					   __LINE__);
-#endif
+
 	}
+
+	
+	LOG_INFO(RLC, "func:%s, reassembly sdu sn:%d finished\n",
+    			__func__, 
+    		     sn );
 
 	//!SN 向上加，
 	sn = (sn + 1) % rlc_pP->rx_sn_modulo;
@@ -1148,8 +1133,13 @@ void   rlc_um_receive_process_dar (const protocol_ctxt_t* const ctxt_pP,
 //		-place the received UMD PDU in the reception buffer.
 
 	rlc_sn_t sn = -1;
-	signed int in_window;
-
+	signed int in_window = 0;
+	uint32_t  state_index = 0; 
+    char *sdu_handle_state[3] = {
+		"sn < vr_ur,droped", 
+		"vr_ur <= sn < vr_uh, but duplicated",
+		"sn == vr_ur, reassmbly handled "
+    };
 
 
 	if (rlc_pP->rx_sn_length == 10) {
@@ -1162,7 +1152,7 @@ void   rlc_um_receive_process_dar (const protocol_ctxt_t* const ctxt_pP,
 
 	RLC_UM_MUTEX_LOCK(&rlc_pP->lock_dar_buffer, ctxt_pP, rlc_pP); //!加线程锁
 	 //！vr_ur 表示的是还没有收到PDU 的最小SN号
-	 //! 这里调用rlc_um_in_window 是用来判断： PDU 是否在[uh-window_size,ur] 这个范围内
+	 //! 这里调用rlc_um_in_window 是用来判断： PDU 是否在[uh-window_size,ur] 这个范围内,
 	in_window = rlc_um_in_window(ctxt_pP, rlc_pP, rlc_pP->vr_uh - rlc_pP->rx_um_window_size, sn, rlc_pP->vr_ur);
 
 #if TRACE_RLC_PAYLOAD
@@ -1190,6 +1180,15 @@ void   rlc_um_receive_process_dar (const protocol_ctxt_t* const ctxt_pP,
 	  free_mem_block(pdu_mem_pP, __func__);
 	  pdu_mem_pP = NULL;
 	  RLC_UM_MUTEX_UNLOCK(&rlc_pP->lock_dar_buffer);
+	  state_index = 0; 
+
+	  LOG_INFO(RLC, "func:%s, received SN:%d, vr_vh:%d, vr_ur:%d, ur_ux:%d, handle_status:%s",
+    			__func__, 
+    		     sn, 
+    		     rlc_pP->vr_uh, 
+    		     rlc_pP->vr_ur,
+    		     rlc_pP->vr_ux, 
+    		     sdu_handle_state[state_index]);
 	  
 	  return;
 	}
@@ -1211,6 +1210,14 @@ void   rlc_um_receive_process_dar (const protocol_ctxt_t* const ctxt_pP,
 		free_mem_block(pdu_mem_pP, __func__);
 		pdu_mem_pP = NULL;
 		RLC_UM_MUTEX_UNLOCK(&rlc_pP->lock_dar_buffer);
+        state_index = 1; 
+		LOG_INFO(RLC, "func:%s, received SN:%d, vr_vh:%d, vr_ur:%d, ur_ux:%d, handle_status:%s",
+    			__func__, 
+    		     sn, 
+    		     rlc_pP->vr_uh, 
+    		     rlc_pP->vr_ur,
+    		     rlc_pP->vr_ux, 
+    		     sdu_handle_state[state_index]);
 		
 		return;
 	  }
@@ -1261,7 +1268,7 @@ void   rlc_um_receive_process_dar (const protocol_ctxt_t* const ctxt_pP,
 
 		//！更新UH
 		rlc_pP->vr_uh = (sn + 1) % rlc_pP->rx_sn_modulo;
-		//!<如果ur 在recording 窗外，则表示需要处理窗外的PDU了。
+		//!<如果ur 在recording 窗外，则表示需要处理窗外的PDU了,处理vr_ur以下的SDU 。
 		if (rlc_um_in_reordering_window(ctxt_pP, rlc_pP, rlc_pP->vr_ur) != 0) {
 		  //如果UR 也被移出到窗外了，那么更新UR = UH - WINDOWSIZE 
 		  //这里相当于是下边界
@@ -1271,12 +1278,12 @@ void   rlc_um_receive_process_dar (const protocol_ctxt_t* const ctxt_pP,
 		  in_window = in_window + rlc_pP->rx_sn_modulo;
 		}
 		 //！处理从ur开始，依次SN 递增的处理
-		 //这里要注意in_window > ur这种特殊情况
-		 //! 处理从vr_ur 到in_window的这段接收窗内的SDU 
-		rlc_um_try_reassembly(ctxt_pP, rlc_pP, rlc_pP->vr_ur, in_window);
+		 //!当初始时，ur = 0, in_window = 513,则滑动窗是[513--1023:0]
+		 //!这里处理 ur 之下的SDU, 不包括UR              
+		rlc_um_try_reassembly(ctxt_pP, rlc_pP, in_window,rlc_pP->vr_ur);
 	  }
 
-	  
+	  //!判断vr 是否在windows中,注意此时的vh 已经更新了，所以此时这个函数vr_ur可能在窗内了。
 	  if (rlc_um_in_reordering_window(ctxt_pP, rlc_pP, rlc_pP->vr_ur) < 0) {
 #if TRACE_RLC_UM_DAR
 		LOG_DEBUG(RLC, PROTOCOL_RLC_UM_CTXT_FMT" VR(UR) %d OUTSIDE REORDERING WINDOW SET TO VR(UH) – UM_Window_Size = %d\n",
@@ -1298,12 +1305,20 @@ void   rlc_um_receive_process_dar (const protocol_ctxt_t* const ctxt_pP,
 
 	//！如果sn =ur,并且ur的PDU已经收到过，则更新vr_ur 
 	if ((sn == rlc_pP->vr_ur) && rlc_um_get_pdu_from_dar_buffer(ctxt_pP, rlc_pP, rlc_pP->vr_ur)) {
-	  //sn_tmp = rlc_pP->vr_ur;
 	  do { //！从ur 开始依次往上找，直到找到一个没有收到PDU的SN号，并且不能等于UH 
 		rlc_pP->vr_ur = (rlc_pP->vr_ur+1) % rlc_pP->rx_sn_modulo;
-	  } while (rlc_um_get_pdu_from_dar_buffer(ctxt_pP, rlc_pP, rlc_pP->vr_ur) && (rlc_pP->vr_ur != rlc_pP->vr_uh));
+	  } while (rlc_um_get_pdu_from_dar_buffer(ctxt_pP, rlc_pP, rlc_pP->vr_ur));  //! &&(rlc_pP->vr_ur != rlc_pP->vr_uh)
 	   //!将SN < 更新后的ur 的PDU,进行去header处理，从SN 往上处理，处理到更新后的UR结束。
 	  rlc_um_try_reassembly(ctxt_pP, rlc_pP, sn, rlc_pP->vr_ur);
+
+	  state_index = 2; 
+	  LOG_INFO(RLC, "func:%s, received SN:%d, vr_vh:%d, vr_ur:%d, ur_ux:%d, handle_status:%s",
+    			__func__, 
+    		     sn, 
+    		     rlc_pP->vr_uh, 
+    		     rlc_pP->vr_ur,
+    		     rlc_pP->vr_ux, 
+    		     sdu_handle_state[state_index]);
 	}
 
 	// -if t-Reordering is running:
@@ -1318,14 +1333,14 @@ void   rlc_um_receive_process_dar (const protocol_ctxt_t* const ctxt_pP,
 		in_window = rlc_um_in_reordering_window(ctxt_pP, rlc_pP, rlc_pP->vr_ux);
 
 		if (in_window < 0) {
-#if TRACE_RLC_UM_DAR
+
 		  LOG_DEBUG(RLC,
-				PROTOCOL_RLC_UM_CTXT_FMT" STOP and RESET t-Reordering because VR(UX) falls outside of the reordering window and VR(UX)=%d 
+				PROTOCOL_RLC_UM_CTXT_FMT" STOP and RESET t-Reordering because VR(UX) falls outside of the reordering window and VR(UX)=%d \
 	is not equal to VR(UH)=%d -or- VR(UX) <= VR(UR)\n",
 				PROTOCOL_RLC_UM_CTXT_ARGS(ctxt_pP, rlc_pP),
 				rlc_pP->vr_ux,
 				rlc_pP->vr_uh);
-#endif
+
 		  rlc_um_stop_and_reset_timer_reordering(ctxt_pP, rlc_pP);
 		}
 	  }
@@ -1336,14 +1351,13 @@ void   rlc_um_receive_process_dar (const protocol_ctxt_t* const ctxt_pP,
 	   //！ -2： ux < ur, 丢失ux,不用再运行timer 
 	   //! 1:	 ux = ur ,表示已经收到了，也不用再运行了
 	  if ((in_window == -2) || (in_window == 1)) {
-#if TRACE_RLC_UM_DAR
+
 		LOG_DEBUG(RLC,
-			  PROTOCOL_RLC_UM_CTXT_FMT" STOP and RESET t-Reordering because VR(UX) falls outside of the reordering window and VR(UX)=%d is 
+			  PROTOCOL_RLC_UM_CTXT_FMT" STOP and RESET t-Reordering because VR(UX) falls outside of the reordering window and VR(UX)=%d is \
 	not equal to VR(UH)=%d\n",
 			  PROTOCOL_RLC_UM_CTXT_ARGS(ctxt_pP, rlc_pP),
 			  rlc_pP->vr_ux,
 			  rlc_pP->vr_uh);
-#endif
 		rlc_um_stop_and_reset_timer_reordering(ctxt_pP, rlc_pP);
 	  }
 	}
@@ -1357,18 +1371,18 @@ void   rlc_um_receive_process_dar (const protocol_ctxt_t* const ctxt_pP,
 	if (rlc_pP->t_reordering.running == 0) {
 	  in_window = rlc_um_in_window(ctxt_pP, rlc_pP, rlc_pP->vr_ur,	rlc_pP->vr_uh,	rlc_pP->vr_uh);
 
-	  if (in_window == 2) {
+	  if (in_window >= 2) {
 	  	LOG_DEBUG(RLC, PROTOCOL_RLC_UM_CTXT_FMT" RESTART t-Reordering set VR(UX) to VR(UH) =%d\n",
 			  PROTOCOL_RLC_UM_CTXT_ARGS(ctxt_pP, rlc_pP),
 			  rlc_pP->vr_ux);
 		//!启动timer 
 		rlc_um_start_timer_reordering(ctxt_pP, rlc_pP);
 		rlc_pP->vr_ux = rlc_pP->vr_uh;	//！更新ux = uh
-
-
+		
 	  }
 	}
 
+    
 	RLC_UM_MUTEX_UNLOCK(&rlc_pP->lock_dar_buffer); //！解锁
 
 }

@@ -129,12 +129,9 @@ typedef struct
 	uint16_t ue_index;// value: 0..16
 	uint16_t maxHARQ_Tx;// value: 0..8, default: 4
 	uint16_t max_out_sync;// value: 0..8, default: 4
-	uint16_t padding;
+	uint16_t logical_channel_num;
 	logical_channel_config_s logical_channel_config[MAX_LOGICCHAN_NUM];
 }rrc_mac_connnection_setup; //RRC_MAC_CONNECT_SETUP_CFG_REQ;
-
-
-
 
 typedef struct 
 {
@@ -142,5 +139,4 @@ typedef struct
 	uint16_t   subsfn; 
     uint32_t   mib_receive_flag; //fixed to 1
 }mac_rrc_bcch_mib_rpt; 
-
 #endif /* INC_INTERFACE_RRC_MAC_H_ */

@@ -116,7 +116,7 @@ void rrc_Mac_ConnectSetup_Config(uint16_t ue_index, uint16_t max_harq_tx,uint16_
 	mac_connect_req->maxHARQ_Tx = max_harq_tx; 
 	
 	mac_connect_req->max_out_sync = max_out_sync; 
-
+    mac_connect_req->logical_channel_num = logicch_num;
     
 	for (lch_index = 0;lch_index < logicch_num;lch_index++)
 	{
