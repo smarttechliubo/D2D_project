@@ -12,14 +12,16 @@
 
 typedef struct
 {
-	sorting_policy_e policy;
-}sort_params;
+	uint32_t size;
+	uint8_t data[8];
+}mac_ce;
 
 typedef struct
 {
 	bool reTx;
 	uint8_t harqId;
 	uint8_t reTx_num;
+	uint16_t padding;
 
     uint32_t rb_start;
 	uint32_t rb_num;
@@ -34,6 +36,7 @@ typedef struct
 	uint16_t cqi;
 	uint16_t mcs;
 	uint16_t coefficient;
+	uint16_t padding;
 
 	uint32_t rb_start;
 	uint32_t rb_num;
@@ -50,27 +53,44 @@ typedef struct
 typedef struct
 {
 	uint8_t  chan_num;
+	uint8_t  padding;
 	uint16_t buffer_total;
 	uint8_t  chan_id[MAX_LOGICCHAN_NUM];
 	uint32_t buffer_size[MAX_LOGICCHAN_NUM];
+	uint32_t lc_num;
+	uint16_t lc_priority_index[MAX_LOGICCHAN_NUM];
+	uint32_t lc_rbs_alloc[MAX_LOGICCHAN_NUM];
 }txBuffer;
 
 typedef struct
 {
-	bool active;
-	uint16_t ueId;
-	uint16_t ueIndex;
-	rnti_t rnti;
-	uint16_t padding;
-	bool out_of_sync;
-	uint16_t maxHARQ_Tx;
-	uint16_t max_out_sync;
-	uint16_t lc_num;
+	bool      active;
+	uint16_t  ueId;
+	uint16_t  ueIndex;
+	rnti_t    rnti;
+	uint16_t  maxHARQ_Tx;
+	bool      out_of_sync;
+	uint16_t  max_out_sync;
+
+	uint16_t  lc_num;
 	lc_config lc_config[MAX_LOGICCHAN_NUM];
+	uint32_t  ce_num;
+	mac_ce    macCE[2];
 
 	txBuffer buffer;
 	harq_info harq[MAX_HARQ_NUM];
 	schedule_info sch_info;
 }ueInfo;//ue
+
+typedef struct
+{
+	sorting_policy_e policy;
+}sort_ue_params;
+
+typedef struct
+{
+	lc_config* config;
+	txBuffer* buffer;
+}sort_lc_params;
 
 #endif /* _SMARTLOGICTECH_PROTOCOL_MAC_INC_SMAC_UE_INFO_H_ */

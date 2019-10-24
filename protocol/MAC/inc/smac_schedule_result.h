@@ -14,6 +14,7 @@
 
 typedef struct
 {
+	bool  scheduled;
 	uint16_t ueIndex;
 	rnti_t rnti;
 
@@ -37,10 +38,10 @@ typedef struct
 	uint16_t ueIndex;
 	rnti_t rnti;
 
-	uint8_t cce_rb;
-	uint8_t cce_rb_num;
+	uint8_t cce_rb;//dci rb start
+	uint8_t cce_rb_num;//dci rb num
 	uint16_t padding;
-	
+	//dci
     uint32_t rb_start;
 	uint32_t rb_num;
 	uint8_t mcs;
@@ -64,6 +65,7 @@ typedef struct
 	uint16_t cellId;
 	uint16_t padding;
 	tx_req_info tx_info;
+	tx_req_info common;
 }schedule_result_s;
 
 #endif /* _SMARTLOGICTECH_PROTOCOL_MAC_INC_SMAC_SCHEDULE_RESULT_H_ */

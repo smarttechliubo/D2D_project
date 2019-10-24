@@ -41,6 +41,11 @@ typedef struct
 	uint16_t num0;
 	uint16_t scheduling_list0[MAX_UE];
 
+	uint16_t num1;
+	uint16_t scheduling_list1[MAX_UE];
+
+	uint16_t num2;
+	uint16_t scheduling_list2[MAX_UE];
 }mac_info_s;//cell
 
 #endif /* _SMARTLOGICTECH_PROTOCOL_MAC_INC_STRUCT_MAC_INFO_H_ */

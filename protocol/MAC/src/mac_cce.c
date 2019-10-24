@@ -10,6 +10,35 @@
 
 #include "mac_cce.h"
 #include "mac_vars.h"
+#include "log.h"
+
+//for future using
+uint16_t get_aggregation_level(const uint16_t bandwith, const uint8_t dci_fmt, const uint16_t cqi)
+{
+	//TODO: choose aggregation level base on cqi, for now, default format0
+	uint16_t aggregation_level = 0;
+
+	switch (dci_fmt)
+	{
+		case EFORMAT0:
+		{
+			aggregation_level = 2;
+			break;
+		}
+		case EFORMAT1:
+		{
+			aggregation_level = 2;
+			break;
+		}
+		default:
+		{
+			LOG_ERROR(MAC, "unknown dci format:%u", dci_fmt);
+			break;
+		}
+	}
+
+	return aggregation_level;
+}
 
 int32_t get_cce_offset(const uint16_t rb_num, const uint16_t rb_start_index, const uint16_t aggregation_level)
 {

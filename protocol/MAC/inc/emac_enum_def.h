@@ -12,6 +12,13 @@
 
 typedef enum
 {
+	EFORMAT0,
+	EFORMAT1,
+	EFARMAT_MAX
+}dci_format_e;
+
+typedef enum
+{
 	ESTATUS_NONE,
 	ESTATUS_ACTIVE,
     ESTATUS_INACTIVE

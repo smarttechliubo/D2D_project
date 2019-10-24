@@ -71,7 +71,7 @@ void mac_config(const rrc_mac_initial_req *req)
 		mac->rb_start_index = req->pdcch_config.rb_start_index;
 		
 		mac->max_rbs_per_ue = MAX_RBS;
-		mac->max_rbs_per_ue = 1;
+		//mac->max_rbs_per_ue = 1;
 
 		success = true;
 

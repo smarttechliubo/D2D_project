@@ -47,6 +47,21 @@ void init_mac_vars()
 {
 	
 }
+
+uint8_t get_rv(uint8_t tx_num)
+{
+	uint8_t rv[5] = {0, 0, 2, 1, 3};
+
+	if (tx_num >= 5)
+	{
+		LOG_ERROR(MAC, "get rv, invalid tx_num:%u", tx_num);
+		return 0;
+	}
+	
+	return rv[tx_num];
+}
+
+
 uint32_t get_rbg_size(const uint16_t bandwith)
 {
 	if (bandwith >= 5)

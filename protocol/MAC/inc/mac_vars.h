@@ -20,6 +20,7 @@ extern schedule_result_s g_sch;
 uint32_t get_rb_num(uint16_t bandwith);
 uint32_t get_rb_start(const uint16_t bandwith);
 uint32_t get_tbs(const uint8_t mcs, const uint8_t num_rb);
+uint8_t get_rv(uint8_t tx_num);
 uint32_t get_rbg_size(const uint16_t bandwith);
 uint32_t get_first_rb(uint16_t bandwith);
 uint32_t get_available_rbs(const uint16_t bandwith);

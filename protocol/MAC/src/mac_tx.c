@@ -17,6 +17,7 @@
 #include "mac_vars.h"
 #include "mac_ra.h"
 #include "log.h"
+#include "mac_cce.h"
 #include "interface_mac_rlc.h"
 
 #include "messageDefine.h"//MAC_TEST
@@ -41,6 +42,23 @@ uint32_t calculate_available_rbs()
 		available_rbs = available_rbs - sch->rb_num;
 	}
 	return available_rbs;
+}
+
+uint32_t get_logic_channel_header_size(uint32_t buffer_size)
+{
+	uint32_t header_size = 0;
+
+	if (buffer_size < 128)
+	{
+		header_size = 2;
+	}
+
+	if (buffer_size >= 128)
+	{
+		header_size = 3;
+	}
+
+	return header_size;
 }
 
 void add_to_scheduling_list0(uint16_t ueIndex)
@@ -86,6 +104,7 @@ void update_buffer_status(rlc_buffer_rpt buffer)
 
 	for (uint32_t i = 0; i < logic_chan_num; i++)
 	{
+		ue_buffer->lc_rbs_alloc[i] = 0;
 		ue_buffer->chan_id[i] = buffer.logicchannel_id[i];
 		ue_buffer->buffer_size[i] = buffer.buffer_byte_size[i];
 		ue_buffer->buffer_total += buffer.buffer_byte_size[i];
@@ -97,7 +116,7 @@ void update_buffer_status(rlc_buffer_rpt buffer)
 	//}
 }
 
-void handle_buffer_status(const frame_t frame, const sub_frame_t subframe, const rlc_mac_buf_status_rpt *rpt)
+void handle_buffer_status(const rlc_mac_buf_status_rpt *rpt)
 {
 	uint32_t ue_num = rpt->valid_ue_num; 
 	rlc_buffer_rpt buffer;
@@ -122,7 +141,7 @@ void handle_buffer_status(const frame_t frame, const sub_frame_t subframe, const
 	}
 }
 
-void handle_buffer_status_ind(const frame_t frame, const sub_frame_t subframe)
+void handle_buffer_status_ind()
 {
 	//MAC_TEST
 	msgDef msg;
@@ -142,8 +161,112 @@ void handle_buffer_status_ind(const frame_t frame, const sub_frame_t subframe)
 			{
 				rlc_mac_buf_status_rpt *rpt = (rlc_mac_buf_status_rpt *)msg.data;
 
-				handle_buffer_status(frame, subframe, rpt);
+				handle_buffer_status(rpt);
 				msg_free(rpt);
+				break;
+			}
+			default:
+			{
+				LOG_ERROR(MAC, "Unknown RLC msg! msgId:%u", msg.header.msgId);
+				break;
+			}
+		}
+	}
+}
+
+bool update_scheduled_ue(const rnti_t rnti, const uint32_t data_size, uint8_t* dataptr)
+{
+	uint16_t sch_num = g_sch.tx_info.sch_num;
+	sch_ind* sch = NULL;
+
+	if (dataptr == NULL)
+	{
+		LOG_ERROR(MAC, "update_scheduled_ue, invalid dataptr");
+		return false;
+	}
+
+	for (uint32_t i = 0; i < sch_num; ++i)
+	{
+		sch = &g_sch.tx_info.sch[i];
+
+		if (rnti == sch->rnti)
+		{
+			if (data_size != sch->pdu_len)
+			{
+				LOG_WARN(MAC, "rlc pdu length wrong, rnti:%u, dataSize:%u, pdu_len:%u", 
+					rnti, data_size, sch->pdu_len);
+			}
+
+			sch->data = dataptr;
+			sch->scheduled = true;
+
+			return true;
+		}
+	}
+
+	return false;
+}
+
+void handle_rlc_data_result(const rlc_mac_data_ind* ind)
+{
+	bool ret = false;
+	uint32_t ue_num = ind->ue_num;
+	uint16_t ueIndex = INVALID_U16;
+	//mac_info_s *mac = g_context.mac;
+	//ueInfo* ue = &mac->ue[0];
+	rnti_t rnti = INVALID_U16;
+	uint32_t data_size = 0;
+	uint8_t* dataptr = NULL;
+
+	for (uint32_t i = 0; i < ue_num; i++)
+	{
+		ueIndex = find_ue(ind->sdu_pdu_info[i].rnti);
+
+		if (ueIndex == INVALID_U16)
+		{
+			LOG_ERROR(MAC, "handle_rlc_data_result, did not find scheduled ue rnti:%u", 
+				ind->sdu_pdu_info[i].rnti);
+			continue;
+		}
+
+		//ue = &mac->ue[ueIndex];
+		rnti = ind->sdu_pdu_info[i].rnti;
+		data_size = ind->sdu_pdu_info[i].tb_byte_size;
+		dataptr = ind->sdu_pdu_info[i].data_buffer_adder_ptr;
+
+		ret = update_scheduled_ue(rnti, data_size, dataptr);
+
+		if (ret)
+		{
+
+		}
+	}
+
+}
+
+void handle_rlc_data_ind()
+{
+	//MAC_TEST
+	msgDef msg;
+	uint32_t msg_len = 0;
+
+	//while (1)
+	{
+		msg_len = msgRecv(RLC_MAC_QUEUE, (char *)&msg, MQ_MSGSIZE);
+
+		if (msg_len == 0)
+		{
+			return;
+		}
+
+		switch (msg.header.msgId)
+		{
+			case RLC_MAC_DATA_IND:
+			{
+				rlc_mac_data_ind *ind = (rlc_mac_data_ind *)msg.data;
+
+				handle_rlc_data_result(ind);
+				msg_free(ind);
 				break;
 			}
 			default:
@@ -187,7 +310,7 @@ int32_t ue_compare(const void *_a, const void *_b, void *_p)
 {
 	int32_t ret = 0;
 	mac_info_s *mac = g_context.mac;
-	sort_params *params = _p;
+	sort_ue_params *params = _p;
 	uint16_t ueIndex1 = *(const uint16_t *)_a;
 	uint16_t ueIndex2 = *(const uint16_t *)_b;
 	ueInfo ue1 = mac->ue[0];
@@ -227,10 +350,52 @@ int32_t ue_compare(const void *_a, const void *_b, void *_p)
 
 void sort_ues(uint16_t list[MAX_UE], uint16_t size)
 {
-	sort_params params = {ESORTING_HIGH};
+	sort_ue_params params = {ESORTING_HIGH};
 
 	qsort_r(list, size, sizeof(uint16_t), ue_compare, &params);
+}
 
+int32_t logic_channel_compare(const void *_a, const void *_b, void *_p)
+{
+	sort_lc_params* params = _p;
+	uint16_t index1 = *(const uint16_t *)_a;
+	uint16_t index2 = *(const uint16_t *)_b;
+
+	lc_config lc1 = params->config[index1];
+	lc_config lc2 = params->config[index2];
+	uint32_t buffer1 = params->buffer->buffer_size[index1];
+	uint32_t buffer2 = params->buffer->buffer_size[index2];
+
+	if (buffer1 == 0 && buffer2 == 0)
+	{
+		return 0;
+	}
+
+	if(buffer1 > 0 && buffer2 == 0)
+	{
+		return -1;
+	}
+
+	if(buffer1 == 0 && buffer2 > 0)
+	{
+		return 1;
+	}
+
+	if (lc1.priority > lc2.priority)
+	{
+		return -1;
+	}
+	else if (lc1.priority < lc2.priority)
+	{
+		return 1;
+	}
+
+	return 0;
+}
+
+void sort_logic_channel(uint16_t list[MAX_LOGICCHAN_NUM], uint16_t size, sort_lc_params* params)
+{
+	qsort_r(list, size, sizeof(uint16_t), logic_channel_compare, params);
 }
 
 void pre_assign_rbs(const frame_t frame, const sub_frame_t subframe)
@@ -484,8 +649,9 @@ void scheduler_resource_locate()
 	mac_info_s *mac = g_context.mac;
 	//ueInfo *ue = &mac->ue[0];
 	uint32_t first_rb = get_first_rb(mac->bandwith);
-	uint32_t rb_num = get_rb_num(mac->bandwith);
+	uint32_t total_rbs = get_rb_num(mac->bandwith);
 	uint32_t rb_alloc_count = 0;
+	uint16_t num1 = 0;
 
 	num0 = mac->num0;
 
@@ -505,8 +671,17 @@ void scheduler_resource_locate()
 		//ue = &mac->ue[ueIndex];
 		first_rb = first_rb + rb_alloc_count;
 
-		rb_alloc_count = rballoc(mac, ueIndex, first_rb, rb_num);
+		if (first_rb >= total_rbs)
+		{
+			break;
+		}
+
+		rb_alloc_count = rballoc(mac, ueIndex, first_rb, total_rbs);
+
+		mac->scheduling_list1[num1++] = ueIndex;
 	}
+
+	mac->num1 = num1;
 }
 
 void schedule_ue(const frame_t frame, const sub_frame_t subframe)
@@ -537,77 +712,321 @@ void schedule_ue(const frame_t frame, const sub_frame_t subframe)
 	scheduler_resource_locate();
 }
 
-void mac_scheduler()
+void handle_ue_macce(ueInfo* ue)
 {
-	frame_t frame = g_sch.frame;
-	sub_frame_t subframe = g_sch.subframe;
-
-	handle_buffer_status_ind(frame, subframe);
-
-	schedule_ra(frame, subframe);
-
-	schedule_ue(frame, subframe);
+// so far, no mac ce
 }
-#if 0
-void resource_alloc()
+
+void handle_ue_logic_channel(ueInfo* ue, uint16_t lc_index[MAX_LOGICCHAN_NUM], uint16_t lc_num, const sub_frame_t subframe)
 {
-	mac_info_s *mac = g_context.mac;
-	common_channel_s *common_channel = &mac->common_channel;
-	mac_tx_req *tx_req = &g_sch.tx_req;
-	uint32_t sib_len = common_channel->sib_size;
-	uint32_t rb_max = get_rb_num(mac->bandwith);
-	uint32_t rb_start_index = get_rb_start(mac->bandwith);
-	uint32_t rbg_size = get_rbg_size(mac->bandwith);
+	uint8_t harqId = get_harqId(subframe);
+	harq_info* harq = &ue->harq[harqId];
+	txBuffer* buffer = &ue->buffer;
+	schedule_info* sch_info = &ue->sch_info;
+	int32_t pre_rbs_alloc = sch_info->pre_rbs_alloc;
+	uint16_t index = 0;
+
+	uint32_t rbg_size = 4;
 	uint32_t rbs_req = 0;
-	uint16_t aggregation_level = 2;
-	int32_t cce_offset = -1;
+	uint32_t header_size = 0;
+	uint32_t buffer_total = 0;
 
-	uint8_t mcs = 2; // for sib
-	uint32_t tbs = get_tbs(mcs, rbg_size);
-	
-	while (tbs < sib_len)
+	if (harq->reTx)
 	{
-	  rbs_req += rbg_size;
-	
-	  if (rbs_req > mac->max_rbs_per_ue || rbs_req > rb_max) 
-	  {
-		rbs_req = MIN(mac->max_rbs_per_ue,rb_max);
-		tbs = get_tbs(mcs, rbs_req);
-		break;
-	  }
-	  tbs = get_tbs(mcs, rbs_req);
-	} // end of while
+		return;
+	}
 
-	tx_req->tx_info[tx_req->num_tx].sch.rb_start = rb_start_index;
-	tx_req->tx_info[tx_req->num_tx].sch.rb_num = rbs_req;
-	tx_req->tx_info[tx_req->num_tx].sch.modulation = 2;//QPSK
-	tx_req->tx_info[tx_req->num_tx].sch.rv = 0;
-	tx_req->tx_info[tx_req->num_tx].sch.data_ind = 2;
-	tx_req->tx_info[tx_req->num_tx].sch.ack = INVALID_U8;
-	tx_req->tx_info[tx_req->num_tx].sch.pdu_len = sib_len;
-	tx_req->tx_info[tx_req->num_tx].sch.data = common_channel->sib_pdu;
+	buffer->lc_num = 0;
+
+	for (uint16_t i = 0; i < lc_num && pre_rbs_alloc > 0; i++)
+	{
+		index = lc_index[i];
+
+		if (buffer->buffer_size[index] > 0)
+		{
+			header_size = get_logic_channel_header_size(buffer->buffer_size[index]);
+
+			rbs_req = 0;
+			rbs_req = rbg_size;
+			buffer_total = buffer->buffer_size[index] + header_size;
+
+			while (rbs_req < buffer_total)
+			{
+				rbs_req += rbg_size;
+			}
+
+			if (rbs_req > buffer_total)
+			{
+				while (rbs_req <= buffer_total)
+					rbs_req--;
+			}
+
+			//pre_rbs_alloc = pre_rbs_alloc - rbs_req;
+
+			if (pre_rbs_alloc - rbs_req < 0)
+			{
+				while ((pre_rbs_alloc - rbs_req) >= 0)
+					rbs_req--;
+			}
+
+			pre_rbs_alloc = pre_rbs_alloc - rbs_req;
+			buffer->lc_rbs_alloc[index] = rbs_req;
+
+			buffer->lc_priority_index[buffer->lc_num++] = index;
+		}
+	}
+
+	if (pre_rbs_alloc > 0)
+	{
+		LOG_WARN(MAC, "there are still rbs unassgin pre_rbs_alloc:%d", pre_rbs_alloc);
+	}
+}
+
+void handle_ue_result(ueInfo* ue, const sub_frame_t subframe)
+{
+	uint16_t lc_num = ue->lc_num;
+	lc_config* lc_config = &ue->lc_config[0];
+
+	txBuffer* buffer = &ue->buffer;
+	//schedule_info* sch_info = &ue->sch_info;
+
+	sort_lc_params params = {lc_config, buffer};
+
+	uint16_t lc_index[lc_num];
+
+	for (uint16_t i = 0; i < lc_num; i++)
+	{
+		lc_index[i] = i;
+	}
+
+	if (ue->ce_num > 0)
+	{
+		handle_ue_macce(ue);
+	}
+
+	sort_logic_channel(lc_index, lc_num, &params);
+
+	handle_ue_logic_channel(ue, lc_index, lc_num, subframe);
+}
+
+bool fill_dci_result(ueInfo* ue, dci_ind* dci, uint16_t dci_num, const uint32_t rb_num, const uint32_t rb_start, const uint8_t mcs)
+{
+	int32_t cce_offset = -1;
+	uint16_t aggregation_level = 2;//get_aggregation_level(bandwith, EFORMAT0, 2);
 
 	cce_offset = allocate_CCE(aggregation_level);
 
 	if (cce_offset >= 0)
 	{
-		tx_req->tx_info[tx_req->num_tx].rnti = SI_RNTI;
-		tx_req->tx_info[tx_req->num_tx].ueIndex = INVALID_U16;
+		dci[dci_num].rnti = ue->rnti;
+		dci[dci_num].ueIndex = ue->ueIndex;
 
-		tx_req->tx_info[tx_req->num_tx].dci.cce_rb_num = aggregation_level;
-		tx_req->tx_info[tx_req->num_tx].dci.cce_rb = cce_offset;
-		tx_req->tx_info[tx_req->num_tx].dci.rb_num = rbs_req;
-		tx_req->tx_info[tx_req->num_tx].dci.rb_start = rb_start_index;
-		tx_req->tx_info[tx_req->num_tx].dci.mcs = mcs;
-		tx_req->tx_info[tx_req->num_tx].dci.data_ind = 2;
-		tx_req->tx_info[tx_req->num_tx].dci.ndi = 0;
-		tx_req->tx_info[tx_req->num_tx].dci.rv = 0;
-		tx_req->num_tx++;
+		dci[dci_num].cce_rb_num = aggregation_level;
+		dci[dci_num].cce_rb = cce_offset;
+		dci[dci_num].rb_num = rb_num;
+		dci[dci_num].rb_start = rb_start;
+		dci[dci_num].mcs = mcs;
+		dci[dci_num].data_ind = 2;
+		dci[dci_num].ndi = 0;
+		dci[dci_num].rv = 0;
+		dci_num++;
+	}
+	else
+	{	
+		LOG_WARN(MAC, "No CCE Resoure for ue ueIndex:%u", ue->ueIndex);
+		return false;
+	}
+
+	return true;
+}
+
+void fill_sch_result(ueInfo* ue, 
+	sch_ind* sch, 
+	uint16_t sch_num,
+	const uint32_t rb_num,
+	const uint32_t rb_start,
+	const uint8_t mcs, 
+	const uint8_t rv)
+{
+	sch[sch_num].scheduled = false;
+	sch[sch_num].ueIndex = ue->ueIndex;
+	sch[sch_num].rnti = ue->rnti;
+	sch[sch_num].rb_start = rb_start;
+	sch[sch_num].rb_num = rb_num;
+	sch[sch_num].mcs = mcs;
+	sch[sch_num].data_ind = 2; //TODO:
+	sch[sch_num].modulation = 1;//TODO: not define yet
+	sch[sch_num].rv = rv;
+	//sch[sch_num].harqId = 
+	//sch[sch_num].ack = 
+
+	sch[sch_num].pdu_len = ue->buffer.buffer_total;
+}
+
+bool fill_schedule_result(ueInfo* ue, const sub_frame_t subframe)
+{
+	bool ret = false;
+	tx_req_info* tx = &g_sch.tx_info;
+	uint16_t dci_num = tx->dci_num;
+	uint16_t sch_num = tx->sch_num;
+	dci_ind* dci = &tx->dci[0];
+	sch_ind* sch = &tx->sch[0];
+
+	uint8_t harqId = get_harqId(subframe);
+    uint32_t rb_start = 0;
+	uint32_t rb_num  = 0;
+	uint8_t mcs = 0;
+	uint8_t rv = 0;
+
+	if (ue->harq[harqId].reTx)
+	{
+		rb_start = ue->harq[harqId].rb_start;
+		rb_num = ue->harq[harqId].rb_num;
+		mcs = ue->harq[harqId].mcs;
+		rv = get_rv(ue->harq[harqId].reTx_num);
 	}
 	else
 	{
-		LOG_WARN(MAC, "No CCE Resoure for SIB SFN:%u", frame*4+subframe);
+		rb_start = ue->sch_info.rb_start;
+		rb_num = ue->sch_info.rb_num;
+		mcs = ue->sch_info.mcs;
+		rv = 0;
 	}
 
+	ret = fill_dci_result(ue, dci, dci_num, rb_num, rb_start, mcs);
+
+	if (ret)
+	{
+		fill_sch_result(ue, sch, sch_num, rb_num, rb_start, mcs, rv);
+	}
+	else
+	{
+		return false;
+	}
+
+	tx->dci_num = dci_num;
+	tx->sch_num = sch_num;
+
+	return true;
 }
-#endif
+
+void handle_schedule_result(const frame_t frame, const sub_frame_t subframe)
+{
+	uint16_t ueIndex = INVALID_U16;
+	uint16_t num1 = 0;
+	mac_info_s* mac = g_context.mac;
+	ueInfo* ue = NULL;
+	//uint32_t rb_num = get_rb_num(mac->bandwith);
+	//uint32_t rb_alloc_count = 0;
+	uint16_t num2 = 0;
+	bool ret = false;
+
+	num1 = mac->num1;
+
+	for (uint32_t i = 0; i < num1; i++)
+	{
+		ueIndex = mac->scheduling_list1[i];
+
+		if (ueIndex >= MAX_UE ||
+			mac->ue[ueIndex].active == false ||
+			mac->ue[ueIndex].out_of_sync == true) 
+		{
+			LOG_ERROR(MAC, "ue is not available, ueIndex:%u, active:%u, outOfSync:%u", 
+				ueIndex, mac->ue[ueIndex].active, mac->ue[ueIndex].out_of_sync);
+			continue;
+		}
+
+		ue = &mac->ue[ueIndex];
+
+		handle_ue_result(ue, subframe);
+
+		ret = fill_schedule_result(ue, subframe);
+
+		if (ret)
+		{
+			mac->scheduling_list2[num2++] = ueIndex;
+		}
+	}
+}
+
+void mac_rlc_data_request()
+{
+	mac_info_s* mac = g_context.mac;
+	ueInfo* ue = &mac->ue[0];
+	uint16_t ue_num = mac->num2;
+	uint16_t ueIndex = mac->scheduling_list2[0];
+	uint8_t harqId = get_harqId(mac->subframe);
+	uint16_t lc_index = 0;
+
+	msgDef msg;
+	mac_rlc_data_req *req;
+	msgSize msg_size = sizeof(mac_rlc_data_req);
+	msg.data = (uint8_t*)msg_malloc(msg_size);
+
+	rlc_data_req* data = NULL;
+
+	if (msg.data != NULL)
+	{
+		msg.header.msgId = MAC_RLC_DATA_REQ;
+		msg.header.source = MAC_TASK;
+		msg.header.destination = RLC_TASK;
+		msg.header.msgSize = msg_size;
+	}
+	else
+	{
+		LOG_ERROR(MAC, "mac_rlc_data_request, new mac message fail!");
+		return;
+	}
+
+	req = (mac_rlc_data_req*)msg.data;
+	req->sfn = mac->frame;
+	req->sub_sfn = mac->subframe;
+	req->ue_num = 0;
+
+	for (uint32_t i = 0; i < ue_num; i++)
+	{
+		ueIndex = mac->scheduling_list2[i];
+		ue = &mac->ue[ueIndex];
+
+		if (ue->harq[harqId].reTx)
+		{
+			continue;
+		}
+
+		data = &req->rlc_data_request[req->ue_num++];
+		data->rnti = ue->rnti;
+		data->tb_size = 0;
+		data->logic_chan_num = ue->buffer.lc_num;
+
+		for (uint32_t j = 0; j < ue->buffer.lc_num; j++)
+		{
+			lc_index = ue->buffer.lc_priority_index[j];
+			data->logicchannel_id[j] = ue->buffer.chan_id[lc_index];
+			data->mac_pdu_byte_size[j] = ue->buffer.buffer_size[lc_index];
+			data->tb_size += ue->buffer.lc_rbs_alloc[lc_index];
+		}
+	}
+
+	if (msgSend(RLC_QUEUE, (char *)&msg, sizeof(msgDef)))
+	{
+
+	}
+}
+
+void mac_scheduler()
+{
+	frame_t frame = g_sch.frame;
+	sub_frame_t subframe = g_sch.subframe;
+
+	handle_buffer_status_ind();
+
+	schedule_ra(frame, subframe);
+
+	schedule_ue(frame, subframe);
+
+	handle_schedule_result(frame, subframe);
+
+	//sleep(100us);
+	handle_rlc_data_ind();
+}
+
