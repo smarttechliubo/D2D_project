@@ -152,7 +152,8 @@ typedef struct rrc_rlc_data_ind_s
 	rb_type_e   rb_type;  /** 0:srb0; 1:srb1; 3:drb */
 	rb_id_t     rb_id; 
 	rnti_t      rnti;
-	uint16_t   data_size; /**unit: byte*/
+	uint32_t    data_sn; 
+	uint32_t   data_size; /**unit: byte*/
 	uint32_t   *data_addr_ptr; /**data address*/
 }rrc_rlc_data_ind;
 

@@ -88,13 +88,13 @@ rlc_op_status_t rlc_get_tx_data(const protocol_ctxt_t *const ctxt_pP,
 
 	key = RLC_COLL_KEY_VALUE(ctxt_pP->module_id, ctxt_pP->rnti, ctxt_pP->enb_flag, rb_idP, srb_flagP);
 	h_rc = hashtable_get(rlc_coll_p, key, (void **)&rlc_union_p);
-
-	if (h_rc == HASH_TABLE_OK) {
-		pthread_mutex_lock(&(rlc_union_p->rlc_union_mtex));
+    
+	if (h_rc == HASH_TABLE_OK) {		
+		LOG_INFO(RLC, "func:%s,ling:%d: key = %lld: get rlc entity sucess!\n",__func__,__LINE__,key);
 		rlc_mode = rlc_union_p->mode;
 	} else {
 		//AssertFatal (0 , "RLC not configured key %ju\n", key);
-		LOG_ERROR(RLC, "not configured key %lu\n", key);
+		LOG_ERROR(RLC, "not configured key %lld\n", key);
 		return RLC_OP_STATUS_OUT_OF_RESSOURCES;
 	}
 
@@ -105,7 +105,7 @@ rlc_op_status_t rlc_get_tx_data(const protocol_ctxt_t *const ctxt_pP,
 	rlc_util_print_hex_octets(RLC, (unsigned char *)sdu_pP, sdu_sizeP);
 #endif
 
-
+  
 	switch (rlc_mode) {
 #ifdef AM_ENABLE 
 	case RLC_MODE_AM:
@@ -149,11 +149,12 @@ rlc_op_status_t rlc_get_tx_data(const protocol_ctxt_t *const ctxt_pP,
 		return RLC_OP_STATUS_OUT_OF_RESSOURCES;
 	  }
 #endif
-
+      
 	  //！这里申请出来的data 的首地址指向的是包含了rlc_um_data_req_alloc这个结构体的
 	  new_sdu_p = get_free_mem_block (sdu_sizeP + sizeof (struct rlc_um_data_req_alloc), __func__);
 
 	  if (new_sdu_p != NULL) {
+	    pthread_mutex_lock(&(rlc_union_p->rlc_union_mtex));
 		// PROCESS OF COMPRESSION HERE:
 		memset (new_sdu_p->data, 0, sizeof (struct rlc_um_data_req_alloc));
 		//！copy 数据到新申请buffer中
@@ -167,7 +168,7 @@ rlc_op_status_t rlc_get_tx_data(const protocol_ctxt_t *const ctxt_pP,
 	    rlc_um_data_req(ctxt_pP, &rlc_union_p->rlc.um, new_sdu_p);
 
 		//free_mem_block(new_sdu, __func__);
-	
+	    pthread_mutex_unlock(&(rlc_union_p->rlc_union_mtex));
 		return RLC_OP_STATUS_OK;
 	  } else {
 		//free_mem_block(sdu_pP, __func__);
@@ -177,12 +178,13 @@ rlc_op_status_t rlc_get_tx_data(const protocol_ctxt_t *const ctxt_pP,
 	  break;
 
 	case RLC_MODE_TM:
-
+     
 	  //！申请Mem时，增加了size: sizeof (struct rlc_tm_data_req_alloc)
 	  new_sdu_p = get_free_mem_block (sdu_sizeP + sizeof (struct rlc_tm_data_req_alloc), __func__);
 
 	  if (new_sdu_p != NULL) {
 		// PROCESS OF COMPRESSION HERE:
+		pthread_mutex_lock(&(rlc_union_p->rlc_union_mtex));
 		memset (new_sdu_p->data, 0, sizeof (struct rlc_tm_data_req_alloc));
 		memcpy (&new_sdu_p->data[sizeof (struct rlc_tm_data_req_alloc)], sdu_pP, sdu_sizeP);
 		((struct rlc_tm_data_req *) (new_sdu_p->data))->data_size = sdu_sizeP;
@@ -192,7 +194,7 @@ rlc_op_status_t rlc_get_tx_data(const protocol_ctxt_t *const ctxt_pP,
 		 //！这里只是将申请出来的mem 地址添加到了input_sdu中，但是数据并没有copy进去，哪里看到数据的搬移呢？
 		rlc_tm_data_req(ctxt_pP, &rlc_union_p->rlc.tm, new_sdu_p);
 		
-		
+		pthread_mutex_unlock(&(rlc_union_p->rlc_union_mtex));
 		
 		return RLC_OP_STATUS_OK;
 	  } else {
@@ -208,7 +210,7 @@ rlc_op_status_t rlc_get_tx_data(const protocol_ctxt_t *const ctxt_pP,
 	
 	  return RLC_OP_STATUS_INTERNAL_ERROR;
   }
-	pthread_mutex_unlock(&(rlc_union_p->rlc_union_mtex));	
+		
 }
 
 
@@ -290,13 +292,14 @@ void rlc_tx_process(void *message, MessagesIds      msg_type)
 	uint16_t     subsfn; 
 	uint32_t     ue_num; 
 	uint32_t     ue_index; 
+	uint32_t     srb_flag = 0; 
 
 	tb_size_t    tb_size; 
 	uint32_t   ue_pdu_buffer_array[D2D_MAX_USER_NUM]; 
 	uint32_t   ue_pdu_size_array[D2D_MAX_USER_NUM]; 
 	uint32_t   ue_rnti_array[D2D_MAX_USER_NUM]; 
 	
-	
+	LOG_INFO(RLC, "RLC_RRC_TX receive message = %d\n",msg_type);
 	switch (msg_type)
 	{
 		case RRC_RLC_BUF_STATUS_REQ: 
@@ -322,8 +325,9 @@ void rlc_tx_process(void *message, MessagesIds      msg_type)
 			break; 
 		}
 		case RRC_RLC_DATA_IND: 
+		case IP_RLC_DATA_IND:
 		{
-			//!receive RRC data
+			
 			rrc_rlc_data_ind_ptr  = (rrc_rlc_data_ind *)message; 
 			rb_type = rrc_rlc_data_ind_ptr->rb_type; 
 			rb_id = rrc_rlc_data_ind_ptr->rb_id; 
@@ -331,13 +335,22 @@ void rlc_tx_process(void *message, MessagesIds      msg_type)
 			data_buffer = rrc_rlc_data_ind_ptr->data_addr_ptr;
 			rnti = rrc_rlc_data_ind_ptr->rnti; 
 			g_rlc_protocol_ctxt.rnti = rnti; 
-	
+
+			if (RRC_RLC_DATA_IND == msg_type)
+			{
+				srb_flag = SRB_FLAG_YES; 
+			}
+			else 
+			{
+				srb_flag = SRB_FLAG_NO; 
+			}
+	       
 			rlc_get_tx_data(&g_rlc_protocol_ctxt,
-							SRB_FLAG_YES,
+							srb_flag,
 							rb_id,
 							send_data_size,
 							data_buffer);
-
+            LOG_INFO(RLC, "message:%d tx data process finished,data SN = %d\n",msg_type,rrc_rlc_data_ind_ptr->data_sn);
 			break; 
 		}
 		//!TODO  IP DATA transfer message

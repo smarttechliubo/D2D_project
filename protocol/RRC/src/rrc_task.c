@@ -548,7 +548,6 @@ int  rrc_Receive_Signal_Msg(uint16_t mode_type, void *message, MessagesIds  msg_
 	        else 
 	        {
 				LOG_DEBUG(RRC,"RRC DETINATION receive MAC_RRC_CONNECT_SETUP_CFG_CFM message\n "); 
-
 	        }
 	      
 
@@ -563,8 +562,8 @@ int  rrc_Receive_Signal_Msg(uint16_t mode_type, void *message, MessagesIds  msg_
 			 	//！after SRB1 and DRB eatablished ,RRC SOURCE send connect setup message 
 	             //!generate connectsetup message, config MAC/RLC,PHY 
 			    EncodeD2dCcch(encode_buffer,ENCODE_MAX_SIZE,
-			                                      &encode_buffer_size,
-			                                      CCCH_MessageType_PR_rrcConnectionsetup); 
+			                  &encode_buffer_size,
+			                  CCCH_MessageType_PR_rrcConnectionsetup); 
 	            
 	            LOG_INFO(RRC, "SOURCE generate RRC connect setup message!\n");
 			    //!send buffer_status require message to RLC  srb1 for connect setup message 
@@ -589,10 +588,6 @@ int  rrc_Receive_Signal_Msg(uint16_t mode_type, void *message, MessagesIds  msg_
 				 //! update rrc status for destination 
                  rrc_SetStatus(RRC_STATUS_CONNECTE_COMPLETE);
 			}
-	
-
-
-
 			break; 
 		}
 	    case MAC_RRC_CCCH_RPT: 
@@ -685,11 +680,11 @@ int  rrc_Receive_Signal_Msg(uint16_t mode_type, void *message, MessagesIds  msg_
 
                 
 				 //! RRC CONFIG MAC 
-                rrc_Mac_ConnectSetup_Config( 0, //!fix to 0 at destination mode 
-                                             max_harq_tx,  
-                                             max_out_sync,  
-                                             logic_ch_num,  
-                                             logic_channel_config);
+                rrc_Mac_ConnectSetup_Config(0,           //!fix to 0 at destination mode 
+                                            max_harq_tx,  
+                                            max_out_sync,  
+                                            logic_ch_num,  
+                                            logic_channel_config);
 
 				  //! RRC CONFIG RLC and MAC 
                 rrc_rbinfo_decode_connect_setup(ccch_message.message.choice.rrcConnectionsetup,
@@ -698,8 +693,7 @@ int  rrc_Receive_Signal_Msg(uint16_t mode_type, void *message, MessagesIds  msg_
                                                 logic_channel_config, 
                                                 &logic_ch_num, 
                                                 &max_harq_tx, 
-                                                &max_out_sync
-                                            ); 
+                                                &max_out_sync); 
 
                 
 				
@@ -710,7 +704,6 @@ int  rrc_Receive_Signal_Msg(uint16_t mode_type, void *message, MessagesIds  msg_
 				LOG_DEBUG(RRC,"RRC DESTINATION receive connect setup message,rnti = %d,\
 								connect setup config for MAC/RLC\n",g_rrc_mac_report_rnti);
  
-				
 				
             }
             else if (CCCH_MessageType_PR_rrcConectioncomplete == ccch_message.message.present)

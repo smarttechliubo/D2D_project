@@ -223,7 +223,6 @@ int   rlc_Get_Buffer_Status(rlc_buffer_rpt *buffer_status)
     return ue_num; 
 
 
-
 }
 
 
@@ -258,7 +257,10 @@ void   rlc_Set_Buffer_Status(rnti_t rnti,
 		rlc_header_size = 0; 
 	}
 
+        
 	ue_index = dict_GetValue(g_rrc_ue_info_dict,rnti);
+	
+	
 	AssertFatal((ue_index < (D2D_MAX_USER_NUM + 1)), RLC, "ue num exceed max limit!!\n"); 
 	
 	if (0 == g_rlc_buffer_status[ue_index].valid_flag)
@@ -295,9 +297,6 @@ void   rlc_Set_Buffer_Status(rnti_t rnti,
    
 
 	pthread_mutex_unlock(&g_rlc_buffer_mutex); 
-
- 	
-
 
 }
 

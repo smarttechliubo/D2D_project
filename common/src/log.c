@@ -16,7 +16,7 @@
 #include "log.h"
 
 #ifndef LOGLEVEL
-#define LOGLEVEL DEBUG
+#define LOGLEVEL INFO
 #endif
 
 // 使用了GNU C扩展语法，只在gcc（C语言）生效，
@@ -91,7 +91,7 @@ void log_info(const char* filename, int line, comp_name_t comp, LogLevel level, 
     #ifdef  LOG_PRINTF_ALL 
     printf("%s [%s] [%s]  [%s:%d]  %s\n", time, s_comp[comp], s_loginfo[level], tmp, line, buf);
 	#else 
-	printf( "[%s] %s\n" ,  s_loginfo[level],  buf);
+	printf( "[%s][%s] %s\n" ,  s_loginfo[level],s_comp[comp], buf);
 	#endif 
 #endif
     va_end(arg_list);

@@ -177,8 +177,7 @@ rlc_union_t *rrc_rlc_add_rlc   (const protocol_ctxt_t* const ctxt_pP,
 
 
 
-rlc_op_status_t rrc_rlc_config_req	 (
-											const protocol_ctxt_t* const ctxt_pP,
+rlc_op_status_t rrc_rlc_config_req	 (const protocol_ctxt_t* const ctxt_pP,
 											const srb_flag_t		srb_flagP,
 											const MBMS_flag_t	mbms_flagP,
 											const config_action_t actionP,
@@ -339,7 +338,7 @@ void  rlc_rrc_config_process(void *message, MessagesIds         msg_type)
 									rb_id,
 									logic_ch_id,
 									temp_rlc_info); 
-			     LOG_INFO(RLC,"RRC_RLC_BCCH_PARA_CFG_REQ: SRB add and modify, rb_indx = %d,rb_id = %d, lc_id = %d,\
+			    LOG_INFO(RLC,"RRC_RLC_BCCH_PARA_CFG_REQ: SRB add and modify, rb_indx = %d,rb_id = %d, lc_id = %d,\
 			     			rlc_mode = %s\n", \
 			     			rb_index,rb_id,logic_ch_id,g_rlc_mode_str[temp_rlc_info.rlc_mode]); 
 			}

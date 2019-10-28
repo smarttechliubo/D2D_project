@@ -63,8 +63,7 @@ void rlc_tm_init (
 }
 
 
-void config_req_rlc_tm (
-							  const protocol_ctxt_t* const  ctxt_pP,
+void config_req_rlc_tm(const protocol_ctxt_t* const  ctxt_pP,
 							  const srb_flag_t  srb_flagP,
 							  const rlc_tm_info_t * const config_tmP,
 							  const rb_id_t rb_idP,
