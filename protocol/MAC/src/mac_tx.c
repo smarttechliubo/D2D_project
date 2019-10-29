@@ -232,7 +232,7 @@ void handle_rlc_data_result(const rlc_mac_data_ind* ind)
 		//ue = &mac->ue[ueIndex];
 		rnti = ind->sdu_pdu_info[i].rnti;
 		data_size = ind->sdu_pdu_info[i].tb_byte_size;
-		dataptr = ind->sdu_pdu_info[i].data_buffer_adder_ptr;
+		dataptr = (uint8_t*)ind->sdu_pdu_info[i].data_buffer_adder_ptr;
 
 		ret = update_scheduled_ue(rnti, data_size, dataptr);
 

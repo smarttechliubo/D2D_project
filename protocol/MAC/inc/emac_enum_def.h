@@ -12,6 +12,22 @@
 
 typedef enum
 {
+	ECRC_NULL,
+	ECRC_ACK,
+	ECRC_NACK,
+	ECRC_DTX
+}crc_result_e;
+
+typedef enum
+{
+	PHR,
+	CRNTI,
+	CONRES,
+	TA
+}mac_ce_e;
+
+typedef enum
+{
 	EFORMAT0,
 	EFORMAT1,
 	EFARMAT_MAX

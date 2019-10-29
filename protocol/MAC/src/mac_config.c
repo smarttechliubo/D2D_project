@@ -50,7 +50,7 @@ bool mac_config_cfm(bool success)
 	}
 	else
 	{
-		LOG_ERROR(MAC, "[TEST]: new mac message fail!");
+		LOG_ERROR(MAC, "new mac message fail!");
 		return false;
 	}
 	return false;

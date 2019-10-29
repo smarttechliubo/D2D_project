@@ -33,6 +33,7 @@ typedef struct
 
 typedef struct
 {
+	crc_result_e crc;
 	uint16_t cqi;
 	uint16_t mcs;
 	uint16_t coefficient;
@@ -71,15 +72,19 @@ typedef struct
 	uint16_t  maxHARQ_Tx;
 	bool      out_of_sync;
 	uint16_t  max_out_sync;
+	uint16_t  out_sync_count;
+	uint16_t  padding;
 
 	uint16_t  lc_num;
 	lc_config lc_config[MAX_LOGICCHAN_NUM];
 	uint32_t  ce_num;
 	mac_ce    macCE[2];
 
-	txBuffer buffer;
-	harq_info harq[MAX_HARQ_NUM];
+	//uint16_t cqi[4];
+
+	txBuffer      buffer;
 	schedule_info sch_info;
+	harq_info     harq[MAX_HARQ_NUM];
 }ueInfo;//ue
 
 typedef struct

@@ -145,6 +145,14 @@ uint8_t get_harqId(const sub_frame_t subframe)
 	uint8_t harqId = INVALID_U8;
 	mac_info_s *mac = g_context.mac;
 	mode_e mode = mac->mode;
+
+	if ((mode == EMAC_SRC && subframe > 1) || (mode == EMAC_DEST && subframe <= 1))
+	{
+		harqId = 0;
+		LOG_ERROR(MAC, "get_harqId error, subframe:%u", subframe);
+		return harqId;
+	}
+
 	if (mode == EMAC_SRC)
 	{
 		harqId = subframe % MAX_SUBSFN;
@@ -153,6 +161,9 @@ uint8_t get_harqId(const sub_frame_t subframe)
 	{
 		harqId = (subframe % MAX_SUBSFN) - 2;
 	}
+
+	//AssertFatal(harqId <= 2, MAC, "get harqId fail, subframe:%u, harqId:%u", subframe, harqId);
+
 	return harqId;
 }
 

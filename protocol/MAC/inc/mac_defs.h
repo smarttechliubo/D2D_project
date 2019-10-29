@@ -1,6 +1,6 @@
 /**********************************************************
-* @file rrc_mac_interface.h
-* @brief  define msg ID and msg struct for MAC and RRC
+* @file mac_defs.h
+* @brief  mac macro defs
 *
 * @author	guicheng.liu
 * @date 	2019/03/30

@@ -20,6 +20,21 @@
 #include "messageDefine.h"//MAC_TEST
 #include "msg_queue.h"
 
+bool get_ue_status(const uint16_t ueIndex)
+{
+	if (ueIndex >= MAX_UE)
+		return false;
+
+	return g_context.mac->ue[ueIndex].out_of_sync;
+}
+
+void set_ue_status(const uint16_t ueIndex, const uint16_t status)
+{
+	if (ueIndex >= MAX_UE)
+		return;
+	g_context.mac->ue[ueIndex].out_of_sync = status;
+}
+
 rnti_t new_rnti(const uint16_t cellId, const uint16_t ueIndex)
 {
 	return (cellId + 1) * 1000 + ueIndex;
@@ -244,5 +259,156 @@ void mac_user_release(const rrc_mac_release_req *req)//TODO: mac reset ue releas
 	ret = remove_ue(ueIndex);
 
 	mac_release_cfm(req, ret);
+}
+
+void mac_rrc_status_report(const rnti_t rnti, bool status)
+{
+	msgDef msg;
+	mac_rrc_outsync_rpt *rpt;
+	msgSize msg_size = sizeof(mac_rrc_outsync_rpt);
+	msg.data = (uint8_t*)msg_malloc(msg_size);
+
+	if (msg.data != NULL)
+	{
+		msg.header.msgId = MAC_RRC_INITIAL_CFM;
+		msg.header.source = MAC_TASK;
+		msg.header.destination = RRC_TASK;
+		msg.header.msgSize = msg_size;
+
+		rpt = (mac_rrc_outsync_rpt*)msg.data;
+		rpt->rnti = rnti;
+		rpt->outsync_flag = status;
+
+		if (msgSend(RRC_QUEUE, (char *)&msg, sizeof(msgDef)))
+		{
+
+		}
+	}
+	else
+	{
+		LOG_ERROR(MAC, "status report, new mac message fail!");
+	}
+}
+
+//for future using, get csi info
+void get_csi_paras(const uint16_t ueIndex, uint16_t* cqi_periodic)
+{
+	//ueInfo* ue = &g_context.mac->ue[ueIndex];
+}
+
+bool update_crc_result(rnti_t rnti, uint16_t crc)
+{
+	uint16_t ueIndex = find_ue(rnti);
+	ueInfo* ue = NULL;
+	crc_result_e c = ECRC_NULL;
+
+	if (ueIndex == INVALID_U16)
+	{
+		LOG_ERROR(MAC, "update cqi fail, no such ue rnti:%u", rnti);
+		return false;
+	}
+
+	c = (crc == 0) ? ECRC_NACK : ECRC_ACK;
+
+	ue = &g_context.mac->ue[ueIndex];
+	ue->sch_info.crc = c;
+
+	return true;
+}
+
+bool update_ue_cqi(const rnti_t rnti, const uint16_t cqi)
+{
+	uint16_t ueIndex = find_ue(rnti);
+	ueInfo* ue = NULL;
+	uint16_t cqi_periodic = 0;
+
+	if (ueIndex == INVALID_U16)
+	{
+		LOG_ERROR(MAC, "update cqi fail, no such ue rnti:%u", rnti);
+		return false;
+	}
+
+	get_csi_paras(ueIndex, &cqi_periodic);
+
+	ue = &g_context.mac->ue[ueIndex];
+
+	ue->sch_info.cqi = cqi;
+	ue->sch_info.mcs = cqi_to_mcs(cqi);
+
+	return true;
+}
+
+void update_harq_info(const sub_frame_t subframe, const rnti_t rnti, const uint16_t ack)
+{
+	uint16_t ueIndex = find_ue(rnti);
+	ueInfo* ue = NULL;
+	uint8_t harqId = get_harqId((subframe + MAX_SUBSFN - 2)%4);
+
+	if (ueIndex == INVALID_U16)
+	{
+		LOG_ERROR(MAC, "update harq fail, no such ue rnti:%u", rnti);
+		return;
+	}
+
+	ue = &g_context.mac->ue[ueIndex];
+
+	if (ack == 0)//nack
+	{
+		if (ue->harq[harqId].reTx_num >= ue->maxHARQ_Tx)
+		{
+			//release harq
+			ue->harq[harqId].reTx = false;
+			ue->harq[harqId].reTx_num = 0;
+		}
+		else
+		{
+			ue->harq[harqId].reTx_num++;
+		}
+	}
+
+	if (ack == 1)
+	{
+		//release harq
+		ue->harq[harqId].reTx = false;
+		ue->harq[harqId].reTx_num = 0;
+	}
+}
+
+void update_ue_status(const rnti_t rnti, const uint16_t status)
+{
+	uint16_t ueIndex = find_ue(rnti);
+	ueInfo* ue = NULL;
+
+	if (ueIndex == INVALID_U16)
+	{
+		LOG_ERROR(MAC, "update status fail, no such ue rnti:%u", rnti);
+		return;
+	}
+
+	ue = &g_context.mac->ue[ueIndex];
+
+	if (status == 0) //outOfSync
+	{
+		ue->out_sync_count++;
+
+		if (!get_ue_status(ueIndex))
+		{
+			set_ue_status(ueIndex, true);
+		}
+
+		if (ue->out_sync_count >= ue->max_out_sync)
+		{
+			mac_rrc_status_report(ue->rnti, true);
+		}
+	}
+	else if (status == 1)// inSync
+	{
+		if (get_ue_status(ueIndex))
+		{
+			ue->out_sync_count = 0;
+			set_ue_status(ueIndex, false);
+			mac_rrc_status_report(ue->rnti, false);
+		}
+	}
 }
 

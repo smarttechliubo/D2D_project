@@ -15,6 +15,7 @@
 #include "mac_ra.h"
 #include "log.h"
 #include "mac_header.h"
+#include "mac_ue.h"
 
 #include "messageDefine.h"//MAC_TEST
 #include "msg_queue.h"
@@ -24,7 +25,39 @@ void init_mac_rx()
 
 }
 
-void mac_rrc_data_ind(const frame_t frame, const sub_frame_t subframe, const pusch_result result)
+void mac_rrc_bcch_received(const frame_t frame, const sub_frame_t subframe)
+{
+	msgDef msg;
+	mac_rrc_bcch_mib_rpt *bcch;
+	msgSize msg_size = sizeof(mac_rrc_bcch_mib_rpt);
+	msg.data = (uint8_t*)msg_malloc(msg_size);
+
+	if (msg.data != NULL)
+	{
+		msg.header.msgId = MAC_RRC_BCCH_MIB_RPT;
+		msg.header.source = MAC_TASK;
+		msg.header.destination = RRC_TASK;
+		msg.header.msgSize = msg_size;
+
+		bcch = (mac_rrc_bcch_mib_rpt*)msg.data;
+		bcch->SFN = frame;
+		bcch->subsfn = subframe;
+		bcch->mib_receive_flag = 1;
+
+		if (!msgSend(RRC_QUEUE, (char *)&msg, sizeof(msgDef)))
+		{
+			LOG_ERROR(MAC, "send bcch fail!");
+		}
+
+		//msg_free(msg);
+	}
+	else
+	{
+		LOG_ERROR(MAC, "new mac message fail!");
+	}
+}
+
+void mac_rrc_data_ind(const frame_t frame, const sub_frame_t subframe, const uint16_t rx_length, const uint8_t* payload)
 {
 	msgDef msg;
 	mac_rrc_ccch_rpt *ind;
@@ -41,8 +74,8 @@ void mac_rrc_data_ind(const frame_t frame, const sub_frame_t subframe, const pus
 		ind = (mac_rrc_ccch_rpt*)msg.data;
 		ind->sfn = frame;
 		ind->subsfn = subframe;
-		ind->data_size = result.dataSize;
-		ind->data_ptr = (uint32_t*)result.dataptr;
+		ind->data_size = rx_length;
+		ind->data_ptr = (uint32_t*)payload;
 
 		if (msgSend(RRC_QUEUE, (char *)&msg, sizeof(msgDef)))
 		{
@@ -53,6 +86,38 @@ void mac_rrc_data_ind(const frame_t frame, const sub_frame_t subframe, const pus
 	else
 	{
 		LOG_ERROR(MAC, "[TEST]: new mac message fail!");
+	}
+}
+
+void mac_rlc_data_ind(const frame_t frame, const sub_frame_t subframe, const uint16_t rx_length, const uint8_t* payload)
+{
+	msgDef msg;
+	mac_rrc_ccch_rpt *ind;
+	msgSize msg_size = sizeof(mac_rrc_ccch_rpt);
+	msg.data = (uint8_t*)msg_malloc(msg_size);
+
+	if (msg.data != NULL)
+	{
+		msg.header.msgId = MAC_RRC_CCCH_RPT;
+		msg.header.source = MAC_TASK;
+		msg.header.destination = RRC_TASK;
+		msg.header.msgSize = msg_size;
+
+		ind = (mac_rrc_ccch_rpt*)msg.data;
+		ind->sfn = frame;
+		ind->subsfn = subframe;
+		ind->data_size = rx_length;
+		ind->data_ptr = (uint32_t*)payload;
+
+		if (msgSend(RRC_QUEUE, (char *)&msg, sizeof(msgDef)))
+		{
+		}
+
+		//msg_free(msg);
+	}
+	else
+	{
+		LOG_ERROR(MAC, "new mac message fail!");
 	}
 }
 
@@ -99,7 +164,8 @@ uint8_t *parse_mac_header(uint8_t *mac_header,
 				{
 					length = ((mac_header_short *) mac_header_ptr)->L;
 					mac_header_ptr += 2; 
-				} else 
+				} 
+				else
 				{  // F = 1
 					length =((((mac_header_long *) mac_header_ptr)->L_MSB &	0x7f) << 8) | (((mac_header_long *)mac_header_ptr)->L_LSB & 0xff);
 					mac_header_ptr += 3;  //sizeof(SCH_SUBHEADER_LONG);
@@ -151,7 +217,27 @@ uint8_t *parse_mac_header(uint8_t *mac_header,
 	return (mac_header_ptr);
 }
 
-void handlePuschSdu(const frame_t frame, const sub_frame_t subframe, const uint16_t cellId, const pusch_result result)
+//mac ce not support now.
+void handle_mac_ce(const uint8_t num_ce, const uint8_t rx_ceIds[MAX_NUM_CE])
+{
+	for (uint32_t i = 0; i < num_ce; i++)
+	{
+		switch (rx_ceIds[i])
+		{
+			case PHR:
+			case CRNTI:
+			case CONRES:
+			case TA:
+			{
+				break;
+			}
+			default:
+				break;
+		}
+	}
+}
+
+void handlePuschSdu(const frame_t frame, const sub_frame_t subframe, const pusch_result result)
 {
 	uint8_t * payload = result.dataptr;
 	//mac_header_info header;
@@ -161,29 +247,22 @@ void handlePuschSdu(const frame_t frame, const sub_frame_t subframe, const uint1
 	uint8_t rx_ceIds[MAX_NUM_CE];
 	uint8_t rx_lcIds[MAX_LOGICCHAN_NUM];
 	uint16_t rx_lengths[MAX_LOGICCHAN_NUM];
+	uint16_t offset = 0;
 
 	payload = parse_mac_header(payload, &num_ce, &num_sdu, rx_ceIds, rx_lcIds, rx_lengths, tb_length);
 
 	if (payload == NULL)
 	{
-		LOG_ERROR(MAC, "parse mac header error! cellId:%u, rnti:%u",cellId, result.rnti);
+		LOG_ERROR(MAC, "parse mac header error! rnti:%u",
+			result.rnti);
 		return;
 	}
 
-#if 0 //TODO: mac ce handler
-	for (uint32_t i = 0; i < num_ce; i++)
-	{
-		switch (rx_ceIds[i])
-		{
-			case 
-		}
-	}
-#endif
 	for (uint32_t i = 0; i < num_sdu; i++)
 	{
-		switch (rx_lcIds[i])
+		if (rx_lcIds[i] < MAX_LCID)
 		{
-			case CCCH_:
+			if (rx_lcIds[i] == CCCH_)
 			{
 #if 0
 				if(result.rnti == RA_RNTI)//source ue
@@ -200,25 +279,110 @@ void handlePuschSdu(const frame_t frame, const sub_frame_t subframe, const uint1
 
 				}
 #endif
-				mac_rrc_data_ind(frame, subframe, result);
-
-				break;
+				//CCCH
+				mac_rrc_data_ind(frame, subframe, rx_lengths[i], payload + offset);
+				offset = offset + rx_lengths[i];
 			}
-			default:
-				break;
+			else
+			{
+				//DTCH
+				mac_rlc_data_ind(frame, subframe, rx_lengths[i], payload + offset);
+				offset = offset + rx_lengths[i];
 			}
+		}
+		else
+		{
+			LOG_WARN(MAC, "not support now lc Id:%u", rx_lcIds[i]);
+		}
 
 	}
 }
 
-void handleCrcFail(const pusch_result result)
+void handle_cqi(const PHY_CQIInd* ind)
 {
+	frame_t frame = ind->frame;
+	sub_frame_t subframe = ind->subframe;
+	uint16_t num = ind->num;
+	uint16_t cqi = 0;
+	rnti_t rnti = INVALID_U16;
 
+	for (uint32_t i = 0; i < num; i++)
+	{
+		cqi = ind->cqiInfo[i].rnti;
+		rnti = ind->cqiInfo[i].rnti;
+
+		if (!update_ue_cqi(rnti, cqi))
+		{
+			LOG_WARN(MAC, "handle cqi fail, frame:%u, subframe:%u", frame, subframe);
+		}
+	}
 }
 
-void handlePuschReceivedcInd(const PHY_PuschReceivedInd *req)
+void handleCrcFail(const frame_t frame, const sub_frame_t subframe, const pusch_result result)
 {
-	uint16_t cellId = 0;//g_sch.cellId;//TODO:
+	rnti_t rnti = result.rnti;
+	uint16_t crc = result.crc;
+
+	if (crc != 0)
+	{
+		LOG_ERROR(MAC, "unknow crc result, frame:%u, subframe:%u, crc:%u", frame, subframe, crc);
+		return;
+	}
+
+	update_crc_result(rnti, crc);
+	
+}
+
+void handleCrcOK(const frame_t frame, const sub_frame_t subframe, const pusch_result result)
+{
+	rnti_t rnti = result.rnti;
+	uint16_t crc = result.crc;
+
+	if (crc != 1)
+	{
+		LOG_ERROR(MAC, "unknow crc result, crc:%u", crc);
+		return;
+	}
+
+	update_crc_result(rnti, crc);
+	handlePuschSdu(frame, subframe, result);
+}
+
+void handle_ack(const PHY_ACKInd* ind)
+{
+	//frame_t frame = ind->frame;
+	sub_frame_t subframe = ind->subframe;
+	uint32_t num = ind->num;
+	rnti_t rnti = INVALID_U16;
+	uint16_t ack = 0;
+
+	for (uint32_t i = 0; i < num; i++)
+	{
+		rnti = ind->ack[i].rnti;
+		ack = ind->ack[i].ack;
+
+		update_harq_info(subframe, rnti, ack);
+	}
+}
+
+void handle_linkStatusReport(const PHY_LinkStatusReportInd* ind)
+{
+	uint32_t num = ind->num;
+	rnti_t rnti = 0;
+	uint16_t status = 0;
+
+	for (uint32_t i = 0; i < num; i++)
+	{
+		rnti = ind->status[i].rnti;
+		status = ind->status[i].status;
+
+		update_ue_status(rnti, status);
+	}
+}
+
+void handlePuschReceivedInd(const PHY_PuschReceivedInd *req)
+{
+	//uint16_t cellId = 0;//g_sch.cellId;//TODO:
 	frame_t frame = req->frame;
 	sub_frame_t subframe = req->subframe;
 	uint16_t num_ue = req->num_ue;
@@ -227,15 +391,23 @@ void handlePuschReceivedcInd(const PHY_PuschReceivedInd *req)
 	for (uint32_t i = 0; i < num_ue; i++)
 	{
 		result = req->result[i];
-		if (result.crc == 1)//ACK
+
+		if (result.crc == 0) //NACK
 		{
-			handleCrcFail(result);
+			handleCrcFail(frame, subframe, result);
 		}
 		else
 		{
-			handlePuschSdu(cellId, frame, subframe, result);
+			handleCrcOK(frame, subframe, result);
 		}
 	}
+}
+
+void handlePbchReceivedInd(const PHY_PBCHReceivedInd* ind)
+{
+	LOG_DEBUG(MAC, "PBCH received, frame:%u, subframe:%u", ind->frame, ind->subframe);
+
+	mac_rrc_bcch_received(ind->frame, ind->subframe);
 }
 
 void handle_phy_msg()
@@ -256,30 +428,49 @@ void handle_phy_msg()
 		{
 			case PHY_MAC_PBCH_PDU_RPT:
 			{
-				PHY_PuschReceivedInd *req = (PHY_PuschReceivedInd *)msg.data; //TODO:
+				PHY_PBCHReceivedInd* ind = (PHY_PBCHReceivedInd *)msg.data; //TODO:
 
-				handlePuschReceivedcInd(req);
-				msg_free(req);
+				handlePbchReceivedInd(ind);
+				msg_free(ind);
 				break;
 			}
 			case PHY_MAC_DECOD_DATA_RPT:
 			{
+				PHY_PuschReceivedInd* req = (PHY_PuschReceivedInd *)msg.data; //TODO:
+
+				handlePuschReceivedInd(req);
+				msg_free(req);
 				break;
 			}
 			case PHY_MAC_ACK_RPT:
 			{
+				PHY_ACKInd* ind = (PHY_ACKInd *)msg.data; //TODO:
+
+				handle_ack(ind);
+				msg_free(ind);
 				break;
 			}
 			case PHY_MAC_CQI_IND:
 			{
+				PHY_CQIInd* ind = (PHY_CQIInd*) msg.data;
+
+				handle_cqi(ind);
+				msg_free(ind);
 				break;
 			}
 			case PHY_MAC_LINK_STATUS_IND:
 			{
+				PHY_LinkStatusReportInd* ind = (PHY_LinkStatusReportInd*) msg.data;
+
+				handle_linkStatusReport(ind);
+				msg_free(ind);
 				break;
 			}
 			default:
+			{
+				LOG_ERROR(MAC, "unknow PHY msg id:%u", msg.header.msgId);
 				break;
+			}
 		}
 	}
 }
