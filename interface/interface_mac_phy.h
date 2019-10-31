@@ -23,6 +23,9 @@ typedef struct
 {
 	dci_type_e type;
 	rnti_t rnti;
+	uint8_t dci_rb_start;//dci rb start
+	uint8_t dci_rb_num;//dci rb num
+	uint8_t padding;
 	uint8_t data_size;
 	uint8_t data[MAX_DCI_LEN];
 }dci_info;
@@ -34,9 +37,30 @@ typedef struct{
 	dci_info dci[MAX_DCI_NUM];
 }PHY_PdcchSendReq;
 
+typedef struct
+{
+	rnti_t rnti;
+
+	uint32_t rb_start;
+	uint32_t rb_num;
+	uint8_t mcs;
+	uint8_t data_ind;// 1:ack/nack, 2:data, 3:ack/nack + data
+
+	uint8_t modulation;
+	uint8_t rv;
+	uint8_t harqId;
+	uint8_t ack;
+
+	uint16_t padding_len;
+	uint16_t pdu_len;
+	uint8_t *data;
+}pusch_info;
+
 typedef struct{
 	frame_t frame;
 	sub_frame_t subframe;
+	uint32_t num;
+	pusch_info pusch[MAX_TX_UE];
 }PHY_PuschSendReq;
 
 typedef struct{

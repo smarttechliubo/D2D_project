@@ -19,6 +19,7 @@
 #include "log.h"
 #include "mac_cce.h"
 #include "interface_mac_rlc.h"
+#include "interface_mac_phy.h"
 
 #include "messageDefine.h"//MAC_TEST
 #include "msg_queue.h"
@@ -174,10 +175,11 @@ void handle_buffer_status_ind()
 	}
 }
 
-bool update_scheduled_ue(const rnti_t rnti, const uint32_t data_size, uint8_t* dataptr)
+bool update_scheduled_ue(const rnti_t rnti, const uint32_t data_size, uint8_t* dataptr, const bool cancel)
 {
-	uint16_t sch_num = g_sch.tx_info.sch_num;
+	uint16_t num = 0;
 	sch_ind* sch = NULL;
+	dci_ind* dci =NULL;
 
 	if (dataptr == NULL)
 	{
@@ -185,30 +187,51 @@ bool update_scheduled_ue(const rnti_t rnti, const uint32_t data_size, uint8_t* d
 		return false;
 	}
 
-	for (uint32_t i = 0; i < sch_num; ++i)
+	for (uint32_t i = 0; i < MAX_TX_UE && num < 2; ++i)
 	{
 		sch = &g_sch.tx_info.sch[i];
+		dci = &g_sch.tx_info.dci[i];
 
 		if (rnti == sch->rnti)
 		{
-			if (data_size != sch->pdu_len)
+			if (cancel)
 			{
-				LOG_WARN(MAC, "rlc pdu length wrong, rnti:%u, dataSize:%u, pdu_len:%u", 
-					rnti, data_size, sch->pdu_len);
+				sch->scheduled = false;
 			}
+			else
+			{
+				if (data_size != sch->pdu_len)
+				{
+					LOG_WARN(MAC, "rlc pdu length wrong, rnti:%u, dataSize:%u, pdu_len:%u", 
+						rnti, data_size, sch->pdu_len);
+				}
 
-			sch->data = dataptr;
-			sch->scheduled = true;
+				sch->data = dataptr;
+				sch->scheduled = true;
+			}
+			num++;
+		}
 
-			return true;
+		if (rnti == dci->rnti)
+		{
+			if (cancel)
+			{
+				dci->scheduled = false;
+			}
+			else
+			{
+				dci->scheduled = true;
+			}
+			num++;
 		}
 	}
 
-	return false;
+	return true;
 }
 
 void handle_rlc_data_result(const rlc_mac_data_ind* ind)
 {
+	bool cancel = false;
 	bool ret = false;
 	uint32_t ue_num = ind->ue_num;
 	uint16_t ueIndex = INVALID_U16;
@@ -230,11 +253,18 @@ void handle_rlc_data_result(const rlc_mac_data_ind* ind)
 		}
 
 		//ue = &mac->ue[ueIndex];
+		if (!ind->sdu_pdu_info[i].valid_flag)
+		{
+			LOG_INFO(MAC, "rlc data result, ue rnti:%u canceled", 
+				ind->sdu_pdu_info[i].rnti);
+			cancel = true;
+		}
+
 		rnti = ind->sdu_pdu_info[i].rnti;
 		data_size = ind->sdu_pdu_info[i].tb_byte_size;
 		dataptr = (uint8_t*)ind->sdu_pdu_info[i].data_buffer_adder_ptr;
 
-		ret = update_scheduled_ue(rnti, data_size, dataptr);
+		ret = update_scheduled_ue(rnti, data_size, dataptr, cancel);
 
 		if (ret)
 		{
@@ -458,6 +488,11 @@ void pre_assign_rbs(const frame_t frame, const sub_frame_t subframe)
 void pre_schedule_reset()
 {
 	g_context.mac->num0 = 0;
+	g_context.mac->num1 = 0;
+	g_context.mac->num2 = 0;
+
+	g_sch.tx_info.dci_num = 0;
+	g_sch.tx_info.sch_num = 0;
 }
 
 void scheduler_pre_handler(const frame_t frame, const sub_frame_t subframe)
@@ -590,7 +625,7 @@ void scheduler_resouce_calc_fair(const frame_t frame, const sub_frame_t subframe
 	}
 }
 
-uint32_t rballoc(mac_info_s *mac, const uint16_t ueIndex, const uint32_t first_rb, const uint32_t total_rb_num)
+uint32_t scheduler_rballoc(mac_info_s *mac, const uint16_t ueIndex, const uint32_t first_rb, const uint32_t total_rb_num)
 {
     //uint32_t rb_start = first_rb;
 	uint32_t rb_num = 0;
@@ -661,7 +696,7 @@ void scheduler_resource_locate()
 
 		if (ueIndex >= MAX_UE ||
 			mac->ue[ueIndex].active == false ||
-			mac->ue[ueIndex].out_of_sync == true) 
+			mac->ue[ueIndex].out_of_sync == true)
 		{
 			LOG_ERROR(MAC, "ue is not available, ueIndex:%u, active:%u, outOfSync:%u", 
 				ueIndex, mac->ue[ueIndex].active, mac->ue[ueIndex].out_of_sync);
@@ -676,7 +711,7 @@ void scheduler_resource_locate()
 			break;
 		}
 
-		rb_alloc_count = rballoc(mac, ueIndex, first_rb, total_rbs);
+		rb_alloc_count = scheduler_rballoc(mac, ueIndex, first_rb, total_rbs);
 
 		mac->scheduling_list1[num1++] = ueIndex;
 	}
@@ -818,6 +853,7 @@ bool fill_dci_result(ueInfo* ue, dci_ind* dci, uint16_t dci_num, const uint32_t 
 
 	if (cce_offset >= 0)
 	{
+		dci[dci_num].scheduled = false;
 		dci[dci_num].rnti = ue->rnti;
 		dci[dci_num].ueIndex = ue->ueIndex;
 
@@ -949,13 +985,13 @@ void handle_schedule_result(const frame_t frame, const sub_frame_t subframe)
 	}
 }
 
-void mac_rlc_data_request()
+void mac_rlc_data_request(const frame_t frame, const sub_frame_t subframe)
 {
 	mac_info_s* mac = g_context.mac;
 	ueInfo* ue = &mac->ue[0];
 	uint16_t ue_num = mac->num2;
 	uint16_t ueIndex = mac->scheduling_list2[0];
-	uint8_t harqId = get_harqId(mac->subframe);
+	uint8_t harqId = get_harqId(subframe);
 	uint16_t lc_index = 0;
 
 	msgDef msg;
@@ -979,8 +1015,8 @@ void mac_rlc_data_request()
 	}
 
 	req = (mac_rlc_data_req*)msg.data;
-	req->sfn = mac->frame;
-	req->sub_sfn = mac->subframe;
+	req->sfn = frame;
+	req->sub_sfn = subframe;
 	req->ue_num = 0;
 
 	for (uint32_t i = 0; i < ue_num; i++)
@@ -1013,6 +1049,158 @@ void mac_rlc_data_request()
 	}
 }
 
+void send_pdcch_req(const frame_t frame, const sub_frame_t subframe)
+{
+	tx_req_info* tx = &g_sch.tx_info;
+	tx_req_info* common = &g_sch.common;
+	uint16_t common_dci_num = common->dci_num;
+	uint16_t dci_num = tx->dci_num;
+	dci_ind* common_dci = &common->dci[0];
+	dci_ind* dci = &tx->dci[0];
+
+	msgDef msg;
+	PHY_PdcchSendReq* req;
+	msgSize msg_size = sizeof(PHY_PdcchSendReq);
+	msg.data = (uint8_t*)msg_malloc(msg_size);
+
+	if (msg.data != NULL)
+	{
+		msg.header.msgId = MAC_PHY_PDCCH_SEND;
+		msg.header.source = MAC_TASK;
+		msg.header.destination = PHY_TASK;
+		msg.header.msgSize = msg_size;
+
+		req = (PHY_PdcchSendReq*)msg.data;
+		req->num_dci = dci_num + common_dci_num;
+		req->frame = frame;
+		req->subframe = subframe;
+
+		for (uint32_t i = 0; i < common_dci_num; i++)
+		{
+			req->dci[i].type = (dci_type_e)common_dci[i].type;
+			req->dci[i].rnti = common_dci[i].rnti;
+			req->dci[i].dci_rb_start = common_dci[i].cce_rb_num;
+			req->dci[i].dci_rb_num = common_dci[i].cce_rb;
+			req->dci[i].data_size = MAX_DCI_LEN;
+			req->dci[i].data[0] = (common_dci[i].rb_start & 0X7F) << 1;
+			req->dci[i].data[0] |= (common_dci[i].rb_num & 0X7F) >> 6;
+			req->dci[i].data[1] = (common_dci[i].rb_num & 0X7F) << 2;
+			req->dci[i].data[1] |= (common_dci[i].mcs & 0X1F) >> 3;
+			req->dci[i].data[2] = (common_dci[i].mcs & 0X1F) >> 5;
+			req->dci[i].data[2] |= (common_dci[i].data_ind & 0X03) << 3;
+			req->dci[i].data[2] |= (common_dci[i].ndi & 0X01) << 2;
+		}
+
+		for (uint32_t i = 0; i < dci_num; i++)
+		{
+			if (dci[i].scheduled == false)
+			{
+				continue;
+			}
+
+			req->dci[i+common_dci_num].type = (dci_type_e)dci[i].type;
+			req->dci[i+common_dci_num].rnti = dci[i].rnti;
+			req->dci[i+common_dci_num].dci_rb_start = dci[i].cce_rb_num;
+			req->dci[i+common_dci_num].dci_rb_num = dci[i].cce_rb;
+			req->dci[i+common_dci_num].data_size = MAX_DCI_LEN;
+			req->dci[i+common_dci_num].data[0] = (dci[i].rb_start & 0X7F) << 1;
+			req->dci[i+common_dci_num].data[0] |= (dci[i].rb_num & 0X7F) >> 6;
+			req->dci[i+common_dci_num].data[1] = (dci[i].rb_num & 0X7F) << 2;
+			req->dci[i+common_dci_num].data[1] |= (dci[i].mcs & 0X1F) >> 3;
+			req->dci[i+common_dci_num].data[2] = (dci[i].mcs & 0X1F) >> 5;
+			req->dci[i+common_dci_num].data[2] |= (dci[i].data_ind & 0X03) << 3;
+			req->dci[i+common_dci_num].data[2] |= (dci[i].ndi & 0X01) << 2;
+		}
+
+		if (!msgSend(PHY_QUEUE, (char *)&msg, sizeof(msgDef)))
+		{
+			LOG_ERROR(MAC, "MAC_PHY_PDCCH_SEND fail");
+		}
+	}
+	else
+	{
+		LOG_ERROR(MAC, "PDCCH send, new mac message fail!");
+	}
+}
+
+void send_pusch_req(const frame_t frame, const sub_frame_t subframe)
+{
+	tx_req_info* tx = &g_sch.tx_info;
+	tx_req_info* common = &g_sch.common;
+	uint16_t common_sch_num = common->sch_num;
+	uint16_t sch_num = tx->sch_num;
+	sch_ind* common_sch = &common->sch[0];
+	sch_ind* sch = &tx->sch[0];
+
+	msgDef msg;
+	PHY_PuschSendReq* req;
+	msgSize msg_size = sizeof(PHY_PuschSendReq);
+	msg.data = (uint8_t*)msg_malloc(msg_size);
+
+	if (msg.data != NULL)
+	{
+		msg.header.msgId = MAC_PHY_PUSCH_SEND;
+		msg.header.source = MAC_TASK;
+		msg.header.destination = PHY_TASK;
+		msg.header.msgSize = msg_size;
+
+		req = (PHY_PuschSendReq*)msg.data;
+		req->num = sch_num + common_sch_num;
+		req->frame = frame;
+		req->subframe = subframe;
+
+		for (uint32_t i = 0; i < common_sch_num; i++)
+		{
+			req->pusch[i].rnti = common_sch[i].rnti;
+			req->pusch[i].rb_start = common_sch[i].rb_start;
+			req->pusch[i].rb_num = common_sch[i].rb_num;
+			req->pusch[i].mcs = common_sch[i].mcs;
+			req->pusch[i].data_ind = common_sch[i].data_ind;
+			req->pusch[i].modulation = common_sch[i].modulation;
+			req->pusch[i].rv = common_sch[i].rv;
+			req->pusch[i].harqId = common_sch[i].harqId;
+			req->pusch[i].ack = common_sch[i].ack;
+			req->pusch[i].pdu_len = common_sch[i].pdu_len;
+			req->pusch[i].data = common_sch[i].data;
+		}
+
+		for (uint32_t i = 0; i < sch_num; i++)
+		{			
+			if (sch[i].scheduled == false)
+			{
+				continue;
+			}
+
+			req->pusch[i+common_sch_num].rnti = sch[i].rnti;
+			req->pusch[i+common_sch_num].rb_start = sch[i].rb_start;
+			req->pusch[i+common_sch_num].rb_num = sch[i].rb_num;
+			req->pusch[i+common_sch_num].mcs = sch[i].mcs;
+			req->pusch[i+common_sch_num].data_ind = sch[i].data_ind;
+			req->pusch[i+common_sch_num].modulation = sch[i].modulation;
+			req->pusch[i+common_sch_num].rv = sch[i].rv;
+			req->pusch[i+common_sch_num].harqId = sch[i].harqId;
+			req->pusch[i+common_sch_num].ack = sch[i].ack;
+			req->pusch[i+common_sch_num].pdu_len = sch[i].pdu_len;
+			req->pusch[i+common_sch_num].data = sch[i].data;
+		}
+
+		if (msgSend(PHY_QUEUE, (char *)&msg, sizeof(msgDef)))
+		{
+
+		}
+	}
+	else
+	{
+		LOG_ERROR(MAC, "PXSCH send, new mac message fail!");
+	}
+}
+
+void mac_phy_data_send(const frame_t frame, const sub_frame_t subframe)
+{
+	send_pdcch_req(frame, subframe);
+	send_pusch_req(frame, subframe);
+}
+
 void mac_scheduler()
 {
 	frame_t frame = g_sch.frame;
@@ -1026,7 +1214,11 @@ void mac_scheduler()
 
 	handle_schedule_result(frame, subframe);
 
+	mac_rlc_data_request(frame, subframe);
+
 	//sleep(100us);
 	handle_rlc_data_ind();
+
+	mac_phy_data_send(frame, subframe);
 }
 

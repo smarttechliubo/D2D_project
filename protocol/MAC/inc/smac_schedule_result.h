@@ -35,6 +35,8 @@ typedef struct
 
 typedef struct
 {
+	bool scheduled;
+	uint32_t type;//0:SI, 1:UE
 	uint16_t ueIndex;
 	rnti_t rnti;
 
@@ -45,7 +47,7 @@ typedef struct
     uint32_t rb_start;
 	uint32_t rb_num;
 	uint8_t mcs;
-	uint8_t data_ind;
+	uint8_t data_ind;// 1:ACK/NACK; 2:DATA;  3:DATA + ACK/NACK
 	uint8_t ndi;
 	uint8_t rv;
 }dci_ind;

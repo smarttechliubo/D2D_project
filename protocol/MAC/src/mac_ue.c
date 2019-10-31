@@ -362,6 +362,7 @@ void update_harq_info(const sub_frame_t subframe, const rnti_t rnti, const uint1
 		}
 		else
 		{
+			ue->harq[harqId].reTx = true;
 			ue->harq[harqId].reTx_num++;
 		}
 	}
