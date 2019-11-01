@@ -22,7 +22,7 @@
 
 task_info mytask[MAX_TASK];
 
-bool create_new_thread(task_id_t taskId, void *(*start_routine) (void*), void *arg)
+bool create_new_thread(task_id taskId, void *(*start_routine) (void*), void *arg)
 {
 	int policy;
 	

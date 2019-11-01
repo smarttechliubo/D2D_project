@@ -24,9 +24,6 @@
 #include "d2d_message_type.h"
 #include "interface_rrc_mac.h"
 
-#include "messageDefine.h"//MAC_TEST
-#include "msg_queue.h"
-
 bool g_timing_sync = false;
 
 //extern context_s g_context;

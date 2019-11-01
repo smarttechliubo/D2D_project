@@ -18,7 +18,6 @@
 #include "mac_ue.h"
 
 #include "messageDefine.h"//MAC_TEST
-#include "msg_queue.h"
 #include "msg_handler.h"
 
 extern context_s g_context;
@@ -157,17 +156,20 @@ void handle_rrc_msg()
 //MAC_TEST
 	msgDef msg;
 	uint32_t msg_len = 0;
+	msgId msgId = RRC_TASK;
 
 	while (1)
 	{
-		msg_len = msgRecv(MAC_PRE_QUEUE, (char *)&msg, MQ_MSGSIZE);
+		msg_len = message_receive(MAC_PRE_TASK, (char *)&msg, 0);
 
 		if (msg_len == 0)
 		{
 			return;
 		}
 
-		switch (msg.header.msgId)
+		msgId = get_msgId(&msg);
+
+		switch (msgId)
 		{
 			case RRC_MAC_INITIAL_REQ:
 			{
@@ -177,7 +179,7 @@ void handle_rrc_msg()
 					req->cellId,req->mode,req->bandwith);
 
 				mac_config(req);
-				msg_free(req);
+				message_free(req);
 				break;
 			}
 			case RRC_MAC_RELEASE_REQ:
@@ -188,7 +190,7 @@ void handle_rrc_msg()
 					req->cellId,req->ue_index,req->releaseCause);
 
 				mac_user_release(req);
-				msg_free(req);
+				message_free(req);
 				break;
 			}
 			case RRC_MAC_CONNECT_SETUP_CFG_REQ:
@@ -199,7 +201,7 @@ void handle_rrc_msg()
 					req->ue_index,req->maxHARQ_Tx);
 
 				mac_user_setup(req);
-				msg_free(req);
+				message_free(req);
 				break;
 			}
 			case RRC_MAC_BCCH_PARA_CFG_REQ:
@@ -209,7 +211,7 @@ void handle_rrc_msg()
 				LOG_INFO(MAC, "RRC_MAC_BCCH_PARA_CFG_REQ, flag:%u", req->flag);
 
 				rrc_mac_bcch_req(req);
-				msg_free(req);
+				message_free(req);
 				break;
 			}
 			case RRC_MAC_BCCH_SIB1_REQ:

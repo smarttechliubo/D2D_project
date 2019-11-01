@@ -13,7 +13,7 @@
 #include "messageDefine.h"//MAC_TEST
 #include "msg_queue.h"
 
-msgq_type get_msgq_type(const task_id_t taskId)
+msgq_type get_msgq_type(const task_id taskId)
 {
 	msgq_type type = MAX_TASK;
 
@@ -60,7 +60,14 @@ msgId get_msgId(const msgDef* msg)
 	return msg->header.msgId;
 }
 
-bool new_message(msgDef* msg, int32_t msgId, const task_id_t source, const task_id_t dest, msgSize msg_size)
+void message_int(task_id taskId)
+{
+	msgq_type type = get_msgq_type(taskId);
+
+	msgq_init(type);
+}
+
+bool new_message(msgDef* msg, int32_t msgId, const task_id source, const task_id dest, msgSize msg_size)
 {
 	msg->data = (uint8_t*)msg_malloc(msg_size);
 
@@ -83,7 +90,7 @@ bool new_message(msgDef* msg, int32_t msgId, const task_id_t source, const task_
 }
 
 
-bool message_send(const task_id_t dest, char *msg_ptr, int msg_len)
+bool message_send(const task_id dest, char *msg_ptr, int msg_len)
 {
 	msgq_type type = get_msgq_type(dest);
 
@@ -95,7 +102,7 @@ bool message_send(const task_id_t dest, char *msg_ptr, int msg_len)
 	return false;
 }
 
-uint32_t message_receive(const task_id_t dest, char *msg, int msg_len)
+uint32_t message_receive(const task_id dest, char *msg, int msg_len)
 {
 	//uint32_t msg_len = 0;
 	msgq_type type = get_msgq_type(dest);

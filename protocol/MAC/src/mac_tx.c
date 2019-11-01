@@ -24,7 +24,6 @@
 #include "msg_handler.h"
 
 #include "messageDefine.h"//MAC_TEST
-#include "msg_queue.h"
 
 void init_mac_tx(const uint16_t cellId)
 {

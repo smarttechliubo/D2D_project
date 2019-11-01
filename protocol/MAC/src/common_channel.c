@@ -17,7 +17,6 @@
 #include "d2d_message_type.h"
 
 #include "messageDefine.h"//MAC_TEST
-#include "msg_queue.h"
 #include "msg_handler.h"
 
 bool send_pbch_msg(const frame_t frame, const sub_frame_t subframe, const common_channel_s *common_channel)
@@ -32,7 +31,7 @@ bool send_pbch_msg(const frame_t frame, const sub_frame_t subframe, const common
 		cfm->frame = frame;
 		cfm->subframe = subframe;
 
-		if (message_send(PHY_QUEUE, (char *)&msg, sizeof(msgDef)))
+		if (message_send(PHY_TASK, (char *)&msg, sizeof(msgDef)))
 		{
 			return true;
 		}

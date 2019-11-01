@@ -11,7 +11,7 @@
 #define _SMARTLOGICTECH_PROTOCOL_MAC_TEST_MESSAGEDEFINE_H_
 
 #include "typedef.h"
-#include "mytask.h"
+#include "tasks_def.h"
 
 typedef uint32_t msgId;
 typedef uint32_t msgSize;
@@ -19,8 +19,8 @@ typedef uint32_t msgSize;
 typedef struct
 {
 	msgId msgId;
-	task_id_t source;
-	task_id_t destination;
+	task_id source;
+	task_id destination;
 	msgSize msgSize;
 }msgHeader;
 

@@ -19,7 +19,6 @@
 #include "mac_ue.h"
 
 #include "messageDefine.h"//MAC_TEST
-#include "msg_queue.h"
 #include "msg_handler.h"
 
 void init_mac_rx()
@@ -40,7 +39,7 @@ void mac_rrc_bcch_received(const frame_t frame, const sub_frame_t subframe)
 		bcch->subsfn = subframe;
 		bcch->mib_receive_flag = 1;
 
-		if (!message_send(RRC_QUEUE, (char *)&msg, sizeof(msgDef)))
+		if (!message_send(RRC_TASK, (char *)&msg, sizeof(msgDef)))
 		{
 			LOG_ERROR(MAC, "send bcch fail!");
 		}
@@ -92,7 +91,7 @@ void fill_rlc_data_ind(const uint16_t rx_length,
 
 void mac_rlc_data_ind(msgDef* msg)
 {
-	if (message_send(RLC_QUEUE, (char *)&msg, sizeof(msgDef)))
+	if (message_send(RLC_TASK, (char *)&msg, sizeof(msgDef)))
 	{
 	
 	}
@@ -624,18 +623,20 @@ void msg_handler()
 {
 	msgDef msg;
 	uint32_t msg_len = 0;
-	task_id_t source = RRC_TASK;
+	task_id taskId = RRC_TASK;
 
 	while(1)
 	{
-		msg_len = message_receive(MAC_MAIN_QUEUE, (char *)&msg, 0);
+		msg_len = message_receive(MAC_MAIN_TASK, (char *)&msg, 0);
 
 		if (msg_len == 0)
 		{
 			return;
 		}
 
-		switch (source)
+		taskId = get_msgId(&msg);
+
+		switch (taskId)
 		{
 			case RLC_TASK:
 			{
@@ -650,7 +651,7 @@ void msg_handler()
 			}
 			default:
 			{
-				LOG_ERROR(MAC, "UNknown task msg taskId:%u", source);
+				LOG_ERROR(MAC, "UNknown task msg taskId:%u", taskId);
 				break;
 			}
 		}

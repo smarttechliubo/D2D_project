@@ -18,7 +18,6 @@
 #include "ue_index.h"
 
 #include "messageDefine.h"//MAC_TEST
-#include "msg_queue.h"
 #include "msg_handler.h"
 
 bool get_ue_status(const uint16_t ueIndex)
@@ -154,7 +153,7 @@ void mac_user_setup_cfm(const rrc_mac_connnection_setup *req, const bool result,
 		cfm->status = result;
 		cfm->error_code = INVALID_U16;
 
-		if (message_send(RRC_QUEUE, (char *)&msg, sizeof(msgDef)))
+		if (message_send(RRC_TASK, (char *)&msg, sizeof(msgDef)))
 		{
 		}
 
@@ -263,7 +262,7 @@ void mac_rrc_status_report(const rnti_t rnti, bool status)
 		rpt->rnti = rnti;
 		rpt->outsync_flag = status;
 
-		if (message_send(RRC_QUEUE, (char *)&msg, sizeof(msgDef)))
+		if (message_send(RRC_TASK, (char *)&msg, sizeof(msgDef)))
 		{
 
 		}

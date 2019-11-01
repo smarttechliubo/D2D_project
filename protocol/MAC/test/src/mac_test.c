@@ -18,7 +18,7 @@
 #include "mac.h"
 #include "log.h"
 #include "mytask.h"
-#include "msg_queue.h"
+#include "msg_handler.h"
 
 bool g_run_enable = false;
 uint32_t run_time = 0;
@@ -98,9 +98,9 @@ void init_sim()
 	init_mac_sim();
 	init_rrc_sim();
 
-	for (uint32_t i = 0; i < MAX_QUEUE; i++)
+	for (uint32_t i = 0; i < MAX_TASK; i++)
 	{
-		msgq_init((msgq_type)i);
+		message_int((task_id)i);
 	}
 }
 
