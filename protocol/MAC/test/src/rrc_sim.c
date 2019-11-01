@@ -17,6 +17,7 @@
 #include "interface_rrc_mac.h"
 #include "d2d_message_type.h"
 #include "log.h"
+#include "msg_handler.h"
 
 rrc_info g_rrc;
 static uint32_t g_runtime = 0;
@@ -40,15 +41,9 @@ void rrcStatusHandler()
 		rrc_mac_initial_req *req;
 		msgSize msg_size = sizeof(rrc_mac_initial_req);
 
-		msg.data = (uint8_t*)msg_malloc(msg_size);
 
-		if (msg.data != NULL)
+		if (new_message(&msg, RRC_MAC_INITIAL_REQ, RRC_TASK, MAC_PRE_TASK, msg_size))
 		{
-			msg.header.msgId = RRC_MAC_INITIAL_REQ;
-			msg.header.source = RRC_TASK;
-			msg.header.destination = MAC_TASK;
-			msg.header.msgSize = msg_size;
-
 			req = (rrc_mac_initial_req*)msg.data;
 			req->cellId = 0;
 			req->bandwith = 1;
@@ -57,10 +52,10 @@ void rrcStatusHandler()
 			req->subframe_config = 0;
 			req->mode = 0;
 
-			if (msgSend(RRC_MAC_QUEUE, (char *)&msg, sizeof(msgDef)))
+			if (message_send(MAC_PRE_QUEUE, (char *)&msg, sizeof(msgDef)))
 			{
 				g_rrc.status = RRC_INITAIL;
-				LOG_ERROR(MAC, "[TEST]: rrc_mac_initial_req send");
+				LOG_INFO(MAC, "rrc_mac_initial_req send");
 			}
 
 			//msg_free(msg);
@@ -76,15 +71,9 @@ void rrcStatusHandler()
 		rrc_mac_bcch_para_config_req *req;
 		msgSize msg_size = sizeof(rrc_mac_bcch_para_config_req);
 
-		msg.data = (uint8_t*)msg_malloc(msg_size);
-
-		if (msg.data != NULL)
+		if (new_message(&msg, RRC_MAC_BCCH_PARA_CFG_REQ, RRC_TASK, MAC_PRE_TASK, msg_size))
 		{
 			uint8_t *sib_pdu = (uint8_t *)malloc(8);
-			msg.header.msgId = RRC_MAC_BCCH_PARA_CFG_REQ;
-			msg.header.source = RRC_TASK;
-			msg.header.destination = MAC_TASK;
-			msg.header.msgSize = msg_size;
 
 			req = (rrc_mac_bcch_para_config_req*)msg.data;
 			req->flag = 3;
@@ -96,7 +85,7 @@ void rrcStatusHandler()
 
 			memset(req->sib.sib_pdu, 0xFE, req->sib.size);
 			
-			if (msgSend(RRC_MAC_QUEUE, (char *)&msg, sizeof(msgDef)))
+			if (message_send(MAC_PRE_QUEUE, (char *)&msg, sizeof(msgDef)))
 			{
 				g_rrc.status = RRC_BCCH_SEND;
 			}

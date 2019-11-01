@@ -19,8 +19,8 @@ typedef uint32_t msgSize;
 typedef struct
 {
 	msgId msgId;
-	task_id source;
-	task_id destination;
+	task_id_t source;
+	task_id_t destination;
 	msgSize msgSize;
 }msgHeader;
 
@@ -28,6 +28,8 @@ typedef struct
 {
 	msgHeader header;
 	uint8_t *data;
-}msgDef;
+}MessageDef;
+
+typedef MessageDef msgDef;
 
 #endif /* _SMARTLOGICTECH_PROTOCOL_MAC_TEST_MESSAGEDEFINE_H_ */

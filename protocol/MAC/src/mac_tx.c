@@ -21,6 +21,8 @@
 #include "interface_mac_rlc.h"
 #include "interface_mac_phy.h"
 
+#include "msg_handler.h"
+
 #include "messageDefine.h"//MAC_TEST
 #include "msg_queue.h"
 
@@ -70,109 +72,6 @@ void add_to_scheduling_list0(uint16_t ueIndex)
 		return;
 	}
 	g_context.mac->scheduling_list0[g_context.mac->num0++] = ueIndex;
-}
-
-void update_buffer_status(rlc_buffer_rpt buffer)
-{
-	rnti_t rnti = buffer.rnti;
-	uint8_t logic_chan_num = buffer.logic_chan_num;
-	//uint8_t logicchannel_id;
-	//uint32_t buffer_byte_size;
-	ueInfo* ue;
-	txBuffer *ue_buffer;
-	uint16_t ueIndex = INVALID_U16;
-
-	if ((ueIndex = find_ue(rnti)) == INVALID_U16 || ueIndex >= MAX_UE)
-	{
-		LOG_ERROR(MAC, "ue rnti:%u does not exist!", rnti);
-		return;
-	}
-
-	ue = &g_context.mac->ue[ueIndex];
-
-	if (ue->active == false ||
-		ue->out_of_sync)
-	{
-		LOG_WARN(MAC, "ue ueIndex:%u, rnti:%u is inactive?active:%u(1:active, 0:inactive)", ueIndex, rnti, ue->active);
-		return;
-	}
-
-	ue_buffer = &ue->buffer;
-	ue_buffer->chan_num = 0;
-	ue_buffer->buffer_total = 0;
-
-	ue_buffer->chan_num = logic_chan_num;
-
-	for (uint32_t i = 0; i < logic_chan_num; i++)
-	{
-		ue_buffer->lc_rbs_alloc[i] = 0;
-		ue_buffer->chan_id[i] = buffer.logicchannel_id[i];
-		ue_buffer->buffer_size[i] = buffer.buffer_byte_size[i];
-		ue_buffer->buffer_total += buffer.buffer_byte_size[i];
-	}
-
-	//if(ue_buffer->buffer_total > 0)
-	//{
-	//	add_to_scheduling_list(ueIndex);
-	//}
-}
-
-void handle_buffer_status(const rlc_mac_buf_status_rpt *rpt)
-{
-	uint32_t ue_num = rpt->valid_ue_num; 
-	rlc_buffer_rpt buffer;
-	//uint16_t cellId = g_sch.cellId;
-	//uint8_t logic_chan_num = 0;
-
-	for (uint32_t i = 0; i < ue_num; i++)
-	{
-		buffer = rpt->rlc_buffer_rpt[i];
-		//logic_chan_num = buffer.logic_chan_num;
-
-		if (buffer.rnti == RA_RNTI && buffer.logicchannel_id[i] == CCCH_)// TODO: no data should be transmit before ue get connection setup.
-		{
-			update_ra_buffer(buffer);
-			break;
-		}
-
-		if (buffer.valid_flag)
-		{
-			update_buffer_status(buffer);
-		}
-	}
-}
-
-void handle_buffer_status_ind()
-{
-	//MAC_TEST
-	msgDef msg;
-	uint32_t msg_len = 0;
-	//while (1)
-	{
-		msg_len = msgRecv(RLC_MAC_QUEUE, (char *)&msg, MQ_MSGSIZE);
-
-		if (msg_len == 0)
-		{
-			return;
-		}
-
-		switch (msg.header.msgId)
-		{
-			case RLC_MAC_BUF_STATUS_RPT:
-			{
-				rlc_mac_buf_status_rpt *rpt = (rlc_mac_buf_status_rpt *)msg.data;
-
-				handle_buffer_status(rpt);
-				msg_free(rpt);
-				break;
-			}
-			default:
-			{
-				LOG_ERROR(MAC, "Unknown RLC msg! msgId:%u", msg.header.msgId);
-				break;
-			}
-		}
-	}
 }
 
 bool update_scheduled_ue(const rnti_t rnti, const uint32_t data_size, uint8_t* dataptr, const bool cancel)
@@ -276,27 +175,29 @@ void handle_rlc_data_result(const rlc_mac_data_ind* ind)
 
 void handle_rlc_data_ind()
 {
-	//MAC_TEST
 	msgDef msg;
 	uint32_t msg_len = 0;
+	msgId msgid = 0;
 
-	//while (1)
+	while (1)
 	{
-		msg_len = msgRecv(RLC_MAC_QUEUE, (char *)&msg, MQ_MSGSIZE);
+		msg_len = message_receive(MAC_MAIN_TASK, (char *)&msg, 0);
 
 		if (msg_len == 0)
 		{
 			return;
 		}
 
-		switch (msg.header.msgId)
+		msgid = get_msgId(&msg);
+
+		switch (msgid)
 		{
 			case RLC_MAC_DATA_IND:
 			{
 				rlc_mac_data_ind *ind = (rlc_mac_data_ind *)msg.data;
 
 				handle_rlc_data_result(ind);
-				msg_free(ind);
+				message_free(ind);
 				break;
 			}
 			default:
@@ -997,18 +898,10 @@ void mac_rlc_data_request(const frame_t frame, const sub_frame_t subframe)
 	msgDef msg;
 	mac_rlc_data_req *req;
 	msgSize msg_size = sizeof(mac_rlc_data_req);
-	msg.data = (uint8_t*)msg_malloc(msg_size);
 
 	rlc_data_req* data = NULL;
 
-	if (msg.data != NULL)
-	{
-		msg.header.msgId = MAC_RLC_DATA_REQ;
-		msg.header.source = MAC_TASK;
-		msg.header.destination = RLC_TASK;
-		msg.header.msgSize = msg_size;
-	}
-	else
+	if (!new_message(&msg, MAC_RLC_DATA_REQ, MAC_MAIN_TASK, RLC_TASK, msg_size))
 	{
 		LOG_ERROR(MAC, "mac_rlc_data_request, new mac message fail!");
 		return;
@@ -1043,9 +936,9 @@ void mac_rlc_data_request(const frame_t frame, const sub_frame_t subframe)
 		}
 	}
 
-	if (msgSend(RLC_QUEUE, (char *)&msg, sizeof(msgDef)))
+	if (!message_send(RLC_TASK, (char *)&msg, sizeof(msgDef)))
 	{
-
+		LOG_ERROR(MAC, "MAC_RLC_DATA_REQ, send msg fail!");
 	}
 }
 
@@ -1061,15 +954,9 @@ void send_pdcch_req(const frame_t frame, const sub_frame_t subframe)
 	msgDef msg;
 	PHY_PdcchSendReq* req;
 	msgSize msg_size = sizeof(PHY_PdcchSendReq);
-	msg.data = (uint8_t*)msg_malloc(msg_size);
 
-	if (msg.data != NULL)
+	if (new_message(&msg, MAC_PHY_PDCCH_SEND, MAC_MAIN_TASK, PHY_TASK, msg_size))
 	{
-		msg.header.msgId = MAC_PHY_PDCCH_SEND;
-		msg.header.source = MAC_TASK;
-		msg.header.destination = PHY_TASK;
-		msg.header.msgSize = msg_size;
-
 		req = (PHY_PdcchSendReq*)msg.data;
 		req->num_dci = dci_num + common_dci_num;
 		req->frame = frame;
@@ -1112,7 +999,7 @@ void send_pdcch_req(const frame_t frame, const sub_frame_t subframe)
 			req->dci[i+common_dci_num].data[2] |= (dci[i].ndi & 0X01) << 2;
 		}
 
-		if (!msgSend(PHY_QUEUE, (char *)&msg, sizeof(msgDef)))
+		if (!message_send(PHY_TASK, (char *)&msg, sizeof(msgDef)))
 		{
 			LOG_ERROR(MAC, "MAC_PHY_PDCCH_SEND fail");
 		}
@@ -1135,15 +1022,9 @@ void send_pusch_req(const frame_t frame, const sub_frame_t subframe)
 	msgDef msg;
 	PHY_PuschSendReq* req;
 	msgSize msg_size = sizeof(PHY_PuschSendReq);
-	msg.data = (uint8_t*)msg_malloc(msg_size);
 
-	if (msg.data != NULL)
+	if (new_message(&msg, MAC_PHY_PUSCH_SEND, MAC_MAIN_TASK, PHY_TASK, msg_size))
 	{
-		msg.header.msgId = MAC_PHY_PUSCH_SEND;
-		msg.header.source = MAC_TASK;
-		msg.header.destination = PHY_TASK;
-		msg.header.msgSize = msg_size;
-
 		req = (PHY_PuschSendReq*)msg.data;
 		req->num = sch_num + common_sch_num;
 		req->frame = frame;
@@ -1184,9 +1065,9 @@ void send_pusch_req(const frame_t frame, const sub_frame_t subframe)
 			req->pusch[i+common_sch_num].data = sch[i].data;
 		}
 
-		if (msgSend(PHY_QUEUE, (char *)&msg, sizeof(msgDef)))
+		if (!message_send(PHY_TASK, (char *)&msg, sizeof(msgDef)))
 		{
-
+			LOG_ERROR(MAC, "MAC_PHY_PUSCH_SEND fail");
 		}
 	}
 	else
@@ -1205,8 +1086,6 @@ void mac_scheduler()
 {
 	frame_t frame = g_sch.frame;
 	sub_frame_t subframe = g_sch.subframe;
-
-	handle_buffer_status_ind();
 
 	schedule_ra(frame, subframe);
 

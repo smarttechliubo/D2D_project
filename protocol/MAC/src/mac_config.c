@@ -19,6 +19,7 @@
 
 #include "messageDefine.h"//MAC_TEST
 #include "msg_queue.h"
+#include "msg_handler.h"
 
 extern context_s g_context;
 
@@ -28,25 +29,19 @@ bool mac_config_cfm(bool success)
 	msgDef msg;
 	mac_rrc_initial_cfm *cfm;
 	msgSize msg_size = sizeof(mac_rrc_initial_cfm);
-	msg.data = (uint8_t*)msg_malloc(msg_size);
 
-	if (msg.data != NULL)
+	if (new_message(&msg, MAC_RRC_INITIAL_CFM, MAC_PRE_TASK, RRC_TASK, msg_size))
 	{
-		msg.header.msgId = MAC_RRC_INITIAL_CFM;
-		msg.header.source = MAC_TASK;
-		msg.header.destination = RRC_TASK;
-		msg.header.msgSize = msg_size;
 
 		cfm = (mac_rrc_initial_cfm*)msg.data;
 		cfm->status = 1;
 		cfm->error_code = success;
 
-		if (msgSend(RRC_QUEUE, (char *)&msg, sizeof(msgDef)))
+		if (!message_send(RRC_TASK, (char *)&msg, sizeof(msgDef)))
 		{
 			return true;
 		}
 
-		//msg_free(msg);
 	}
 	else
 	{
@@ -100,25 +95,18 @@ void rrc_mac_bcch_cfm(bool success)
 	msgDef msg;
 	mac_rrc_bcch_para_config_cfm *cfm;
 	msgSize msg_size = sizeof(mac_rrc_bcch_para_config_cfm);
-	msg.data = (uint8_t*)msg_malloc(msg_size);
 
-	if (msg.data != NULL)
+	if (new_message(&msg, MAC_RRC_BCCH_PARA_CFG_CFM, MAC_PRE_TASK, RRC_TASK, msg_size))
 	{
-		msg.header.msgId = MAC_RRC_BCCH_PARA_CFG_CFM;
-		msg.header.source = MAC_TASK;
-		msg.header.destination = RRC_TASK;
-		msg.header.msgSize = msg_size;
-
 		cfm = (mac_rrc_bcch_para_config_cfm*)msg.data;
 		cfm->flag = 3;
 		cfm->status = 1;
 		cfm->error_code = success;
 
-		if (msgSend(RRC_QUEUE, (char *)&msg, sizeof(msgDef)))
+		if (message_send(RRC_TASK, (char *)&msg, sizeof(msgDef)))
 		{
+		
 		}
-
-		//msg_free(msg);
 	}
 	else
 	{
@@ -172,7 +160,7 @@ void handle_rrc_msg()
 
 	while (1)
 	{
-		msg_len = msgRecv(RRC_MAC_QUEUE, (char *)&msg, MQ_MSGSIZE);
+		msg_len = msgRecv(MAC_PRE_QUEUE, (char *)&msg, MQ_MSGSIZE);
 
 		if (msg_len == 0)
 		{

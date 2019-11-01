@@ -18,26 +18,21 @@
 
 #include "messageDefine.h"//MAC_TEST
 #include "msg_queue.h"
+#include "msg_handler.h"
 
 bool send_pbch_msg(const frame_t frame, const sub_frame_t subframe, const common_channel_s *common_channel)
 {
 	msgDef msg;
 	PHY_PBCHSendReq *cfm;
 	msgSize msg_size = sizeof(PHY_PBCHSendReq);
-	msg.data = (uint8_t*)msg_malloc(msg_size);
 
-	if (msg.data != NULL)
+	if (new_message(&msg, MAC_PHY_PBCH_TX_REQ, MAC_PRE_TASK, PHY_TASK, msg_size))
 	{
-		msg.header.msgId = MAC_PHY_PBCH_TX_REQ;
-		msg.header.source = MAC_TASK;
-		msg.header.destination = PHY_TASK;
-		msg.header.msgSize = msg_size;
-
 		cfm = (PHY_PBCHSendReq*)msg.data;
 		cfm->frame = frame;
 		cfm->subframe = subframe;
 
-		if (msgSend(PHY_QUEUE, (char *)&msg, sizeof(msgDef)))
+		if (message_send(PHY_QUEUE, (char *)&msg, sizeof(msgDef)))
 		{
 			return true;
 		}

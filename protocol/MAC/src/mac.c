@@ -162,7 +162,7 @@ void run_scheduler()
 {
 	LOG_INFO(MAC, "[TEST]: run_scheduler");
 
-	handle_phy_msg();
+	msg_handler();
 
 	if (!pre_check(g_context.mac->subframe))
 	{

@@ -18,19 +18,21 @@ typedef enum
 {
 	PHY_TASK,
 	MAC_TASK,
+	MAC_PRE_TASK,
+	MAC_MAIN_TASK,
 	RLC_TASK,
 	RRC_TASK,
 	MAX_TASK
-}task_id;
+}task_id_t;
 
 typedef struct task_list_s 
 {
-	task_id taskId;
+	task_id_t taskId;
 	pthread_t thread;
 	pthread_mutex_t mutex;
 }task_info;
 
-bool create_new_thread(task_id taskId, void *(*start_routine) (void*), void *arg);
+bool create_new_thread(task_id_t taskId, void *(*start_routine) (void*), void *arg);
 void wait_period(uint32_t timer_fd);
 bool make_timer(uint32_t period_us, uint32_t* timer_fd, bool periodic);
 bool stop_timer(uint32_t timer_fd);

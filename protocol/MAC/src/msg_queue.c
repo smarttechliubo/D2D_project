@@ -27,9 +27,8 @@
 static const char* s_msgq_file[] = {
     [PHY_QUEUE] = "/phyQ",
     [MAC_QUEUE] = "/macQ",
-	[RRC_MAC_QUEUE] = "/rrc-macQ",
-	[RLC_MAC_QUEUE] = "/rlc-macQ",
-	[PHY_MAC_QUEUE] = "/phy-macQ",
+	[MAC_PRE_QUEUE] = "/macQ_PRE",
+	[MAC_MAIN_QUEUE] = "/macQ_MAIN",
     [RLC_QUEUE] = "/rlcQ",
     [RRC_QUEUE] = "/rrcQ"
 };

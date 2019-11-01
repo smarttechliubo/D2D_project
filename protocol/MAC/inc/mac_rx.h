@@ -10,7 +10,7 @@
 #ifndef _SMARTLOGICTECH_PROTOCOL_MAC_INC_MAC_RX_H_
 #define _SMARTLOGICTECH_PROTOCOL_MAC_INC_MAC_RX_H_
 
-void handle_phy_msg();
+void msg_handler();
 
 
 #endif /* _SMARTLOGICTECH_PROTOCOL_MAC_INC_MAC_RX_H_ */

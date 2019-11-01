@@ -19,6 +19,7 @@
 
 #include "messageDefine.h"//MAC_TEST
 #include "msg_queue.h"
+#include "msg_handler.h"
 
 bool get_ue_status(const uint16_t ueIndex)
 {
@@ -144,22 +145,16 @@ void mac_user_setup_cfm(const rrc_mac_connnection_setup *req, const bool result,
 	msgDef msg;
 	mac_rrc_connection_cfm *cfm;
 	msgSize msg_size = sizeof(mac_rrc_connection_cfm);
-	msg.data = (uint8_t*)msg_malloc(msg_size);
 
-	if (msg.data != NULL)
+	if (new_message(&msg, MAC_RRC_CONNECT_SETUP_CFG_CFM, MAC_PRE_TASK, RRC_TASK, msg_size))
 	{
-		msg.header.msgId = MAC_RRC_INITIAL_CFM;
-		msg.header.source = MAC_TASK;
-		msg.header.destination = RRC_TASK;
-		msg.header.msgSize = msg_size;
-
 		cfm = (mac_rrc_connection_cfm*)msg.data;
 		cfm->ue_index = req->ue_index;
 		cfm->rnti = rnti;
 		cfm->status = result;
 		cfm->error_code = INVALID_U16;
 
-		if (msgSend(RRC_QUEUE, (char *)&msg, sizeof(msgDef)))
+		if (message_send(RRC_QUEUE, (char *)&msg, sizeof(msgDef)))
 		{
 		}
 
@@ -227,21 +222,16 @@ void mac_release_cfm(const rrc_mac_release_req *req, bool success)
 	msgDef msg;
 	mac_rrc_release_cfm *cfm;
 	msgSize msg_size = sizeof(mac_rrc_release_cfm);
-	msg.data = (uint8_t*)msg_malloc(msg_size);
 
-	if (msg.data != NULL)
+	if (new_message(&msg, MAC_RRC_RELEASE_CFM, MAC_PRE_TASK, RRC_TASK, msg_size))
 	{
-		msg.header.msgId = MAC_RRC_INITIAL_CFM;
-		msg.header.source = MAC_TASK;
-		msg.header.destination = RRC_TASK;
-		msg.header.msgSize = msg_size;
-
 		cfm = (mac_rrc_release_cfm*)msg.data;
 		cfm->status = 1;
 		cfm->error_code = success;
 
-		if (msgSend(RRC_QUEUE, (char *)&msg, sizeof(msgDef)))
+		if (message_send(RRC_TASK, (char *)&msg, sizeof(msgDef)))
 		{
+		
 		}
 	}
 	else
@@ -266,20 +256,14 @@ void mac_rrc_status_report(const rnti_t rnti, bool status)
 	msgDef msg;
 	mac_rrc_outsync_rpt *rpt;
 	msgSize msg_size = sizeof(mac_rrc_outsync_rpt);
-	msg.data = (uint8_t*)msg_malloc(msg_size);
 
-	if (msg.data != NULL)
+	if (new_message(&msg, MAC_RRC_OUTSYNC_RPT, MAC_MAIN_TASK, RRC_TASK, msg_size))
 	{
-		msg.header.msgId = MAC_RRC_INITIAL_CFM;
-		msg.header.source = MAC_TASK;
-		msg.header.destination = RRC_TASK;
-		msg.header.msgSize = msg_size;
-
 		rpt = (mac_rrc_outsync_rpt*)msg.data;
 		rpt->rnti = rnti;
 		rpt->outsync_flag = status;
 
-		if (msgSend(RRC_QUEUE, (char *)&msg, sizeof(msgDef)))
+		if (message_send(RRC_QUEUE, (char *)&msg, sizeof(msgDef)))
 		{
 
 		}
