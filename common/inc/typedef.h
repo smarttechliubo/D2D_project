@@ -10,6 +10,7 @@
 #ifndef INC_TYPEDEF_H_
 #define INC_TYPEDEF_H_
 
+#include <stddef.h>
 #define true 1
 #define false 0
 

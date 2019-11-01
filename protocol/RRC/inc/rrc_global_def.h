@@ -104,6 +104,8 @@ extern uint8_t   g_rrc_messge_encode[ENCODE_MAX_SIZE];
 extern uint16_t  g_rrc_mac_report_rnti; 
 
 /*************************************extern function****************************/
+extern int rrc_GetModeType( ); 
+extern rrc_status_e  rrc_GetCurrentStatus( );
 extern void rrc_module_Initial();
 extern void  *rrc_Sche_Task();
 extern int EncodeD2dMib(uint8_t *encode_buffer, uint32_t max_buffersize, uint32_t *encode_size );

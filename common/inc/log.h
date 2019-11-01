@@ -53,6 +53,7 @@ typedef enum
     PDCP,
     RRC,
     NAS,
+    IP,
 
 } comp_name_t;
 

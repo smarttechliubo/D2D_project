@@ -357,7 +357,7 @@ void 	rlc_mac_data_send(const protocol_ctxt_t          ctxt,
   h_rc = hashtable_get(rlc_coll_p, key, (void**)&rlc_union_p); //!从hash table中，根据key，获得rlc_union_p
 
   if (h_rc == HASH_TABLE_OK) {
-  	pthread_mutex_lock(rlc_union_p->rlc_union_mtex); 
+  	pthread_mutex_lock(&rlc_union_p->rlc_union_mtex); 
     rlc_mode = rlc_union_p->mode;
   } else {
     rlc_mode = RLC_MODE_NONE;
@@ -403,7 +403,7 @@ void 	rlc_mac_data_send(const protocol_ctxt_t          ctxt,
 	  default:break;
   }
 
-  pthread_mutex_unlock(rlc_union_p->rlc_union_mtex); 
+  pthread_mutex_unlock(&rlc_union_p->rlc_union_mtex); 
 
 }
 
@@ -444,7 +444,7 @@ void mac_rlc_data_ind	  (
 
 	if (h_rc == HASH_TABLE_OK) {
 		rlc_mode = rlc_union_p->mode;
-		pthread_mutex_lock(rlc_union_p->rlc_union_mtex);
+		pthread_mutex_lock(&rlc_union_p->rlc_union_mtex);
 	} else {
 	rlc_mode = RLC_MODE_NONE;
 	
@@ -469,14 +469,14 @@ void mac_rlc_data_ind	  (
 		case RLC_MODE_UM:
 	    {
 			rlc_um_mac_data_indication(&ctxt, &rlc_union_p->rlc.um, data_ind);
-			pthread_mutex_unlock(rlc_union_p->rlc_union_mtex);
+			pthread_mutex_unlock(&rlc_union_p->rlc_union_mtex);
 		    break;
 		}
 		
 		case RLC_MODE_TM:
 		{
 			rlc_tm_mac_data_indication(&ctxt, &rlc_union_p->rlc.tm, data_ind);
-			pthread_mutex_unlock(rlc_union_p->rlc_union_mtex);
+			pthread_mutex_unlock(&rlc_union_p->rlc_union_mtex);
 		    break;
 		}
 

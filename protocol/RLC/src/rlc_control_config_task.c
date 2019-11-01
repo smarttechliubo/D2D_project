@@ -136,14 +136,14 @@ rlc_union_t *rrc_rlc_add_rlc   (const protocol_ctxt_t* const ctxt_pP,
 	else if (h_rc == HASH_TABLE_KEY_NOT_EXISTS) {
 		rlc_union_p = calloc(1, sizeof(rlc_union_t));
 		//! 在RRC 信令中，当需要增加RLC 实体时，进行hashtable 的insert, 使得插入key对应的节点
-		rlc_union_p->rlc_union_mtex = PTHREAD_MUTEX_INITIALIZER;  //! add mutex
+		pthread_mutex_init(&rlc_union_p->rlc_union_mtex ,NULL);
 		
 		h_rc = hashtable_insert(rlc_coll_p, key, rlc_union_p);  //!rb_id生成的h_rc
 		h_lcid_rc = hashtable_insert(rlc_coll_p, key_lcid, rlc_union_p); //！logic chid 生成的h_lcid_rc
 
 		if ((h_rc == HASH_TABLE_OK) && (h_lcid_rc == HASH_TABLE_OK)) {  //!<如果插入成功
 		  //!<打印log
-			LOG_INFO(RLC, PROTOCOL_CTXT_FMT"[%s %u] rrc_rlc_add_rlc:key =%lld,lc_key=%lld, insert rlc entity\n",
+			LOG_WARN(RLC, PROTOCOL_CTXT_FMT"[%s %u] rrc_rlc_add_rlc:key =%lld,lc_key=%lld, insert rlc entity\n",
 			      PROTOCOL_CTXT_ARGS(ctxt_pP),
 			      (srb_flagP) ? "SRB" : "DRB",
 			      rb_idP,

@@ -160,7 +160,7 @@ int itti_receive_msg(task_id_t task_id, MessageDef **received_msg) {
 	 
 	} else {
 	//！从队列中获取消息
-	 // *received_msg=t->message_queue.back();
+	 // *received_msg=t->message_queue.back( );
 	 // t->message_queue.pop_back();
 	 //!取最新的消息
 	 LOG_DEBUG(DRIVER,"task: %d receive new message,message number in queue = %d\n",task_id,t->message_queue.nb_elements);
@@ -182,17 +182,19 @@ void itti_free_message(MessageDef *received_msg)
 
 
 
-int itti_create_task(task_id_t task_id, void *(*start_routine)(void *), void *args_p) {
-	task_list_t *t=&tasks[task_id];
+int itti_create_task(task_id_t task_id, void *(*start_routine)(void *), int task_priority,void *args_p) {
+	 task_list_t *t=&tasks[task_id];
 	//!返回thread ip给t->pthread
 	 AssertFatal( pthread_create (&t->thread, NULL, start_routine, args_p) ==0,DRIVER,
 	              "Thread creation for task %d failed!\n", task_id);
 	//!给线程设置名字
-	pthread_setname_np( t->thread, itti_get_task_name(task_id) );
+	pthread_setname_np(t->thread, itti_get_task_name(task_id) );
 	//LOG_I(DRIVER,"Created Posix thread %s\n",  itti_get_task_name(task_id) );
 #if 1 // BMC test RT prio
 	{
 	  int policy;
+	  pthread_attr_t attr;
+	  struct sched_param getparam;
 	  struct sched_param sparam;
 	  memset(&sparam, 0, sizeof(sparam));
 	  //!设置调度类型为sched_fifo,先入先出，高优先级抢占低优先级
@@ -208,18 +210,34 @@ int itti_create_task(task_id_t task_id, void *(*start_routine)(void *), void *ar
 	  else 
 	  {
 		sparam.sched_priority = sched_get_priority_max(SCHED_FIFO)-13;
-	  }
+	  }：
 	  
 	  #else 
-		sparam.sched_priority = sched_get_priority_max(SCHED_FIFO)-10;
+
+	  sparam.sched_priority =  task_priority;
+	  if ( (sparam.sched_priority < sched_get_priority_min(SCHED_FIFO))
+			  ||  (sparam.sched_priority > sched_get_priority_max(SCHED_FIFO)))
+	  {
+		  AssertFatal(0,DRIVER,"task  %s : pthread priority:%d exceed the limit in [%d,%d]\n",  itti_get_task_name(task_id) ,
+					sparam.sched_priority,sched_get_priority_min(SCHED_FIFO),sched_get_priority_max(SCHED_FIFO)	);
+
+	  }
 	  #endif 
-	  LOG_INFO(DRIVER,"taskid =%d,priority = %d\n",task_id,sparam.sched_priority );
+	  LOG_DEBUG(DRIVER,"taskid =%d,min_priority = %d,max_priority = %d\n",task_id,sched_get_priority_min(SCHED_FIFO),
+			   sched_get_priority_max(SCHED_FIFO) );
 	  policy = SCHED_FIFO ; 
 	  //!设置了同一个优先级
 	  if (pthread_setschedparam(t->thread, policy, &sparam) != 0) {
 		  LOG_ERROR(DRIVER,"task %s : Failed to set pthread priority\n",  itti_get_task_name(task_id) );
 	    //printf("task %s : Failed to set pthread priority\n",  itti_get_task_name(task_id));
 	  }
+	  else 
+	  {
+		pthread_getschedparam(t->thread,&policy, &getparam);
+		LOG_WARN(DRIVER,"create task id = %d, priority=%d\n", task_id,getparam.sched_priority);
+	  }
+
+	  
 	}
 #endif    
 	return 0;
@@ -249,7 +267,7 @@ int itti_create_task(task_id_t task_id, void *(*start_routine)(void *), void *ar
    //   itti_subscribe_event_fd((task_id_t)i, tasks[i].sem_fd);
 
       if (tasks[i].admin.threadFunc != NULL)
-        itti_create_task((task_id_t)i, tasks[i].admin.threadFunc, NULL);
+        itti_create_task((task_id_t)i, tasks[i].admin.threadFunc,tasks[i].admin.priority, NULL);
     }
 
     return 0;

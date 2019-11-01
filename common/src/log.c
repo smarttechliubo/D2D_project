@@ -16,7 +16,7 @@
 #include "log.h"
 
 #ifndef LOGLEVEL
-#define LOGLEVEL INFO
+#define LOGLEVEL WARN
 #endif
 
 // 使用了GNU C扩展语法，只在gcc（C语言）生效，
@@ -36,7 +36,8 @@ static const char* s_comp[] = {
     [RLC]  = "RLC",
     [PDCP] = "PDCP",
     [RRC]  = "RRC",
-    [NAS] = "NAS"
+    [NAS] = "NAS",
+    [IP] = "IP"
 };
 
 static void get_timestamp(char *buffer)
@@ -51,10 +52,10 @@ static void get_timestamp(char *buffer)
     p = localtime(&t);
 
     gettimeofday(&tv, NULL);
-    millsec = (int)(tv.tv_usec / 1000);
-
+   // millsec = (int)(tv.tv_usec / 1000);
+    millsec = (int)(tv.tv_usec);
     /* 时间格式：[2011-11-15 12:47:34:888] */
-    len = snprintf(buffer, 32, "[%04d-%02d-%02d %02d:%02d:%02d:%03d] ",
+    len = snprintf(buffer, 36, "[%04d-%02d-%02d %02d:%02d:%02d:%06d(us)] ",
         p->tm_year+1900, p->tm_mon+1,
         p->tm_mday, p->tm_hour, p->tm_min, p->tm_sec, millsec);
 
@@ -78,7 +79,7 @@ void log_info(const char* filename, int line, comp_name_t comp, LogLevel level, 
     memset(buf, 0, 1024);
     va_start(arg_list, fmt);
     vsnprintf(buf, 1024, fmt, arg_list);
-    char time[32] = {0};
+    char time[36] = {0};
 
     // 去掉*可能*存在的目录路径，只保留文件名
     const char* tmp = strrchr(filename, '/');
@@ -91,7 +92,7 @@ void log_info(const char* filename, int line, comp_name_t comp, LogLevel level, 
     #ifdef  LOG_PRINTF_ALL 
     printf("%s [%s] [%s]  [%s:%d]  %s\n", time, s_comp[comp], s_loginfo[level], tmp, line, buf);
 	#else 
-	printf( "[%s][%s] %s\n" ,  s_loginfo[level],s_comp[comp], buf);
+	printf( "%s: [%s][%s] %s\n" , time, s_loginfo[level],s_comp[comp], buf);
 	#endif 
 #endif
     va_end(arg_list);

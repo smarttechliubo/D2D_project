@@ -18,10 +18,14 @@
 #include <interface_rrc_rlc.h>
 #include <d2d_message_type.h>
 #include <log.h>
-#include <rrc_global_def.h>
+
 #include <CCCH-Message.h> 
 #include <unistd.h>
- 
+#include <rrc_global_def.h>
+
+extern int rrc_GetModeType( ); 
+extern rrc_status_e  rrc_GetCurrentStatus( );
+
 
 #define   RLC_MODULE_TEST
 /**************************function******************************/

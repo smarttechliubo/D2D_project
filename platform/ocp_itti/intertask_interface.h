@@ -7,6 +7,7 @@
 #include <typedef.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <pthread.h>
 //#include <sys/epoll.h>
 
 //#include <mem_block.h>
@@ -291,42 +292,12 @@ TASK_DEF(TASK_D2D_RLC,	TASK_PRIORITY_MED, 200, NULL, NULL)	\
 TASK_DEF(TASK_D2D_RLC_TX,	TASK_PRIORITY_MED, 200, NULL, NULL) \
 TASK_DEF(TASK_D2D_RLC_RX,	TASK_PRIORITY_MED, 200, NULL, NULL)	\
 TASK_DEF(TASK_D2D_MAC,	TASK_PRIORITY_MED, 200, NULL, NULL)   \
-TASK_DEF(TASK_D2D_IP,	TASK_PRIORITY_MED, 200, NULL, NULL)   \
+TASK_DEF(TASK_D2D_IP,	TASK_PRIORITY_MAX, 200, NULL, NULL)   \
 TASK_DEF(TASK_D2D_MAC_RLC,TASK_PRIORITY_MED, 200, NULL, NULL)   \
 TASK_DEF(TASK_D2D_PHY,	TASK_PRIORITY_MED, 200, NULL, NULL)	\
 TASK_DEF(TASK_D2D_DUMMY,TASK_PRIORITY_MED, 200, NULL, NULL)   
 
 
-
-# if 0
-  TASK_DEF(TASK_UNKNOWN,  TASK_PRIORITY_MED, 50, NULL, NULL)  \
-  TASK_DEF(TASK_TIMER,    TASK_PRIORITY_MED, 10, NULL, NULL)   \
-  TASK_DEF(TASK_L2L1,     TASK_PRIORITY_MAX, 200, NULL, NULL)   \
-  TASK_DEF(TASK_BM,       TASK_PRIORITY_MED, 200, NULL, NULL)   \
-  TASK_DEF(TASK_PHY_ENB,  TASK_PRIORITY_MED, 200, NULL, NULL)   \
-  TASK_DEF(TASK_MAC_ENB,  TASK_PRIORITY_MED, 200, NULL, NULL)   \
-  TASK_DEF(TASK_RLC_ENB,  TASK_PRIORITY_MED, 200, NULL, NULL)   \
-  TASK_DEF(TASK_RRC_ENB_NB_IoT,  TASK_PRIORITY_MED, 200, NULL, NULL) \
-  TASK_DEF(TASK_PDCP_ENB, TASK_PRIORITY_MED, 200, NULL, NULL)   \
-  TASK_DEF(TASK_RRC_ENB,  TASK_PRIORITY_MED,  200, NULL,NULL)\
-  TASK_DEF(TASK_RAL_ENB,  TASK_PRIORITY_MED,  200, NULL, NULL)  \
-  TASK_DEF(TASK_S1AP,     TASK_PRIORITY_MED,  200, NULL, NULL)  \
-  TASK_DEF(TASK_X2AP,     TASK_PRIORITY_MED,  200, NULL, NULL)  \
-  TASK_DEF(TASK_SCTP,     TASK_PRIORITY_MED,  200, NULL, NULL)  \
-  TASK_DEF(TASK_ENB_APP,  TASK_PRIORITY_MED,  200, NULL, NULL)  \
-  TASK_DEF(TASK_FLEXRAN_AGENT,TASK_PRIORITY_MED, 200, NULL, NULL) \
-  TASK_DEF(TASK_PHY_UE,   TASK_PRIORITY_MED,  200, NULL, NULL)  \
-  TASK_DEF(TASK_MAC_UE,   TASK_PRIORITY_MED,  200, NULL, NULL)  \
-  TASK_DEF(TASK_RLC_UE,   TASK_PRIORITY_MED,  200, NULL, NULL)  \
-  TASK_DEF(TASK_PDCP_UE,  TASK_PRIORITY_MED,  200, NULL, NULL)  \
-  TASK_DEF(TASK_RRC_UE,   TASK_PRIORITY_MED,  200, NULL, NULL)  \
-  TASK_DEF(TASK_NAS_UE,   TASK_PRIORITY_MED,  200, NULL, NULL)  \
-  TASK_DEF(TASK_RAL_UE,   TASK_PRIORITY_MED,  200, NULL, NULL)  \
-  TASK_DEF(TASK_MSC,      TASK_PRIORITY_MED,  200, NULL, NULL)\
-  TASK_DEF(TASK_GTPV1_U,  TASK_PRIORITY_MED,  1000,NULL, NULL)\
-  TASK_DEF(TASK_UDP,      TASK_PRIORITY_MED,  1000, NULL, NULL)\
-  TASK_DEF(TASK_MAX,      TASK_PRIORITY_MED,  200, NULL, NULL)
-#endif 
 
 #define TASK_DEF(TaskID, pRIO, qUEUEsIZE, FuNc, ThreadFunc)          { pRIO, qUEUEsIZE, #TaskID, FuNc, ThreadFunc },
 
@@ -521,9 +492,7 @@ void itti_poll_msg(task_id_t task_id, MessageDef **received_msg);
    \param args_p Optional argument to pass to the start routine
    @returns -1 on failure, 0 otherwise
  **/
-int itti_create_task(task_id_t task_id,
-                     void *(*start_routine) (void *),
-                     void *args_p);
+int itti_create_task(task_id_t task_id, void *(*start_routine)(void *), int task_priority,void *args_p);
 void itti_free_message(MessageDef *received_msg);
 /** \brief Exit the current task.
  **/

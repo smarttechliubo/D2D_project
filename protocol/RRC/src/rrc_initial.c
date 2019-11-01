@@ -64,7 +64,7 @@ void rrc_module_Initial()
 void rrc_SetStatus(rrc_status_e          rrc_next_status)
 {
 	g_rrc_status = rrc_next_status; 
-	LOG_INFO(RRC, "MODE: %d, RRC STATUS = %d\n", rrc_GetModeType(),g_rrc_status);
+	LOG_WARN(RRC, "MODE: %d, RRC STATUS = %d\n", rrc_GetModeType(),g_rrc_status);
 }
 
  /*!   

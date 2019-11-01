@@ -94,7 +94,8 @@ rlc_op_status_t rlc_get_tx_data(const protocol_ctxt_t *const ctxt_pP,
 		rlc_mode = rlc_union_p->mode;
 	} else {
 		//AssertFatal (0 , "RLC not configured key %ju\n", key);
-		LOG_ERROR(RLC, "not configured key %lld\n", key);
+		LOG_ERROR(RLC, "not configured key %lld,module_id:%d,  srb_flag:%d,rnti:%d,rb_idP = %d, enb_flag:%d\n", 
+					key,ctxt_pP->module_id, srb_flagP, ctxt_pP->rnti, rb_idP, ctxt_pP->enb_flag);
 		return RLC_OP_STATUS_OUT_OF_RESSOURCES;
 	}
 
@@ -149,10 +150,11 @@ rlc_op_status_t rlc_get_tx_data(const protocol_ctxt_t *const ctxt_pP,
 		return RLC_OP_STATUS_OUT_OF_RESSOURCES;
 	  }
 #endif
-      
+      LOG_INFO(RLC, "start get memory time");
 	  //！这里申请出来的data 的首地址指向的是包含了rlc_um_data_req_alloc这个结构体的
 	  new_sdu_p = get_free_mem_block (sdu_sizeP + sizeof (struct rlc_um_data_req_alloc), __func__);
-
+      LOG_INFO(RLC, "end get  memory time");
+      
 	  if (new_sdu_p != NULL) {
 	    pthread_mutex_lock(&(rlc_union_p->rlc_union_mtex));
 		// PROCESS OF COMPRESSION HERE:
@@ -327,7 +329,7 @@ void rlc_tx_process(void *message, MessagesIds      msg_type)
 		case RRC_RLC_DATA_IND: 
 		case IP_RLC_DATA_IND:
 		{
-			
+			  LOG_ERROR(RLC, "message:%d tx data process start,enb_flag = %d",msg_type,g_rlc_protocol_ctxt.enb_flag);
 			rrc_rlc_data_ind_ptr  = (rrc_rlc_data_ind *)message; 
 			rb_type = rrc_rlc_data_ind_ptr->rb_type; 
 			rb_id = rrc_rlc_data_ind_ptr->rb_id; 
@@ -350,7 +352,8 @@ void rlc_tx_process(void *message, MessagesIds      msg_type)
 							rb_id,
 							send_data_size,
 							data_buffer);
-            LOG_INFO(RLC, "message:%d tx data process finished,data SN = %d\n",msg_type,rrc_rlc_data_ind_ptr->data_sn);
+            LOG_ERROR(RLC, "message:%d tx data process finished,enb_flag = %d,data SN = %d\n",
+            				msg_type,g_rlc_protocol_ctxt.enb_flag,rrc_rlc_data_ind_ptr->data_sn);            
 			break; 
 		}
 		//!TODO  IP DATA transfer message
