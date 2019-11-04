@@ -4,7 +4,7 @@
 # compile C with /usr/bin/cc
 C_FLAGS =  
 
-C_DEFINES = -DASN_DISABLE_OER_SUPPORT
+C_DEFINES = -DASN_DISABLE_OER_SUPPORT -DUSE_SYSLOG
 
 C_INCLUDES = -I/mnt/hgfs/eclipse_workspace/D2D_project_github/D2D_project/common/inc -I/mnt/hgfs/eclipse_workspace/D2D_project_github/D2D_project/interface -I/mnt/hgfs/eclipse_workspace/D2D_project_github/D2D_project/platform/ocp_itti -I/mnt/hgfs/eclipse_workspace/D2D_project_github/D2D_project/protocol/RLC/inc -I/mnt/hgfs/eclipse_workspace/D2D_project_github/D2D_project/protocol/RRC -I/mnt/hgfs/eclipse_workspace/D2D_project_github/D2D_project/protocol/RRC/inc -I/mnt/hgfs/eclipse_workspace/D2D_project_github/D2D_project/protocol/RRC/inc/asn1c_inc 
 

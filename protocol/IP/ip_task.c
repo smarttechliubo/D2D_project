@@ -31,7 +31,7 @@
 //char *vm_addr1 = "192.168.1.168";
 //char *vm_addr2= "192.168.84.129";
 
-char *vm_addr1 = "192.168.1.135";
+char *vm_addr1 = "192.168.0.127";
 char *vm_addr2= "192.168.84.1";
 
 char *PC_src_ip = "192.168.1.135";
@@ -197,7 +197,7 @@ void ip_task( )
 		if (FD_ISSET(sockfd_1,&rset))
 		{
 
-			
+			errno = 0;
 			recv_length = recvfrom(sockfd_1,msg_buffer,MAX_BUFFER_LENGTH,0,NULL,NULL); //!获取PC 发送的地址
 			inet_ntop(AF_INET,&PC_addr_src.sin_addr.s_addr, pc_addr_ip,sizeof(pc_addr_ip));
 			LOG_DEBUG(IP,"message buffer = %s\n",msg_buffer);
@@ -206,6 +206,7 @@ void ip_task( )
 	 		{
 		       // LOG_DEBUG(IP,"receive data from ip:%s, port: %d, length:%d ! \n",pc_addr_ip,ntohs(PC_addr_src.sin_port),recv_length);
 				LOG_INFO(IP,"channel:0 -- receive data no.: %d \n",recv_cnt[0]++);
+				LOG_ERROR(IP,"channel:0 --data_length = %d, send data no.: %d \n",recv_length,send_cnt[0]++);
 #ifdef RLC_UT_DEBUG
 				//! 组包消息，向RLC 发送消息
 				Ip_Rlc_Data_Send(RB_TYPE_DRB,
@@ -218,7 +219,7 @@ void ip_task( )
 				//sendto(sockfd_2,msg_buffer,recv_length,0,SA&PC_addr_dst,sizeof(PC_addr_dst));
 #endif 
 				
-	 			LOG_ERROR(IP,"channel:0 --data_length = %d, send data no.: %d \n",recv_length,send_cnt[0]++);
+	 			
 
 				if (0 != errno)
 				{
@@ -237,6 +238,7 @@ void ip_task( )
 
 		       // LOG_DEBUG(IP,"msg buffer = %s\n",msg_buffer);
 			//LOG_DEBUG(IP,"fd = %d,start receive data in 0x%x,length = %d \n",sockfd_1,msg_buffer,sizeof(msg_buffer));
+			errno = 0;
 			LOG_DEBUG(IP,"start receive ip from %s\n",PC_dst_ip);
 			recv_length_2 = recvfrom(sockfd_2,msg_buffer_2,MAX_BUFFER_LENGTH,0,NULL,NULL); //!获取PC 发送的地址
 			inet_ntop(AF_INET,&PC_addr_dst.sin_addr.s_addr, pc_addr_ip,sizeof(pc_addr_ip));

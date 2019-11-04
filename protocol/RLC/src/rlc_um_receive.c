@@ -1150,7 +1150,7 @@ void   rlc_um_receive_process_dar (const protocol_ctxt_t* const ctxt_pP,
 	  free_mem_block(pdu_mem_pP, __func__);
 	}
 
-	RLC_UM_MUTEX_LOCK(&rlc_pP->lock_dar_buffer, ctxt_pP, rlc_pP); //!加线程锁
+//	RLC_UM_MUTEX_LOCK(&rlc_pP->lock_dar_buffer, ctxt_pP, rlc_pP); //!加线程锁
 	 //！vr_ur 表示的是还没有收到PDU 的最小SN号
 	 //! 这里调用rlc_um_in_window 是用来判断： PDU 是否在[uh-window_size,ur] 这个范围内,
 	in_window = rlc_um_in_window(ctxt_pP, rlc_pP, rlc_pP->vr_uh - rlc_pP->rx_um_window_size, sn, rlc_pP->vr_ur);
@@ -1383,7 +1383,7 @@ void   rlc_um_receive_process_dar (const protocol_ctxt_t* const ctxt_pP,
 	}
 
     
-	RLC_UM_MUTEX_UNLOCK(&rlc_pP->lock_dar_buffer); //！解锁
+//	RLC_UM_MUTEX_UNLOCK(&rlc_pP->lock_dar_buffer); //！解锁
 
 }
 

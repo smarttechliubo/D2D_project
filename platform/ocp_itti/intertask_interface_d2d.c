@@ -9,7 +9,7 @@
 
 #include <intertask_interface.h>
 #include <log.h>
-
+#include <errno.h>
 typedef struct timer_elm_s {
   timer_type_t      type;     ///< Timer type
   long              instance;
@@ -227,8 +227,9 @@ int itti_create_task(task_id_t task_id, void *(*start_routine)(void *), int task
 			   sched_get_priority_max(SCHED_FIFO) );
 	  policy = SCHED_FIFO ; 
 	  //!设置了同一个优先级
+	  errno = 0; 
 	  if (pthread_setschedparam(t->thread, policy, &sparam) != 0) {
-		  LOG_ERROR(DRIVER,"task %s : Failed to set pthread priority\n",  itti_get_task_name(task_id) );
+		  LOG_ERROR(DRIVER,"task %s : Failed to set pthread priority,errno = %d\n",  itti_get_task_name(task_id),errno );
 	    //printf("task %s : Failed to set pthread priority\n",  itti_get_task_name(task_id));
 	  }
 	  else 

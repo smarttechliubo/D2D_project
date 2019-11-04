@@ -40,6 +40,7 @@ static const char* s_comp[] = {
     [IP] = "IP"
 };
 
+
 static void get_timestamp(char *buffer)
 {
     time_t t;
@@ -64,16 +65,34 @@ static void get_timestamp(char *buffer)
 
 void log_info(const char* filename, int line, comp_name_t comp, LogLevel level, const char* fmt, ...)
 {
+
+	int syslog_level =0; 
+#ifndef USE_SYSLOG 
     if(level > LOGLEVEL)
         return;
+#else 
+	switch(level)
+	{
+		case ERROR:
+			syslog_level = LOG_ERR; 
+			break; 
+		case WARN: 
+			syslog_level = LOG_WARNING ; 
+			break; 
+		case INFO:
+			syslog_level = LOG_NOTICE; 
+			break; 
+		case DEBUG:
+			syslog_level = LOG_NOTICE; 
+			break; 
+        default: 
+        	syslog_level = LOG_ERR; 
+			break; 
+	}
+
+#endif 
 
 
-#if 0
-	int32_t fd, size;
-	fd = open("./file", O_CREAT|O_RDWR| O_SYNC);
-    size = write(fd,str,sizeof(str));
-
-#else
     va_list arg_list;
     char buf[1024];
     memset(buf, 0, 1024);
@@ -89,12 +108,16 @@ void log_info(const char* filename, int line, comp_name_t comp, LogLevel level, 
 
 
     //printf("%s, [%s], [%s:%d] %s\n", time, s_comp[comp], tmp, line, buf);
+#ifndef USE_SYSLOG
     #ifdef  LOG_PRINTF_ALL 
     printf("%s [%s] [%s]  [%s:%d]  %s\n", time, s_comp[comp], s_loginfo[level], tmp, line, buf);
 	#else 
 	printf( "%s: [%s][%s] %s\n" , time, s_loginfo[level],s_comp[comp], buf);
 	#endif 
-#endif
+#else 
+	syslog(syslog_level,"%s [%s] [%s]  [%s:%d]  %s\n", time, s_comp[comp], s_loginfo[level], tmp, line, buf);
+#endif 
+		
     va_end(arg_list);
 
 }

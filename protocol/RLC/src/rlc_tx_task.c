@@ -156,7 +156,7 @@ rlc_op_status_t rlc_get_tx_data(const protocol_ctxt_t *const ctxt_pP,
       LOG_INFO(RLC, "end get  memory time");
       
 	  if (new_sdu_p != NULL) {
-	    pthread_mutex_lock(&(rlc_union_p->rlc_union_mtex));
+	//    pthread_mutex_lock(&(rlc_union_p->rlc_union_mtex));
 		// PROCESS OF COMPRESSION HERE:
 		memset (new_sdu_p->data, 0, sizeof (struct rlc_um_data_req_alloc));
 		//！copy 数据到新申请buffer中
@@ -170,7 +170,7 @@ rlc_op_status_t rlc_get_tx_data(const protocol_ctxt_t *const ctxt_pP,
 	    rlc_um_data_req(ctxt_pP, &rlc_union_p->rlc.um, new_sdu_p);
 
 		//free_mem_block(new_sdu, __func__);
-	    pthread_mutex_unlock(&(rlc_union_p->rlc_union_mtex));
+	 //   pthread_mutex_unlock(&(rlc_union_p->rlc_union_mtex));
 		return RLC_OP_STATUS_OK;
 	  } else {
 		//free_mem_block(sdu_pP, __func__);
@@ -186,7 +186,7 @@ rlc_op_status_t rlc_get_tx_data(const protocol_ctxt_t *const ctxt_pP,
 
 	  if (new_sdu_p != NULL) {
 		// PROCESS OF COMPRESSION HERE:
-		pthread_mutex_lock(&(rlc_union_p->rlc_union_mtex));
+	//	pthread_mutex_lock(&(rlc_union_p->rlc_union_mtex));
 		memset (new_sdu_p->data, 0, sizeof (struct rlc_tm_data_req_alloc));
 		memcpy (&new_sdu_p->data[sizeof (struct rlc_tm_data_req_alloc)], sdu_pP, sdu_sizeP);
 		((struct rlc_tm_data_req *) (new_sdu_p->data))->data_size = sdu_sizeP;
@@ -196,7 +196,7 @@ rlc_op_status_t rlc_get_tx_data(const protocol_ctxt_t *const ctxt_pP,
 		 //！这里只是将申请出来的mem 地址添加到了input_sdu中，但是数据并没有copy进去，哪里看到数据的搬移呢？
 		rlc_tm_data_req(ctxt_pP, &rlc_union_p->rlc.tm, new_sdu_p);
 		
-		pthread_mutex_unlock(&(rlc_union_p->rlc_union_mtex));
+	//	pthread_mutex_unlock(&(rlc_union_p->rlc_union_mtex));
 		
 		return RLC_OP_STATUS_OK;
 	  } else {

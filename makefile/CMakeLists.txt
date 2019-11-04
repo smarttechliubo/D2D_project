@@ -15,6 +15,7 @@ include_directories (${PROJECT_ORIGIN_DIR}/common/inc
                      ${PROJECT_ORIGIN_DIR}/protocol/RRC/inc/asn1c_inc  )
 
 add_definitions(-DASN_DISABLE_OER_SUPPORT)
+add_definitions(-DUSE_SYSLOG)
 
 aux_source_directory (${PROJECT_ORIGIN_DIR}/common/src SRC_COMMON)
 aux_source_directory (${PROJECT_ORIGIN_DIR}/platform/ocp_itti SRC_PLATFORM)

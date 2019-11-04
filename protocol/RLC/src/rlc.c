@@ -190,7 +190,7 @@ int   rlc_Get_Buffer_Status(rlc_buffer_rpt *buffer_status)
 
 	memset((void *)&buffer_status,0,MAX_LOGICCHAN_NUM *sizeof(rlc_buffer_rpt)); 
 
-    pthread_mutex_lock(&g_rlc_buffer_mutex); 
+   // pthread_mutex_lock(&g_rlc_buffer_mutex); 
 	for(ue_index = 0; ue_index < (D2D_MAX_USER_NUM +1); ue_index++)
 	{
 		if (g_rlc_buffer_status[ue_index].valid_flag)
@@ -218,7 +218,7 @@ int   rlc_Get_Buffer_Status(rlc_buffer_rpt *buffer_status)
 		
 	}
 	
-    pthread_mutex_unlock(&g_rlc_buffer_mutex); 
+    //pthread_mutex_unlock(&g_rlc_buffer_mutex); 
 
     return ue_num; 
 
@@ -236,7 +236,7 @@ void   rlc_Set_Buffer_Status(rnti_t rnti,
 	uint32_t   lch_index = 0; 
 	uint32_t   rlc_header_size = 0; 
 	
-	pthread_mutex_lock(&g_rlc_buffer_mutex); 
+	//pthread_mutex_lock(&g_rlc_buffer_mutex); 
 
 	 //!calculate rlc header size for all of the SDU for UM
 	if (RLC_MODE_UM == rlc_mode)
@@ -294,7 +294,7 @@ void   rlc_Set_Buffer_Status(rnti_t rnti,
 
    
 
-	pthread_mutex_unlock(&g_rlc_buffer_mutex); 
+	//pthread_mutex_unlock(&g_rlc_buffer_mutex); 
 
 }
 

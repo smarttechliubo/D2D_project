@@ -43,6 +43,8 @@ sys/time.h
 -
 stdint.h
 -
+syslog.h
+-
 
 /mnt/hgfs/eclipse_workspace/D2D_project_github/D2D_project/common/inc/mem_block.h
 stdint.h
@@ -530,6 +532,8 @@ pthread.h
 intertask_interface.h
 -
 log.h
+-
+errno.h
 -
 
 /mnt/hgfs/eclipse_workspace/D2D_project_github/D2D_project/platform/ocp_itti/thread_communication_demo.c
@@ -1595,9 +1599,9 @@ rlc.h
 -
 test_time.h
 -
-syslog.h
--
 log.h
+-
+syslog.h
 -
 
 /mnt/hgfs/eclipse_workspace/D2D_project_github/D2D_project/protocol/RRC/src/CCCH-Message.c

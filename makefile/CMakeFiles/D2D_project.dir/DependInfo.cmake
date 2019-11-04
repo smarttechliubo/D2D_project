@@ -113,6 +113,7 @@ set(CMAKE_C_COMPILER_ID "GNU")
 # Preprocessor definitions for this target.
 set(CMAKE_TARGET_DEFINITIONS_C
   "ASN_DISABLE_OER_SUPPORT"
+  "USE_SYSLOG"
   )
 
 # The include file search paths:

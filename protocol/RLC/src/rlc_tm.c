@@ -81,7 +81,7 @@ void config_req_rlc_tm(const protocol_ctxt_t* const  ctxt_pP,
   
   
   if (h_rc == HASH_TABLE_OK) {
-  	pthread_mutex_lock(&(rlc_union_p->rlc_union_mtex)); 
+  //	pthread_mutex_lock(&(rlc_union_p->rlc_union_mtex)); 
     rlc_p = &rlc_union_p->rlc.tm;
     LOG_DEBUG(RLC, PROTOCOL_RLC_TM_CTXT_FMT" CONFIG_REQ (is_uplink_downlink=%d) RB %u\n",
           PROTOCOL_RLC_TM_CTXT_ARGS(ctxt_pP, rlc_p),
@@ -92,7 +92,7 @@ void config_req_rlc_tm(const protocol_ctxt_t* const  ctxt_pP,
     rlc_p->protocol_state = RLC_DATA_TRANSFER_READY_STATE;
     rlc_tm_configure(ctxt_pP, rlc_p, config_tmP->is_uplink_downlink);
 
-    pthread_mutex_unlock(&(rlc_union_p->rlc_union_mtex)); 
+    //pthread_mutex_unlock(&(rlc_union_p->rlc_union_mtex)); 
   } else {
     LOG_ERROR(RLC, PROTOCOL_RLC_TM_CTXT_FMT" CONFIG_REQ RB %u RLC NOT FOUND\n",
           PROTOCOL_RLC_TM_CTXT_ARGS(ctxt_pP, rlc_p),

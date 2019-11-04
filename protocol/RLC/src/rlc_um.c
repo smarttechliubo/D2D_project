@@ -315,7 +315,7 @@ void config_req_rlc_um (
   h_rc = hashtable_get(rlc_coll_p, key, (void**)&rlc_union_p);
 
   if (h_rc == HASH_TABLE_OK) {
-    pthread_mutex_lock(&(rlc_union_p->rlc_union_mtex));
+   // pthread_mutex_lock(&(rlc_union_p->rlc_union_mtex));
     rlc_p = &rlc_union_p->rlc.um;
 
     rlc_um_init(ctxt_pP, rlc_p,srb_flagP,rb_idP); //！初始化
@@ -341,7 +341,7 @@ void config_req_rlc_um (
           rlc_p->is_mxch,
           rlc_p->rb_id);
     }
-    pthread_mutex_unlock(&(rlc_union_p->rlc_union_mtex));
+  //  pthread_mutex_unlock(&(rlc_union_p->rlc_union_mtex));
   } else {
     LOG_ERROR(RLC, PROTOCOL_RLC_UM_CTXT_FMT"  CONFIG_REQ RB %u  RLC UM NOT FOUND\n",
           PROTOCOL_RLC_UM_CTXT_ARGS(ctxt_pP,rlc_p),
@@ -549,7 +549,7 @@ void  rlc_um_segment_10(const protocol_ctxt_t* const ctxt_pP,
   pdu_mem_p = NULL;
 
 
-  RLC_UM_MUTEX_LOCK(&rlc_pP->lock_input_sdus, ctxt_pP, rlc_pP); //!加锁
+ // RLC_UM_MUTEX_LOCK(&rlc_pP->lock_input_sdus, ctxt_pP, rlc_pP); //!加锁
   
    //!从rlc_pp的input_sdu链表中，获取每个节点，进行如下处理： 
   while ((list_get_head(&rlc_pP->input_sdus)) && (nb_bytes_to_transmit > 0)) {
@@ -1015,7 +1015,7 @@ void  rlc_um_segment_10(const protocol_ctxt_t* const ctxt_pP,
 	nb_bytes_to_transmit = 0; // 1 PDU only
   }
 
-  RLC_UM_MUTEX_UNLOCK(&rlc_pP->lock_input_sdus); //!退出函数之前，解锁
+ // RLC_UM_MUTEX_UNLOCK(&rlc_pP->lock_input_sdus); //!退出函数之前，解锁
 }
 
 
