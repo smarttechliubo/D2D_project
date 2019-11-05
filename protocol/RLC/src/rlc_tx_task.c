@@ -23,7 +23,6 @@ long   g_rlc_tx_max_process_time = 0;
 long   g_rlc_tx_max_process_time_sn = 0; 
 
 
-
 void  rlc_mac_data_ind_message(uint32_t         *ue_pdu_buffer_ptr, uint32_t *ue_tb_size_ptr,uint32_t *rnti_array, uint32_t ue_num )
 {
    
@@ -159,7 +158,7 @@ rlc_op_status_t rlc_get_tx_data(const protocol_ctxt_t *const ctxt_pP,
 	  new_sdu_p = get_free_mem_block (sdu_sizeP + sizeof (struct rlc_um_data_req_alloc), __func__);
       LOG_INFO(RLC, "end get  memory time");
 
-   
+
       
 	  if (new_sdu_p != NULL) {
 	//    pthread_mutex_lock(&(rlc_union_p->rlc_union_mtex));
@@ -177,7 +176,7 @@ rlc_op_status_t rlc_get_tx_data(const protocol_ctxt_t *const ctxt_pP,
 		//！将sdu的地址更新到input_sdu节点中去
 	    rlc_um_data_req(ctxt_pP, &rlc_union_p->rlc.um, new_sdu_p);
 
-	  
+
 
 		//free_mem_block(new_sdu, __func__);
 	 //   pthread_mutex_unlock(&(rlc_union_p->rlc_union_mtex));
@@ -364,7 +363,7 @@ void rlc_tx_process(void *message, MessagesIds      msg_type)
 				srb_flag = SRB_FLAG_NO; 
 			}
 
-			       
+
 			rlc_get_tx_data(&g_rlc_protocol_ctxt,
 							srb_flag,
 							rb_id,
@@ -383,7 +382,7 @@ cur process time = [%lld, %lld, %lld] \n",
             				msg_type,g_rlc_protocol_ctxt.enb_flag,rrc_rlc_data_ind_ptr->data_sn,
             				g_rlc_tx_max_process_time,g_rlc_tx_max_process_time_sn,
             				process_time,end_time.tv_usec,start_time.tv_usec);    
-          
+
 			break; 
 		}
 		//!TODO  IP DATA transfer message

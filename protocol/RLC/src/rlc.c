@@ -227,6 +227,7 @@ int   rlc_Get_Buffer_Status(rlc_buffer_rpt *buffer_status)
 
 
 
+
 void   rlc_Set_Buffer_Status(rnti_t rnti,
 									   rlc_mode_e rlc_mode,
 									   uint32_t input_sdu_num,
@@ -265,7 +266,6 @@ void   rlc_Set_Buffer_Status(rnti_t rnti,
 	if (0 == g_rlc_buffer_status[ue_index].valid_flag)
 	{
 
-	
 
 		//!add new ue to array
 		memset((void *)&g_rlc_buffer_status[ue_index],0,sizeof(rlc_buffer_status));
@@ -282,7 +282,7 @@ void   rlc_Set_Buffer_Status(rnti_t rnti,
 	else 
 	{
 
-	  
+
 		//! modify UE info to array
 		for(lch_index = 0; lch_index < g_rlc_buffer_status[ue_index].latest_logic_ch_num;lch_index++)
 		{
@@ -295,6 +295,7 @@ void   rlc_Set_Buffer_Status(rnti_t rnti,
 		g_rlc_buffer_status[ue_index].data_size[lch_index] += data_size; 
 		g_rlc_buffer_status[ue_index].latest_logic_ch_num = lch_index+1; 
 		g_rlc_buffer_status[ue_index].rlc_header_size[lch_index] = rlc_header_size; //!update rlc header size   
+
 
 	}
 
