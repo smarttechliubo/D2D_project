@@ -352,7 +352,7 @@ void config_req_rlc_um (
 
 
 
-
+extern uint32_t g_rlc_debug; 
 void rlc_um_data_req (const protocol_ctxt_t *const ctxt_pP, void *rlc_pP, mem_block_t *sdu_pP) 
 {
 	rlc_um_entity_t *rlc_p = (rlc_um_entity_t *) rlc_pP;
@@ -384,19 +384,52 @@ void rlc_um_data_req (const protocol_ctxt_t *const ctxt_pP, void *rlc_pP, mem_bl
 	//！SDU中的Buffer size 增加
 	rlc_p->buffer_occupancy += ((struct rlc_um_tx_sdu_management *) (sdu_pP->data))->sdu_size;
 	
-	
+	   if(g_rlc_debug > 0)
+      {
+			LOG_ERROR(RLC,"ENB FLAG = %d,%d,%d,%d,%d,%d,%d,%d \n",g_rlc_protocol_ctxt.module_id,
+					g_rlc_protocol_ctxt.enb_flag,g_rlc_protocol_ctxt.instance,g_rlc_protocol_ctxt.rnti,
+					g_rlc_protocol_ctxt.frame,g_rlc_protocol_ctxt.subframe,g_rlc_protocol_ctxt.eNB_index,
+					g_rlc_protocol_ctxt.configured);
+
+      }
    
-	rlc_Set_Buffer_Status(ctxt_pP->rnti, RLC_MODE_UM,rlc_p->channel_id,rlc_p->input_sdus.nb_elements,
+	rlc_Set_Buffer_Status(ctxt_pP->rnti, RLC_MODE_UM,rlc_p->input_sdus.nb_elements,rlc_p->channel_id,
 						((struct rlc_tm_tx_sdu_management *) (sdu_pP->data))->sdu_size);
+
+	   if(g_rlc_debug > 0)
+      {
+			LOG_ERROR(RLC,"ENB FLAG = %d,%d,%d,%d,%d,%d,%d,%d \n",g_rlc_protocol_ctxt.module_id,
+					g_rlc_protocol_ctxt.enb_flag,g_rlc_protocol_ctxt.instance,g_rlc_protocol_ctxt.rnti,
+					g_rlc_protocol_ctxt.frame,g_rlc_protocol_ctxt.subframe,g_rlc_protocol_ctxt.eNB_index,
+					g_rlc_protocol_ctxt.configured);
+
+      }
 	//！将新的sdu 加入到rlc->input_sdu中 ，更新节点中的地址
 	list_add_tail_eurecom(sdu_pP, &rlc_p->input_sdus);
+
+	   if(g_rlc_debug > 0)
+      {
+			LOG_ERROR(RLC,"ENB FLAG = %d,%d,%d,%d,%d,%d,%d,%d \n",g_rlc_protocol_ctxt.module_id,
+					g_rlc_protocol_ctxt.enb_flag,g_rlc_protocol_ctxt.instance,g_rlc_protocol_ctxt.rnti,
+					g_rlc_protocol_ctxt.frame,g_rlc_protocol_ctxt.subframe,g_rlc_protocol_ctxt.eNB_index,
+					g_rlc_protocol_ctxt.configured);
+
+      }
 
 	LOG_INFO(RLC, "rlc_p->stat_tx_pdcp_sdu: %d  , rlc_p->stat_tx_pdcp_bytes: %lld ,rlc_p->buffer_occupancy = %d, UM tx sdu List element count = %d\n", 
 				rlc_p->stat_tx_pdcp_sdu , rlc_p->stat_tx_pdcp_bytes,rlc_p->buffer_occupancy,
 				rlc_p->input_sdus.nb_elements);
 	RLC_UM_MUTEX_UNLOCK(&rlc_p->lock_input_sdus);
+	  
+     
+	   if(g_rlc_debug > 0)
+      {
+			LOG_ERROR(RLC,"ENB FLAG = %d,%d,%d,%d,%d,%d,%d,%d \n",g_rlc_protocol_ctxt.module_id,
+					g_rlc_protocol_ctxt.enb_flag,g_rlc_protocol_ctxt.instance,g_rlc_protocol_ctxt.rnti,
+					g_rlc_protocol_ctxt.frame,g_rlc_protocol_ctxt.subframe,g_rlc_protocol_ctxt.eNB_index,
+					g_rlc_protocol_ctxt.configured);
 
-	
+      }
 }
 
 

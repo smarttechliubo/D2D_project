@@ -225,6 +225,7 @@ int   rlc_Get_Buffer_Status(rlc_buffer_rpt *buffer_status)
 
 }
 
+extern uint32_t   g_rlc_debug; 
 
 void   rlc_Set_Buffer_Status(rnti_t rnti,
 									   rlc_mode_e rlc_mode,
@@ -264,6 +265,15 @@ void   rlc_Set_Buffer_Status(rnti_t rnti,
 	if (0 == g_rlc_buffer_status[ue_index].valid_flag)
 	{
 
+	      if(g_rlc_debug > 0)
+      {
+			LOG_ERROR(RLC,"ENB FLAG = %d,%d,%d,%d,%d,%d,%d,%d \n",g_rlc_protocol_ctxt.module_id,
+					g_rlc_protocol_ctxt.enb_flag,g_rlc_protocol_ctxt.instance,g_rlc_protocol_ctxt.rnti,
+					g_rlc_protocol_ctxt.frame,g_rlc_protocol_ctxt.subframe,g_rlc_protocol_ctxt.eNB_index,
+					g_rlc_protocol_ctxt.configured);
+
+      }
+
 		//!add new ue to array
 		memset((void *)&g_rlc_buffer_status[ue_index],0,sizeof(rlc_buffer_status));
 
@@ -278,6 +288,15 @@ void   rlc_Set_Buffer_Status(rnti_t rnti,
 	}
 	else 
 	{
+
+	   if(g_rlc_debug > 0)
+      {
+			LOG_ERROR(RLC,"ENB FLAG = %d,%d,%d,%d,%d,%d,%d,%d \n",g_rlc_protocol_ctxt.module_id,
+					g_rlc_protocol_ctxt.enb_flag,g_rlc_protocol_ctxt.instance,g_rlc_protocol_ctxt.rnti,
+					g_rlc_protocol_ctxt.frame,g_rlc_protocol_ctxt.subframe,g_rlc_protocol_ctxt.eNB_index,
+					g_rlc_protocol_ctxt.configured);
+
+      }
 		//! modify UE info to array
 		for(lch_index = 0; lch_index < g_rlc_buffer_status[ue_index].latest_logic_ch_num;lch_index++)
 		{
@@ -290,6 +309,15 @@ void   rlc_Set_Buffer_Status(rnti_t rnti,
 		g_rlc_buffer_status[ue_index].data_size[lch_index] += data_size; 
 		g_rlc_buffer_status[ue_index].latest_logic_ch_num = lch_index+1; 
 		g_rlc_buffer_status[ue_index].rlc_header_size[lch_index] = rlc_header_size; //!update rlc header size   
+
+		 if(g_rlc_debug > 0)
+      {
+			LOG_ERROR(RLC,"ENB FLAG = %d,%d,%d,%d,%d,%d,%d,%d, ue_idx=%d,lch:%d,data:%d \n",g_rlc_protocol_ctxt.module_id,
+					g_rlc_protocol_ctxt.enb_flag,g_rlc_protocol_ctxt.instance,g_rlc_protocol_ctxt.rnti,
+					g_rlc_protocol_ctxt.frame,g_rlc_protocol_ctxt.subframe,g_rlc_protocol_ctxt.eNB_index,
+					g_rlc_protocol_ctxt.configured, ue_index,lch_index, g_rlc_buffer_status[ue_index].data_size[lch_index]);
+
+      }
 	}
 
    
