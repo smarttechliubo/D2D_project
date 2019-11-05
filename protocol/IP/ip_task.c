@@ -174,8 +174,8 @@ void ip_task( )
 		{
 			read(timerfd_1,&timer_expire_count[0],sizeof(timer_expire_count[0]));
 			curtime[0] = GetTimeUs();
-			LOG_ERROR(IP,"******timerfd_1,expire count:%lld, time:%lld(s), %lld(us),elapse time:%lld(us) \n",timer_expire_count[0],curtime[0].tv_sec, curtime[0].tv_usec,
-					 ((curtime[0].tv_sec*100000 + curtime[0].tv_usec) - (oldtime[0].tv_sec*100000 + oldtime[0].tv_usec)) );
+			//LOG_ERROR(IP,"******timerfd_1,expire count:%lld, time:%lld(s), %lld(us),elapse time:%lld(us) \n",timer_expire_count[0],curtime[0].tv_sec, curtime[0].tv_usec,
+			//		 ((curtime[0].tv_sec*1000000 + curtime[0].tv_usec) - (oldtime[0].tv_sec*1000000 + oldtime[0].tv_usec)) );
 			oldtime[0] = curtime[0];
 			//current_cycle = GetCpuCycle();
 			//LOG_INFO(IP, "timerfd_1,expire count:%lld, cycle:%lld, elapse cycle = %lld \n",timer_expire_count,current_cycle, current_cycle - old_cycle);
@@ -186,8 +186,8 @@ void ip_task( )
 		{
 			read(timerfd_2,&timer_expire_count[1],sizeof(timer_expire_count[1]));
 			curtime[1] = GetTimeUs();
-			LOG_ERROR(IP,"------timerfd_2,expire count:%lld, time:%lld(s), %lld(us),elapse time:%lld(us) \n",timer_expire_count[1],curtime[1].tv_sec, curtime[1].tv_usec,
-					 ((curtime[1].tv_sec*100000 + curtime[1].tv_usec) - (oldtime[1].tv_sec*100000 + oldtime[1].tv_usec)) );
+			//LOG_ERROR(IP,"------timerfd_2,expire count:%lld, time:%lld(s), %lld(us),elapse time:%lld(us) \n",timer_expire_count[1],curtime[1].tv_sec, curtime[1].tv_usec,
+			//		 ((curtime[1].tv_sec*1000000 + curtime[1].tv_usec) - (oldtime[1].tv_sec*1000000 + oldtime[1].tv_usec)) );
 			oldtime[1] = curtime[1];
 			//current_cycle = GetCpuCycle();
 			//LOG_INFO(IP, "timerfd_1,expire count:%lld, cycle:%lld, elapse cycle = %lld \n",timer_expire_count,current_cycle, current_cycle - old_cycle);
@@ -205,8 +205,8 @@ void ip_task( )
 			if (0 == errno)
 	 		{
 		       // LOG_DEBUG(IP,"receive data from ip:%s, port: %d, length:%d ! \n",pc_addr_ip,ntohs(PC_addr_src.sin_port),recv_length);
-				LOG_INFO(IP,"channel:0 -- receive data no.: %d \n",recv_cnt[0]++);
-				LOG_ERROR(IP,"channel:0 --data_length = %d, send data no.: %d \n",recv_length,send_cnt[0]++);
+				LOG_INFO(IP,"channel:0 -- receive data no.: %d \n",++recv_cnt[0]);
+				LOG_ERROR(IP,"channel:0 --data_length = %d, send data no.: %d \n",recv_length,++send_cnt[0]);
 #ifdef RLC_UT_DEBUG
 				//! 组包消息，向RLC 发送消息
 				Ip_Rlc_Data_Send(RB_TYPE_DRB,

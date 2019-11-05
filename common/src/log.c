@@ -93,6 +93,7 @@ void log_info(const char* filename, int line, comp_name_t comp, LogLevel level, 
 #endif 
 
 
+
     va_list arg_list;
     char buf[1024];
     memset(buf, 0, 1024);
@@ -100,22 +101,26 @@ void log_info(const char* filename, int line, comp_name_t comp, LogLevel level, 
     vsnprintf(buf, 1024, fmt, arg_list);
     char time[36] = {0};
 
+
     // 去掉*可能*存在的目录路径，只保留文件名
     const char* tmp = strrchr(filename, '/');
     if (!tmp) tmp = filename;
     else tmp++;
+
+#ifndef USE_SYSLOG
+
     get_timestamp(time);
 
 
     //printf("%s, [%s], [%s:%d] %s\n", time, s_comp[comp], tmp, line, buf);
-#ifndef USE_SYSLOG
+
     #ifdef  LOG_PRINTF_ALL 
     printf("%s [%s] [%s]  [%s:%d]  %s\n", time, s_comp[comp], s_loginfo[level], tmp, line, buf);
 	#else 
 	printf( "%s: [%s][%s] %s\n" , time, s_loginfo[level],s_comp[comp], buf);
 	#endif 
 #else 
-	syslog(syslog_level,"%s [%s] [%s]  [%s:%d]  %s\n", time, s_comp[comp], s_loginfo[level], tmp, line, buf);
+	syslog(syslog_level," [%s] [%s]  [%s,%d] %s\n",  s_comp[comp], s_loginfo[level], tmp,line,buf);
 #endif 
 		
     va_end(arg_list);

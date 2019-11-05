@@ -17,6 +17,10 @@
 #include <interface_rrc_rlc.h>
 #include <interface_mac_rlc.h>
 #include <intertask_interface.h>
+#include <time.h>
+#include <test_time.h>
+long   g_rlc_tx_max_process_time = 0;
+long   g_rlc_tx_max_process_time_sn = 0; 
 
 
 
@@ -154,6 +158,8 @@ rlc_op_status_t rlc_get_tx_data(const protocol_ctxt_t *const ctxt_pP,
 	  //！这里申请出来的data 的首地址指向的是包含了rlc_um_data_req_alloc这个结构体的
 	  new_sdu_p = get_free_mem_block (sdu_sizeP + sizeof (struct rlc_um_data_req_alloc), __func__);
       LOG_INFO(RLC, "end get  memory time");
+
+   
       
 	  if (new_sdu_p != NULL) {
 	//    pthread_mutex_lock(&(rlc_union_p->rlc_union_mtex));
@@ -165,9 +171,13 @@ rlc_op_status_t rlc_get_tx_data(const protocol_ctxt_t *const ctxt_pP,
 		((struct rlc_um_data_req *) (new_sdu_p->data))->data_size = sdu_sizeP;
 		((struct rlc_um_data_req *) (new_sdu_p->data))->data_offset = sizeof (struct rlc_um_data_req_alloc);
 
+		
+
 		//free_mem_block(sdu_pP, __func__);
 		//！将sdu的地址更新到input_sdu节点中去
 	    rlc_um_data_req(ctxt_pP, &rlc_union_p->rlc.um, new_sdu_p);
+
+	  
 
 		//free_mem_block(new_sdu, __func__);
 	 //   pthread_mutex_unlock(&(rlc_union_p->rlc_union_mtex));
@@ -270,6 +280,7 @@ int  rlc_rrc_tx_status_ind(const protocol_ctxt_t* const ctxt_pP,
 }
 
 
+
 void rlc_tx_process(void *message, MessagesIds      msg_type)
 {
 	rrc_rlc_buffer_status_req    *rlc_buffer_req_ptr  = NULL; 
@@ -300,6 +311,11 @@ void rlc_tx_process(void *message, MessagesIds      msg_type)
 	uint32_t   ue_pdu_buffer_array[D2D_MAX_USER_NUM]; 
 	uint32_t   ue_pdu_size_array[D2D_MAX_USER_NUM]; 
 	uint32_t   ue_rnti_array[D2D_MAX_USER_NUM]; 
+
+	struct timeval    start_time; 
+	struct timeval    end_time; 
+	long   process_time = 0;
+
 	
 	LOG_INFO(RLC, "RLC_RRC_TX receive message = %d\n",msg_type);
 	switch (msg_type)
@@ -329,7 +345,8 @@ void rlc_tx_process(void *message, MessagesIds      msg_type)
 		case RRC_RLC_DATA_IND: 
 		case IP_RLC_DATA_IND:
 		{
-			  LOG_ERROR(RLC, "message:%d tx data process start,enb_flag = %d",msg_type,g_rlc_protocol_ctxt.enb_flag);
+		    gettimeofday(&start_time,NULL); 
+			LOG_ERROR(RLC, "message:%d tx data process start,enb_flag = %d",msg_type,g_rlc_protocol_ctxt.enb_flag);
 			rrc_rlc_data_ind_ptr  = (rrc_rlc_data_ind *)message; 
 			rb_type = rrc_rlc_data_ind_ptr->rb_type; 
 			rb_id = rrc_rlc_data_ind_ptr->rb_id; 
@@ -346,14 +363,27 @@ void rlc_tx_process(void *message, MessagesIds      msg_type)
 			{
 				srb_flag = SRB_FLAG_NO; 
 			}
-	       
+
+			       
 			rlc_get_tx_data(&g_rlc_protocol_ctxt,
 							srb_flag,
 							rb_id,
 							send_data_size,
 							data_buffer);
-            LOG_ERROR(RLC, "message:%d tx data process finished,enb_flag = %d,data SN = %d\n",
-            				msg_type,g_rlc_protocol_ctxt.enb_flag,rrc_rlc_data_ind_ptr->data_sn);            
+			gettimeofday(&end_time,NULL); 
+			process_time = ( (end_time.tv_sec * 1000000 + end_time.tv_usec) - (start_time.tv_sec * 1000000 + start_time.tv_usec)); 
+			if (g_rlc_tx_max_process_time <= process_time )
+			{
+				g_rlc_tx_max_process_time = process_time; 
+				g_rlc_tx_max_process_time_sn = rrc_rlc_data_ind_ptr->data_sn; 
+			}
+			
+            LOG_ERROR(RLC, "message:%d tx data process finished,enb_flag = %d,data SN = %d,max_process_record[%lld,%lld], \
+cur process time = [%lld, %lld, %lld] \n",
+            				msg_type,g_rlc_protocol_ctxt.enb_flag,rrc_rlc_data_ind_ptr->data_sn,
+            				g_rlc_tx_max_process_time,g_rlc_tx_max_process_time_sn,
+            				process_time,end_time.tv_usec,start_time.tv_usec);    
+          
 			break; 
 		}
 		//!TODO  IP DATA transfer message
