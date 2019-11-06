@@ -16,6 +16,7 @@ include_directories (${PROJECT_ORIGIN_DIR}/common/inc
 
 add_definitions(-DASN_DISABLE_OER_SUPPORT)
 add_definitions(-DUSE_SYSLOG)
+add_definitions(-DRLC_UT_DEBUG)
 
 aux_source_directory (${PROJECT_ORIGIN_DIR}/common/src SRC_COMMON)
 aux_source_directory (${PROJECT_ORIGIN_DIR}/platform/ocp_itti SRC_PLATFORM)
@@ -27,6 +28,7 @@ aux_source_directory (${PROJECT_ORIGIN_DIR}/protocol/IP SRC_PROTOCOL_IP)
 aux_source_directory (${PROJECT_ORIGIN_DIR}/protocol/IP SRC_PROTOCOL_IP)
 LINK_LIBRARIES(-lpthread)
 LINK_LIBRARIES(-lrt)
+add_compile_options(-g)
 
 set (EXECUTABLE_OUTPUT_PATH ${PROJECT_ORIGIN_DIR}/target)
 message("SRC_COMMON = " ${SRC_COMMON})

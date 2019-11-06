@@ -61,6 +61,31 @@ void Ip_Rlc_Data_Send(rb_type_e rb_type, rb_id_t rb_id, rnti_t rnti, uint32_t da
 	itti_send_msg_to_task(TASK_D2D_RLC_TX,  0, message);
 }
 
+
+
+void mac_Rlc_Bufstat_Req(uint16_t frame, uint16_t subsfn)
+{
+	MessageDef  *message;  
+
+	mac_rlc_buf_status_req *buffer_stat_req = calloc(1,sizeof(mac_rlc_buf_status_req)); 
+
+ 	
+ 	buffer_stat_req->sfn = frame; 
+ 	buffer_stat_req->sub_sfn = subsfn; 
+ 	
+    message = itti_alloc_new_message(TASK_D2D_MAC, MAC_RLC_BUF_STATUS_REQ,
+	                       ( char *)buffer_stat_req, sizeof(mac_rlc_buf_status_req));
+
+	itti_send_msg_to_task(TASK_D2D_RLC_TX,  0, message);
+	
+}
+
+
+uint32_t   g_d2d_subsfn = 0; 
+uint32_t   g_d2d_sfn = 0; 
+
+
+
 void ip_task( )
 {
 
@@ -173,13 +198,23 @@ void ip_task( )
 		if (FD_ISSET(timerfd_1,&rset))
 		{
 			read(timerfd_1,&timer_expire_count[0],sizeof(timer_expire_count[0]));
+			
+			g_d2d_subsfn++;
+			g_d2d_subsfn = g_d2d_subsfn % 10; 
+			if ((g_d2d_subsfn % 10) == 0)
+			{
+				g_d2d_sfn++;
+				g_d2d_sfn = g_d2d_sfn % 1024; 
+			}
 			curtime[0] = GetTimeUs();
-			//LOG_ERROR(IP,"******timerfd_1,expire count:%lld, time:%lld(s), %lld(us),elapse time:%lld(us) \n",timer_expire_count[0],curtime[0].tv_sec, curtime[0].tv_usec,
+			//LOG_ERROR(IP,"******timerfd_1,expire count:%lld,[sfn-subsfn]:[%d--%d],elapse time:%lld(us) \n",timer_expire_count[0],
+			//		g_d2d_sfn,g_d2d_subsfn,
 			//		 ((curtime[0].tv_sec*1000000 + curtime[0].tv_usec) - (oldtime[0].tv_sec*1000000 + oldtime[0].tv_usec)) );
+ 
 			oldtime[0] = curtime[0];
-			//current_cycle = GetCpuCycle();
-			//LOG_INFO(IP, "timerfd_1,expire count:%lld, cycle:%lld, elapse cycle = %lld \n",timer_expire_count,current_cycle, current_cycle - old_cycle);
-			//old_cycle = current_cycle;
+#ifdef     RLC_UT_DEBUG 
+			mac_Rlc_Bufstat_Req(g_d2d_sfn,g_d2d_subsfn);
+#endif 
 		}
 
 		if (FD_ISSET(timerfd_2,&rset))

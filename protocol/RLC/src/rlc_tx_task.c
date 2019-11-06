@@ -22,6 +22,35 @@
 long   g_rlc_tx_max_process_time = 0;
 long   g_rlc_tx_max_process_time_sn = 0; 
 
+#ifdef RLC_UT_DEBUG 
+
+void mac_Rlc_data_Req(uint16_t frame, uint16_t subsfn,uint16_t valid_ue_num, rlc_data_req *rlc_data_request_ptr)
+{
+	MessageDef  *message;  
+
+	uint16_t    ue_index; 
+
+	mac_rlc_data_req *mac_rlc_data_req_ptr = calloc(1,sizeof(mac_rlc_data_req)); 
+
+ 	
+ 	mac_rlc_data_req_ptr->sfn = frame; 
+ 	mac_rlc_data_req_ptr->sub_sfn = subsfn; 
+
+ 	mac_rlc_data_req_ptr->ue_num = valid_ue_num; 
+ 	
+
+    memcpy((void *)mac_rlc_data_req_ptr->rlc_data_request,(void *)rlc_data_request_ptr,valid_ue_num * sizeof(rlc_data_req))	; 
+ 	
+    message = itti_alloc_new_message(TASK_D2D_MAC, MAC_RLC_DATA_REQ,
+	                       ( char *)mac_rlc_data_req_ptr, sizeof(mac_rlc_data_req));
+
+	itti_send_msg_to_task(TASK_D2D_RLC_TX,  0, message);
+	
+}
+
+
+#endif 
+
 
 void  rlc_mac_data_ind_message(uint32_t         *ue_pdu_buffer_ptr, uint32_t *ue_tb_size_ptr,uint32_t *rnti_array, uint32_t ue_num )
 {
@@ -51,7 +80,7 @@ void  rlc_mac_data_ind_message(uint32_t         *ue_pdu_buffer_ptr, uint32_t *ue
 	   
 
 	
-	   message = itti_alloc_new_message(TASK_D2D_RLC, RLC_MAC_DATA_IND,
+	   message = itti_alloc_new_message(TASK_D2D_RLC_TX, RLC_MAC_DATA_IND,
 							  ( char *)rlc_mac_data_send_ptr, sizeof(rlc_mac_data_ind ));
 	
 	   itti_send_msg_to_task(TASK_D2D_MAC,0, message);
@@ -295,7 +324,7 @@ void rlc_tx_process(void *message, MessagesIds      msg_type)
 	uint8_t     *data_buffer; 
 
 	rnti_t     rnti; 
-	rlc_buffer_rpt    rlc_buf_sta[D2D_MAX_USER_NUM]; 
+	rlc_buffer_rpt    rlc_buf_sta[D2D_MAX_USER_NUM+1]; 
 
 
 	int        ret_value = 0; 
@@ -316,7 +345,7 @@ void rlc_tx_process(void *message, MessagesIds      msg_type)
 	long   process_time = 0;
 
 	
-	LOG_INFO(RLC, "RLC_RRC_TX receive message = %d\n",msg_type);
+	LOG_WARN(RLC, "RLC_TX receive message = %d\n",msg_type);
 	switch (msg_type)
 	{
 		case RRC_RLC_BUF_STATUS_REQ: 
@@ -392,19 +421,37 @@ cur process time = [%lld, %lld, %lld] \n",
 
 			sfn = mac_data_buffer_req_ptr->sfn; 
 			subsfn = mac_data_buffer_req_ptr->sub_sfn; 
+
 			
 			//!srb0/srb1/drb's buffer status report to mac 
-           	ue_num =  rlc_Get_Buffer_Status(rlc_buf_sta); 
+          	ue_num =  rlc_Get_Buffer_Status(rlc_buf_sta); 
             
             rlc_Mac_BufferSta_Rpt(sfn,subsfn,ue_num,rlc_buf_sta);
+            if (ue_num != 0)
+            {
+				
+#ifdef  RLC_UT_DEBUG 
+            rlc_data_req   mac_data_req_to_rlc;
+            mac_data_req_to_rlc.rnti = 101; 
+            mac_data_req_to_rlc.logic_chan_num = 1; 
+              mac_data_req_to_rlc.tb_size = 1000;   //!total size ,unit:byte
+            mac_data_req_to_rlc.logicchannel_id[0] =3;  //!DRB = 3
+            
+            mac_data_req_to_rlc.mac_pdu_byte_size[0] = 1000; //!logic channel's size ,unit:byte
+		    //! send MAC_RLC_DATA_REQ message to RLC_TX 
+			mac_Rlc_data_Req(sfn, subsfn, 1, &mac_data_req_to_rlc); 
+#endif 
+
+            LOG_ERROR(RLC, "message:%d,[sfn--subsfn]:[%d,%d] send rlc buffer status to mac \n",msg_type,sfn,subsfn);
+            }
 
 			break; 
 		}
 		case MAC_RLC_DATA_REQ: 
 		{
 			mac_rlc_data_req_ptr = (mac_rlc_data_req *)message; 
-			sfn = mac_data_buffer_req_ptr->sfn; 
-			subsfn = mac_data_buffer_req_ptr->sub_sfn; 
+			sfn = mac_rlc_data_req_ptr->sfn; 
+			subsfn = mac_rlc_data_req_ptr->sub_sfn; 
             ue_num = mac_rlc_data_req_ptr->ue_num; 
             
 			for (ue_index = 0; ue_index < ue_num; ue_index++)
@@ -447,8 +494,9 @@ void *rlc_tx_task( )
 		//!TODO change RLC TASK ID 
         if (0 == itti_receive_msg(TASK_D2D_RLC_TX, &recv_msg))
         {
-         	
+         	LOG_ERROR(RLC,"1: recv_msg:%lld \n", recv_msg); 
 			rlc_tx_process(recv_msg->message_ptr, recv_msg->ittiMsgHeader.messageId);
+			LOG_ERROR(RLC,"2: recv_msg:%lld \n", recv_msg); 
 			itti_free_message(recv_msg);
         }
 

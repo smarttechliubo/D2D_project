@@ -32,14 +32,16 @@ void rlc_Mac_BufferSta_Rpt(uint16_t   sfn, uint16_t  subsfn, uint32_t valid_ue_n
 	rlc_rpt->sfn = sfn;
 	rlc_rpt->sub_sfn = subsfn;
 	rlc_rpt->valid_ue_num = valid_ue_num;
-	
-	memcpy((void *)rlc_rpt->rlc_buffer_rpt,(void *)buffer_status,valid_ue_num * sizeof(rlc_buffer_rpt));
 
-
-	message = itti_alloc_new_message(TASK_D2D_RLC, RLC_MAC_BUF_STATUS_RPT,
+	if (valid_ue_num != 0) //!avoid the ue_num =0, memcpy errors occur
+	{
+		memcpy((void *)rlc_rpt->rlc_buffer_rpt,(void *)buffer_status,valid_ue_num * sizeof(rlc_buffer_rpt));
+    }
+    LOG_ERROR(DRIVER, "TASK_D2D_RLC_TX = %d \n", TASK_D2D_RLC_TX);
+	message = itti_alloc_new_message(TASK_D2D_RLC_TX, RLC_MAC_BUF_STATUS_RPT,
 	                       ( char *)rlc_rpt, sizeof(rlc_mac_buf_status_rpt ));
     
-	itti_send_msg_to_task(TASK_D2D_MAC_RLC,0, message);
+	itti_send_msg_to_task(TASK_D2D_MAC,0, message);
 
 }
 
@@ -183,6 +185,7 @@ void rlc_mac_ue_data_process(frame_t frameP,
 	memset((void *)ue_mac_subheader_ptr,0,(MAX_LOGICCHAN_NUM + 1) * 3 * sizeof(uint8_t)); 
 
 	ue_pdu_size_para_ptr->total_pdu_size = pdu_total_size; 
+	ue_pdu_size_para_ptr->remain_pdu_size = pdu_total_size; //!initial 
 
     for (logic_index = 0; logic_index < logic_num; logic_index++)
     {
@@ -192,21 +195,22 @@ void rlc_mac_ue_data_process(frame_t frameP,
 		lc_pdu_component[logic_index].remain_mac_pdu_size = lc_pdu_component[logic_index].mac_reqeust_tb_size; //!initial 
 		lc_pdu_component[logic_index].logic_ch_index = logic_index; 
 		lc_pdu_component[logic_index].valid_flag = 1; 
+		LOG_DEBUG(RLC, "%s: initial para: rnti:%d; logic_index info: lc_num:%d, lc_idx:%d, is_last_subheader:%d, mac_tb_size:%d \n",
+			__func__, ue_rnti,logic_num,logic_index,lc_pdu_component[logic_index].is_last_sub_header_flag, 
+			lc_pdu_component[logic_index].mac_reqeust_tb_size );
     }
 
 	list_init (&g_rlc_mac_data_req.data, NULL);  
+
+	//!按逻辑信道进行依次处理，包括RCL分段，组包，MAC header生成，组装等。
 	for (logic_index = 0; logic_index < logic_num; logic_index++)
 	{
 		logic_ch_id = rlc_data_ptr->logicchannel_id[logic_index];
 		tb_size_for_lc = rlc_data_ptr->mac_pdu_byte_size[logic_index]; 
+        LOG_ERROR(RLC, "0 \n");
 
-        //!ue remian space 
-        ue_pdu_size_para_ptr->remain_pdu_size = ue_pdu_size_para_ptr->total_pdu_size - ue_pdu_size_para_ptr->total_mac_subheader_size - \
-        										ue_pdu_size_para_ptr->total_mac_ce_size - ue_pdu_size_para_ptr->total_mac_sdu_size; 
-        										
-        										
         //!calculate rlc data length ,mac header length, mac subheader type, mac_padding_header ,pading size for logic channel 
-		rlc_mac_data_send(temp_ctxt,
+		rlc_mac_logicchan_data_send(temp_ctxt,
 						 logic_ch_id,
 						 tb_size_for_lc,
 						 &lc_pdu_component[logic_index],
@@ -217,10 +221,25 @@ void rlc_mac_ue_data_process(frame_t frameP,
 		ue_pdu_size_para_ptr->total_mac_subheader_size += lc_pdu_component[logic_index].mac_subheader_length; 
 		ue_pdu_size_para_ptr->total_mac_sdu_size += lc_pdu_component[logic_index].final_mac_sdu_size; 
 
+		 //!ue remian space 
+        ue_pdu_size_para_ptr->remain_pdu_size = ue_pdu_size_para_ptr->total_pdu_size - ue_pdu_size_para_ptr->total_mac_subheader_size - \
+        										ue_pdu_size_para_ptr->total_mac_ce_size - ue_pdu_size_para_ptr->total_mac_sdu_size; 
+        										
+        										
+
+		LOG_WARN(RLC, "%s, rnti:%d: ue_total_size:%d, logic_index:%d, mac_subheader:%d, mac_ce_header:%d, total_mac_sdu_size:%d,\
+ue remained size:%d after logic chan mapping \n",
+						__func__, 
+						ue_rnti,ue_pdu_size_para_ptr->total_pdu_size,logic_index,
+						lc_pdu_component[logic_index].mac_subheader_length, 0, 
+						lc_pdu_component[logic_index].final_mac_sdu_size,
+						ue_pdu_size_para_ptr->remain_pdu_size);
+        LOG_ERROR(RLC, "11 \n");
 	
 	
 	}
 
+     LOG_ERROR(RLC, "12 \n");
      /**!
      When single-byte or two-byte padding is required, one or two MAC PDU subheaders corresponding to padding are placed at the beginning of 
      the MAC PDU before any other MAC PDU subheader.
@@ -240,7 +259,7 @@ void rlc_mac_ue_data_process(frame_t frameP,
         ue_pdu_size_para_ptr->remain_pdu_size = 0; //!no padding in the end of PDU when insert padding subheader 
 
     }
-
+    LOG_ERROR(RLC, "13 \n");
 	for (logic_index = 0; logic_index < logic_num; logic_index++)
 	{
 		e = !(lc_pdu_component[logic_index].is_last_sub_header_flag); 
@@ -250,7 +269,7 @@ void rlc_mac_ue_data_process(frame_t frameP,
 			case 1: 
 			{
 				mac_subheader_without_l = e << 5 | (logic_ch_id); 
-				memcpy((void *)ue_mac_subheader_ptr,(void *)mac_subheader_without_l,1); 
+				memcpy((void *)ue_mac_subheader_ptr,(void *)&mac_subheader_without_l,1); 
 				ue_mac_subheader_ptr += 1; 
 				mac_subheader_length += 1; 
 				break; 
@@ -281,6 +300,8 @@ void rlc_mac_ue_data_process(frame_t frameP,
 			}
 		}
     }
+
+    LOG_ERROR(RLC, "14 \n");
      /**!
 		Padding occurs at the end of the MAC PDU, except when single-byte or two-byte padding is required. 
      */
@@ -288,13 +309,15 @@ void rlc_mac_ue_data_process(frame_t frameP,
     {
     	
 		mac_subheader_without_l = (0 << 5 | 0x1f); //!logic id = b'11111, padding ID 	
-        memcpy((void *)ue_mac_subheader_ptr,(void *)mac_subheader_without_l,1); 
+        memcpy((void *)ue_mac_subheader_ptr,(void *)&mac_subheader_without_l,1); 
 		ue_mac_subheader_ptr += 1; 
 		mac_subheader_length += 1; 
     }
 
+    LOG_ERROR(RLC, "15 \n");
+
     //!copy mac subheader to ue_tb_buffer 
-    memcpy((void *)mac_pdu_buffer_ptr, subheader_ptr, mac_subheader_length); 
+    memcpy((void *)mac_pdu_buffer_ptr, (void *)subheader_ptr, mac_subheader_length); 
     mac_pdu_buffer_ptr += mac_subheader_length; 
 
     //!copy rlc sdu to ue_tb_bubfer ,after the mac subheader 
@@ -306,7 +329,8 @@ void rlc_mac_ue_data_process(frame_t frameP,
     {
 		memset(mac_pdu_buffer_ptr,0,ue_pdu_size_para_ptr->remain_pdu_size);
     }
-	
+
+	LOG_ERROR(RLC, "16 \n");
 
    
 }
@@ -316,9 +340,9 @@ void rlc_mac_ue_data_process(frame_t frameP,
 
 
 
-void 	rlc_mac_data_send(const protocol_ctxt_t          ctxt,
+void 	rlc_mac_logicchan_data_send(const protocol_ctxt_t          ctxt,
 									const logical_chan_id_t channel_idP,
-									const tb_size_t         tb_sizeP,
+									const tb_size_t         logicch_tb_sizeP,
 									logic_channel_pdu_component   *lc_component_ptr,
 									mac_pdu_size_para  *ue_mac_pdu_size_ptr,
 									struct mac_data_req *data_request)
@@ -348,11 +372,11 @@ void 	rlc_mac_data_send(const protocol_ctxt_t          ctxt,
 	        PROTOCOL_CTXT_ARGS((&ctxt)),
 	        __func__,
 	        channel_idP,
-	    	tb_sizeP);
+	    	logicch_tb_sizeP);
 
  
 
-  key = RLC_COLL_KEY_LCID_VALUE(module_idP, rntiP, enb_flagP, channel_idP, srb_flag);  //!生成key 
+  key = RLC_COLL_KEY_VALUE(module_idP, rntiP, enb_flagP, channel_idP, srb_flag);  //!生成key 
 
   h_rc = hashtable_get(rlc_coll_p, key, (void**)&rlc_union_p); //!从hash table中，根据key，获得rlc_union_p
 
@@ -361,7 +385,8 @@ void 	rlc_mac_data_send(const protocol_ctxt_t          ctxt,
     rlc_mode = rlc_union_p->mode;
   } else {
     rlc_mode = RLC_MODE_NONE;
-    AssertFatal (0 , RLC,"RLC not configured lcid %u RNTI %x!\n", channel_idP, rntiP);
+    AssertFatal (0 , RLC,"RLC not configured key= %lld, module_id:%lld, rnti:%d, enb_flag:%d, lcid %u srb_flag %d!\n",
+    					key,  module_idP,rntiP, enb_flagP,  channel_idP, srb_flag);
   }
 
   switch (rlc_mode) {
@@ -374,7 +399,7 @@ void 	rlc_mac_data_send(const protocol_ctxt_t          ctxt,
 	  case RLC_MODE_AM:
 	  {
 	    rlc_am_mui.rrc_mui_num = 0;
-	    if (!enb_flagP) rlc_am_set_nb_bytes_requested_by_mac(&rlc_union_p->rlc.am,tb_sizeP);
+	    if (!enb_flagP) rlc_am_set_nb_bytes_requested_by_mac(&rlc_union_p->rlc.am,logicch_tb_sizeP);
 		data_request = rlc_am_mac_data_request(&ctxt, &rlc_union_p->rlc.am,enb_flagP);
 	    break;
 	 }	
@@ -383,8 +408,9 @@ void 	rlc_mac_data_send(const protocol_ctxt_t          ctxt,
 	  case RLC_MODE_UM:
 	  {
 	    //!将SDU 分段放进PDU中
+	    LOG_ERROR(RLC, "rlc_um_mac_data_request \n"); 
 	    rlc_um_mac_data_request(&ctxt,
-	                                           tb_sizeP,
+	                                           logicch_tb_sizeP,
 	    									   &rlc_union_p->rlc.um,
 	    									   enb_flagP,
 	    									   lc_component_ptr,
@@ -397,7 +423,7 @@ void 	rlc_mac_data_send(const protocol_ctxt_t          ctxt,
 	  case RLC_MODE_TM:
 	  {
 			//！返回一个mac_data_req 
-		rlc_tm_mac_data_request(&ctxt, &rlc_union_p->rlc.tm,tb_sizeP,lc_component_ptr,data_request);
+		rlc_tm_mac_data_request(&ctxt, &rlc_union_p->rlc.tm,logicch_tb_sizeP,lc_component_ptr,data_request);
 		break;
       }
 	  default:break;

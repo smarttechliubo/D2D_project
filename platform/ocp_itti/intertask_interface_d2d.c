@@ -95,6 +95,7 @@ static inline int itti_send_msg_to_task_locked(task_id_t destination_task_id,
 	//！往队列中添加消息
 	//t->message_queue.insert(t->message_queue.begin(), message);
 	message_list_add_tail_eurecom(message, &(t->message_queue));
+	
 #if 0
 	eventfd_t sem_counter = 1;
 	AssertFatal ( sizeof(sem_counter) == write(t->sem_fd, &sem_counter, sizeof(sem_counter)), "");
@@ -105,7 +106,7 @@ static inline int itti_send_msg_to_task_locked(task_id_t destination_task_id,
 }
 
 int itti_send_msg_to_task(task_id_t destination_task_id, instance_t instance, MessageDef *message) {
-	task_list_t *t=&tasks[TASK_D2D_DUMMY];
+	task_list_t *t=&tasks[destination_task_id];
 
 	pthread_mutex_lock(&t->queue_cond_lock);
 	int ret=itti_send_msg_to_task_locked(destination_task_id, instance, message);
@@ -132,10 +133,10 @@ LOG_W(DRIVER,"queue in no thread mode is %ld\n", t->message_queue.size());
 int itti_receive_msg(task_id_t task_id, MessageDef **received_msg) {
 // Reception of one message, blocking caller
 	task_list_t *t=&tasks[task_id];
-	LOG_DEBUG(DRIVER,"task_id:%d start to fetch receive lock\n",task_id);
+	//LOG_DEBUG(DRIVER,"task_id:%d start to fetch receive lock\n",task_id);
 	pthread_mutex_lock(&t->queue_cond_lock);
-	LOG_DEBUG(DRIVER,"task_id:%d fetch receive lock\n",task_id);
 
+	
 #if 0
 	// Weird condition to deal with crap legacy itti interface
 	if ( t->nb_fd_epoll == 1 ) {
@@ -159,11 +160,12 @@ int itti_receive_msg(task_id_t task_id, MessageDef **received_msg) {
 	  	return -1; 
 	 
 	} else {
+	
 	//！从队列中获取消息
 	 // *received_msg=t->message_queue.back( );
 	 // t->message_queue.pop_back();
 	 //!取最新的消息
-	 LOG_DEBUG(DRIVER,"task: %d receive new message,message number in queue = %d\n",task_id,t->message_queue.nb_elements);
+	// LOG_DEBUG(DRIVER,"task: %d receive new message,message number in queue = %d\n",task_id,t->message_queue.nb_elements);
 	 *received_msg = message_list_remove_head(&(t->message_queue));
  
 	}
@@ -176,7 +178,8 @@ int itti_receive_msg(task_id_t task_id, MessageDef **received_msg) {
 void itti_free_message(MessageDef *received_msg)
 {
  
-  LOG_DEBUG(DRIVER,"free memory address :%ld\n",received_msg->message_ptr);
+  LOG_DEBUG(DRIVER,"task_id:%d, message_ptr:%lld, free memory address :%ld\n",received_msg->ittiMsgHeader.destinationTaskId,received_msg,
+  					received_msg->message_ptr);
   free(received_msg->message_ptr);
 }
 

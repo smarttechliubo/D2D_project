@@ -25,19 +25,21 @@ extern void *rlc_rx_task( );
 
 void test_syslog( )
 {
-    setlogmask(LOG_UPTO(LOG_WARNING)); 
+    setlogmask(LOG_UPTO(LOG_NOTICE)); 
     syslog(LOG_ERR, "%s",  "------------------------ D2D_project start log ------------- \n");  
     closelog(); 
 
 
 
 }
+int gdb=1;
 int main()
 {
 
   
     unsigned long start_time; 
     unsigned long end_time ;
+    
     test_syslog();
 	itti_init(8, &tasks_info);
     rrc_module_Initial(); 

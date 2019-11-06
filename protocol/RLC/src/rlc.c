@@ -188,12 +188,12 @@ int   rlc_Get_Buffer_Status(rlc_buffer_rpt *buffer_status)
 
 
 
-	memset((void *)&buffer_status,0,MAX_LOGICCHAN_NUM *sizeof(rlc_buffer_rpt)); 
+	memset((void *)buffer_status,0,(D2D_MAX_USER_NUM +1) *sizeof(rlc_buffer_rpt)); 
 
    // pthread_mutex_lock(&g_rlc_buffer_mutex); 
 	for(ue_index = 0; ue_index < (D2D_MAX_USER_NUM +1); ue_index++)
 	{
-		if (g_rlc_buffer_status[ue_index].valid_flag)
+		if (1 == g_rlc_buffer_status[ue_index].valid_flag)
 		{
 			buffer_status[ue_num].valid_flag = 1; 
 			buffer_status[ue_num].logic_chan_num = g_rlc_buffer_status[ue_index].latest_logic_ch_num; 
@@ -201,7 +201,10 @@ int   rlc_Get_Buffer_Status(rlc_buffer_rpt *buffer_status)
             //!data_size include the rlc header size , then report to MAC Layer 
 			for (logic_ch_index = 0; logic_ch_index < buffer_status[ue_num].logic_chan_num; logic_ch_index++)
 			{
-				g_rlc_buffer_status[ue_index].data_size[logic_ch_index] += g_rlc_buffer_status[ue_index].rlc_header_size[logic_ch_index]; 
+				g_rlc_buffer_status[ue_index].data_size[logic_ch_index] += g_rlc_buffer_status[ue_index].rlc_header_size[logic_ch_index];
+				LOG_WARN(RLC, "rlc_Get_Buffer_Status:ue_index:%d,lc_ch_num:%d,lc_index:%d, data_size:%d,rlc_header:%d \n",
+						ue_num,buffer_status[ue_num].logic_chan_num,logic_ch_index,g_rlc_buffer_status[ue_index].data_size[logic_ch_index],
+						g_rlc_buffer_status[ue_index].rlc_header_size[logic_ch_index]);
 			}
 			
 			memcpy((void *)buffer_status[ue_num].logicchannel_id,
@@ -211,6 +214,7 @@ int   rlc_Get_Buffer_Status(rlc_buffer_rpt *buffer_status)
 			memcpy((void *)buffer_status[ue_num].buffer_byte_size,
 					(void *)g_rlc_buffer_status[ue_index].data_size,
 					buffer_status[ue_num].logic_chan_num * sizeof(uint32_t)); 
+			
 
 			ue_num++; 
 
@@ -259,6 +263,7 @@ void   rlc_Set_Buffer_Status(rnti_t rnti,
 		rlc_header_size = 0; 
 	}
 
+    LOG_ERROR(RLC, "input_sdu_num:%d , rlc_header_size:%d \n",input_sdu_num,rlc_header_size );
         
 	ue_index = dict_GetValue(g_rrc_ue_info_dict,rnti);
 	AssertFatal((ue_index < (D2D_MAX_USER_NUM + 1)), RLC, "ue num exceed max limit!!\n"); 

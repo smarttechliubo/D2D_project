@@ -32,7 +32,7 @@
 
 
 
-#define  RLC_UT_DEBUG   1   //!the MACRO for RLC UT 
+
 
 //#define  AM_ENABLE   1
 
