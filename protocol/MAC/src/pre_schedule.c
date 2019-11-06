@@ -18,7 +18,6 @@
 #include "d2d_message_type.h"
 
 #include "messageDefine.h"//MAC_TEST
-#include "msg_queue.h"
 #include "msg_handler.h"
 
 void handle_buffer_status_req(const frame_t frame, const sub_frame_t subframe)
@@ -38,7 +37,6 @@ void handle_buffer_status_req(const frame_t frame, const sub_frame_t subframe)
 		{
 			LOG_ERROR(MAC, "mac_rlc_buf_status_req send");
 		}
-	
 	}
 	else
 	{

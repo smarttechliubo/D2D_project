@@ -12,7 +12,6 @@
 
 #include "rrc_sim.h"
 #include "mytask.h"
-#include "msg_queue.h"
 #include "messageDefine.h"
 #include "interface_rrc_mac.h"
 #include "d2d_message_type.h"
@@ -30,6 +29,7 @@ void init_rrc_sim()
 	g_rrc.mode = 0;//source
 	g_rrc.status = RRC_NONE;
 	
+	message_int(RRC_TASK, ENONBLOCK);
 }
 
 void rrcStatusHandler()
@@ -41,7 +41,6 @@ void rrcStatusHandler()
 		rrc_mac_initial_req *req;
 		msgSize msg_size = sizeof(rrc_mac_initial_req);
 
-
 		if (new_message(&msg, RRC_MAC_INITIAL_REQ, RRC_TASK, MAC_PRE_TASK, msg_size))
 		{
 			req = (rrc_mac_initial_req*)msg.data;
@@ -52,17 +51,17 @@ void rrcStatusHandler()
 			req->subframe_config = 0;
 			req->mode = 0;
 
-			if (message_send(MAC_PRE_QUEUE, (char *)&msg, sizeof(msgDef)))
+			if (message_send(MAC_PRE_TASK, (char *)&msg, sizeof(msgDef)))
 			{
 				g_rrc.status = RRC_INITAIL;
-				LOG_INFO(MAC, "rrc_mac_initial_req send");
+				LOG_INFO(RRC, "rrc_mac_initial_req send");
 			}
 
 			//msg_free(msg);
 		}
 		else
 		{
-			LOG_ERROR(MAC, "[TEST]: new rrc message fail!");
+			LOG_ERROR(RRC, "[TEST]: new rrc message fail!");
 		}
 	}
 
@@ -85,16 +84,15 @@ void rrcStatusHandler()
 
 			memset(req->sib.sib_pdu, 0xFE, req->sib.size);
 			
-			if (message_send(MAC_PRE_QUEUE, (char *)&msg, sizeof(msgDef)))
+			if (message_send(MAC_PRE_TASK, (char *)&msg, sizeof(msgDef)))
 			{
 				g_rrc.status = RRC_BCCH_SEND;
 			}
 
-			//msg_free(msg);
 		}
 		else
 		{
-			LOG_ERROR(MAC, "[TEST]: new rrc message fail!");
+			LOG_ERROR(RRC, "[TEST]: new rrc message fail!");
 		}
 	}
 }
@@ -103,72 +101,98 @@ void rrcMsgHandler()
 {
 	msgDef msg;
 	uint32_t msg_len = 0;
+	msgId msg_id = 0;
 
 	while (1)
 	{ 
-		msg_len = msgRecv(RRC_QUEUE, (char *)&msg, MQ_MSGSIZE);
+		msg_len = message_receive(RRC_TASK, (char *)&msg, msg_len);
 
 		if (msg_len == 0)
 		{
 			return;
 		}
 
-		switch (msg.header.msgId)
+		msg_id = get_msgId(&msg);
+
+		switch (msg_id)
 		{
 			case MAC_RRC_INITIAL_CFM:
 			{
-				mac_rrc_initial_cfm *cfm = (mac_rrc_initial_cfm *)msg.data; //TODO: add msg body handler function
+				mac_rrc_initial_cfm *cfm = (mac_rrc_initial_cfm *)msg.data;
 
-				LOG_INFO(MAC, "[TEST] mac_rrc_initial_cfm, status:%u, error_:%u",cfm->status, cfm->error_code);
+				LOG_INFO(RRC, "[TEST] mac_rrc_initial_cfm, status:%u, error_:%u",cfm->status, cfm->error_code);
 
 				g_rrc.status = RRC_INITAIL_CFM;
-				msg_free(cfm);
+				message_free(cfm);
 				break;
 			}
 			case MAC_RRC_RELEASE_CFM:
 			{
-				mac_rrc_release_cfm *cfm = (mac_rrc_release_cfm *)msg.data; //TODO: add msg body handler function
+				mac_rrc_release_cfm *cfm = (mac_rrc_release_cfm *)msg.data;
 
-				LOG_INFO(MAC, "[TEST] mac_rrc_release_cfm, status:%u",cfm->status);
-				msg_free(cfm);
-				break;
-			}
-			case MAC_RRC_CONNECT_SETUP_CFG_CFM:
-			{
-				mac_rrc_connection_cfm *cfm = (mac_rrc_connection_cfm *)msg.data; //TODO: add msg body handler function
-
-				LOG_INFO(MAC, "[TEST] mac_rrc_connection_cfm, status:%u,ue_index:%u,rnti:%u,error:%u",
-					cfm->status,cfm->ue_index,cfm->rnti,cfm->error_code);
-				msg_free(cfm);
+				LOG_INFO(RRC, "[TEST] mac_rrc_release_cfm, status:%u",cfm->status);
+				message_free(cfm);
 				break;
 			}
 			case MAC_RRC_BCCH_PARA_CFG_CFM:
 			{
-				mac_rrc_bcch_para_config_cfm *cfm = (mac_rrc_bcch_para_config_cfm *)msg.data; //TODO: add msg body handler function
+				mac_rrc_bcch_para_config_cfm *cfm = (mac_rrc_bcch_para_config_cfm *)msg.data;
+
+				LOG_INFO(RRC, "[TEST] mac_rrc_bcch_para_config_cfm, status:%u,flag:%u,error:%u", 
+					cfm->status,cfm->flag,cfm->error_code);
+
+				g_rrc.status = RRC_BCCH_CFM;
+				message_free(cfm);
+				break;
+			}
+			case MAC_RRC_BCCH_MIB_RPT:
+			{
+				mac_rrc_bcch_mib_rpt *rpt = (mac_rrc_bcch_mib_rpt *)msg.data;
 				
-				LOG_INFO(MAC, "[TEST] mac_rrc_bcch_para_config_cfm, status:%u,flag:%u,error:%u", cfm->status,cfm->flag,cfm->error_code);
-				msg_free(cfm);
+				LOG_INFO(RRC, "[TEST] mac_rrc_bcch_mib_rpt, SFN:%u,subsfn:%u", 
+					rpt->SFN, rpt->subsfn);
+				message_free(rpt);
+				break;
+			}
+			case MAC_RRC_BCCH_SIB1_RPT:
+			{
+				mac_rrc_bcch_sib1_rpt *rpt = (mac_rrc_bcch_sib1_rpt *)msg.data;
+				
+				LOG_INFO(RRC, "[TEST] mac_rrc_bcch_para_config_cfm, SFN:%u, subsfn:%u, data_size:%u", 
+					rpt->sfn, rpt->subsfn, rpt->data_size);
+				message_free(rpt);
 				break;
 			}
 			case MAC_RRC_OUTSYNC_RPT:
 			{
-				mac_rrc_outsync_rpt *cfm = (mac_rrc_outsync_rpt *)msg.data; //TODO: add msg body handler function
+				mac_rrc_outsync_rpt *cfm = (mac_rrc_outsync_rpt *)msg.data;
 				
-				LOG_INFO(MAC, "[TEST] mac_rrc_outsync_rpt, rnti:%u, outsync_flag:%u", cfm->rnti,cfm->outsync_flag);
-				msg_free(cfm);
+				LOG_INFO(RRC, "[TEST] mac_rrc_outsync_rpt, rnti:%u, outsync_flag:%u", cfm->rnti,cfm->outsync_flag);
+				message_free(cfm);
 				break;
 			}
 			case MAC_RRC_CCCH_RPT:
 			{
-				mac_rrc_ccch_rpt *cfm = (mac_rrc_ccch_rpt *)msg.data; //TODO: add msg body handler function
+				mac_rrc_ccch_rpt *cfm = (mac_rrc_ccch_rpt *)msg.data;
 
-				LOG_INFO(MAC, "[TEST] mac_rrc_ccch_rpt");
-				msg_free(cfm);
+				LOG_INFO(RRC, "[TEST] mac_rrc_ccch_rpt");
+				message_free(cfm);
 
 				break;
 			}
-			default:
+			case MAC_RRC_CONNECT_SETUP_CFG_CFM:
+			{
+				mac_rrc_connection_cfm *cfm = (mac_rrc_connection_cfm *)msg.data;
+
+				LOG_INFO(RRC, "[TEST] mac_rrc_connection_cfm, status:%u,ue_index:%u,rnti:%u,error:%u",
+					cfm->status,cfm->ue_index,cfm->rnti,cfm->error_code);
+				message_free(cfm);
 				break;
+			}
+			default:
+			{
+				break;
+			}
 		}
 	}
 }
@@ -180,7 +204,7 @@ void *rrc_thread()
 
 	if (!make_timer(period_us, &timer_fd, true))
 	{
-		LOG_ERROR(MAC, "[TEST]: run_thread make periodic timer error");
+		LOG_ERROR(RRC, "[TEST]: rrc_thread make periodic timer error");
 		return NULL;
 	}
 
@@ -188,6 +212,7 @@ void *rrc_thread()
 	{
 		rrcStatusHandler();
 		rrcMsgHandler();
+
 		if (g_runtime < 20)
 		{
 			g_runtime++;

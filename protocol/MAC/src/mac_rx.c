@@ -74,7 +74,7 @@ void mac_rrc_data_ind(const frame_t frame, const sub_frame_t subframe, const uin
 	}
 	else
 	{
-		LOG_ERROR(MAC, "[TEST]: new mac message fail!");
+		LOG_ERROR(MAC, "mac_rrc_data_ind, new mac message fail!");
 	}
 }
 
@@ -623,7 +623,7 @@ void msg_handler()
 {
 	msgDef msg;
 	uint32_t msg_len = 0;
-	task_id taskId = RRC_TASK;
+	msgId msg_id = 0;
 
 	while(1)
 	{
@@ -634,9 +634,9 @@ void msg_handler()
 			return;
 		}
 
-		taskId = get_msgId(&msg);
+		msg_id = get_msgId(&msg);
 
-		switch (taskId)
+		switch (msg_id)
 		{
 			case RLC_TASK:
 			{
@@ -651,7 +651,7 @@ void msg_handler()
 			}
 			default:
 			{
-				LOG_ERROR(MAC, "UNknown task msg taskId:%u", taskId);
+				LOG_ERROR(MAC, "UNknown task msg msg_id:%u", msg_id);
 				break;
 			}
 		}

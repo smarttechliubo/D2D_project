@@ -176,7 +176,7 @@ void handle_rlc_data_ind()
 {
 	msgDef msg;
 	uint32_t msg_len = 0;
-	msgId msgid = 0;
+	msgId msg_id = 0;
 
 	while (1)
 	{
@@ -187,9 +187,9 @@ void handle_rlc_data_ind()
 			return;
 		}
 
-		msgid = get_msgId(&msg);
+		msg_id = get_msgId(&msg);
 
-		switch (msgid)
+		switch (msg_id)
 		{
 			case RLC_MAC_DATA_IND:
 			{

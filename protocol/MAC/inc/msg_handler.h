@@ -13,8 +13,8 @@
 #include "messageDefine.h"//MAC_TEST
 
 msgId get_msgId(const msgDef* msg);
-void message_int(task_id taskId);
-bool new_message(msgDef* msg, int32_t msgId, const task_id source, const task_id dest, msgSize msg_size);
+void message_int(const task_id taskId, const msg_mode mode);
+bool new_message(msgDef* msg, const int32_t msgId, const task_id source, const task_id dest, msgSize msg_size);
 bool message_send(const task_id dest, char *msg_ptr, int msg_len);
 uint32_t message_receive(const task_id dest, char *msg, int msg_len);
 void message_free(void *ptr);

@@ -13,6 +13,7 @@
 #include "messageDefine.h"//MAC_TEST
 #include "msg_queue.h"
 
+#if 0
 msgq_type get_msgq_type(const task_id taskId)
 {
 	msgq_type type = MAX_TASK;
@@ -44,6 +45,11 @@ msgq_type get_msgq_type(const task_id taskId)
 			type = RRC_QUEUE;
 			break;
 		}
+		case INTERFACE_TASK:
+		{
+			type = INTERFACE_QUEUE;
+			break;
+		}
 		case MAX_TASK:
 		default:
 		{
@@ -54,20 +60,20 @@ msgq_type get_msgq_type(const task_id taskId)
 
 	return type;
 }
-
+#endif
 msgId get_msgId(const msgDef* msg)
 {
 	return msg->header.msgId;
 }
 
-void message_int(task_id taskId)
+void message_int(const task_id taskId, const msg_mode mode)
 {
-	msgq_type type = get_msgq_type(taskId);
+	//msgq_type type = get_msgq_type(taskId);
 
-	msgq_init(type);
+	msgq_init(taskId, mode);
 }
 
-bool new_message(msgDef* msg, int32_t msgId, const task_id source, const task_id dest, msgSize msg_size)
+bool new_message(msgDef* msg, const int32_t msgId, const task_id source, const task_id dest, msgSize msg_size)
 {
 	msg->data = (uint8_t*)msg_malloc(msg_size);
 
@@ -90,11 +96,11 @@ bool new_message(msgDef* msg, int32_t msgId, const task_id source, const task_id
 }
 
 
-bool message_send(const task_id dest, char *msg_ptr, int msg_len)
+bool message_send(const task_id taskId, char *msg_ptr, int msg_len)
 {
-	msgq_type type = get_msgq_type(dest);
+	//msgq_type type = get_msgq_type(taskId);
 
-	if (msgSend(type, msg_ptr, msg_len))
+	if (msgSend(taskId, msg_ptr, msg_len))
 	{
 		return true;
 	}
@@ -102,12 +108,12 @@ bool message_send(const task_id dest, char *msg_ptr, int msg_len)
 	return false;
 }
 
-uint32_t message_receive(const task_id dest, char *msg, int msg_len)
+uint32_t message_receive(const task_id taskId, char *msg, int msg_len)
 {
 	//uint32_t msg_len = 0;
-	msgq_type type = get_msgq_type(dest);
+	//msgq_type type = get_msgq_type(taskId);
 
-	msg_len = msgRecv(type, (char *)&msg, MQ_MSGSIZE);
+	msg_len = msgRecv(taskId, (char *)&msg, MQ_MSGSIZE);
 
 	return msg_len;
 }

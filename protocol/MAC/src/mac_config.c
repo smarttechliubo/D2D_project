@@ -109,7 +109,7 @@ void rrc_mac_bcch_cfm(bool success)
 	}
 	else
 	{
-		LOG_ERROR(MAC, "[TEST]: new mac message fail!");
+		LOG_ERROR(MAC, "bcch, new mac message fail!");
 	}
 }
 
@@ -156,7 +156,7 @@ void handle_rrc_msg()
 //MAC_TEST
 	msgDef msg;
 	uint32_t msg_len = 0;
-	msgId msgId = RRC_TASK;
+	msgId msg_id = 0;
 
 	while (1)
 	{
@@ -167,9 +167,9 @@ void handle_rrc_msg()
 			return;
 		}
 
-		msgId = get_msgId(&msg);
+		msg_id = get_msgId(&msg);
 
-		switch (msgId)
+		switch (msg_id)
 		{
 			case RRC_MAC_INITIAL_REQ:
 			{

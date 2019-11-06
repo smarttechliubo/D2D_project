@@ -22,6 +22,57 @@
 
 task_info mytask[MAX_TASK];
 
+void init_thread(task_id taskId)
+{
+	task_info* task = &mytask[taskId];
+
+	pthread_mutex_init(&task->mutex_4ms,NULL);
+	pthread_cond_init(&task->cond_4ms,NULL);
+
+	pthread_mutex_init(&task->mutex_1ms,NULL);
+	pthread_cond_init(&task->cond_1ms,NULL);
+}
+
+bool thread_wakeup(task_id taskId, uint32_t periodic)
+{
+	task_info* task = &mytask[taskId];
+
+	if (periodic == PERIODIC_4MS)// 4ms periodic timer
+	{
+		pthread_mutex_lock(&task->mutex_4ms);
+		pthread_cond_broadcast(&task->cond_4ms);
+		pthread_mutex_unlock(&task->mutex_4ms);
+	}
+	else
+	{
+		pthread_mutex_lock(&task->mutex_1ms);
+		pthread_cond_broadcast(&task->cond_1ms);
+		pthread_mutex_unlock(&task->mutex_1ms);
+	}
+
+	return true;
+}
+
+bool thread_wait(task_id taskId, uint32_t periodic)
+{
+	task_info* task = &mytask[taskId];
+
+	if (periodic == PERIODIC_4MS)// 4ms periodic timer
+	{
+		pthread_mutex_lock(&task->mutex_4ms);
+		pthread_cond_wait(&task->cond_4ms, &task->mutex_4ms);
+		pthread_mutex_unlock(&task->mutex_4ms);
+	}
+	else
+	{
+		pthread_mutex_lock(&task->mutex_1ms);
+		pthread_cond_wait(&task->cond_1ms, &task->mutex_1ms);
+		pthread_mutex_unlock(&task->mutex_1ms);
+	}
+
+	return true;
+}
+
 bool create_new_thread(task_id taskId, void *(*start_routine) (void*), void *arg)
 {
 	int policy;
@@ -37,15 +88,16 @@ bool create_new_thread(task_id taskId, void *(*start_routine) (void*), void *arg
 	memset(&sparam, 0, sizeof(sparam));
 	sparam.sched_priority = sched_get_priority_max(SCHED_FIFO)-10;
 	policy = SCHED_FIFO ; 
+
 	if (pthread_setschedparam(mytask[taskId].thread, policy, &sparam) != 0) 
 	{
 		//
 	}
+
 	LOG_INFO(MAC, "[TEST]: create task success");
+
 	return true;
 }
-
-
 
 bool make_timer(uint32_t period_us, uint32_t* timer_fd, bool periodic)
 {
@@ -57,7 +109,8 @@ bool make_timer(uint32_t period_us, uint32_t* timer_fd, bool periodic)
     /* Create the timer */
     ret = timerfd_create (CLOCK_MONOTONIC, 0);
     *timer_fd = ret;
-    if (ret > 0) 
+
+	if (ret > 0) 
 	{
         /* Make the timer periodic */
         sec = period_us/1e6;
@@ -79,7 +132,8 @@ bool make_timer(uint32_t period_us, uint32_t* timer_fd, bool periodic)
 		perror("timerfd_create");
 		return false;
     }
-    return true;
+
+	return true;
 }
 
 bool stop_timer(uint32_t timer_fd)
@@ -99,7 +153,8 @@ bool stop_timer(uint32_t timer_fd)
       perror("timerfd_settime");
 	  return false;
     }
-    return true;
+
+	return true;
 }
 
 bool restart_timer(uint32_t period_us, uint32_t timer_fd)

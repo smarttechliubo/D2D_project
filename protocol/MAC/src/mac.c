@@ -150,14 +150,14 @@ void syncTime()//TODO: sync
 // interrupt function
 void run_period()
 {
-	LOG_INFO(MAC, "[TEST]: run_period");
+	LOG_INFO(MAC, "run_period");
 	syncTime();		
 	mac_pre_handler();
 }
 
 void run_scheduler()
 {
-	LOG_INFO(MAC, "[TEST]: run_scheduler");
+	LOG_INFO(MAC, "run_scheduler");
 
 	msg_handler();
 

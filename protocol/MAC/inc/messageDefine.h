@@ -16,6 +16,12 @@
 typedef uint32_t msgId;
 typedef uint32_t msgSize;
 
+typedef enum
+{
+	EBLOCK,
+	ENONBLOCK
+}msg_mode;
+
 typedef struct
 {
 	msgId msgId;

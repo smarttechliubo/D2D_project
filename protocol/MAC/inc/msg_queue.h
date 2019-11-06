@@ -20,17 +20,20 @@
 typedef enum
 {
 	PHY_QUEUE,
+	PHY_TX_QUEUE,
+	PHY_RX_QUEUE,
 	MAC_QUEUE,
 	MAC_PRE_QUEUE,
 	MAC_MAIN_QUEUE,
 	RLC_QUEUE,
 	RRC_QUEUE,
+	INTERFACE_QUEUE,
 	MAX_QUEUE
 }msgq_type;
 
-mqd_t msgq_init(msgq_type type);
-bool msgSend(msgq_type type, const char *msg_ptr, int msg_len);
-uint32_t msgRecv(msgq_type type, char *msg_ptr, int msg_len);
+mqd_t msgq_init(task_id type, msg_mode mode);
+bool msgSend(task_id type, const char *msg_ptr, int msg_len);
+uint32_t msgRecv(task_id type, char *msg_ptr, int msg_len);
 msgDef *new_msg(msgSize msg_size);
 int msg_free(void *ptr);
 void *msg_malloc(uint32_t size);

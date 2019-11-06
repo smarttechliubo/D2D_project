@@ -15,13 +15,23 @@
 #include "typedef.h"
 #include "tasks_def.h"
 
+#define PERIODIC_4MS 4
+#define PERIODIC_1MS 1
+
 typedef struct task_list_s 
 {
 	task_id taskId;
 	pthread_t thread;
-	pthread_mutex_t mutex;
+	//pthread_mutex_t mutex;
+	pthread_cond_t cond_4ms;
+	pthread_mutex_t mutex_4ms;
+	pthread_cond_t cond_1ms;
+	pthread_mutex_t mutex_1ms;
 }task_info;
 
+void init_thread(task_id taskId);
+bool thread_wait(task_id taskId, uint32_t periodic);
+bool thread_wakeup(task_id taskId, uint32_t periodic);
 bool create_new_thread(task_id taskId, void *(*start_routine) (void*), void *arg);
 void wait_period(uint32_t timer_fd);
 bool make_timer(uint32_t period_us, uint32_t* timer_fd, bool periodic);

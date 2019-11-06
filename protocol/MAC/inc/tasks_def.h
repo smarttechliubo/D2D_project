@@ -13,11 +13,14 @@
 typedef enum
 {
 	PHY_TASK,
+	PHY_TX_TASK,
+	PHY_RX_TASK,
 	MAC_TASK,
 	MAC_PRE_TASK,
 	MAC_MAIN_TASK,
 	RLC_TASK,
 	RRC_TASK,
+	INTERFACE_TASK,
 	MAX_TASK
 }task_id;
 

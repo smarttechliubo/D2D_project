@@ -25,28 +25,31 @@
 
 
 static const char* s_msgq_file[] = {
-    [PHY_QUEUE] = "/phyQ",
-    [MAC_QUEUE] = "/macQ",
-	[MAC_PRE_QUEUE] = "/macQ_PRE",
-	[MAC_MAIN_QUEUE] = "/macQ_MAIN",
-    [RLC_QUEUE] = "/rlcQ",
-    [RRC_QUEUE] = "/rrcQ"
+    [PHY_TASK] = "/phyQ",
+	[PHY_TX_TASK] = "/phyTxQ",
+	[PHY_RX_TASK] = "/phyRxQ",
+    [MAC_TASK] = "/macQ",
+	[MAC_PRE_TASK] = "/macQ_PRE",
+	[MAC_MAIN_TASK] = "/macQ_MAIN",
+    [RLC_TASK] = "/rlcQ",
+    [RRC_TASK] = "/rrcQ",
+    [INTERFACE_TASK] = "/interfaceQ"
 };
 
 typedef struct
 {
-	msgq_type type;
+	task_id taskId;
 	mqd_t msgq_id;
 }msgq_info;
 
 msgq_info q_info[MAX_QUEUE];
 
-mqd_t msgq_init(msgq_type type)
+mqd_t msgq_init(task_id taskId, msg_mode mode)
 {
-	if (type >= MAX_QUEUE)
+	if (taskId >= MAX_TASK)
 		return -1;
 
-	const char *file = s_msgq_file[type];
+	const char *file = s_msgq_file[taskId];
     struct mq_attr msgq_attr;
  
 	mqd_t msgq_id;
@@ -54,8 +57,12 @@ mqd_t msgq_init(msgq_type type)
     msgq_attr.mq_maxmsg = QUE_DEP;
     msgq_attr.mq_msgsize = MQ_MSGSIZE;
 
-    msgq_id = mq_open(file, O_RDWR | O_CREAT | O_NONBLOCK , S_IRWXU | S_IRWXG, &msgq_attr);
-    if(msgq_id == (mqd_t)-1)
+	if (mode == EBLOCK)
+		msgq_id = mq_open(file, O_RDWR | O_CREAT , S_IRWXU | S_IRWXG, &msgq_attr);
+	else
+	    msgq_id = mq_open(file, O_RDWR | O_CREAT | O_NONBLOCK , S_IRWXU | S_IRWXG, &msgq_attr);
+
+	if(msgq_id == (mqd_t)-1)
     {
         perror("mq_open");
 		printf("errno:%d\n",errno);
@@ -72,20 +79,20 @@ mqd_t msgq_init(msgq_type type)
         "large at most %ld bytes each\n\t- currently holds %ld messages\n",
         file, msgq_attr.mq_maxmsg, msgq_attr.mq_msgsize, msgq_attr.mq_curmsgs);
 
-	q_info[type].msgq_id = msgq_id;
-	q_info[type].type = type;
+	q_info[taskId].msgq_id = msgq_id;
+	q_info[taskId].taskId = taskId;
 
     return msgq_id;
 }
 
-bool msgSend(msgq_type type, const char *msg_ptr, int msg_len)
+bool msgSend(task_id taskId, const char *msg_ptr, int msg_len)
 {
 	int ret;
-	mqd_t msgq_id = q_info[type].msgq_id;
+	mqd_t msgq_id = q_info[taskId].msgq_id;
 
-	if (type >= MAX_QUEUE)
+	if (taskId >= MAX_TASK)
 	{
-		LOG_ERROR(MAC, "Wrong msgType:%u,msg_len:%u",type,msg_len);
+		LOG_ERROR(MAC, "Wrong msgType:%u,msg_len:%u",taskId,msg_len);
 		return false;
 	}
 
@@ -93,20 +100,20 @@ bool msgSend(msgq_type type, const char *msg_ptr, int msg_len)
 	if (ret == -1)
 	{
 		perror("mq_send");
-		LOG_ERROR(MAC, "msgSend fail msgType:%u,msg_len:%u,errno:%d",type,msg_len, errno);
+		LOG_ERROR(MAC, "msgSend fail msgType:%u,msg_len:%u,errno:%d",taskId,msg_len, errno);
 		return false;
 	}
 
 	return true;
 }
 
-uint32_t msgRecv(msgq_type type, char *msg_ptr, int msg_len)
+uint32_t msgRecv(task_id taskId, char *msg_ptr, int msg_len)
 {
 	uint32_t ret;
 	//unsigned msg_prio = 1;
-	mqd_t msgq_id = q_info[type].msgq_id;
+	mqd_t msgq_id = q_info[taskId].msgq_id;
 
-	if (type >= MAX_QUEUE || msg_ptr == NULL)
+	if (taskId >= MAX_TASK || msg_ptr == NULL)
 		return 0;
 
 	ret = mq_receive(msgq_id, msg_ptr, msg_len, NULL);
@@ -116,7 +123,7 @@ uint32_t msgRecv(msgq_type type, char *msg_ptr, int msg_len)
 		if (errno != EAGAIN)// TODO: how to handle O_NONBLOCK
 		{
 			perror("mq_receive");
-			LOG_ERROR(MAC, "msgSend fail msgType:%u,msg_len:%u,errno:%d",type,msg_len, errno);
+			LOG_ERROR(MAC, "msgRecv fail msgType:%u,msg_len:%u,errno:%d",taskId,msg_len, errno);
 		}
 		return 0;
 	}
