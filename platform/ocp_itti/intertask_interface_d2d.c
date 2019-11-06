@@ -105,7 +105,7 @@ static inline int itti_send_msg_to_task_locked(task_id_t destination_task_id,
 }
 
 int itti_send_msg_to_task(task_id_t destination_task_id, instance_t instance, MessageDef *message) {
-	task_list_t *t=&tasks[TASK_D2D_DUMMY];
+	task_list_t *t=&tasks[destination_task_id];
 
 	pthread_mutex_lock(&t->queue_cond_lock);
 	int ret=itti_send_msg_to_task_locked(destination_task_id, instance, message);
