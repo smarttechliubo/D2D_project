@@ -85,7 +85,7 @@ void  *pool_buffer_init (void)
                                    };
 
 #ifdef MEMBLOCK_BIG_LOCK
-  if (pthread_mutex_lock(&mtex)) abort();
+ // if (pthread_mutex_lock(&mtex)) abort();
 #endif
 
 	memset (memory, 0, sizeof (mem_pool));
@@ -168,7 +168,7 @@ void  *pool_buffer_init (void)
   }
 
 #ifdef MEMBLOCK_BIG_LOCK
-  if (pthread_mutex_unlock(&mtex)) abort();
+ // if (pthread_mutex_unlock(&mtex)) abort();
 #endif
 
   return 0;
@@ -191,7 +191,7 @@ void  free_mem_block (mem_block_t * leP, const char* caller)
   }
 
 #ifdef MEMBLOCK_BIG_LOCK
-  if (pthread_mutex_lock(&mtex)) abort();
+//  if (pthread_mutex_lock(&mtex)) abort();
 #endif
 
 #ifdef DEBUG_MEM_MNGT_FREE
@@ -218,12 +218,12 @@ void  free_mem_block (mem_block_t * leP, const char* caller)
   }
 
 #ifdef MEMBLOCK_BIG_LOCK
-  if (pthread_mutex_unlock(&mtex)) abort();
+//  if (pthread_mutex_unlock(&mtex)) abort();
 #endif
 }
 
 //-----------------------------------------------------------------------------
-mem_block_t   *get_free_mem_block (uint32_t sizeP, const char* caller)
+mem_block_t   *get_free_mem_block(uint32_t sizeP, const char* caller)
 {
   //-----------------------------------------------------------------------------
   mem_block_t      *le = NULL;
@@ -238,7 +238,7 @@ mem_block_t   *get_free_mem_block (uint32_t sizeP, const char* caller)
   }
 
 #ifdef MEMBLOCK_BIG_LOCK
-  if (pthread_mutex_lock(&mtex)) abort();
+ // if (pthread_mutex_lock(&mtex)) abort();
 #endif
 
   size = sizeP >> 6;  //！memory's minimal size = 64byte
@@ -271,7 +271,7 @@ mem_block_t   *get_free_mem_block (uint32_t sizeP, const char* caller)
       AssertFatal(le->pool_id == pool_selected,DRIVER, "Unexpected pool ID!");
 
 #ifdef MEMBLOCK_BIG_LOCK
-  if (pthread_mutex_unlock(&mtex)) abort();
+//  if (pthread_mutex_unlock(&mtex)) abort();
 #endif
 
       return le;
@@ -289,7 +289,7 @@ mem_block_t   *get_free_mem_block (uint32_t sizeP, const char* caller)
 //  AssertFatal(1==0,"get_free_mem_block failed");
   LOG_ERROR(MAC,"[MEM_MNGT][ERROR][FATAL] get_free_mem_block failed!!!\n");
 #ifdef MEMBLOCK_BIG_LOCK
-  if (pthread_mutex_unlock(&mtex)) abort();
+ // if (pthread_mutex_unlock(&mtex)) abort();
 #endif
 
   return NULL;

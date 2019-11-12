@@ -52,7 +52,8 @@ void rlc_um_cleanup ( rlc_um_entity_t * const rlc_pP)
 void  rlc_um_init (const protocol_ctxt_t* const ctxt_pP,
   				rlc_um_entity_t * const rlc_pP,
   				 const srb_flag_t  srb_flagP,
-  				const rb_id_t rb_idP)
+  				const rb_id_t rb_idP,
+  				rnti_t   rnti)
 {
 
   //AssertFatal(rlc_pP, "Bad RLC UM pointer (NULL)");
@@ -87,6 +88,7 @@ void  rlc_um_init (const protocol_ctxt_t* const ctxt_pP,
 	}
 
 	rlc_pP->rb_id = rb_idP;
+	rlc_pP->rnti  = rnti; 
 
     // RX SIDE
     list_init (&rlc_pP->pdus_from_mac_layer, NULL); //！pdus_from_mac_layer链表清0
@@ -318,7 +320,7 @@ void config_req_rlc_um (
    // pthread_mutex_lock(&(rlc_union_p->rlc_union_mtex));
     rlc_p = &rlc_union_p->rlc.um;
 
-    rlc_um_init(ctxt_pP, rlc_p,srb_flagP,rb_idP); //！初始化
+    rlc_um_init(ctxt_pP, rlc_p,srb_flagP,rb_idP,ctxt_pP->rnti); //！初始化
 
  
     if (rlc_um_fsm_notify_event (ctxt_pP, rlc_p, RLC_UM_RECEIVE_CRLC_CONFIG_REQ_ENTER_DATA_TRANSFER_READY_STATE_EVENT)) {
@@ -358,38 +360,41 @@ void rlc_um_data_req (const protocol_ctxt_t *const ctxt_pP, void *rlc_pP, mem_bl
 	uint16_t			 data_size;
 	size_t				 message_string_size = 0;
 	int 				 octet_index, index;
-	char				 message_string[7000];
+
+	struct rlc_um_tx_sdu_management *um_tx_sdu_header = ((struct rlc_um_tx_sdu_management *) (sdu_pP->data)); 
 	LOG_INFO(RLC, PROTOCOL_RLC_UM_CTXT_FMT" RLC_UM_DATA_REQ size %d Bytes, BO %d , NB SDU %d\n",
 		  PROTOCOL_RLC_UM_CTXT_ARGS(ctxt_pP,rlc_p),
 		  ((struct rlc_um_data_req *) (sdu_pP->data))->data_size,
 		  rlc_p->buffer_occupancy,
 		  rlc_p->input_sdus.nb_elements);
 	// IMPORTANT : do not change order of affectations
-	((struct rlc_um_tx_sdu_management *) (sdu_pP->data))->sdu_size = ((struct rlc_um_data_req *) (sdu_pP->data))->data_size;
+	um_tx_sdu_header->sdu_size = um_tx_sdu_header->data_size;
+
 	//rlc_p->nb_sdu += 1;
 	//! first byte 地址偏移掉header 
-	((struct rlc_um_tx_sdu_management *) (sdu_pP->data))->first_byte = (uint8_t *)&sdu_pP->data[sizeof (struct rlc_um_data_req_alloc)];
-	((struct rlc_um_tx_sdu_management *) (sdu_pP->data))->sdu_remaining_size = \
-													((struct rlc_um_tx_sdu_management *)(sdu_pP->data))->sdu_size;
-	((struct rlc_um_tx_sdu_management *) (sdu_pP->data))->sdu_segmented_size = 0;  //!已经分配给PDU的size 
-	((struct rlc_um_tx_sdu_management *) (sdu_pP->data))->sdu_creation_time = ctxt_pP->frame; 
+	um_tx_sdu_header->first_byte = (uint8_t *)&sdu_pP->data[sizeof (struct rlc_um_tx_sdu_management)];
+	um_tx_sdu_header->sdu_remaining_size = um_tx_sdu_header->sdu_size;
+	um_tx_sdu_header->sdu_segmented_size = 0;  //!已经分配给PDU的size 
+	um_tx_sdu_header->sdu_creation_time = ctxt_pP->frame << 8 | ctxt_pP->subframe; 
+
+	um_tx_sdu_header->sdu_creation_sn = rlc_p->stat_tx_pdcp_sdu;
 	//rlc_p->next_sdu_index = (rlc_p->next_sdu_index + 1) % rlc_p->size_input_sdus_buffer;
 	rlc_p->stat_tx_pdcp_sdu   += 1;
-	rlc_p->stat_tx_pdcp_bytes += ((struct rlc_um_tx_sdu_management *) (sdu_pP->data))->sdu_size;
+	rlc_p->stat_tx_pdcp_bytes += um_tx_sdu_header->sdu_size;
 	
 
 	RLC_UM_MUTEX_LOCK(&rlc_p->lock_input_sdus, ctxt_pP, rlc_p);
 	//！SDU中的Buffer size 增加
-	rlc_p->buffer_occupancy += ((struct rlc_um_tx_sdu_management *) (sdu_pP->data))->sdu_size;
+	rlc_p->buffer_occupancy += um_tx_sdu_header->sdu_size;
 	
 	
 	//！将新的sdu 加入到rlc->input_sdu中 ，更新节点中的地址
 	list_add_tail_eurecom(sdu_pP, &rlc_p->input_sdus);
 
 	//! update buffer status 
-	   
-	rlc_Set_Buffer_Status(ctxt_pP->rnti, RLC_MODE_UM,rlc_p->input_sdus.nb_elements,rlc_p->channel_id,
-						((struct rlc_tm_tx_sdu_management *) (sdu_pP->data))->sdu_size);
+	rlc_Set_Buffer_Status(ctxt_pP->rnti, 
+						RLC_MODE_UM,rlc_p->input_sdus.nb_elements,rlc_p->channel_id,
+						um_tx_sdu_header->data_size);
 
 
 	LOG_WARN(RLC, "rlc_p->stat_tx_pdcp_sdu: %d  , rlc_p->stat_tx_pdcp_bytes: %lld ,rlc_p->buffer_occupancy = %d, UM tx sdu List element count = %d\n", 
@@ -430,7 +435,7 @@ void	rlc_um_mac_data_request(const protocol_ctxt_t *const ctxt_pP,
 	rlc_um_entity_t *l_rlc_p = (rlc_um_entity_t *) rlc_pP;
 
 	l_rlc_p->nb_bytes_requested_by_mac = logicch_tb_sizeP;
-	LOG_ERROR(RLC, "1 \n"); 
+	
 	//！把填好的PDU 添加到rlc_p->pdus_to_mac_layer 链表中，
 	rlc_um_get_pdus(ctxt_pP, l_rlc_p,lc_pdu_component_ptr,ue_mac_pdu_size_ptr);
      
@@ -441,7 +446,7 @@ void	rlc_um_mac_data_request(const protocol_ctxt_t *const ctxt_pP,
 	
     data_req->buffer_occupancy_in_bytes +=  l_rlc_p->buffer_occupancy;
 
-    LOG_ERROR(RLC, "10 \n");
+    
 #if 0
 	if (data_req.data.nb_elements > 0) 
 	{ //!data 是一个链表，链表中的成员个数> 0 
@@ -474,13 +479,14 @@ void	rlc_um_mac_data_request(const protocol_ctxt_t *const ctxt_pP,
 
 
 
-void  rlc_um_segment_10(const protocol_ctxt_t* const ctxt_pP, 
+int  rlc_um_segment_10(const protocol_ctxt_t* const ctxt_pP, 
 							    rlc_um_entity_t *rlc_pP,
 							    logic_channel_pdu_component  *lc_pdu_component_ptr,
 							    mac_pdu_size_para  *ue_mac_pdu_size_ptr)
 {
   list_t			  pdus;
   signed int		  pdu_remaining_size;
+  signed int          buffer_status_sub_size ; 
   signed int		  test_pdu_remaining_size;
 
   int				  nb_bytes_to_transmit = 0; //！MAC需要的TB size 
@@ -494,18 +500,19 @@ void  rlc_um_segment_10(const protocol_ctxt_t* const ctxt_pP,
   struct rlc_um_tx_sdu_management *sdu_mngt_p;
   unsigned int		 li_length_in_bytes;
   unsigned int		 test_li_length_in_bytes;
-  unsigned int		 test_remaining_size_to_substract;
+  unsigned int		 test_e_li_length;
   unsigned int		 test_remaining_num_li_to_substract;
   unsigned int		 continue_fill_pdu_with_sdu;  //!是否在一个PDU 中还要填其他SDU 
   unsigned int		 num_fill_sdu;
   unsigned int		 test_num_li;
-  unsigned int		 fill_num_li;
+  unsigned int		 fill_num_sdu;
   mem_block_t		 *sdu_in_buffer = NULL;
   unsigned int		 data_pdu_size;
 
   unsigned int		 fi_first_byte_pdu_is_first_byte_sdu;
   unsigned int		 fi_last_byte_pdu_is_last_byte_sdu;
   unsigned int		 fi;
+  unsigned int       e_in_fixheader = 0; 
   unsigned int		 max_li_overhead;
   logic_channel_pdu_component    *next_lc_pdu_ptr = NULL; 
   tb_size_t                       next_lc_pdu_size ; 
@@ -528,13 +535,13 @@ void  rlc_um_segment_10(const protocol_ctxt_t* const ctxt_pP,
  
   
   
-
+  //!如果要传输的byte < 3,也直接return 
   if (nb_bytes_to_transmit < 3) {
-	LOG_ERROR(RLC, PROTOCOL_RLC_UM_CTXT_FMT" NO SEGMENTATION nb_bytes to transmit = %d\n",
+	LOG_WARN(RLC, PROTOCOL_RLC_UM_CTXT_FMT" NO SEGMENTATION nb_bytes to transmit = %d\n",
 		  PROTOCOL_RLC_UM_CTXT_ARGS(ctxt_pP,rlc_pP),
 		  nb_bytes_to_transmit);
 
-	return;
+	return -1;
   }
 
   if ((0 == remain_byte_to_allocate ) && (1 == lc_pdu_component_ptr->is_last_sub_header_flag))
@@ -544,7 +551,7 @@ void  rlc_um_segment_10(const protocol_ctxt_t* const ctxt_pP,
 			  PROTOCOL_RLC_UM_CTXT_ARGS(ctxt_pP,rlc_pP),
 			  lc_pdu_component_ptr->logic_ch_index,
 			  lc_pdu_component_ptr->occupy_by_previous_lc_idx); 
-	return ; 
+	return -2; 
   }
 
 
@@ -553,25 +560,25 @@ void  rlc_um_segment_10(const protocol_ctxt_t* const ctxt_pP,
   list_init (&pdus, NULL);	  // param string identifying the list is NULL
   pdu_mem_p = NULL;
 
-  LOG_ERROR(RLC, "3------ \n");
+  
  // RLC_UM_MUTEX_LOCK(&rlc_pP->lock_input_sdus, ctxt_pP, rlc_pP); //!加锁
+
+  
   
    //!从rlc_pp的input_sdu链表中，获取每个节点，进行如下处理： 
   while ((list_get_head(&rlc_pP->input_sdus)) && (nb_bytes_to_transmit > 0)) {
 
-	LOG_DEBUG(RLC, PROTOCOL_RLC_UM_CTXT_FMT" nb_bytes_to_transmit %d BO %d\n",
-		  PROTOCOL_RLC_UM_CTXT_ARGS(ctxt_pP,rlc_pP),
-		  nb_bytes_to_transmit,
-		  rlc_pP->buffer_occupancy);
+	LOG_WARN(RLC, "-----------start to process  sdu data, BO: %d: lc_idx:%d ,lc_tb_size:%d---------\n",
+		  rlc_pP->buffer_occupancy,
+		  lc_pdu_component_ptr->logic_ch_index,
+		  nb_bytes_to_transmit);
 
-    LOG_ERROR(RLC, "4------ \n");
 	// pdu_p management
 	//!< UM PDU是由一个或多个data segment 组成的，每个data segment对应一个SDU或者SDU 分段
 	//!< 最后一个data segment不需要LI 字段。如果是奇数个LI,则需要增加4bit padding.
 	//! 计算LI+E 和可能存在的Padding的header大小
 	//! 没有申请过内存时，先header和扩展部分的大小，然后根据sdu大小+header+扩展部分的大小和MAC tb_size进行
 	//！ 比较，确定要传给MAC的大小 
-
 	//!calculate the rlc header size if rlc transmit all of the SDU data 
 	if (!pdu_mem_p) {  
 		  if (rlc_pP->input_sdus.nb_elements <= 1) {
@@ -581,10 +588,42 @@ void  rlc_um_segment_10(const protocol_ctxt_t* const ctxt_pP,
 		  }
 
 		 
-		  //!RLC total size 
-		  rlc_sdu_length =  (rlc_pP->buffer_occupancy + rlc_pP->tx_header_min_length_in_bytes + max_li_overhead); 
-	  
-	   //!如果mac tb size 大于RLC total size , 则要发送的data_pdu_size就是实际大小,然后加padding 
+          //!RLC total size 
+		 rlc_sdu_length =  (rlc_pP->buffer_occupancy + rlc_pP->tx_header_min_length_in_bytes + max_li_overhead); 
+
+	    
+         //! calculate the mac subheader for the first time 
+		if (1 == lc_pdu_component_ptr->is_last_sub_header_flag)
+		{
+			lc_pdu_component_ptr->mac_subheader_length = 1; 
+			lc_pdu_component_ptr->mac_subheader_length_type = 1; 
+		}
+		else
+		{	
+			if (lc_pdu_component_ptr->rlc_data_length < 128)
+			{
+				lc_pdu_component_ptr->mac_subheader_length = 2; 
+				lc_pdu_component_ptr->mac_subheader_length_type  = 2; 
+			}
+			else 
+			{
+				lc_pdu_component_ptr->mac_subheader_length = 3; 
+				lc_pdu_component_ptr->mac_subheader_length_type  = 3;
+
+			}
+		} 
+
+		LOG_DEBUG(RLC, "1st time calculate the mac subheader:lc:%d's mac subheader length:%d \n ",lc_pdu_component_ptr->logic_ch_index,
+						lc_pdu_component_ptr->mac_subheader_length); 	
+
+		//!update the lc's tb-size 
+	    nb_bytes_to_transmit = nb_bytes_to_transmit - lc_pdu_component_ptr->mac_subheader_length; 
+	    
+        LOG_WARN(RLC, "initial RLC all SDU overhead+MAC subheader:total_sdu_num:%d, BO:%d,  max_li_overhead:%d,fixed_RLC_header:%d,\
+MAC subheeader:%d,total_RLC_SDU_bytes:%d \n",
+		  			rlc_pP->input_sdus.nb_elements,rlc_pP->buffer_occupancy,max_li_overhead, 2,lc_pdu_component_ptr->mac_subheader_length ,
+		  			rlc_sdu_length); 
+	     //!如果mac tb size 大于RLC total size , 则要发送的data_pdu_size就是实际大小,然后加padding 
 		if  (nb_bytes_to_transmit >= rlc_sdu_length) 
 		{
 			data_pdu_size = rlc_sdu_length;
@@ -598,22 +637,25 @@ void  rlc_um_segment_10(const protocol_ctxt_t* const ctxt_pP,
 			{
 				lc_pdu_component_ptr->padding_byte = 0; 
 			}
-			LOG_DEBUG(RLC, PROTOCOL_RLC_UM_CTXT_FMT"SDU doesn't need to split, MAC TB size [%d] >= RLC SDU + header size [%d],the final pdu size[%d]!\n",
-				  PROTOCOL_RLC_UM_CTXT_ARGS(ctxt_pP,rlc_pP),
+			LOG_WARN(RLC, "total SDU send without split, last lc flag:%d, MAC TB size [%d] >= (rlc sdu size)[%d], final pdu size[%d],\
+padding byte = %d!\n",
+				  lc_pdu_component_ptr->is_last_sub_header_flag,
 				  nb_bytes_to_transmit,
 				  rlc_sdu_length,
-				  data_pdu_size);
+				  data_pdu_size,
+				  lc_pdu_component_ptr->padding_byte);
 
 		} 
-		else
+		else  
+		 //!如果RLC SDU size > 逻辑信道的传输size ，则需要分割成SDU分段进行传输,或者占用其他逻辑信道的空间进行传输
 		{		
-			 
+			
 			if (1 == lc_pdu_component_ptr->is_last_sub_header_flag)
 			{
 				data_pdu_size = nb_bytes_to_transmit;
 				lc_pdu_component_ptr->final_mac_sdu_size = nb_bytes_to_transmit; 	
-				LOG_DEBUG(RLC, PROTOCOL_RLC_UM_CTXT_FMT" SDU is the last logic chan's SDU, MAC TB size [%d] < RLC SDU + header size [%d],the final PDU size:[%d]\n",
-				  PROTOCOL_RLC_UM_CTXT_ARGS(ctxt_pP,rlc_pP),
+				LOG_WARN(RLC, "the last SDU need to split,  last lc flag:%d, MAC TB size [%d] < (rlc sdu size)[%d],the final RLC PDU size:[%d]\n",
+				  1,
 				  nb_bytes_to_transmit,
 				  rlc_sdu_length,
 				  data_pdu_size);
@@ -633,6 +675,11 @@ void  rlc_um_segment_10(const protocol_ctxt_t* const ctxt_pP,
 							next_lc_pdu_ptr->occupy_by_previous_lc_flag = 1; 
 							next_lc_pdu_ptr->occupy_by_previous_lc_idx = lc_pdu_component_ptr->logic_ch_index;
 							next_lc_pdu_ptr->remain_mac_pdu_size = 0;
+							LOG_WARN(RLC, "lc:%d occupied the whole space of lc:%d, added next lc's tbsize  %d,current lc tbsize:%d, continue!\n",
+									 lc_pdu_component_ptr->logic_ch_index,
+									 lc_pdu_component_ptr->logic_ch_index,
+									 next_lc_pdu_size,
+									 lc_pdu_component_ptr->final_mac_sdu_size );
 							
 						}
 						else 
@@ -645,6 +692,13 @@ void  rlc_um_segment_10(const protocol_ctxt_t* const ctxt_pP,
 
 							next_lc_pdu_ptr->occupy_by_previous_lc_flag = 1; 
 							next_lc_pdu_ptr->occupy_by_previous_lc_idx = lc_pdu_component_ptr->logic_ch_index;
+
+							LOG_WARN(RLC, "lc:%d occupied the partial spase of lc:%d, added next lc's tbsize  %d,current lc tbsize:%d! stop!\n",
+									 lc_pdu_component_ptr->logic_ch_index,
+									 lc_pdu_component_ptr->logic_ch_index,
+									 (rlc_sdu_length - lc_pdu_component_ptr->final_mac_sdu_size),
+									 lc_pdu_component_ptr->final_mac_sdu_size );
+									 
 							break; 
 						}
 					}
@@ -654,11 +708,10 @@ void  rlc_um_segment_10(const protocol_ctxt_t* const ctxt_pP,
 
 				data_pdu_size = lc_pdu_component_ptr->final_mac_sdu_size; //!this logic channel's final SDU size 
 				
-				LOG_DEBUG(RLC, PROTOCOL_RLC_UM_CTXT_FMT" SDU  need to occupy other lc's space, MAC TB size [%d] < RLC SDU + header size [%d],the final PDU size:[%d]\n",
-				  PROTOCOL_RLC_UM_CTXT_ARGS(ctxt_pP,rlc_pP),
-				  nb_bytes_to_transmit,
-				  rlc_sdu_length,
-				  data_pdu_size);
+				LOG_WARN(RLC, "the final SDU need to split to segment  or occupy other lc's space,lc tb size:%d, rlc_sdu_length:%d,the final send PDU size:[%d]\n",
+							  nb_bytes_to_transmit,
+							  rlc_sdu_length,
+							  data_pdu_size);
 			}
 
 			
@@ -686,22 +739,23 @@ void  rlc_um_segment_10(const protocol_ctxt_t* const ctxt_pP,
 				lc_pdu_component_ptr->mac_subheader_length_type  = 3;
 
 			}
-
 		} 
 
+		LOG_WARN(RLC, "final  RLC SDU overhead+MAC subheader:total_sdu_num:%d, BO:%d,  max_li_overhead:%d,fixed_RLC_header:%d,MAC subheeader:%d,total_RLC_SDU_bytes:%d \n",
+		  			rlc_pP->input_sdus.nb_elements,rlc_pP->buffer_occupancy,max_li_overhead, 2,lc_pdu_component_ptr->mac_subheader_length ,
+		  			data_pdu_size); 
       
 	   
 	  //！申请一块内存，大小为data_pdu_size + sizeof(struct mac_tb_req);
 	  if (!(pdu_mem_p = get_free_mem_block (data_pdu_size + sizeof(struct mac_tb_req), __func__))) {
 			LOG_ERROR(RLC, PROTOCOL_RLC_UM_CTXT_FMT" ERROR COULD NOT GET NEW PDU, EXIT\n",
-			  PROTOCOL_RLC_UM_CTXT_ARGS(ctxt_pP,rlc_pP));
+			  			PROTOCOL_RLC_UM_CTXT_ARGS(ctxt_pP,rlc_pP));
 			RLC_UM_MUTEX_UNLOCK(&rlc_pP->lock_input_sdus); //出错，return之前解锁
-		return;
+		return -3;
 	  }
 
-      //!去掉2个固定的header，去掉这个逻辑信道对应的mac subheader.  
-      //! 如果不是唯一的一个逻辑信道，这里的固定的2byte的header不需要减去，目前只有单逻辑信道，所以这里的代码暂时不改
-	  pdu_remaining_size = data_pdu_size - 2 - lc_pdu_component_ptr->mac_subheader_length ; 
+      //!去掉2个固定的header
+	  pdu_remaining_size = data_pdu_size - 2 ; 
 	   //!pdu_p指向的是PDU的开头部分，UM模式下是包含了header的
 	  pdu_p 	   = (rlc_um_pdu_sn_10_t*) (&pdu_mem_p->data[sizeof(struct mac_tb_req)]);
 	  //!<开头是mac_tb_req,然后才是pdu
@@ -710,7 +764,8 @@ void  rlc_um_segment_10(const protocol_ctxt_t* const ctxt_pP,
 	  memset (pdu_mem_p->data, 0, sizeof (rlc_um_pdu_sn_10_t)+sizeof(struct mac_tb_req));
 	  li_length_in_bytes = 1;
 	}
-     LOG_ERROR(RLC, "5------ \n");
+
+    LOG_WARN(RLC, "-------start to calculate how many sdu can be filled to RLC PDU---------- \n"); 
 	//----------------------------------------
 	// compute how many SDUS can fill the PDU
 	//----------------------------------------
@@ -720,7 +775,7 @@ void  rlc_um_segment_10(const protocol_ctxt_t* const ctxt_pP,
 	sdu_in_buffer			   = list_get_head(&rlc_pP->input_sdus); //！得到header节点 
 	test_pdu_remaining_size    = pdu_remaining_size; 
 	test_li_length_in_bytes    = 1;
-	test_remaining_size_to_substract   = 0;
+	test_e_li_length   = 0;
 	test_remaining_num_li_to_substract = 0;
 
 	 //!calculate how many SDU will fill into the PDU 
@@ -729,54 +784,76 @@ void  rlc_um_segment_10(const protocol_ctxt_t* const ctxt_pP,
 
 	  //! 
 	  if (sdu_mngt_p->sdu_remaining_size > test_pdu_remaining_size) {
+
+	  	LOG_WARN(RLC, "sdu fill param: sdu sn:%d, sdu_remain_size:%d > pdu_remain_size:%d,split this SDU, fill stoped  \n", 
+		 			sdu_mngt_p->sdu_creation_sn, 
+		 			sdu_mngt_p->sdu_remaining_size,
+		 			test_pdu_remaining_size ); 
 		// no LI
 		continue_fill_pdu_with_sdu = 0;  //！只需要填写一次PDU即可，不需要再填PDU了
 		num_fill_sdu += 1;
 		test_pdu_remaining_size = 0; //!PDU 全部占满
-		test_remaining_size_to_substract = 0;
-		test_remaining_num_li_to_substract = 0;
+		test_e_li_length += 0;
+		test_remaining_num_li_to_substract += 0;
+		
 	  } else if (sdu_mngt_p->sdu_remaining_size == test_pdu_remaining_size) {
+	  LOG_WARN(RLC, "sdu fill param: sdu sn:%d, sdu_remain_size:%d ==  pdu_remain_size:%d,fill stoped  \n", 
+		 			sdu_mngt_p->sdu_creation_sn, sdu_mngt_p->sdu_remaining_size,test_pdu_remaining_size ); 
 		// fi will indicate end of PDU is end of SDU, no need for LI
 		continue_fill_pdu_with_sdu = 0;
 		num_fill_sdu += 1;
 		test_pdu_remaining_size = 0;
-		test_remaining_size_to_substract = 0;
-		test_remaining_num_li_to_substract = 0;
+		test_e_li_length += 0;
+		test_remaining_num_li_to_substract += 0;
+
+		
 	  } else if ((sdu_mngt_p->sdu_remaining_size + (test_li_length_in_bytes ^ 3)) == test_pdu_remaining_size ) {
 		// no LI
 		//！SDU 的size 小于PDU的size,但是SDU的size +2个byte就 = PDU size ,
 		//！	
+		LOG_WARN(RLC, "sdu fill param: sdu sn:%d, sdu_remain_size:%d + LI header:%d ==  pdu_remain_size:%d,fill stoped  \n", 
+		 			sdu_mngt_p->sdu_creation_sn,
+		 			sdu_mngt_p->sdu_remaining_size,
+		 			(test_li_length_in_bytes ^ 3),
+		 			test_pdu_remaining_size ); 
 		continue_fill_pdu_with_sdu = 0;
 		num_fill_sdu += 1;
 		test_pdu_remaining_size = 0;
-		test_remaining_size_to_substract = 0;
-		test_remaining_num_li_to_substract = 0;
+		test_e_li_length += 0;
+		test_remaining_num_li_to_substract += 0;
 		//pdu_remaining_size = pdu_remaining_size - (test_li_length_in_bytes ^ 3);
+	
 	  } else if ((sdu_mngt_p->sdu_remaining_size + (test_li_length_in_bytes ^ 3)) < test_pdu_remaining_size ) {
 		//！SDU 的size 小于PDU的size,但是SDU的size +2个byte		 <	PDU size ,
 		//！ PDU 可以容纳2个SDU,因此这里有一个LI ,
+
+		LOG_WARN(RLC, "sdu fill param: sdu sn:%d, sdu_remain_size:%d + LI header:%d <  pdu_remain_size:%d,fill continue.....  \n", 
+		 			sdu_mngt_p->sdu_creation_sn,
+		 			sdu_mngt_p->sdu_remaining_size,
+		 			(test_li_length_in_bytes ^ 3),
+		 			test_pdu_remaining_size ); 
 		test_num_li += 1; //!说明当前的PDU 还可以容纳其他SDU，因此test_num_li + 1
 		num_fill_sdu += 1;
 		//!<PDU 内剩下的size 
 		test_pdu_remaining_size = test_pdu_remaining_size - (sdu_mngt_p->sdu_remaining_size + (test_li_length_in_bytes ^ 3));
 		//!test_li_length_in_bytes =1时，1^3 = 2，当test_li_length_in_bytes =2时，2^3 = 1
-		test_remaining_size_to_substract = test_li_length_in_bytes ^ 3; 
-		test_remaining_num_li_to_substract = 1;
+		test_e_li_length += test_li_length_in_bytes ^ 3; 
+		test_remaining_num_li_to_substract += 1;
 		test_li_length_in_bytes = test_li_length_in_bytes ^ 3;
+
+		
 	  } else {
-#if TRACE_RLC_UM_SEGMENT
-		LOG_DEBUG(RLC, PROTOCOL_RLC_UM_CTXT_FMT" sdu_mngt_p->sdu_remaining_size=%d test_pdu_remaining_size=%d test_li_length_in_bytes=%d\n",
-			  PROTOCOL_RLC_UM_CTXT_ARGS(ctxt_pP,rlc_pP),
-			  sdu_mngt_p->sdu_remaining_size,
-			  test_pdu_remaining_size,
-			  test_li_length_in_bytes ^ 3);
-#endif
 		// reduce the size of the PDU
+		LOG_WARN(RLC, "sdu fill error,stoped \n", 
+		 			sdu_mngt_p->sdu_creation_sn,
+		 			sdu_mngt_p->sdu_remaining_size,
+		 			(test_li_length_in_bytes ^ 3),
+		 			test_pdu_remaining_size ); 
 		continue_fill_pdu_with_sdu = 0;
 		num_fill_sdu += 1;
 		test_pdu_remaining_size = 0;
-		test_remaining_size_to_substract = 0;
-		test_remaining_num_li_to_substract = 0;
+		test_e_li_length = 0;
+		test_remaining_num_li_to_substract += 0;
 		pdu_remaining_size = pdu_remaining_size - 1;//!??
 	  }
 
@@ -784,32 +861,38 @@ void  rlc_um_segment_10(const protocol_ctxt_t* const ctxt_pP,
 	}
 
 
-	LOG_ERROR(RLC, "6------ \n");
+
 	
-#if 0
 	if (test_remaining_num_li_to_substract > 0) {  //!有多个SDU填到一个PDU 
 	  // there is a LI that is not necessary
-	  test_num_li = test_num_li - 1;  //!<最后一个data segment不需要LI  
+	  test_num_li = num_fill_sdu - 1;  //!<最后一个data segment不需要LI  
 	  //!<pdu_remaining_size 再次更新
-	  pdu_remaining_size = pdu_remaining_size - test_remaining_size_to_substract;
+	  pdu_remaining_size = pdu_remaining_size - test_e_li_length; //!从PDU 中减去LI 的header size 
 	}
-#endif 
 
+  
+	buffer_status_sub_size = pdu_remaining_size;
+
+   	LOG_WARN(RLC, "sdu fill para result: %d sdu filled in RLC PDU,test_remaining_num_li_to_substract = %d,test_num_li = %d,\ 
+test_e_li_length:%d,the real data pdu length %d,E_LI length:%d\n" ,\
+					num_fill_sdu, 
+					test_remaining_num_li_to_substract,
+					test_num_li,
+					test_e_li_length,
+		 			pdu_remaining_size,
+		 			((test_num_li*3) +1) >> 1); 
 	//----------------------------------------
 	// Do the real filling of the pdu_p
 	//----------------------------------------
 
-	LOG_DEBUG(RLC, PROTOCOL_RLC_UM_CTXT_FMT" data shift %d Bytes num_li %d\n",
-		  PROTOCOL_RLC_UM_CTXT_ARGS(ctxt_pP,rlc_pP),
-		  ((test_num_li*3) +1) >> 1,
-		  test_num_li);
+	LOG_WARN(RLC, "------------start to fill sdu's data to RLC pdu ----------------------\n");
 
 	//! data指向的是data field 
 	data = ((char*)(&pdu_p->data[((test_num_li*3) +1) >> 1]));	//！偏移掉E+LI 扩展部分
 	e_li_p = (rlc_um_e_li_t*)(pdu_p->data); //！指向pdu_p->data头部段,开始填写E+LI的地址
 	continue_fill_pdu_with_sdu			= 1;
 	li_length_in_bytes					= 1;
-	fill_num_li 						= 0;
+	fill_num_sdu						= 0;
 	fi_first_byte_pdu_is_first_byte_sdu = 0;
 	fi_last_byte_pdu_is_last_byte_sdu	= 0;
 
@@ -824,19 +907,18 @@ void  rlc_um_segment_10(const protocol_ctxt_t* const ctxt_pP,
 	  sdu_mngt_p = ((struct rlc_um_tx_sdu_management *) (sdu_in_buffer->data));
 
 	  if (sdu_mngt_p->sdu_segmented_size == 0) {  //！sdu_segmented_size 表示已经填给PDU的size 
-
-		LOG_DEBUG(RLC, PROTOCOL_RLC_UM_CTXT_FMT" GET NEW SDU %p AVAILABLE SIZE %d Bytes,PDU remained_size : %d \n",
-			  PROTOCOL_RLC_UM_CTXT_ARGS(ctxt_pP,rlc_pP),
-			  sdu_mngt_p,
-			  sdu_mngt_p->sdu_remaining_size, //!sdu_remaining_size 表示的是SDU 中还没有填进去的size 
-			  pdu_remaining_size);	
+			 LOG_WARN(RLC, "sdu fill data: new sdu--sdu sn:%d,fill into the RLC pdu,sdu size:%d, sdu remained size:%d ,rlc pdu remain size:%d ! \n", 
+		 			sdu_mngt_p->sdu_creation_sn,
+		 			sdu_mngt_p->sdu_size,
+		 			sdu_mngt_p->sdu_remaining_size,
+		 			pdu_remaining_size);	
 
 	  } else {
-		LOG_DEBUG(RLC, PROTOCOL_RLC_UM_CTXT_FMT" GET AGAIN SDU %p REMAINING AVAILABLE SIZE %d Bytes / %d Bytes \n",
-			  PROTOCOL_RLC_UM_CTXT_ARGS(ctxt_pP,rlc_pP),
-			  sdu_mngt_p,
-			  sdu_mngt_p->sdu_remaining_size,
-			  sdu_mngt_p->sdu_size);
+			LOG_WARN(RLC, "sdu fill data: sdu segment--sdu sn:%d,partial fill into the RLC pdu,sdu size:%d, sdu remained size:%d ,rlc pdu remain size:%d ! \n", 
+		 			sdu_mngt_p->sdu_creation_sn,
+		 			sdu_mngt_p->sdu_size,
+		 			sdu_mngt_p->sdu_remaining_size,
+		 			pdu_remaining_size);	
 
 	  }
 
@@ -844,21 +926,8 @@ void  rlc_um_segment_10(const protocol_ctxt_t* const ctxt_pP,
 
 	  //! SDU size > remained PDU size 
 	  if (sdu_mngt_p->sdu_remaining_size > pdu_remaining_size) {
-#if TRACE_RLC_UM_SEGMENT
-		LOG_DEBUG(RLC, PROTOCOL_RLC_UM_CTXT_FMT" Filling all remaining PDU with %d bytes\n",
-			  PROTOCOL_RLC_UM_CTXT_ARGS(ctxt_pP,rlc_pP),
-			  pdu_remaining_size);
-		LOG_DEBUG(RLC, PROTOCOL_RLC_UM_CTXT_FMT" pdu_mem_p %p pdu_mem_p->data %p pdu_p %p pdu_p->data %p data %p data_sdu_p %p pdu_remaining_size %d\n",
-			  PROTOCOL_RLC_UM_CTXT_ARGS(ctxt_pP,rlc_pP),
-			  pdu_mem_p,
-			  pdu_mem_p->data,
-			  pdu_p,
-			  pdu_p->data,
-			  data,
-			  data_sdu_p,
-			  pdu_remaining_size);
-#endif
 
+        LOG_WARN(RLC,"sdu fill data: sdu：%d, remainning size > pdu remaining size, spilt sdu ,stop filling! \n ",sdu_mngt_p->sdu_creation_sn);
 		memcpy(data, data_sdu_p, pdu_remaining_size); //!向PDU中的data field copy数据
 		 //！更新SDU 中已经分配的，残留的 
 		sdu_mngt_p->sdu_remaining_size = sdu_mngt_p->sdu_remaining_size - pdu_remaining_size;
@@ -870,14 +939,11 @@ void  rlc_um_segment_10(const protocol_ctxt_t* const ctxt_pP,
 		pdu_remaining_size = 0;
 	  } 
 	  else if (sdu_mngt_p->sdu_remaining_size == pdu_remaining_size) {
-#if TRACE_RLC_UM_SEGMENT
-		LOG_DEBUG(RLC, PROTOCOL_RLC_UM_CTXT_FMT" Exactly Filling remaining PDU with %d remaining bytes of SDU\n",
-			  PROTOCOL_RLC_UM_CTXT_ARGS(ctxt_pP,rlc_pP),
-			  pdu_remaining_size);
-#endif
+		  LOG_WARN(RLC,"sdu fill data: sdu:%d, remainning size == pdu remaining size, all sdu filled,stop filling! \n ",
+		 		 sdu_mngt_p->sdu_creation_sn);
 		//!< SDU size = PDU size ,直接copy 
 		memcpy(data, data_sdu_p, pdu_remaining_size);
-
+		
 		// free SDU
 		rlc_pP->buffer_occupancy -= sdu_mngt_p->sdu_remaining_size;
 
@@ -894,21 +960,18 @@ void  rlc_um_segment_10(const protocol_ctxt_t* const ctxt_pP,
 		pdu_remaining_size = 0;
 	  } 
 	  else if ((sdu_mngt_p->sdu_remaining_size + (li_length_in_bytes ^ 3)) < pdu_remaining_size ) {
-#if TRACE_RLC_UM_SEGMENT
-		LOG_DEBUG(RLC, PROTOCOL_RLC_UM_CTXT_FMT" Filling  PDU with %d all remaining bytes of SDU\n",
-			  PROTOCOL_RLC_UM_CTXT_ARGS(ctxt_pP,rlc_pP),
-			  sdu_mngt_p->sdu_remaining_size);
-#endif
+        
+	  	LOG_WARN(RLC,"sdu fill data: sdu:%d, remainning size + LI header <  pdu remaining size, all sdu filled,continue to fill---- \n",sdu_mngt_p->sdu_creation_sn);
 		//!< SDU + 一个LI < PDU
 		memcpy(data, data_sdu_p, sdu_mngt_p->sdu_remaining_size); //将SDU 的所有byte都分配给PDU 
 		data = &data[sdu_mngt_p->sdu_remaining_size];
 		li_length_in_bytes = li_length_in_bytes ^ 3;  //! =2
-		fill_num_li += 1; //! =1 
+		fill_num_sdu += 1; 
 
         //!当E+LI = 奇数个时，是计算rlc header的周期，每2个rlc header = 3byte.
 		if (li_length_in_bytes	== 2) {  //!奇数个LI时
 		 //!如果是奇数个E+LI,并且等于最后一个segment,则不需要再填写header了。 
-		  if (fill_num_li == test_num_li) {
+		  if (fill_num_sdu == num_fill_sdu) {
 			//!e_li_p->e1  = 0;
 			e_li_p->b1 = 0;  
 		  } else {
@@ -921,31 +984,28 @@ void  rlc_um_segment_10(const protocol_ctxt_t* const ctxt_pP,
 		  //!右移4bit,剩下7bit和E 组成一个byte
 		  e_li_p->b1 = e_li_p->b1 | (sdu_mngt_p->sdu_remaining_size >> 4);	
 		  e_li_p->b2 = sdu_mngt_p->sdu_remaining_size << 4; //! 左移4bit,作为b2的高4bit
-#if TRACE_RLC_UM_SEGMENT
-		  LOG_DEBUG(RLC, PROTOCOL_RLC_UM_CTXT_FMT" set e_li_p->b1=%02X set e_li_p->b2=%02X fill_num_li=%d test_num_li=%d\n",
-				PROTOCOL_RLC_UM_CTXT_ARGS(ctxt_pP,rlc_pP),
+		   LOG_WARN(RLC, "sdu fill data: sdu：%d, set e_li_p->b1=%02X set e_li_p->b2=%02X fill_num_sdu=%d num_fill_sdu=%d\n",
 				e_li_p->b1,
 				e_li_p->b2,
-				fill_num_li,
-				test_num_li);
-#endif
+				fill_num_sdu,
+				num_fill_sdu);
+
 		} else { //!偶数个LI+E
 		  //！偶数个LI,占3个byte的整数倍
-		  if (fill_num_li != test_num_li) {
+		  if (fill_num_sdu != num_fill_sdu) {
 			e_li_p->b2	= e_li_p->b2 | 0x08; //！第二个E = 1,表示后面是E+L1,在byte2的bit4 
 		  }
 
 		  //e_li_p->li2 = sdu_mngt_p->sdu_remaining_size;
 		  e_li_p->b2 = e_li_p->b2 | (sdu_mngt_p->sdu_remaining_size >> 8);
 		  e_li_p->b3 = sdu_mngt_p->sdu_remaining_size & 0xFF; //!B3是LI 的低8bit 
-#if TRACE_RLC_UM_SEGMENT
-		  LOG_DEBUG(RLC, PROTOCOL_RLC_UM_CTXT_FMT" set e_li_p->b2=%02X set e_li_p->b3=%02X fill_num_li=%d test_num_li=%d\n",
-				PROTOCOL_RLC_UM_CTXT_ARGS(ctxt_pP,rlc_pP),
+
+		  LOG_WARN(RLC, "sdu fill data: sdu：%d, set e_li_p->b2=%02X set e_li_p->b3=%02X fill_num_sdu=%d num_fill_sdu=%d\n",
 				e_li_p->b2,
 				e_li_p->b3,
-				fill_num_li,
-				test_num_li);
-#endif
+				fill_num_sdu,
+				num_fill_sdu);
+
 		  e_li_p++;
 		}
 		//MAC PDU 还残留的size 
@@ -960,15 +1020,7 @@ void  rlc_um_segment_10(const protocol_ctxt_t* const ctxt_pP,
 
 	  } 
 	  else {  //!sdu + header > remain_pdu_size,
-#if TRACE_RLC_UM_SEGMENT
-		LOG_DEBUG(RLC, PROTOCOL_RLC_UM_CTXT_FMT" Filling  PDU with %d all remaining bytes of SDU and reduce TB size by %d bytes\n",
-			  PROTOCOL_RLC_UM_CTXT_ARGS(ctxt_pP,rlc_pP),
-			  sdu_mngt_p->sdu_remaining_size,
-			  pdu_remaining_size - sdu_mngt_p->sdu_remaining_size);
-#endif
-//#if !EXMIMO
-//		  assert(1!=1);
-//#endif
+        
 		memcpy(data, data_sdu_p, sdu_mngt_p->sdu_remaining_size); //!把SDU 的全部都给PDU 
 		// reduce the size of the PDU
 		continue_fill_pdu_with_sdu = 0;//!最多还剩下一个byte的空间， 这里不再继续填充SDU了，所以这里存在一个空洞。
@@ -977,14 +1029,20 @@ void  rlc_um_segment_10(const protocol_ctxt_t* const ctxt_pP,
 		pdu_remaining_size = pdu_remaining_size - sdu_mngt_p->sdu_remaining_size; 
 		// free SDU
 		rlc_pP->buffer_occupancy -= sdu_mngt_p->sdu_remaining_size;
+
+		LOG_WARN(RLC,"sdu fill data: sdu：%d, remainning size + LI header > pdu remaining size, all sdu filled,stop filling,pdu has hole:%d\n",
+        			 sdu_mngt_p->sdu_creation_sn,
+        			 pdu_remaining_size );
 		sdu_in_buffer = list_remove_head(&rlc_pP->input_sdus);
 		free_mem_block (sdu_in_buffer, __func__);
 		sdu_in_buffer = list_get_head(&rlc_pP->input_sdus); //!指向下一个head 
 		sdu_mngt_p	  = NULL;
 
+		
+
 	  }
 	}
-     LOG_ERROR(RLC, "7------ \n");
+    
 
 	 //！开始填写固定的2Byte header信息，include [FI,E,SN] field  
 	// set framing info
@@ -1001,13 +1059,24 @@ void  rlc_um_segment_10(const protocol_ctxt_t* const ctxt_pP,
 	pdu_p->b1 =  (fi << 3); //pdu_p->b1 |
 
 	// set fist e bit
-	if (fill_num_li > 0) {
+	if (fill_num_sdu > 0) {
+		e_in_fixheader = 1; 
 	  pdu_p->b1 = pdu_p->b1 | 0x04;  //! E 占bit[2] 
 	}
+	
 	//!SN 保留高2bit 在b1中， 
 	pdu_p->b1 = pdu_p->b1 | ((rlc_pP->vt_us >> 8) & 0x03);
 	pdu_p->b2 = rlc_pP->vt_us & 0xFF;  //！SN保留低8bit在b2中 
-	rlc_pP->vt_us = rlc_pP->vt_us+1;  //vt_us ++
+	
+
+	LOG_ERROR(RLC, "RLC PDU fixed header info: b1 =%d, b2 = %d, fi = %d, e_in_fixheader = %d, SN =%d \n",
+			pdu_p->b1 ,
+			pdu_p->b2, 
+            fi,
+            e_in_fixheader, 
+			rlc_pP->vt_us ); 
+
+	rlc_pP->vt_us = rlc_pP->vt_us+1;  //vt_us ++		
 
 	pdu_tb_req_p->data_ptr		  = (unsigned char*)pdu_p;
 	//!this logic channel's final tb size , the pdu_remaining_size = 0 or 1,no other value. 
@@ -1031,7 +1100,15 @@ void  rlc_um_segment_10(const protocol_ctxt_t* const ctxt_pP,
 
 	//nb_bytes_to_transmit = nb_bytes_to_transmit - data_pdu_size;
 	nb_bytes_to_transmit = 0; // 1 PDU only
-	LOG_ERROR(RLC, "8------ \n");
+
+	 rlc_ue_data_status_update(rlc_pP->rnti,
+								RLC_MODE_UM,
+								fill_num_sdu,
+								rlc_pP->input_sdus.nb_elements,
+								lc_pdu_component_ptr->logic_ch_index,
+								buffer_status_sub_size);
+
+	LOG_WARN(RLC, "-------------- TX sdu data process finished !--------------------\n"); 
   }
 
  // RLC_UM_MUTEX_UNLOCK(&rlc_pP->lock_input_sdus); //!退出函数之前，解锁
@@ -1075,17 +1152,8 @@ void rlc_um_get_pdus (const protocol_ctxt_t *const ctxt_pP, void *argP,
 	  // - enters the LOCAL_SUSPEND state.
 
 	  // SEND DATA TO MAC
-	  if (rlc_p->tx_sn_length == 10) {
-		//!按照PDU 的header，size,从SDU中分割数据给PDU
-		LOG_ERROR(RLC, "2--- \n");
 		rlc_um_segment_10 (ctxt_pP, rlc_p,lc_pdu_component_ptr,  ue_mac_pdu_size_ptr);
-	  }
-
-	  else{
-		LOG_ERROR(RLC, PROTOCOL_RLC_UM_CTXT_FMT" wrong tx sn filed %d\n",
-			PROTOCOL_RLC_UM_CTXT_ARGS(ctxt_pP,rlc_p),
-			rlc_p->tx_sn_length );
-	  }
+	 
 
 	  break;
 

@@ -34,6 +34,7 @@ typedef  struct rlc_status_rpt_s
 	rlc_mode_e   rlc_mode_for_logicchan[MAX_LOGICCHAN_NUM]; 
 	uint8_t logicchannel_id[MAX_LOGICCHAN_NUM];
 	uint32_t buffer_byte_size[MAX_LOGICCHAN_NUM];
+	uint32_t rlc_header_byte_size[MAX_LOGICCHAN_NUM]; 
 
 }rlc_buffer_rpt;
 

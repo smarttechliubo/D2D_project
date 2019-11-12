@@ -238,7 +238,7 @@ int itti_create_task(task_id_t task_id, void *(*start_routine)(void *), int task
 	  else 
 	  {
 		pthread_getschedparam(t->thread,&policy, &getparam);
-		LOG_WARN(DRIVER,"create task id = %d, priority=%d\n", task_id,getparam.sched_priority);
+		LOG_ERROR(DRIVER,"create task id = %d, priority=%d\n", task_id,getparam.sched_priority);
 	  }
 
 	  

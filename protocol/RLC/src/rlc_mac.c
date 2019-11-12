@@ -17,7 +17,7 @@
 #include <intertask_interface.h>
 #include <mac_rlc_primitives.h>
 
-
+#include <string.h>
  
  
  
@@ -37,7 +37,7 @@ void rlc_Mac_BufferSta_Rpt(uint16_t   sfn, uint16_t  subsfn, uint32_t valid_ue_n
 	{
 		memcpy((void *)rlc_rpt->rlc_buffer_rpt,(void *)buffer_status,valid_ue_num * sizeof(rlc_buffer_rpt));
     }
-    LOG_ERROR(DRIVER, "TASK_D2D_RLC_TX = %d \n", TASK_D2D_RLC_TX);
+  
 	message = itti_alloc_new_message(TASK_D2D_RLC_TX, RLC_MAC_BUF_STATUS_RPT,
 	                       ( char *)rlc_rpt, sizeof(rlc_mac_buf_status_rpt ));
     
@@ -158,7 +158,8 @@ void rlc_mac_ue_data_process(frame_t frameP,
     uint32_t     mac_sdu_tb_size = 0; 
 
     uint8_t      *mac_pdu_buffer_ptr = ue_pdu_buffer; 
-    
+
+    LOG_ERROR(RLC, "----------%s start----------- \n", __func__);
 	ue_rnti = rlc_data_ptr->rnti; 
 	logic_num = rlc_data_ptr->logic_chan_num; 	
 	pdu_total_size = rlc_data_ptr->tb_size; 
@@ -176,17 +177,17 @@ void rlc_mac_ue_data_process(frame_t frameP,
 
 
 	
-
+ 
 	
 	insert_tb_size = 0; 
-	memset((void *)subheader,0,sizeof(subheader)); 
-	memset((void *)lc_pdu_component,0,sizeof(lc_pdu_component)); 
-	memset((void *)ue_pdu_size_para_ptr,0,sizeof(mac_pdu_size_para)); 
-	memset((void *)ue_mac_subheader_ptr,0,(MAX_LOGICCHAN_NUM + 1) * 3 * sizeof(uint8_t)); 
-
+    bzero((void *)subheader,sizeof(subheader)); 
+	bzero((void *)lc_pdu_component,sizeof(lc_pdu_component)); 
+	bzero((void *)ue_pdu_size_para_ptr,sizeof(mac_pdu_size_para)); 
+	bzero((void *)ue_mac_subheader_ptr,(MAX_LOGICCHAN_NUM + 1) * 3 * sizeof(uint8_t)); 
+	
 	ue_pdu_size_para_ptr->total_pdu_size = pdu_total_size; 
 	ue_pdu_size_para_ptr->remain_pdu_size = pdu_total_size; //!initial 
-
+  
     for (logic_index = 0; logic_index < logic_num; logic_index++)
     {
 		lc_pdu_component[logic_index].is_last_sub_header_flag = (logic_index == (logic_num-1))?1:0; 	
@@ -207,8 +208,7 @@ void rlc_mac_ue_data_process(frame_t frameP,
 	{
 		logic_ch_id = rlc_data_ptr->logicchannel_id[logic_index];
 		tb_size_for_lc = rlc_data_ptr->mac_pdu_byte_size[logic_index]; 
-        LOG_ERROR(RLC, "0 \n");
-
+        
         //!calculate rlc data length ,mac header length, mac subheader type, mac_padding_header ,pading size for logic channel 
 		rlc_mac_logicchan_data_send(temp_ctxt,
 						 logic_ch_id,
@@ -234,12 +234,12 @@ ue remained size:%d after logic chan mapping \n",
 						lc_pdu_component[logic_index].mac_subheader_length, 0, 
 						lc_pdu_component[logic_index].final_mac_sdu_size,
 						ue_pdu_size_para_ptr->remain_pdu_size);
-        LOG_ERROR(RLC, "11 \n");
+        
 	
 	
 	}
 
-     LOG_ERROR(RLC, "12 \n");
+     
      /**!
      When single-byte or two-byte padding is required, one or two MAC PDU subheaders corresponding to padding are placed at the beginning of 
      the MAC PDU before any other MAC PDU subheader.
@@ -258,8 +258,9 @@ ue remained size:%d after logic chan mapping \n",
 
         ue_pdu_size_para_ptr->remain_pdu_size = 0; //!no padding in the end of PDU when insert padding subheader 
 
+		LOG_WARN(RLC, "MAC padding header is the first subheader of MAC sdu \n"); 
     }
-    LOG_ERROR(RLC, "13 \n");
+    
 	for (logic_index = 0; logic_index < logic_num; logic_index++)
 	{
 		e = !(lc_pdu_component[logic_index].is_last_sub_header_flag); 
@@ -296,12 +297,16 @@ ue remained size:%d after logic chan mapping \n",
 			}
 			default:
 			{
-				AssertFatal(0, RLC, 'mac sub header type error!\n'); 
+				AssertFatal(0, RLC, "mac sub header type error:%d!\n", lc_pdu_component[logic_index].mac_subheader_length_type); 
 			}
 		}
+
+		LOG_WARN(RLC, "lc index:%d 's mac subheader type:%d, sub header length:%d byte \n", logic_index,
+				 lc_pdu_component[logic_index].mac_subheader_length_type, 
+				 lc_pdu_component[logic_index].mac_subheader_length); 
     }
 
-    LOG_ERROR(RLC, "14 \n");
+  
      /**!
 		Padding occurs at the end of the MAC PDU, except when single-byte or two-byte padding is required. 
      */
@@ -312,9 +317,13 @@ ue remained size:%d after logic chan mapping \n",
         memcpy((void *)ue_mac_subheader_ptr,(void *)&mac_subheader_without_l,1); 
 		ue_mac_subheader_ptr += 1; 
 		mac_subheader_length += 1; 
+
+		LOG_WARN(RLC, "padding  mac subheader type:%d, sub header length:%d byte \n", 
+				 0x1f, 
+				 1); 
     }
 
-    LOG_ERROR(RLC, "15 \n");
+    
 
     //!copy mac subheader to ue_tb_buffer 
     memcpy((void *)mac_pdu_buffer_ptr, (void *)subheader_ptr, mac_subheader_length); 
@@ -330,7 +339,7 @@ ue remained size:%d after logic chan mapping \n",
 		memset(mac_pdu_buffer_ptr,0,ue_pdu_size_para_ptr->remain_pdu_size);
     }
 
-	LOG_ERROR(RLC, "16 \n");
+	LOG_ERROR(RLC, "----------%s finished----------- \n", __func__);
 
    
 }
@@ -376,7 +385,7 @@ void 	rlc_mac_logicchan_data_send(const protocol_ctxt_t          ctxt,
 
  
 
-  key = RLC_COLL_KEY_VALUE(module_idP, rntiP, enb_flagP, channel_idP, srb_flag);  //!生成key 
+  key = RLC_COLL_KEY_VALUE(module_idP, rntiP, enb_flagP, channel_idP, srb_flag);  //!利用rnti, logic ch生成key 
 
   h_rc = hashtable_get(rlc_coll_p, key, (void**)&rlc_union_p); //!从hash table中，根据key，获得rlc_union_p
 
@@ -408,7 +417,7 @@ void 	rlc_mac_logicchan_data_send(const protocol_ctxt_t          ctxt,
 	  case RLC_MODE_UM:
 	  {
 	    //!将SDU 分段放进PDU中
-	    LOG_ERROR(RLC, "rlc_um_mac_data_request \n"); 
+	
 	    rlc_um_mac_data_request(&ctxt,
 	                                           logicch_tb_sizeP,
 	    									   &rlc_union_p->rlc.um,

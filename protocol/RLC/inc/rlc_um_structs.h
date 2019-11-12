@@ -24,12 +24,9 @@
 
 
 struct rlc_um_data_req {
-  uint16_t             data_size;    // in bytes
+	uint16_t			 data_size;    // in bytes
+	uint16_t			 data_offset;  
 
-  // beginning of payload data may not start just after the header (PDCP header compression, etc)
-  
-  uint16_t             data_offset;  
-  uint8_t              use_special_li;
 };
 
 
@@ -44,10 +41,13 @@ struct rlc_um_data_req {
 typedef struct rlc_um_tx_sdu_management {
   uint8_t             *first_byte;                 /*!< \brief Pointer on SDU payload. */
   int32_t             sdu_creation_time;          /*!< \brief Time stamped with mac_xface->frame. */
+  uint32_t            sdu_creation_sn; 
   uint16_t             sdu_remaining_size;         /*!< \brief Remaining size in bytes to be filled in a PDU. */
   uint16_t             sdu_test_remaining_size;
   uint16_t             sdu_segmented_size;           /*!< \brief Bytes already segmented in a/several PDU(s). */
   uint16_t             sdu_size;                     /*!< \brief SDU size in bytes. */
+  uint16_t             data_size;    // in bytes
+  uint16_t             data_offset;  
 } rlc_um_tx_sdu_management_t;
 /** @} */
 

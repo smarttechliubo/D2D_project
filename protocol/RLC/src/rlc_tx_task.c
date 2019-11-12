@@ -103,6 +103,7 @@ rlc_op_status_t rlc_get_tx_data(const protocol_ctxt_t *const ctxt_pP,
 	hash_key_t			   key		   = HASHTABLE_NOT_A_KEY_VALUE;
 	hashtable_rc_t		   h_rc;
     rlc_mode_e			   rlc_mode;
+    struct rlc_um_tx_sdu_management    *um_tx_sdu_header_ptr = NULL; 
 
 
 
@@ -122,7 +123,7 @@ rlc_op_status_t rlc_get_tx_data(const protocol_ctxt_t *const ctxt_pP,
 	h_rc = hashtable_get(rlc_coll_p, key, (void **)&rlc_union_p);
     
 	if (h_rc == HASH_TABLE_OK) {		
-		LOG_INFO(RLC, "func:%s,ling:%d: key = %lld: get rlc entity sucess!\n",__func__,__LINE__,key);
+		LOG_INFO(RLC, "func:%s,line:%d: key = %lld: get rlc entity sucess!\n",__func__,__LINE__,key);
 		rlc_mode = rlc_union_p->mode;
 	} else {
 		//AssertFatal (0 , "RLC not configured key %ju\n", key);
@@ -184,7 +185,7 @@ rlc_op_status_t rlc_get_tx_data(const protocol_ctxt_t *const ctxt_pP,
 #endif
       LOG_INFO(RLC, "start get memory time");
 	  //！这里申请出来的data 的首地址指向的是包含了rlc_um_data_req_alloc这个结构体的
-	  new_sdu_p = get_free_mem_block (sdu_sizeP + sizeof (struct rlc_um_data_req_alloc), __func__);
+	  new_sdu_p = get_free_mem_block (sdu_sizeP + sizeof (struct rlc_um_tx_sdu_management), __func__);
       LOG_INFO(RLC, "end get  memory time");
 
 
@@ -192,12 +193,15 @@ rlc_op_status_t rlc_get_tx_data(const protocol_ctxt_t *const ctxt_pP,
 	  if (new_sdu_p != NULL) {
 	//    pthread_mutex_lock(&(rlc_union_p->rlc_union_mtex));
 		// PROCESS OF COMPRESSION HERE:
-		memset (new_sdu_p->data, 0, sizeof (struct rlc_um_data_req_alloc));
+		memset (new_sdu_p->data, 0, sizeof (struct rlc_um_tx_sdu_management));
+
+		um_tx_sdu_header_ptr = ((struct rlc_um_tx_sdu_management *) (new_sdu_p->data)); 
 		//！copy 数据到新申请buffer中
-		memcpy (&new_sdu_p->data[sizeof (struct rlc_um_data_req_alloc)], sdu_pP, sdu_sizeP);
+		memcpy (&new_sdu_p->data[sizeof (struct rlc_um_tx_sdu_management)], sdu_pP, sdu_sizeP);
 		//！这里的头部是rlc_um_data_req_alloc ,是一个union 
-		((struct rlc_um_data_req *) (new_sdu_p->data))->data_size = sdu_sizeP;
-		((struct rlc_um_data_req *) (new_sdu_p->data))->data_offset = sizeof (struct rlc_um_data_req_alloc);
+		um_tx_sdu_header_ptr->data_size = sdu_sizeP; 
+
+		um_tx_sdu_header_ptr->data_offset = sizeof(struct rlc_um_tx_sdu_management);
 
 		
 
@@ -434,15 +438,19 @@ cur process time = [%lld, %lld, %lld] \n",
             rlc_data_req   mac_data_req_to_rlc;
             mac_data_req_to_rlc.rnti = 101; 
             mac_data_req_to_rlc.logic_chan_num = 1; 
-              mac_data_req_to_rlc.tb_size = 1000;   //!total size ,unit:byte
+            mac_data_req_to_rlc.tb_size = 1380;   //!total size ,unit:byte
             mac_data_req_to_rlc.logicchannel_id[0] =3;  //!DRB = 3
             
-            mac_data_req_to_rlc.mac_pdu_byte_size[0] = 1000; //!logic channel's size ,unit:byte
+            mac_data_req_to_rlc.mac_pdu_byte_size[0] = 1380; //!logic channel's size ,unit:byte
 		    //! send MAC_RLC_DATA_REQ message to RLC_TX 
-			mac_Rlc_data_Req(sfn, subsfn, 1, &mac_data_req_to_rlc); 
+		    if (1 != g_rlc_no_data_transfer)
+		    {
+				mac_Rlc_data_Req(sfn, subsfn, 1, &mac_data_req_to_rlc); 
+			}
 #endif 
 
-            LOG_ERROR(RLC, "message:%d,[sfn--subsfn]:[%d,%d] send rlc buffer status to mac \n",msg_type,sfn,subsfn);
+            LOG_INFO(RLC, "message:%d,[sfn--subsfn]:[%d,%d] send rlc buffer status to mac,the data req message flag:%d \n",
+            		msg_type,sfn,subsfn,!g_rlc_no_data_transfer);
             }
 
 			break; 
@@ -471,6 +479,7 @@ cur process time = [%lld, %lld, %lld] \n",
 				ue_pdu_size_array[ue_index] = (uint32_t )rlc_data_req_ptr->tb_size; 
 				ue_rnti_array[ue_index] =  	rlc_data_req_ptr->rnti; 
 				
+				
 			}
 			
             rlc_mac_data_ind_message(ue_pdu_buffer_array,ue_pdu_size_array,ue_rnti_array,ue_num); 
@@ -494,9 +503,8 @@ void *rlc_tx_task( )
 		//!TODO change RLC TASK ID 
         if (0 == itti_receive_msg(TASK_D2D_RLC_TX, &recv_msg))
         {
-         	LOG_ERROR(RLC,"1: recv_msg:%lld \n", recv_msg); 
+         	
 			rlc_tx_process(recv_msg->message_ptr, recv_msg->ittiMsgHeader.messageId);
-			LOG_ERROR(RLC,"2: recv_msg:%lld \n", recv_msg); 
 			itti_free_message(recv_msg);
         }
 

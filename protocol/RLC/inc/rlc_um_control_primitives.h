@@ -51,17 +51,7 @@ void config_req_rlc_um (
 
 
 
-/*! \fn void rlc_um_init (const protocol_ctxt_t* const ctxt_pP, rlc_um_entity_t * const rlc_pP)
-* \brief    Initialize a RLC UM protocol instance, initialize all variables, lists, allocate buffers for making this 
-instance ready to be configured with protocol configuration parameters. After this initialization the RLC UM protocol 
-instance will be in RLC_NULL_STATE state.
-* \param[in]  ctxtP                     Running context.
-* \param[in]  rlc_pP                    RLC UM protocol instance pointer.
-*/
-extern void  rlc_um_init (const protocol_ctxt_t* const ctxt_pP,
-		  				rlc_um_entity_t * const rlc_pP,
-		  				 const srb_flag_t  srb_flagP,
-		  				const rb_id_t rb_idP);
+
 
 /*! \fn void rlc_um_reset_state_variables (const protocol_ctxt_t* const ctxt_pP, rlc_um_entity_t * const rlc_pP)
 * \brief    Reset protocol variables and state variables to initial values.

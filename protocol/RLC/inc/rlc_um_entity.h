@@ -102,7 +102,8 @@ RLC_UM_SN_5_BITS_MODULO or RLC_UM_SN_10_BITS_MODULO. */
 
   logical_chan_id_t channel_id;                     /*!< \brief Transport channel identifier. */
   /*!< \brief Radio bearer identifier, for statistics and trace purpose. */
-  rb_id_t           rb_id;                          
+  rb_id_t           rb_id;              
+  rnti_t            rnti;
   rlc_usn_t         last_reassemblied_sn;           /*!< \brief Sequence number of the last reassemblied PDU. */
   rlc_usn_t         last_reassemblied_missing_sn;   /*!< \brief Sequence number of the last found missing PDU. */
   /*!< \brief Act as a boolean, set if a hole in the sequence numbering of received PDUs has been found. */

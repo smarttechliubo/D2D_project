@@ -31,7 +31,7 @@
 //char *vm_addr1 = "192.168.1.168";
 //char *vm_addr2= "192.168.84.129";
 
-char *vm_addr1 = "192.168.0.127";
+char *vm_addr1 = "192.168.84.129";
 char *vm_addr2= "192.168.84.1";
 
 char *PC_src_ip = "192.168.1.135";
@@ -179,7 +179,7 @@ void ip_task( )
     //sver_addr 用来接收主机的IP1 传输的数据，然后发送给vm_addr2,
        // LOG_DEBUG(IP," ip = 0x%x, port = 0x%x\n",sver_addr.sin_addr.s_addr, sver_addr.sin_port);
 
-	for (;;)
+	while(1)
 	{
 		FD_SET(sockfd_1,&rset);
 	   //!FD_SET(sockfd_2,&rset);
@@ -241,7 +241,7 @@ void ip_task( )
 	 		{
 		       // LOG_DEBUG(IP,"receive data from ip:%s, port: %d, length:%d ! \n",pc_addr_ip,ntohs(PC_addr_src.sin_port),recv_length);
 				LOG_INFO(IP,"channel:0 -- receive data no.: %d \n",++recv_cnt[0]);
-				LOG_ERROR(IP,"channel:0 --data_length = %d, send data no.: %d \n",recv_length,++send_cnt[0]);
+				LOG_ERROR(IP,"\n channel:0 --data_length = %d, send data no.: %d \n",recv_length,send_cnt[0]);
 #ifdef RLC_UT_DEBUG
 				//! 组包消息，向RLC 发送消息
 				Ip_Rlc_Data_Send(RB_TYPE_DRB,
@@ -250,10 +250,11 @@ void ip_task( )
 								send_cnt[0],
 								msg_buffer,
 								recv_length); 
+				
 #else 
 				//sendto(sockfd_2,msg_buffer,recv_length,0,SA&PC_addr_dst,sizeof(PC_addr_dst));
 #endif 
-				
+				send_cnt[0]++;
 	 			
 
 				if (0 != errno)

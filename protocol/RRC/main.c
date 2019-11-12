@@ -25,13 +25,13 @@ extern void *rlc_rx_task( );
 
 void test_syslog( )
 {
-    setlogmask(LOG_UPTO(LOG_NOTICE)); 
+    setlogmask(LOG_UPTO(LOG_ERR)); 
     syslog(LOG_ERR, "%s",  "------------------------ D2D_project start log ------------- \n");  
     closelog(); 
 
-
-
 }
+
+
 int gdb=1;
 int main()
 {
@@ -48,10 +48,10 @@ int main()
   
 	
 	itti_create_task(TASK_D2D_RRC, rrc_Sche_Task,30, NULL);
-	itti_create_task(TASK_D2D_RLC, rlc_rrc_config_task,29, NULL);
-	itti_create_task(TASK_D2D_IP,  ip_task,20,NULL);
-	itti_create_task(TASK_D2D_RLC_TX,rlc_tx_task,30,NULL);
-	itti_create_task(TASK_D2D_RLC_RX,rlc_rx_task,30,NULL);
+	itti_create_task(TASK_D2D_RLC, rlc_rrc_config_task,30, NULL);
+	itti_create_task(TASK_D2D_IP,  ip_task,25,NULL);
+	itti_create_task(TASK_D2D_RLC_TX,rlc_tx_task,20,NULL);
+	itti_create_task(TASK_D2D_RLC_RX,rlc_rx_task,20,NULL);
 	
 #ifdef  RRC_SOURCE 
 	itti_create_task(TASK_D2D_DUMMY, dummy_rrc_test,29, D2D_MODE_TYPE_SOURCE);

@@ -33,6 +33,11 @@ mac_pdu_size_para  g_rlc_pdu_size_para[D2D_MAX_USER_NUM];
 
 struct mac_data_req g_rlc_mac_data_req;
 
+#ifdef RLC_UT_DEBUG 
+
+uint32_t   g_rlc_no_data_transfer = 0; 
+
+#endif 
 
  
 /**************************function******************************/

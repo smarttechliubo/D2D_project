@@ -257,6 +257,11 @@ extern mac_pdu_size_para  g_rlc_pdu_size_para[D2D_MAX_USER_NUM];
 
 extern struct mac_data_req g_rlc_mac_data_req;
 
+#ifdef RLC_UT_DEBUG 
+extern  uint32_t   g_rlc_no_data_transfer; 
+#endif 
+
+
 
 
 /************************************function declaration*************************/
@@ -279,9 +284,16 @@ extern void   rlc_Set_Buffer_Status(rnti_t rnti,
 									   rlc_mode_e rlc_mode,
 									   uint32_t input_sdu_num,
 									   logical_chan_id_t logical_chan_id_t,
-									   uint32_t data_size);
+									   uint16_t data_size);
 extern int   rlc_Get_Buffer_Status(rlc_buffer_rpt *buffer_status);
+extern void  rlc_ue_data_status_update(rnti_t rnti, 
+										rlc_mode_e rlc_mode, 
+										uint32_t fill_sdu_num,
+										uint32_t remaind_sdu_num,
+										logical_chan_id_t logical_chan_id, 
+									    uint16_t send_data_size); 
 
+									    
 extern void  rlc_um_mac_data_indication (const protocol_ctxt_t *const ctxt_pP, void *rlc_pP, struct mac_data_ind data_indP); 
 
 
