@@ -17,20 +17,6 @@
 #define QUE_DEP 10
 #define MQ_MSGSIZE 128
 
-typedef enum
-{
-	PHY_QUEUE,
-	PHY_TX_QUEUE,
-	PHY_RX_QUEUE,
-	MAC_QUEUE,
-	MAC_PRE_QUEUE,
-	MAC_MAIN_QUEUE,
-	RLC_QUEUE,
-	RRC_QUEUE,
-	INTERFACE_QUEUE,
-	MAX_QUEUE
-}msgq_type;
-
 mqd_t msgq_init(task_id type, msg_mode mode);
 bool msgSend(task_id type, const char *msg_ptr, int msg_len);
 uint32_t msgRecv(task_id type, char *msg_ptr, int msg_len);

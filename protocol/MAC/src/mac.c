@@ -68,6 +68,11 @@ void mac_clean()
 	free(g_context.mac);
 }
 
+mode_e get_mac_mode()
+{
+	return g_context.mac->mode;
+}
+
 void mac_pre_handler()
 {
 	frame_t frame;
@@ -86,14 +91,18 @@ void mac_pre_handler()
 	g_context.mac->subframe = subframe;
 	g_context.mac->cce_bits = 0;
 
+	LOG_INFO(MAC, "mac_pre_handler 1");
 	handle_rrc_msg();
+	LOG_INFO(MAC, "mac_pre_handler 2");
 
 	if (!pre_check(subframe))
 	{
 		return;
 	}
+	LOG_INFO(MAC, "mac_pre_handler 3");
 
 	pre_schedule(frame, subframe, g_context.mac);
+	LOG_INFO(MAC, "mac_pre_handler 4");
 
 }
 

@@ -23,8 +23,12 @@ bool g_run_enable = false;
 uint32_t run_time = 0;
 
 extern void init_rrc_sim();
+extern void init_rlc_sim();
+extern void init_phy_sim();
 extern void *rrc_thread();
 extern void *rlc_thread();
+extern void *phy_tx_thread();
+extern void *phy_rx_thread();
 
 uint32_t syncT()
 {
@@ -62,18 +66,18 @@ void *mac_thread()
 		thread_wakeup(MAC_TASK, PERIODIC_1MS);
 
 
-		run_time++;
-		if (run_time >= 20)
-		{
-			g_run_enable = false;
-			break;
-		}
-
 		if (g_run_enable) 
 		{
 			wait_period(timer_fd_4);
 		}
-	}
+
+		run_time++;
+
+		if (run_time >= 20)
+		{
+			g_run_enable = false;
+			break;
+		}}
 
 	return 0;
 }
@@ -103,6 +107,8 @@ void create_task()
 	create_new_thread(MAC_PRE_TASK, mac_main_thread, NULL);
 	create_new_thread(RRC_TASK, rrc_thread, NULL);
 	create_new_thread(RLC_TASK, rlc_thread, NULL);
+	create_new_thread(PHY_TX_TASK, phy_tx_thread, NULL);
+	create_new_thread(PHY_RX_TASK, phy_rx_thread, NULL);
 }
 
 void init_mac_sim()
@@ -111,15 +117,18 @@ void init_mac_sim()
 	init_thread(MAC_TASK);//used to sync
 	message_int(MAC_TASK, ENONBLOCK);
 	message_int(MAC_PRE_TASK, ENONBLOCK);
-	message_int(MAC_PRE_TASK, ENONBLOCK);
+	message_int(MAC_MAIN_TASK, ENONBLOCK);
 }
 
-void init_sim()
+void init_sim(const uint16_t mode)
 {
 	g_run_enable = true;
 	run_time = 0;
+
 	init_mac_sim();
-	init_rrc_sim();
+	init_rrc_sim(mode);
+	init_rlc_sim();
+	init_phy_sim();
 
 	//for (uint32_t i = 0; i < MAX_TASK; i++)
 	//{
@@ -130,8 +139,10 @@ void init_sim()
 int main()
 {
 	LOG_INFO(MAC, "[TEST]: MAC main start");
-	
-	init_sim();
+
+	uint16_t mode = 0; //0:source, 1:destination
+
+	init_sim(mode);
 	create_task();
 
 	while (g_run_enable)

@@ -113,7 +113,7 @@ uint32_t message_receive(const task_id taskId, char *msg, int msg_len)
 	//uint32_t msg_len = 0;
 	//msgq_type type = get_msgq_type(taskId);
 
-	msg_len = msgRecv(taskId, (char *)&msg, MQ_MSGSIZE);
+	msg_len = msgRecv(taskId, (char *)msg, MQ_MSGSIZE);
 
 	return msg_len;
 }

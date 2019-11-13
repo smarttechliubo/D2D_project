@@ -215,7 +215,15 @@ void handle_rrc_msg()
 				break;
 			}
 			case RRC_MAC_BCCH_SIB1_REQ:
+			{
+				//rrc_mac_bcch_s *req = (rrc_mac_bcch_para_config_req *)msg.data;
+				
+				LOG_INFO(MAC, "RRC_MAC_BCCH_PARA_CFG_REQ");
+
+				//rrc_mac_sib_update(req);
+				//message_free(req);
 				break;
+			}
 			default:
 				break;
 		}

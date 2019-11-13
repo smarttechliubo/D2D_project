@@ -33,7 +33,21 @@ static const char* s_msgq_file[] = {
 	[MAC_MAIN_TASK] = "/macQ_MAIN",
     [RLC_TASK] = "/rlcQ",
     [RRC_TASK] = "/rrcQ",
-    [INTERFACE_TASK] = "/interfaceQ"
+    [INTERFACE_TASK_A] = "/interfaceA",
+	[INTERFACE_TASK_B] = "/interfaceB"
+};
+
+static const char* s_msgq_file_0[] = {
+    [PHY_TASK] = "/phyQQ",
+	[PHY_TX_TASK] = "/phyTxQQ",
+	[PHY_RX_TASK] = "/phyRxQQ",
+    [MAC_TASK] = "/macQQ",
+	[MAC_PRE_TASK] = "/macQQ_PRE",
+	[MAC_MAIN_TASK] = "/macQQ_MAIN",
+    [RLC_TASK] = "/rlcQQ",
+    [RRC_TASK] = "/rrcQQ",
+	[INTERFACE_TASK_A] = "/interfaceA",
+    [INTERFACE_TASK_B] = "/interfaceB"
 };
 
 typedef struct
@@ -42,14 +56,16 @@ typedef struct
 	mqd_t msgq_id;
 }msgq_info;
 
-msgq_info q_info[MAX_QUEUE];
+msgq_info q_info[MAX_TASK];
+
+extern uint16_t g_rrc_mode;//0:source, 1:destination
 
 mqd_t msgq_init(task_id taskId, msg_mode mode)
 {
 	if (taskId >= MAX_TASK)
 		return -1;
 
-	const char *file = s_msgq_file[taskId];
+	const char *file = g_rrc_mode == 0 ? s_msgq_file[taskId] : s_msgq_file_0[taskId];
     struct mq_attr msgq_attr;
  
 	mqd_t msgq_id;
@@ -123,7 +139,7 @@ uint32_t msgRecv(task_id taskId, char *msg_ptr, int msg_len)
 		if (errno != EAGAIN)// TODO: how to handle O_NONBLOCK
 		{
 			perror("mq_receive");
-			LOG_ERROR(MAC, "msgRecv fail msgType:%u,msg_len:%u,errno:%d",taskId,msg_len, errno);
+			LOG_ERROR(MAC, "msgRecv fail taskId:%u,msg_len:%u,errno:%d",taskId,msg_len, errno);
 		}
 		return 0;
 	}

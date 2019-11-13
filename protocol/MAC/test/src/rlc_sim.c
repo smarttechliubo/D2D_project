@@ -46,6 +46,12 @@ void handle_mac_rlc_buf_status_req(const mac_rlc_buf_status_req *req)
 	}
 }
 
+void handle_mac_rlc_data_req(const mac_rlc_data_req* req)
+{
+
+
+}
+
 void rlcMsgHandler()
 {
 	msgDef msg;
@@ -75,10 +81,18 @@ void rlcMsgHandler()
 			}
 			case MAC_RLC_DATA_REQ:
 			{
+				mac_rlc_data_req *req = (mac_rlc_data_req *)msg.data;
+
+				handle_mac_rlc_data_req(req);
+				message_free(req);
 				break;
 			}
 			case MAC_RLC_DATA_RPT:
 			{
+				mac_rlc_data_rpt *req = (mac_rlc_data_rpt *)msg.data;
+
+				//handle_mac_rlc_data_req(req);
+				message_free(req);
 				break;
 			}
 			default:
