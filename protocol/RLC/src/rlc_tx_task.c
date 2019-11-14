@@ -482,6 +482,7 @@ cur process time = [%lld, %lld, %lld] \n",
 				
 			}
 			
+			
             rlc_mac_data_ind_message(ue_pdu_buffer_array,ue_pdu_size_array,ue_rnti_array,ue_num); 
 			break; 
 		}

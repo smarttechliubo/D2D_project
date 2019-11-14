@@ -31,7 +31,7 @@
 //char *vm_addr1 = "192.168.1.168";
 //char *vm_addr2= "192.168.84.129";
 
-char *vm_addr1 = "192.168.84.129";
+char *vm_addr1 = "192.168.0.127";
 char *vm_addr2= "192.168.84.1";
 
 char *PC_src_ip = "192.168.1.135";

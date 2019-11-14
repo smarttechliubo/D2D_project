@@ -227,7 +227,7 @@ void rlc_mac_ue_data_process(frame_t frameP,
         										
         										
 
-		LOG_WARN(RLC, "%s, rnti:%d: ue_total_size:%d, logic_index:%d, mac_subheader:%d, mac_ce_header:%d, total_mac_sdu_size:%d,\
+		LOG_ERROR(RLC, "%s, rnti:%d: ue_total_size:%d, logic_index:%d, mac_subheader:%d, mac_ce_header:%d, total_rlc_sdu_size:%d,\
 ue remained size:%d after logic chan mapping \n",
 						__func__, 
 						ue_rnti,ue_pdu_size_para_ptr->total_pdu_size,logic_index,
@@ -256,9 +256,13 @@ ue remained size:%d after logic chan mapping \n",
 			mac_subheader_length ++; 
         }
 
-        ue_pdu_size_para_ptr->remain_pdu_size = 0; //!no padding in the end of PDU when insert padding subheader 
+        
 
-		LOG_WARN(RLC, "MAC padding header is the first subheader of MAC sdu \n"); 
+		LOG_ERROR(RLC, "MAC padding header place at the head of MAC sdu ,padding header size:%d,padding size :%d\n", 
+				ue_pdu_size_para_ptr->remain_pdu_size,
+				0);
+				
+		ue_pdu_size_para_ptr->remain_pdu_size = 0; //!no padding in the end of PDU when insert padding subheader 
     }
     
 	for (logic_index = 0; logic_index < logic_num; logic_index++)
@@ -317,10 +321,14 @@ ue remained size:%d after logic chan mapping \n",
         memcpy((void *)ue_mac_subheader_ptr,(void *)&mac_subheader_without_l,1); 
 		ue_mac_subheader_ptr += 1; 
 		mac_subheader_length += 1; 
+		
 
-		LOG_WARN(RLC, "padding  mac subheader type:%d, sub header length:%d byte \n", 
-				 0x1f, 
-				 1); 
+		LOG_ERROR(RLC, "UE TBS remained size:%d, pading sub header length:%d byte,padding size =%d \n", 
+				 ue_pdu_size_para_ptr->remain_pdu_size, 
+				 1,
+				 ue_pdu_size_para_ptr->remain_pdu_size - 1 ); 
+		 //!remained size - pading header size 		 
+		ue_pdu_size_para_ptr->remain_pdu_size  = ue_pdu_size_para_ptr->remain_pdu_size  - 1; 
     }
 
     
@@ -334,7 +342,7 @@ ue remained size:%d after logic chan mapping \n",
 	mac_pdu_buffer_ptr += mac_sdu_tb_size; 
 
     //!add padding 
-    if (ue_pdu_size_para_ptr->remain_pdu_size > 2)
+    if (ue_pdu_size_para_ptr->remain_pdu_size > 0)
     {
 		memset(mac_pdu_buffer_ptr,0,ue_pdu_size_para_ptr->remain_pdu_size);
     }
