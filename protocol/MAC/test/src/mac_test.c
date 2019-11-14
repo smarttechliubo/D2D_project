@@ -136,12 +136,21 @@ void init_sim(const uint16_t mode)
 	//}
 }
 
-int main()
+int main(int argc,char *argv[])
 {
 	LOG_INFO(MAC, "[TEST]: MAC main start");
 
 	uint16_t mode = 0; //0:source, 1:destination
 
+	if (argc >= 2)
+	{
+		mode = (*argv[1] == '1') ? 1 : 0;
+		
+		LOG_INFO(MAC, "[TEST]: MAC main start mode:%u", mode);
+	}
+
+	return 1;
+	
 	init_sim(mode);
 	create_task();
 

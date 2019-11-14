@@ -36,7 +36,7 @@ bool mac_config_cfm(bool success)
 		cfm->status = 1;
 		cfm->error_code = success;
 
-		if (!message_send(RRC_TASK, (char *)&msg, sizeof(msgDef)))
+		if (message_send(RRC_TASK, (char *)&msg, sizeof(msgDef)))
 		{
 			return true;
 		}

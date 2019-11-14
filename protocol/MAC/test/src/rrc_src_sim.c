@@ -90,27 +90,25 @@ void src_user_setup(const uint16_t ueId, const rnti_t rnti, const uint16_t flag,
 	uint16_t data_size = sizeof(ccch_info);
 	ccch_info* ccch = (ccch_info *)malloc(data_size);
 
+	if (new_message(&msg, RRC_RLC_DATA_IND, RRC_TASK, RLC_TASK, msg_size))
 	{
-		if (new_message(&msg, RRC_RLC_DATA_IND, RRC_TASK, RLC_TASK, msg_size))
-		{
-			ind = (rrc_rlc_data_ind*)msg.data;
-			ind->rb_type = RB_TYPE_SRB0;
-			ind->data_size = data_size;
-			ind->data_addr_ptr = (uint32_t*)ccch;
-			ccch->flag = flag;
-			ccch->cause = cause;
-			ccch->ueId = ueId;
-			ccch->rnti = rnti;
+		ind = (rrc_rlc_data_ind*)msg.data;
+		ind->rb_type = RB_TYPE_SRB0;
+		ind->data_size = data_size;
+		ind->data_addr_ptr = (uint32_t*)ccch;
+		ccch->flag = flag;
+		ccch->cause = cause;
+		ccch->ueId = ueId;
+		ccch->rnti = rnti;
 
-			if (message_send(RLC_TASK, (char *)&msg, sizeof(msgDef)))
-			{
-				LOG_INFO(RRC, "rrc_rlc_data_ind send");
-			}
-		}
-		else
+		if (message_send(RLC_TASK, (char *)&msg, sizeof(msgDef)))
 		{
-			LOG_ERROR(RRC, "[TEST]: src_user_setup new rrc message fail!");
+			LOG_INFO(RRC, "rrc_rlc_data_ind send");
 		}
+	}
+	else
+	{
+		LOG_ERROR(RRC, "[TEST]: src_user_setup new rrc message fail!");
 	}
 }
 
