@@ -116,7 +116,7 @@ typedef struct mac_rlc_data_rpt_s
 	uint16_t sfn;     /**sfn number*/
 
     uint32_t  ue_num; 
-	mac_rlc_data_info data_ind[D2D_MAX_USER_NUM];
+	mac_rlc_data_info sdu_data_rpt[D2D_MAX_USER_NUM];
 }mac_rlc_data_rpt;
 
 

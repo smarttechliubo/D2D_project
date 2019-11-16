@@ -122,6 +122,11 @@ struct mac_data_ind mac_rlc_deserialize_tb (char	   *buffer_pP,
 	return data_ind;
 }
 
+#ifdef RLC_UT_DEBUG 
+	  logic_channel_pdu_component   g_debug_rlc_lc_pdu_component[MAX_LOGICCHAN_NUM]; 
+	  uint32_t   g_rlc_debug_ue_mac_header_size = 0; 
+
+#endif 
 
 
 void rlc_mac_ue_data_process(frame_t frameP, 
@@ -227,19 +232,23 @@ void rlc_mac_ue_data_process(frame_t frameP,
         										
         										
 
-		LOG_ERROR(RLC, "%s, rnti:%d: ue_total_size:%d, logic_index:%d, mac_subheader:%d, mac_ce_header:%d, total_rlc_sdu_size:%d,\
+		LOG_ERROR(RLC, "frame-subsfn:[%d, %d]: rnti:%d: ue_total_size:%d, logic_index:%d, mac_subheader:%d, mac_ce_header:%d, total_rlc_sdu_size:%d,\
 ue remained size:%d after logic chan mapping \n",
-						__func__, 
+						frameP, 
+						subframeP,
 						ue_rnti,ue_pdu_size_para_ptr->total_pdu_size,logic_index,
 						lc_pdu_component[logic_index].mac_subheader_length, 0, 
 						lc_pdu_component[logic_index].final_mac_sdu_size,
 						ue_pdu_size_para_ptr->remain_pdu_size);
         
 	
-	
+		
 	}
+#ifdef  RLC_UT_DEBUG 
+	 g_rlc_debug_ue_mac_header_size = 0; 
 
-     
+     memcpy((void *)g_debug_rlc_lc_pdu_component, lc_pdu_component, MAX_LOGICCHAN_NUM * sizeof(logic_channel_pdu_component)); 
+#endif 
      /**!
      When single-byte or two-byte padding is required, one or two MAC PDU subheaders corresponding to padding are placed at the beginning of 
      the MAC PDU before any other MAC PDU subheader.
@@ -257,8 +266,10 @@ ue remained size:%d after logic chan mapping \n",
         }
 
         
-
-		LOG_ERROR(RLC, "MAC padding header place at the head of MAC sdu ,padding header size:%d,padding size :%d\n", 
+        g_rlc_debug_ue_mac_header_size += ue_pdu_size_para_ptr->remain_pdu_size; 
+		LOG_ERROR(RLC, "frame-subsfn:[%d, %d]: MAC padding header place at the head of MAC sdu ,padding header size:%d,padding size :%d\n",
+				frameP,
+				subframeP,
 				ue_pdu_size_para_ptr->remain_pdu_size,
 				0);
 				
@@ -277,6 +288,7 @@ ue remained size:%d after logic chan mapping \n",
 				memcpy((void *)ue_mac_subheader_ptr,(void *)&mac_subheader_without_l,1); 
 				ue_mac_subheader_ptr += 1; 
 				mac_subheader_length += 1; 
+			 
 				break; 
 			}
 			case 2: 
@@ -304,6 +316,9 @@ ue remained size:%d after logic chan mapping \n",
 				AssertFatal(0, RLC, "mac sub header type error:%d!\n", lc_pdu_component[logic_index].mac_subheader_length_type); 
 			}
 		}
+#ifdef RLC_UT_DEBUG 
+		g_rlc_debug_ue_mac_header_size += lc_pdu_component[logic_index].mac_subheader_length;
+#endif 
 
 		LOG_WARN(RLC, "lc index:%d 's mac subheader type:%d, sub header length:%d byte \n", logic_index,
 				 lc_pdu_component[logic_index].mac_subheader_length_type, 
@@ -323,12 +338,18 @@ ue remained size:%d after logic chan mapping \n",
 		mac_subheader_length += 1; 
 		
 
-		LOG_ERROR(RLC, "UE TBS remained size:%d, pading sub header length:%d byte,padding size =%d \n", 
+		LOG_ERROR(RLC, "frame-subsfn:[%d, %d]:UE TBS remained size:%d, pading sub header length:%d byte,padding size =%d \n",
+		         frameP,
+		         subframeP,
 				 ue_pdu_size_para_ptr->remain_pdu_size, 
 				 1,
 				 ue_pdu_size_para_ptr->remain_pdu_size - 1 ); 
 		 //!remained size - pading header size 		 
 		ue_pdu_size_para_ptr->remain_pdu_size  = ue_pdu_size_para_ptr->remain_pdu_size  - 1; 
+#ifdef RLC_UT_DEBUG 
+				 g_rlc_debug_ue_mac_header_size += 1;
+#endif 
+
     }
 
     
@@ -480,7 +501,7 @@ void mac_rlc_data_ind	  (
 	PROTOCOL_CTXT_SET_BY_MODULE_ID(&ctxt, module_idP, enb_flagP, rntiP, frameP, 0, eNB_index);
 
 
-	key = RLC_COLL_KEY_LCID_VALUE(module_idP, rntiP, enb_flagP, channel_idP, srb_flag);
+	key = RLC_COLL_KEY_VALUE(module_idP, rntiP, enb_flagP, channel_idP, srb_flag);
 	
 
 	h_rc = hashtable_get(rlc_coll_p, key, (void**)&rlc_union_p);
@@ -489,8 +510,10 @@ void mac_rlc_data_ind	  (
 		rlc_mode = rlc_union_p->mode;
 		//pthread_mutex_lock(&rlc_union_p->rlc_union_mtex);
 	} else {
-	rlc_mode = RLC_MODE_NONE;
-	
+		rlc_mode = RLC_MODE_NONE;
+		
+    	AssertFatal (0 , RLC,"RLC not configured key= %lld, module_id:%lld, rnti:%d, enb_flag:%d, lcid %u srb_flag %d!\n",
+    					key,  module_idP,rntiP, enb_flagP,  channel_idP, srb_flag);
 	}
 
 	//!按照逻辑信道，对逻辑信道的数据搬移到申请出来的buffer中，进行后续处理，在后续处理中，要及时的free掉buffer，防止内存泄露

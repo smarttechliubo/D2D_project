@@ -259,6 +259,8 @@ extern struct mac_data_req g_rlc_mac_data_req;
 
 #ifdef RLC_UT_DEBUG 
 extern  uint32_t   g_rlc_no_data_transfer; 
+extern  uint32_t g_rlc_debug_ue_mac_header_size;
+extern logic_channel_pdu_component   g_debug_rlc_lc_pdu_component[MAX_LOGICCHAN_NUM];
 #endif 
 
 

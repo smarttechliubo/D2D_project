@@ -18,6 +18,7 @@ add_definitions(-DASN_DISABLE_OER_SUPPORT)
 add_definitions(-DUSE_SYSLOG)
 add_definitions(-DRLC_UT_DEBUG)
 
+
 aux_source_directory (${PROJECT_ORIGIN_DIR}/common/src SRC_COMMON)
 aux_source_directory (${PROJECT_ORIGIN_DIR}/platform/ocp_itti SRC_PLATFORM)
 aux_source_directory (${PROJECT_ORIGIN_DIR}/protocol/RRC SRC_PROTOCOL_RRC_DUMMY)

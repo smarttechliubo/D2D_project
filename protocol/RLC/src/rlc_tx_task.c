@@ -49,6 +49,34 @@ void mac_Rlc_data_Req(uint16_t frame, uint16_t subsfn,uint16_t valid_ue_num, rlc
 }
 
 
+
+
+
+void mac_Rlc_data_Rpt(uint16_t frame, uint16_t subsfn,uint16_t valid_ue_num, mac_rlc_data_info *rlc_data_rpt)
+{
+	MessageDef  *message;  
+
+	uint16_t    ue_index; 
+
+	mac_rlc_data_rpt *mac_rlc_data_rpt_ptr = calloc(1,sizeof(mac_rlc_data_rpt)); 
+
+ 	
+ 	mac_rlc_data_rpt_ptr->sfn = frame; 
+ 	mac_rlc_data_rpt_ptr->sub_sfn = subsfn; 
+
+ 	mac_rlc_data_rpt_ptr->ue_num = valid_ue_num; 
+ 	
+
+    memcpy((void *)mac_rlc_data_rpt_ptr->sdu_data_rpt,(void *)rlc_data_rpt,valid_ue_num * sizeof(mac_rlc_data_info))	; 
+ 	
+    message = itti_alloc_new_message(TASK_D2D_MAC, MAC_RLC_DATA_RPT,
+	                       ( char *)mac_rlc_data_rpt_ptr, sizeof(mac_rlc_data_rpt));
+
+	itti_send_msg_to_task(TASK_D2D_RLC_RX,  0, message);
+	
+}
+
+
 #endif 
 
 
@@ -312,7 +340,7 @@ int  rlc_rrc_tx_status_ind(const protocol_ctxt_t* const ctxt_pP,
 }
 
 
-
+#
 void rlc_tx_process(void *message, MessagesIds      msg_type)
 {
 	rrc_rlc_buffer_status_req    *rlc_buffer_req_ptr  = NULL; 
@@ -482,8 +510,22 @@ cur process time = [%lld, %lld, %lld] \n",
 				
 			}
 			
-			
-            rlc_mac_data_ind_message(ue_pdu_buffer_array,ue_pdu_size_array,ue_rnti_array,ue_num); 
+#ifndef RLC_UT_DEBUG 			
+           rlc_mac_data_ind_message(ue_pdu_buffer_array,ue_pdu_size_array,ue_rnti_array,ue_num); 
+#else 
+		    mac_rlc_data_info    mac_rlc_data_rpt_temp; 
+
+		    mac_rlc_data_rpt_temp.valid_flag = 1; 
+		    mac_rlc_data_rpt_temp.rnti = 101; 
+		    mac_rlc_data_rpt_temp.logic_chan_num = 1; 
+		    mac_rlc_data_rpt_temp.logicchannel_id[0] = 3; 
+		    mac_rlc_data_rpt_temp.mac_pdu_size[0] = g_debug_rlc_lc_pdu_component[0].final_mac_sdu_size; 
+		    mac_rlc_data_rpt_temp.mac_pdu_buffer_ptr[0] = (uint32_t *)((uint8_t *)(&g_rlc_pdu_buffer[0 * MAX_DLSCH_PAYLOAD_BYTES]) 
+		    											+ g_rlc_debug_ue_mac_header_size);
+		    
+			mac_Rlc_data_Rpt(sfn,sfn,1, &mac_rlc_data_rpt_temp);
+
+#endif 		
 			break; 
 		}
 
