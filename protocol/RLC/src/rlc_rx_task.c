@@ -45,7 +45,7 @@ void rlc_mac_data_rx_process(mac_rlc_data_info *ue_data_info,frame_t frame, sub_
 		buffer_pP = (char *)ue_data_info->mac_pdu_buffer_ptr[logic_index]; 
 		tb_sizeP = ue_data_info->mac_pdu_size[logic_index]; 
 
-		LOG_ERROR(RLC, "RLC_RX:frame-subsfn[%d,%d],rnti:%d, lc_idx:lc_id:[%d,%d],rlc_sdu_size:%d \n ", 
+		LOG_ERROR(RLC_TX, "RLC_RX:frame-subsfn[%d,%d],rnti:%d, lc_idx:lc_id:[%d,%d],rlc_sdu_size:%d \n ", 
 					frame,
 					subsfn,
 					ue_rnti,
@@ -78,7 +78,7 @@ void rlc_rx_process(void *message, MessagesIds      msg_type)
 	uint32_t ue_index; 
 	
   
-    LOG_ERROR(RLC, "RLC_RX receive message = %d\n",msg_type);
+    LOG_ERROR(RLC_TX, "RLC_RX receive message = %d\n",msg_type);
 	switch(msg_type)
 	{
 		case MAC_RLC_DATA_RPT:
@@ -90,7 +90,7 @@ void rlc_rx_process(void *message, MessagesIds      msg_type)
 
             for (ue_index = 0; ue_index < mac_report_data_ptr->ue_num; ue_index++)
             {
-            	LOG_ERROR(RLC, "RLC_RX: ue_index:%d, rlc_rx_sdu_addr:%lld \n", 
+            	LOG_ERROR(RLC_TX, "RLC_RX: ue_index:%d, rlc_rx_sdu_addr:%lld \n", 
             		 			ue_index,(uint8_t *)(ue_mac_data_ptr + ue_index)); 
 				rlc_mac_data_rx_process((mac_rlc_data_info *)(ue_mac_data_ptr + ue_index),
 									 receive_frame,

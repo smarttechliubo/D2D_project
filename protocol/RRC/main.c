@@ -25,7 +25,7 @@ extern void *rlc_rx_task( );
 
 void test_syslog( )
 {
-    setlogmask(LOG_UPTO(LOG_NOTICE)); 
+    setlogmask(LOG_UPTO(LOG_ERR)); 
     syslog(LOG_ERR, "%s",  "------------------------ D2D_project start log ------------- \n");  
     closelog(); 
 

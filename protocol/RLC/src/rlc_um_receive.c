@@ -118,7 +118,7 @@ signed int rlc_um_get_pdu_infos(const protocol_ctxt_t* const ctxt_pP,
 
 
 
-  LOG_INFO(RLC,"RLC rx header info:SN:%d, headersize:%d, LI number:%d,sum of LI:%d, tbsize:%d,hiddensize :%d \n", 
+  LOG_INFO(RLC_RX,"RLC rx header info:SN:%d, headersize:%d, LI number:%d,sum of LI:%d, tbsize:%d,hiddensize :%d \n", 
   							 pdu_info_pP->sn,
 							pdu_info_pP->header_size,
 							pdu_info_pP->num_li,
@@ -159,7 +159,7 @@ signed int   rlc_um_in_window(const protocol_ctxt_t* const ctxt_pP,
 
 	if ( lower_boundP > snP) {	//SN 不在接收窗内
 #if TRACE_RLC_UM_RX
-	  LOG_DEBUG(RLC, PROTOCOL_RLC_UM_CTXT_FMT" %d not in WINDOW[%03d:%03d] (SN<LOWER BOUND)\n",
+	  LOG_DEBUG(RLC_RX, PROTOCOL_RLC_UM_CTXT_FMT" %d not in WINDOW[%03d:%03d] (SN<LOWER BOUND)\n",
 			PROTOCOL_RLC_UM_CTXT_ARGS(ctxt_pP, rlc_pP),
 			sn,
 			lower_bound,
@@ -170,7 +170,7 @@ signed int   rlc_um_in_window(const protocol_ctxt_t* const ctxt_pP,
 
 	if ( higher_boundP < snP) { //!< 说明本次处理的PDU 不在这段接收窗内
 #if TRACE_RLC_UM_RX
-	  LOG_DEBUG(RLC, PROTOCOL_RLC_UM_CTXT_FMT" %d not in WINDOW[%03d:%03d] (SN>HIGHER BOUND) <=> %d not in WINDOW[%03d:%03d]\n",
+	  LOG_DEBUG(RLC_RX, PROTOCOL_RLC_UM_CTXT_FMT" %d not in WINDOW[%03d:%03d] (SN>HIGHER BOUND) <=> %d not in WINDOW[%03d:%03d]\n",
 			PROTOCOL_RLC_UM_CTXT_ARGS(ctxt_pP, rlc_pP),
 			sn,
 			lower_bound,
@@ -185,7 +185,7 @@ signed int   rlc_um_in_window(const protocol_ctxt_t* const ctxt_pP,
 	if ( lower_boundP == snP) {
 	  if ( higher_boundP == snP) {
 #if TRACE_RLC_UM_RX
-		LOG_DEBUG(RLC, PROTOCOL_RLC_UM_CTXT_FMT" %d  in WINDOW[%03d:%03d] (SN=HIGHER BOUND=LOWER BOUND)\n",
+		LOG_DEBUG(RLC_RX, PROTOCOL_RLC_UM_CTXT_FMT" %d  in WINDOW[%03d:%03d] (SN=HIGHER BOUND=LOWER BOUND)\n",
 			  PROTOCOL_RLC_UM_CTXT_ARGS(ctxt_pP, rlc_pP),
 			  sn,
 			  lower_bound,
@@ -195,7 +195,7 @@ signed int   rlc_um_in_window(const protocol_ctxt_t* const ctxt_pP,
 	  }
 
 #if TRACE_RLC_UM_RX
-	  LOG_DEBUG(RLC, PROTOCOL_RLC_UM_CTXT_FMT" %d  in WINDOW[%03d:%03d] (SN=LOWER BOUND)\n",
+	  LOG_DEBUG(RLC_RX, PROTOCOL_RLC_UM_CTXT_FMT" %d  in WINDOW[%03d:%03d] (SN=LOWER BOUND)\n",
 			PROTOCOL_RLC_UM_CTXT_ARGS(ctxt_pP, rlc_pP),
 			sn,
 			lower_bound,
@@ -207,7 +207,7 @@ signed int   rlc_um_in_window(const protocol_ctxt_t* const ctxt_pP,
 	//！SN 在上边界了，则返回2
 	if ( higher_boundP == snP) {
 #if TRACE_RLC_UM_RX
-	  LOG_DEBUG(RLC, PROTOCOL_RLC_UM_CTXT_FMT" %d  in WINDOW[%03d:%03d] (SN=HIGHER BOUND)\n",
+	  LOG_DEBUG(RLC_RX, PROTOCOL_RLC_UM_CTXT_FMT" %d  in WINDOW[%03d:%03d] (SN=HIGHER BOUND)\n",
 			PROTOCOL_RLC_UM_CTXT_ARGS(ctxt_pP, rlc_pP),
 			sn,
 			lower_bound,
@@ -233,7 +233,7 @@ void   rlc_um_clear_rx_sdu (const protocol_ctxt_t* const ctxt_pP, rlc_um_entity_
 void  rlc_um_send_sdu (const protocol_ctxt_t* const ctxt_pP, rlc_um_entity_t *rlc_pP)
 {
   if ((rlc_pP->output_sdu_in_construction)) {
-   LOG_DEBUG(RLC, PROTOCOL_RLC_UM_CTXT_FMT" SEND_SDU SN:%d to upper layers %d bytes sdu %p\n",
+   LOG_ERROR(RLC_RX, PROTOCOL_RLC_UM_CTXT_FMT" SEND_SDU SN:%d to upper layers %d bytes sdu %p\n",
           PROTOCOL_RLC_UM_CTXT_ARGS(ctxt_pP,rlc_pP),
           rlc_pP->last_reassemblied_sn,
           rlc_pP->output_sdu_size_to_write,
@@ -257,7 +257,7 @@ void  rlc_um_send_sdu (const protocol_ctxt_t* const ctxt_pP, rlc_um_entity_t *rl
        #endif 
       rlc_pP->output_sdu_in_construction = NULL;  //！释放指针
     } else {
-      LOG_ERROR(RLC, PROTOCOL_RLC_UM_CTXT_FMT"[SEND_SDU] ERROR SIZE <= 0 ... DO NOTHING, SET SDU SIZE TO 0\n",
+      LOG_ERROR(RLC_RX, PROTOCOL_RLC_UM_CTXT_FMT"[SEND_SDU] ERROR SIZE <= 0 ... DO NOTHING, SET SDU SIZE TO 0\n",
             PROTOCOL_RLC_UM_CTXT_ARGS(ctxt_pP,rlc_pP));
     }
 
@@ -300,7 +300,7 @@ int rlc_um_read_length_indicators(unsigned char**data_ppP,
 
 	  if ((*data_size_pP < 0)) 
 	  {
-		  LOG_ERROR(RLC, "Invalid data_size=%d! (pdu_size=%d loop=%d e1=%d e2=%d li2=%d e_liP=%02x.%02x.%02x.%02x.%02x.%02x.%02x.%02x.%02x)\n",
+		  LOG_ERROR(RLC_RX, "Invalid data_size=%d! (pdu_size=%d loop=%d e1=%d e2=%d li2=%d e_liP=%02x.%02x.%02x.%02x.%02x.%02x.%02x.%02x.%02x)\n",
 			  *data_size_pP, *data_size_pP, continue_loop, e1, e2, li2,
 			  (e_liP-(continue_loop-1)+0)->b1,
 			  (e_liP-(continue_loop-1)+0)->b2,
@@ -325,7 +325,7 @@ int rlc_um_read_length_indicators(unsigned char**data_ppP,
 	  //如果E1后面没有扩展部分了，那么后面就是数据了 
 	  if ((*data_size_pP < 0)) 
 	  {
-	    LOG_ERROR(RLC, "Invalid data_size=%d! (pdu_size=%d loop=%d e1=%d li1=%d e_liP=%02x.%02x.%02x.%02x.%02x.%02x.%02x.%02x.%02x)\n",
+	    LOG_ERROR(RLC_RX, "Invalid data_size=%d! (pdu_size=%d loop=%d e1=%d li1=%d e_liP=%02x.%02x.%02x.%02x.%02x.%02x.%02x.%02x.%02x)\n",
 		  *data_size_pP, *data_size_pP, continue_loop, e1, li1,
 		  (e_liP-(continue_loop-1)+0)->b1,
 		  (e_liP-(continue_loop-1)+0)->b2,
@@ -368,7 +368,7 @@ void  rlc_um_reassembly (const protocol_ctxt_t* const ctxt_pP,
 {
   sdu_size_t      sdu_max_size;
 
-  LOG_DEBUG(RLC,PROTOCOL_RLC_UM_CTXT_FMT"REASSEMBLY reassembly()  %d bytes %d bytes start to reassemble\n",
+  LOG_DEBUG(RLC_RX,PROTOCOL_RLC_UM_CTXT_FMT"REASSEMBLY reassembly()  %d bytes %d bytes start to reassemble\n",
         PROTOCOL_RLC_UM_CTXT_ARGS(ctxt_pP,rlc_pP),
         lengthP,
         rlc_pP->output_sdu_size_to_write);
@@ -410,7 +410,7 @@ void  rlc_um_reassembly (const protocol_ctxt_t* const ctxt_pP,
       AssertFatal(0, RLC,PROTOCOL_RLC_UM_CTXT_FMT" RLC_UM_DATA_IND, SDU TOO BIG, DROPPED\n",
                   PROTOCOL_RLC_UM_CTXT_ARGS(ctxt_pP,rlc_pP));
 #if 0
-      LOG_ERROR(RLC, PROTOCOL_RLC_UM_CTXT_FMT"[REASSEMBLY] [max_sdu size %d] ERROR  SDU SIZE OVERFLOW SDU GARBAGED\n",
+      LOG_ERROR(RLC_RX, PROTOCOL_RLC_UM_CTXT_FMT"[REASSEMBLY] [max_sdu size %d] ERROR  SDU SIZE OVERFLOW SDU GARBAGED\n",
             PROTOCOL_RLC_UM_CTXT_ARGS(ctxt_pP,rlc_pP),
             sdu_max_size);
 #endif 
@@ -450,7 +450,7 @@ void   rlc_um_try_reassembly(const protocol_ctxt_t* const ctxt_pP,
 	int				  i 					 = 0;
 	int				  reassembly_start_index = 0;
 
-    LOG_DEBUG(RLC, "%s, start_snp:%d-----end_snp:%d\n", __func__, start_snP,end_snP);
+    LOG_DEBUG(RLC_RX, "%s, start_snp:%d-----end_snp:%d\n", __func__, start_snP,end_snP);
 
 	if (end_snP < 0)	 {
 		end_snP   = end_snP   + rlc_pP->rx_sn_modulo;
@@ -460,7 +460,7 @@ void   rlc_um_try_reassembly(const protocol_ctxt_t* const ctxt_pP,
 		start_snP = start_snP + rlc_pP->rx_sn_modulo;
 	}
 
-	LOG_DEBUG(RLC,  PROTOCOL_RLC_UM_CTXT_FMT" TRY REASSEMBLY FROM PDU SN=%03d+1  TO  PDU SN=%03d,SN Length = %d bits\n",
+	LOG_DEBUG(RLC_RX,  PROTOCOL_RLC_UM_CTXT_FMT" TRY REASSEMBLY FROM PDU SN=%03d+1  TO  PDU SN=%03d,SN Length = %d bits\n",
 		PROTOCOL_RLC_UM_CTXT_ARGS(ctxt_pP, rlc_pP),
 		rlc_pP->last_reassemblied_sn,
 		end_snP,
@@ -514,7 +514,7 @@ CONTIGUOUS WITH LAST REASSEMBLIED SN (%03d) \n",
 	  //AssertFatal((fi >= 0) && (fi <= 3), "invalid fi!");
 	  //!如果当前的SN 的PDU 中的header参数异常，或者size 不对，则sn +1,处理下一个sn 
 	  if((size < 0) || ((e!=0) && (e!=1)) || ((fi < 0) || (fi > 3))){
-			LOG_ERROR(RLC, "sn;%d, invalid size %d, e %d, fi %d\n", sn,size, e, fi);
+			LOG_ERROR(RLC_RX, "sn;%d, invalid size %d, e %d, fi %d\n", sn,size, e, fi);
 			sn = (sn + 1) % rlc_pP->rx_sn_modulo;
 			if ((sn == rlc_pP->vr_uh) || (sn == end_snP)) {
 			  continue_reassembly = 0;
@@ -531,7 +531,7 @@ CONTIGUOUS WITH LAST REASSEMBLIED SN (%03d) \n",
 			case RLC_FI_1ST_BYTE_DATA_IS_1ST_BYTE_SDU_LAST_BYTE_DATA_IS_LAST_BYTE_SDU:
 			{
 
-				  LOG_DEBUG(RLC, PROTOCOL_RLC_UM_CTXT_FMT" TRY REASSEMBLY PDU NO E_LI FI= (00) \n",
+				  LOG_DEBUG(RLC_RX, PROTOCOL_RLC_UM_CTXT_FMT" TRY REASSEMBLY PDU NO E_LI FI= (00) \n",
 						PROTOCOL_RLC_UM_CTXT_ARGS(ctxt_pP, rlc_pP));
 
 				  // one complete SDU
@@ -550,7 +550,7 @@ CONTIGUOUS WITH LAST REASSEMBLIED SN (%03d) \n",
 			case RLC_FI_1ST_BYTE_DATA_IS_1ST_BYTE_SDU_LAST_BYTE_DATA_IS_NOT_LAST_BYTE_SDU:
 			{
 
-				  LOG_DEBUG(RLC, PROTOCOL_RLC_UM_CTXT_FMT" TRY REASSEMBLY PDU NO E_LI FI= (01) \n",
+				  LOG_DEBUG(RLC_RX, PROTOCOL_RLC_UM_CTXT_FMT" TRY REASSEMBLY PDU NO E_LI FI= (01) \n",
 						PROTOCOL_RLC_UM_CTXT_ARGS(ctxt_pP, rlc_pP));
 
 				  // one beginning segment of SDU in PDU
@@ -566,7 +566,7 @@ CONTIGUOUS WITH LAST REASSEMBLIED SN (%03d) \n",
 			case RLC_FI_1ST_BYTE_DATA_IS_NOT_1ST_BYTE_SDU_LAST_BYTE_DATA_IS_LAST_BYTE_SDU:
 			{
 
-				  LOG_DEBUG(RLC, PROTOCOL_RLC_UM_CTXT_FMT" TRY REASSEMBLY PDU NO E_LI FI= (10) \n",
+				  LOG_DEBUG(RLC_RX, PROTOCOL_RLC_UM_CTXT_FMT" TRY REASSEMBLY PDU NO E_LI FI= (10) \n",
 						PROTOCOL_RLC_UM_CTXT_ARGS(ctxt_pP, rlc_pP));
 
 
@@ -587,7 +587,7 @@ CONTIGUOUS WITH LAST REASSEMBLIED SN (%03d) \n",
 			case RLC_FI_1ST_BYTE_DATA_IS_NOT_1ST_BYTE_SDU_LAST_BYTE_DATA_IS_NOT_LAST_BYTE_SDU:
 			{
 
-				  LOG_DEBUG(RLC, PROTOCOL_RLC_UM_CTXT_FMT" TRY REASSEMBLY PDU NO E_LI FI= (11)\n",
+				  LOG_DEBUG(RLC_RX, PROTOCOL_RLC_UM_CTXT_FMT" TRY REASSEMBLY PDU NO E_LI FI= (11)\n",
 						PROTOCOL_RLC_UM_CTXT_ARGS(ctxt_pP, rlc_pP));
 
 
@@ -601,7 +601,7 @@ CONTIGUOUS WITH LAST REASSEMBLIED SN (%03d) \n",
 					LOG_WARN(RLC, PROTOCOL_RLC_UM_CTXT_FMT" TRY REASSEMBLY PDU NO E_LI FI=00 (11) MISSING SN DETECTED\n",
 						  PROTOCOL_RLC_UM_CTXT_ARGS(ctxt_pP, rlc_pP));
 
-					//LOG_DEBUG(RLC, "[MSC_NBOX][FRAME %05u][%s][RLC_UM][MOD %u/%u][RB %u][Missing SN detected][RLC_UM][MOD %u/%u][RB %u]\n",
+					//LOG_DEBUG(RLC_RX, "[MSC_NBOX][FRAME %05u][%s][RLC_UM][MOD %u/%u][RB %u][Missing SN detected][RLC_UM][MOD %u/%u][RB %u]\n",
 					//		ctxt_pP->frame, rlc_pP->module_id,rlc_pP->rb_id, rlc_pP->module_id,rlc_pP->rb_id);
 					rlc_pP->reassembly_missing_sn_detected = 1; // not necessary but for readability of the code
 					rlc_pP->stat_rx_data_pdu_dropped += 1;
@@ -619,7 +619,7 @@ CONTIGUOUS WITH LAST REASSEMBLIED SN (%03d) \n",
 	        }
 			default:
 			{
-				  LOG_ERROR(RLC, PROTOCOL_RLC_UM_CTXT_FMT" fi=%d! TRY REASSEMBLY SHOULD NOT GO HERE\n",
+				  LOG_ERROR(RLC_RX, PROTOCOL_RLC_UM_CTXT_FMT" fi=%d! TRY REASSEMBLY SHOULD NOT GO HERE\n",
 							 PROTOCOL_RLC_UM_CTXT_ARGS(ctxt_pP, rlc_pP), fi);
 			      break; 
 		    }	  
@@ -635,14 +635,14 @@ CONTIGUOUS WITH LAST REASSEMBLIED SN (%03d) \n",
 			  case RLC_FI_1ST_BYTE_DATA_IS_1ST_BYTE_SDU_LAST_BYTE_DATA_IS_LAST_BYTE_SDU:
 			  {
 
-					LOG_DEBUG(RLC, PROTOCOL_RLC_UM_CTXT_FMT" TRY REASSEMBLY PDU FI=11 (00) Li=",
+					LOG_DEBUG(RLC_RX, PROTOCOL_RLC_UM_CTXT_FMT" TRY REASSEMBLY PDU FI=11 (00) Li=",
 						  PROTOCOL_RLC_UM_CTXT_ARGS(ctxt_pP, rlc_pP));
 
 					for (i=0; i < num_li; i++) {
-					  LOG_DEBUG(RLC, "%d ",li_array[i]);
+					  LOG_DEBUG(RLC_RX, "%d ",li_array[i]);
 					}
 
-					LOG_DEBUG(RLC, " remaining size %d\n",size);
+					LOG_DEBUG(RLC_RX, " remaining size %d\n",size);
 
 					// N complete SDUs
 					//LGrlc_um_send_sdu(rlc_pP,ctxt_pP->frame,ctxt_pP->enb_flag);
@@ -671,14 +671,14 @@ CONTIGUOUS WITH LAST REASSEMBLIED SN (%03d) \n",
 			  case RLC_FI_1ST_BYTE_DATA_IS_1ST_BYTE_SDU_LAST_BYTE_DATA_IS_NOT_LAST_BYTE_SDU:
 			  {
 
-					LOG_DEBUG(RLC, PROTOCOL_RLC_UM_CTXT_FMT" TRY REASSEMBLY PDU FI=10 (01) Li=",
+					LOG_DEBUG(RLC_RX, PROTOCOL_RLC_UM_CTXT_FMT" TRY REASSEMBLY PDU FI=10 (01) Li=",
 						  PROTOCOL_RLC_UM_CTXT_ARGS(ctxt_pP, rlc_pP));
 
 					for (i=0; i < num_li; i++) {
-					  LOG_DEBUG(RLC, "%d ",li_array[i]);
+					  LOG_DEBUG(RLC_RX, "%d ",li_array[i]);
 					}
 
-					LOG_DEBUG(RLC, " remaining size %d\n",size);
+					LOG_DEBUG(RLC_RX, " remaining size %d\n",size);
 
 					// N complete SDUs + one segment of SDU in PDU
 					//LG rlc_um_send_sdu(rlc_pP,ctxt_pP->frame,ctxt_pP->enb_flag);
@@ -702,14 +702,14 @@ CONTIGUOUS WITH LAST REASSEMBLIED SN (%03d) \n",
 			  case RLC_FI_1ST_BYTE_DATA_IS_NOT_1ST_BYTE_SDU_LAST_BYTE_DATA_IS_LAST_BYTE_SDU:
 			  {
 
-					LOG_DEBUG(RLC, PROTOCOL_RLC_UM_CTXT_FMT" TRY REASSEMBLY PDU FI=01 (10) Li=",
+					LOG_DEBUG(RLC_RX, PROTOCOL_RLC_UM_CTXT_FMT" TRY REASSEMBLY PDU FI=01 (10) Li=",
 						  PROTOCOL_RLC_UM_CTXT_ARGS(ctxt_pP, rlc_pP));
 
 					for (i=0; i < num_li; i++) {
-					  LOG_DEBUG(RLC, "%d ",li_array[i]);
+					  LOG_DEBUG(RLC_RX, "%d ",li_array[i]);
 					}
 
-					LOG_DEBUG(RLC, " remaining size %d\n",size);
+					LOG_DEBUG(RLC_RX, " remaining size %d\n",size);
 
 					//!因为这里有多个segment ,也就是在一个PDU上有多个SDU,并且最后一个byte是SDU的last byte
 					//!因此这里只能是第一个segment出现了丢包，其他的SDU 包都是完整的。
@@ -741,21 +741,21 @@ CONTIGUOUS WITH LAST REASSEMBLIED SN (%03d) \n",
 			  case RLC_FI_1ST_BYTE_DATA_IS_NOT_1ST_BYTE_SDU_LAST_BYTE_DATA_IS_NOT_LAST_BYTE_SDU:
 			  {
 
-					LOG_DEBUG(RLC, PROTOCOL_RLC_UM_CTXT_FMT" TRY REASSEMBLY PDU FI=00 (11) Li=",
+					LOG_DEBUG(RLC_RX, PROTOCOL_RLC_UM_CTXT_FMT" TRY REASSEMBLY PDU FI=00 (11) Li=",
 						  PROTOCOL_RLC_UM_CTXT_ARGS(ctxt_pP, rlc_pP),
 						  num_li);
 
 					for (i=0; i < num_li; i++) {
-					  LOG_DEBUG(RLC, "%d ",li_array[i]);
+					  LOG_DEBUG(RLC_RX, "%d ",li_array[i]);
 					}
 
-					LOG_DEBUG(RLC, " remaining size %d\n",size);
+					LOG_DEBUG(RLC_RX, " remaining size %d\n",size);
 
 					 //！这种情况，说明第一个包是个半截包，最后一个包也是个半截包，中间的包是完整的
 					 //! 如果出现了丢包，那么只能是第一个包丢了
 					if (rlc_pP->reassembly_missing_sn_detected) {
 
-					  LOG_DEBUG(RLC, PROTOCOL_RLC_UM_CTXT_FMT" DISCARD FIRST LI %d \n",
+					  LOG_DEBUG(RLC_RX, PROTOCOL_RLC_UM_CTXT_FMT" DISCARD FIRST LI %d \n",
 							PROTOCOL_RLC_UM_CTXT_ARGS(ctxt_pP, rlc_pP),
 							li_array[0]);
 
@@ -818,7 +818,7 @@ CONTIGUOUS WITH LAST REASSEMBLIED SN (%03d) \n",
 			  rlc_pP->stat_rx_data_bytes_dropped += tb_ind_p->size;
 			  rlc_pP->reassembly_missing_sn_detected = 1;
 			   //！header错了
-			  LOG_ERROR(RLC, "[SN %d] Bad RLC header! Discard this RLC PDU (size=%d)\n", sn, size);
+			  LOG_ERROR(RLC_RX, "[SN %d] Bad RLC header! Discard this RLC PDU (size=%d)\n", sn, size);
 		}
 	  }
 
@@ -836,7 +836,7 @@ CONTIGUOUS WITH LAST REASSEMBLIED SN (%03d) \n",
 	}
 
 	
-	LOG_INFO(RLC, "func:%s, reassembly sdu sn:%d finished\n",
+	LOG_ERROR(RLC_RX, "func:%s, reassembly sdu sn:%d finished\n",
     			__func__, 
     		     sn );
 
@@ -854,7 +854,7 @@ void   rlc_um_stop_and_reset_timer_reordering(const protocol_ctxt_t* const ctxt_
 													rlc_um_entity_t * 		   rlc_pP)
 {
 
-	LOG_DEBUG(RLC, PROTOCOL_RLC_UM_CTXT_FMT" [T-REORDERING] STOPPED AND RESET\n",
+	LOG_DEBUG(RLC_RX, PROTOCOL_RLC_UM_CTXT_FMT" [T-REORDERING] STOPPED AND RESET\n",
 		PROTOCOL_RLC_UM_CTXT_ARGS(ctxt_pP, rlc_pP));
 
 	rlc_pP->t_reordering.running		   = 0;
@@ -875,12 +875,12 @@ void   rlc_um_start_timer_reordering(const protocol_ctxt_t* const ctxt_pP,
 		 //！设置起始时刻从当前帧开始
 		rlc_pP->t_reordering.ms_start		 = PROTOCOL_CTXT_TIME_MILLI_SECONDS(ctxt_pP);
 
-		LOG_DEBUG(RLC, PROTOCOL_RLC_UM_CTXT_FMT" [T-REORDERING] STARTED (TIME-OUT = FRAME %05u)\n",
+		LOG_DEBUG(RLC_RX, PROTOCOL_RLC_UM_CTXT_FMT" [T-REORDERING] STARTED (TIME-OUT = FRAME %05u)\n",
 			  PROTOCOL_RLC_UM_CTXT_ARGS(ctxt_pP, rlc_pP),
 			rlc_pP->t_reordering.ms_time_out);
 
 	} else {
-		LOG_DEBUG(RLC, PROTOCOL_RLC_UM_CTXT_FMT"[T-REORDERING] NOT STARTED, CAUSE CONFIGURED 0 ms\n",
+		LOG_DEBUG(RLC_RX, PROTOCOL_RLC_UM_CTXT_FMT"[T-REORDERING] NOT STARTED, CAUSE CONFIGURED 0 ms\n",
 		     PROTOCOL_RLC_UM_CTXT_ARGS(ctxt_pP,rlc_pP));
 	}
 }
@@ -933,20 +933,20 @@ void rlc_um_check_timer_dar_time_out(const protocol_ctxt_t* const ctxt_pP,
 	  //	  -set VR(UX) to VR(UH).
 	  rlc_pP->stat_timer_reordering_timed_out += 1;
 #if TRACE_RLC_PAYLOAD
-	  LOG_DEBUG(RLC, PROTOCOL_RLC_UM_CTXT_FMT"*****************************************************\n",
+	  LOG_DEBUG(RLC_RX, PROTOCOL_RLC_UM_CTXT_FMT"*****************************************************\n",
 			PROTOCOL_RLC_UM_CTXT_ARGS(ctxt_pP, rlc_pP));
-	  LOG_DEBUG(RLC, PROTOCOL_RLC_UM_CTXT_FMT"*    T I M E	-  O U T							  *\n",
+	  LOG_DEBUG(RLC_RX, PROTOCOL_RLC_UM_CTXT_FMT"*    T I M E	-  O U T							  *\n",
 			PROTOCOL_RLC_UM_CTXT_ARGS(ctxt_pP, rlc_pP));
-	  LOG_DEBUG(RLC, PROTOCOL_RLC_UM_CTXT_FMT"*****************************************************\n",
+	  LOG_DEBUG(RLC_RX, PROTOCOL_RLC_UM_CTXT_FMT"*****************************************************\n",
 			PROTOCOL_RLC_UM_CTXT_ARGS(ctxt_pP, rlc_pP));
-	  LOG_DEBUG(RLC, PROTOCOL_RLC_UM_CTXT_FMT" TIMER t-Reordering expiration\n",
+	  LOG_DEBUG(RLC_RX, PROTOCOL_RLC_UM_CTXT_FMT" TIMER t-Reordering expiration\n",
 			PROTOCOL_RLC_UM_CTXT_ARGS(ctxt_pP, rlc_pP));
-	  LOG_DEBUG(RLC, PROTOCOL_RLC_UM_CTXT_FMT" timer_reordering=%d frame=%d expire ms %d\n",
+	  LOG_DEBUG(RLC_RX, PROTOCOL_RLC_UM_CTXT_FMT" timer_reordering=%d frame=%d expire ms %d\n",
 			PROTOCOL_RLC_UM_CTXT_ARGS(ctxt_pP, rlc_pP),
 			rlc_pP->t_reordering.ms_duration,
 			ctxt_pP->frame,
 			rlc_pP->t_reordering.ms_time_out);
-	  LOG_DEBUG(RLC, PROTOCOL_RLC_UM_CTXT_FMT" set VR(UR)=%03d to",
+	  LOG_DEBUG(RLC_RX, PROTOCOL_RLC_UM_CTXT_FMT" set VR(UR)=%03d to",
 			PROTOCOL_RLC_UM_CTXT_ARGS(ctxt_pP, rlc_pP),
 			rlc_pP->vr_ur);
 #endif
@@ -963,8 +963,8 @@ void rlc_um_check_timer_dar_time_out(const protocol_ctxt_t* const ctxt_pP,
 	}
 
 #if TRACE_RLC_PAYLOAD
-	LOG_DEBUG(RLC, " %d", rlc_pP->vr_ur);
-	LOG_DEBUG(RLC, "\n");
+	LOG_DEBUG(RLC_RX, " %d", rlc_pP->vr_ur);
+	LOG_DEBUG(RLC_RX, "\n");
 #endif
 	//！开始处理更新后的UR以下的SDU ，从旧的UR 开始一直处理到新的UR 
 	rlc_um_try_reassembly(ctxt_pP, rlc_pP ,old_vr_ur, rlc_pP->vr_ur);
@@ -976,13 +976,13 @@ void rlc_um_check_timer_dar_time_out(const protocol_ctxt_t* const ctxt_pP,
 	  rlc_um_start_timer_reordering(ctxt_pP, rlc_pP); //！重启timer 
 	  rlc_pP->vr_ux = rlc_pP->vr_uh; 
 #if TRACE_RLC_PAYLOAD
-	  LOG_DEBUG(RLC, PROTOCOL_RLC_UM_CTXT_FMT" restarting t-Reordering set VR(UX) to %d (VR(UH)>VR(UR))\n",
+	  LOG_DEBUG(RLC_RX, PROTOCOL_RLC_UM_CTXT_FMT" restarting t-Reordering set VR(UX) to %d (VR(UH)>VR(UR))\n",
 			PROTOCOL_RLC_UM_CTXT_ARGS(ctxt_pP, rlc_pP),
 			rlc_pP->vr_ux);
 #endif
 	} else {
 #if TRACE_RLC_PAYLOAD
-	  LOG_DEBUG(RLC, PROTOCOL_RLC_UM_CTXT_FMT" STOP t-Reordering VR(UX) = %03d\n",
+	  LOG_DEBUG(RLC_RX, PROTOCOL_RLC_UM_CTXT_FMT" STOP t-Reordering VR(UX) = %03d\n",
 			PROTOCOL_RLC_UM_CTXT_ARGS(ctxt_pP, rlc_pP),
 			rlc_pP->vr_ux);
 #endif
@@ -1002,7 +1002,7 @@ mem_block_t*    rlc_um_remove_pdu_from_dar_buffer(const protocol_ctxt_t* const c
 {
 	mem_block_t * pdu_p	  = rlc_pP->dar_buffer[snP];
 
-	LOG_DEBUG(RLC, PROTOCOL_RLC_UM_CTXT_FMT" REMOVE PDU FROM DAR BUFFER  SN=%03d\n",
+	LOG_DEBUG(RLC_RX, PROTOCOL_RLC_UM_CTXT_FMT" REMOVE PDU FROM DAR BUFFER  SN=%03d\n",
 		PROTOCOL_RLC_UM_CTXT_ARGS(ctxt_pP, rlc_pP),
 		snP);
 
@@ -1018,7 +1018,7 @@ void   rlc_um_store_pdu_in_dar_buffer(const protocol_ctxt_t* const ctxt_pP,
 											rlc_usn_t snP)
 {
 
-	LOG_DEBUG(RLC, PROTOCOL_RLC_UM_CTXT_FMT" STORE PDU IN DAR BUFFER:SN= %d  VR(UR)= %d VR(UX)= %d VR(UH)= %d\n",
+	LOG_DEBUG(RLC_RX, PROTOCOL_RLC_UM_CTXT_FMT" STORE PDU IN DAR BUFFER:SN= %d  VR(UR)= %d VR(UX)= %d VR(UH)= %d\n",
 		PROTOCOL_RLC_UM_CTXT_ARGS(ctxt_pP, rlc_pP),
 		snP,
 		rlc_pP->vr_ur,
@@ -1042,7 +1042,7 @@ signed int   rlc_um_in_reordering_window(const protocol_ctxt_t* const ctxt_pP,
 	//在recoding window 以内，返回0 
 		if (sn_mod < rlc_pP->rx_um_window_size) {
 
-		LOG_DEBUG(RLC, PROTOCOL_RLC_UM_CTXT_FMT" %d IN REORDERING WINDOW[%03d:%03d) [SN %d IN [%03d:%03d) VR(UR)=%03d VR(UH)=%03d\n",
+		LOG_DEBUG(RLC_RX, PROTOCOL_RLC_UM_CTXT_FMT" %d IN REORDERING WINDOW[%03d:%03d) [SN %d IN [%03d:%03d) VR(UR)=%03d VR(UH)=%03d\n",
 			  PROTOCOL_RLC_UM_CTXT_ARGS(ctxt_pP, rlc_pP),
 			  sn_mod,
 			  0,
@@ -1059,7 +1059,7 @@ signed int   rlc_um_in_reordering_window(const protocol_ctxt_t* const ctxt_pP,
 
 
 if (modulus < 0) { //！uh 还小于512，这里的接收窗是个循环窗，所以此时的接收窗的边界应该是：[uh + 512,...uh]
-	LOG_DEBUG(RLC, PROTOCOL_RLC_UM_CTXT_FMT"modules < 0, sn_mod: %d NOT IN REORDERING WINDOW[%03d:%03d) [ SN %d NOT IN [%03d:%03d) VR(UR)=%03d VR(UH)=%03d\n",
+	LOG_DEBUG(RLC_RX, PROTOCOL_RLC_UM_CTXT_FMT"modules < 0, sn_mod: %d NOT IN REORDERING WINDOW[%03d:%03d) [ SN %d NOT IN [%03d:%03d) VR(UR)=%03d VR(UH)=%03d\n",
 		PROTOCOL_RLC_UM_CTXT_ARGS(ctxt_pP, rlc_pP),
 		sn_mod,
 		0,
@@ -1070,7 +1070,7 @@ if (modulus < 0) { //！uh 还小于512，这里的接收窗是个循环窗，�
 		rlc_pP->vr_ur,
 		rlc_pP->vr_uh);
 	} else { //！uh 大于512了，此时的接收窗的大小是[uh-512,uh]
-	LOG_DEBUG(RLC, PROTOCOL_RLC_UM_CTXT_FMT"modules >0, sn_mod: %d NOT IN REORDERING WINDOW[%03d:%03d) [SN %d NOT IN [%03d:%03d) VR(UR)=%03d VR(UH)=%03d\n",
+	LOG_DEBUG(RLC_RX, PROTOCOL_RLC_UM_CTXT_FMT"modules >0, sn_mod: %d NOT IN REORDERING WINDOW[%03d:%03d) [SN %d NOT IN [%03d:%03d) VR(UR)=%03d VR(UH)=%03d\n",
 		PROTOCOL_RLC_UM_CTXT_ARGS(ctxt_pP, rlc_pP),
 		sn_mod,
 		modulus,
@@ -1137,7 +1137,7 @@ void   rlc_um_receive_process_dar (const protocol_ctxt_t* const ctxt_pP,
 	 //! 这里调用rlc_um_in_window 是用来判断： PDU 是否在[uh-window_size,ur] 这个范围内,
 	in_window = rlc_um_in_window(ctxt_pP, rlc_pP, rlc_pP->vr_uh - rlc_pP->rx_um_window_size, sn, rlc_pP->vr_ur);
 
-	LOG_DEBUG(RLC, "judge 1: SN:%d, in window[uh - winsize:ur][%d--%d], result = %d \n", 
+	LOG_DEBUG(RLC_RX, "judge 1: SN:%d, in window[uh - winsize:ur][%d--%d], result = %d \n", 
 					sn,
 					rlc_pP->vr_uh - rlc_pP->rx_um_window_size,
 					rlc_pP->vr_ur,
@@ -1157,7 +1157,7 @@ void   rlc_um_receive_process_dar (const protocol_ctxt_t* const ctxt_pP,
 	// rlc_um_in_window() returns  3 if higher_bound == sn == lower_bound
 	if ((in_window == 1) || (in_window == 0)) { 
 
-	  LOG_DEBUG(RLC, PROTOCOL_RLC_UM_CTXT_FMT" RX PDU  VR(UH) – UM_Window_Size) <= SN %d < VR(UR) -> GARBAGE\n",
+	  LOG_DEBUG(RLC_RX, PROTOCOL_RLC_UM_CTXT_FMT" RX PDU  VR(UH) – UM_Window_Size) <= SN %d < VR(UR) -> GARBAGE\n",
 			PROTOCOL_RLC_UM_CTXT_ARGS(ctxt_pP, rlc_pP),
 			sn);
 			
@@ -1170,7 +1170,7 @@ void   rlc_um_receive_process_dar (const protocol_ctxt_t* const ctxt_pP,
 	  RLC_UM_MUTEX_UNLOCK(&rlc_pP->lock_dar_buffer);
 	  state_index = 0; 
 
-	  LOG_INFO(RLC, "func:%s, received SN:%d, vr_vh:%d, vr_ur:%d, ur_ux:%d, handle_status:%s",
+	  LOG_INFO(RLC_RX, "func:%s, received SN:%d, vr_vh:%d, vr_ur:%d, ur_ux:%d, handle_status:%s",
     			__func__, 
     		     sn, 
     		     rlc_pP->vr_uh, 
@@ -1184,12 +1184,12 @@ void   rlc_um_receive_process_dar (const protocol_ctxt_t* const ctxt_pP,
      //!从接收Buffer中获取到data ,说明之前已经收到过SN 的数据了
 	if ((rlc_um_get_pdu_from_dar_buffer(ctxt_pP, rlc_pP, sn))) {
 
-	  	LOG_DEBUG(RLC, "judge 2: SN:%d, is a duplicate PDU or not:%d \n", 
+	  	LOG_DEBUG(RLC_RX, "judge 2: SN:%d, is a duplicate PDU or not:%d \n", 
 						sn,
 						1);
 	   //!如果能从dar buffer 中获取到，并且PDU在[UR, UH ]这段窗内，说明之前已经收到过了，这次收到的是重复的PDU
 	  in_window = rlc_um_in_window(ctxt_pP, rlc_pP, rlc_pP->vr_ur, sn, rlc_pP->vr_uh);
-	  	 LOG_DEBUG(RLC, "judge 3: SN:%d in window[ur--uh][%d--%d], result = %d", 
+	  	 LOG_DEBUG(RLC_RX, "judge 3: SN:%d in window[ur--uh][%d--%d], result = %d", 
 						sn,
 						rlc_pP->vr_ur,
 						rlc_pP->vr_uh,
@@ -1197,7 +1197,7 @@ void   rlc_um_receive_process_dar (const protocol_ctxt_t* const ctxt_pP,
 
 	  if (in_window == 0) {  //如果在，说明重复了，也要丢弃
 
-		LOG_DEBUG(RLC, PROTOCOL_RLC_UM_CTXT_FMT" RX PDU  VR(UR) < SN %d < VR(UH) and RECEIVED BEFORE-> GARBAGE\n",
+		LOG_DEBUG(RLC_RX, PROTOCOL_RLC_UM_CTXT_FMT" RX PDU  VR(UR) < SN %d < VR(UH) and RECEIVED BEFORE-> GARBAGE\n",
 			  PROTOCOL_RLC_UM_CTXT_ARGS(ctxt_pP, rlc_pP),
 			  sn);
 
@@ -1208,7 +1208,7 @@ void   rlc_um_receive_process_dar (const protocol_ctxt_t* const ctxt_pP,
 		pdu_mem_pP = NULL;
 		RLC_UM_MUTEX_UNLOCK(&rlc_pP->lock_dar_buffer);
         state_index = 1; 
-		LOG_INFO(RLC, "func:%s, received SN:%d, vr_vh:%d, vr_ur:%d, ur_ux:%d, handle_status:%s",
+		LOG_INFO(RLC_RX, "func:%s, received SN:%d, vr_vh:%d, vr_ur:%d, ur_ux:%d, handle_status:%s",
     			__func__, 
     		     sn, 
     		     rlc_pP->vr_uh, 
@@ -1225,7 +1225,7 @@ void   rlc_um_receive_process_dar (const protocol_ctxt_t* const ctxt_pP,
 	  rlc_pP->stat_rx_data_pdus_duplicate  += 1;
 	  rlc_pP->stat_rx_data_bytes_duplicate += tb_sizeP;
 
-	  LOG_DEBUG(RLC, PROTOCOL_RLC_UM_CTXT_FMT" RX PDU SN %03d REMOVE OLD PDU BEFORE STORING NEW PDU\n",
+	  LOG_DEBUG(RLC_RX, PROTOCOL_RLC_UM_CTXT_FMT" RX PDU SN %03d REMOVE OLD PDU BEFORE STORING NEW PDU\n",
 			PROTOCOL_RLC_UM_CTXT_ARGS(ctxt_pP, rlc_pP),
 			sn);
 
@@ -1258,25 +1258,25 @@ void   rlc_um_receive_process_dar (const protocol_ctxt_t* const ctxt_pP,
 	 //!当初始化开始后，当sn =0,vh = 0，返回-1，然后更新vr_uh + 1,
 	 //! 一直到sn = 512时，uh = 512,此时rlc_um_in_reordering_window 才能返回0 
 	 //! 下面这段代码用于更新uh
-	LOG_DEBUG(RLC, "judge 4: whether SN in recording window or not \n"); 
+	LOG_DEBUG(RLC_RX, "judge 4: whether SN in recording window or not \n"); 
 	if (rlc_um_in_reordering_window(ctxt_pP, rlc_pP, sn) < 0) {
 
 		//！这里也需要判断SN 在接收窗的上边界才能更新UH，但这里只需要判断不在窗内? 
 		//！更新UH
 		rlc_pP->vr_uh = (sn + 1) % rlc_pP->rx_sn_modulo;
         
-        LOG_DEBUG(RLC, "judge 4.1: SN:%d in not recording window,update UH = sn + 1: UH = %d  \n",
+        LOG_DEBUG(RLC_RX, "judge 4.1: SN:%d in not recording window,update UH = sn + 1: UH = %d  \n",
 						sn,
 						rlc_pP->vr_uh);
 
-		LOG_DEBUG(RLC, "judge 4.2: whether vr_ur:%d in  recording window or not after UH updated   \n",
+		LOG_DEBUG(RLC_RX, "judge 4.2: whether vr_ur:%d in  recording window or not after UH updated   \n",
 						rlc_pP->vr_ur);
 						
 		//!<如果ur 在recording 窗外，则表示需要处理窗外的PDU了,处理vr_ur以下的SDU 。
 		if (rlc_um_in_reordering_window(ctxt_pP, rlc_pP, rlc_pP->vr_ur) != 0) {
 		  //如果UR 也被移出到窗外了，那么更新UR = UH - WINDOWSIZE 
 		  //这里相当于是下边界
-		  LOG_DEBUG(RLC, "judge 4.3: vr_ur:%d in not recording window \n",rlc_pP->vr_ur); 
+		  LOG_DEBUG(RLC_RX, "judge 4.3: vr_ur:%d in not recording window \n",rlc_pP->vr_ur); 
 		 in_window = rlc_pP->vr_uh - rlc_pP->rx_um_window_size;
 
 		if (in_window < 0) {
@@ -1285,14 +1285,14 @@ void   rlc_um_receive_process_dar (const protocol_ctxt_t* const ctxt_pP,
 		 //！处理从ur开始，依次SN 递增的处理
 		 //!当初始时，ur = 0, in_window = 513,则滑动窗是[513--1023:0]
 		 //!这里处理 ur 之下的SDU, 不包括UR           
-		  LOG_DEBUG(RLC, "judge 4.4: start to handle sn < UR:%d \n",rlc_pP->vr_ur); 
+		  LOG_DEBUG(RLC_RX, "judge 4.4: start to handle sn < UR:%d \n",rlc_pP->vr_ur); 
 		rlc_um_try_reassembly(ctxt_pP, rlc_pP, in_window,rlc_pP->vr_ur);
 	  }
 
 	  //!判断vr 是否在windows中,注意此时的vh 已经更新了，所以此时这个函数vr_ur可能在窗内了。
 	  if (rlc_um_in_reordering_window(ctxt_pP, rlc_pP, rlc_pP->vr_ur) < 0) {
 
-		LOG_DEBUG(RLC, PROTOCOL_RLC_UM_CTXT_FMT" VR(UR) %d OUTSIDE REORDERING WINDOW AFTER UH update, SET UR TO VR(UH) – UM_Window_Size = \
+		LOG_DEBUG(RLC_RX, PROTOCOL_RLC_UM_CTXT_FMT" VR(UR) %d OUTSIDE REORDERING WINDOW AFTER UH update, SET UR TO VR(UH) – UM_Window_Size = \
 %d, ur_uh = %d \n",
 			  PROTOCOL_RLC_UM_CTXT_ARGS(ctxt_pP, rlc_pP),
 			  rlc_pP->vr_ur,
@@ -1320,13 +1320,13 @@ void   rlc_um_receive_process_dar (const protocol_ctxt_t* const ctxt_pP,
 		rlc_pP->vr_ur = (rlc_pP->vr_ur+1) % rlc_pP->rx_sn_modulo;
 	  } while (rlc_um_get_pdu_from_dar_buffer(ctxt_pP, rlc_pP, rlc_pP->vr_ur));  //! &&(rlc_pP->vr_ur != rlc_pP->vr_uh)
 
-	  LOG_DEBUG(RLC, "judge 5: sn == UR, and SN have stored in buffer,update the UR = %d ,and the handle PDU < UR \n", rlc_pP->vr_ur); 
+	  LOG_DEBUG(RLC_RX, "judge 5: sn == UR, and SN have stored in buffer,update the UR = %d ,and the handle PDU < UR \n", rlc_pP->vr_ur); 
 
 	   //!将SN < 更新后的ur 的PDU,进行去header处理，从SN 往上处理，处理到更新后的UR结束。
 	  rlc_um_try_reassembly(ctxt_pP, rlc_pP, sn, rlc_pP->vr_ur);
 
 	  state_index = 2; 
-	  LOG_INFO(RLC, "func:%s, received SN:%d, vr_vh:%d, vr_ur:%d, ur_ux:%d, handle_status:%s",
+	  LOG_ERROR(RLC_RX, "func:%s, received SN:%d, vr_vh:%d, vr_ur:%d, ur_ux:%d, handle_status:%s",
     			__func__, 
     		     sn, 
     		     rlc_pP->vr_uh, 
@@ -1348,7 +1348,7 @@ void   rlc_um_receive_process_dar (const protocol_ctxt_t* const ctxt_pP,
 
 		if (in_window < 0) {
 
-		  LOG_DEBUG(RLC,
+		  LOG_DEBUG(RLC_RX,
 				PROTOCOL_RLC_UM_CTXT_FMT" STOP and RESET t-Reordering because VR(UX) falls outside of the reordering window and VR(UX)=%d \
 	is not equal to VR(UH)=%d -or- VR(UX) <= VR(UR)\n",
 				PROTOCOL_RLC_UM_CTXT_ARGS(ctxt_pP, rlc_pP),
@@ -1366,7 +1366,7 @@ void   rlc_um_receive_process_dar (const protocol_ctxt_t* const ctxt_pP,
 	   //! 1:	 ux = ur ,表示已经收到了，也不用再运行了
 	  if ((in_window == -2) ) {
 
-		LOG_DEBUG(RLC,
+		LOG_DEBUG(RLC_RX,
 			  PROTOCOL_RLC_UM_CTXT_FMT" STOP and RESET t-Reordering because VR(UX) = %d falls outside of the reordering window[%d:%d) \n",
 			  PROTOCOL_RLC_UM_CTXT_ARGS(ctxt_pP, rlc_pP),
 			  rlc_pP->vr_ux,
@@ -1376,7 +1376,7 @@ void   rlc_um_receive_process_dar (const protocol_ctxt_t* const ctxt_pP,
 	  }
 	  else if (in_window == 1)
 	  {
-			LOG_DEBUG(RLC,
+			LOG_DEBUG(RLC_RX,
 			  PROTOCOL_RLC_UM_CTXT_FMT" STOP and RESET t-Reordering because VR(UX) =%d is equal to VR(UH)=%d\n",
 			  PROTOCOL_RLC_UM_CTXT_ARGS(ctxt_pP, rlc_pP),
 			  rlc_pP->vr_ux,
@@ -1398,7 +1398,7 @@ void   rlc_um_receive_process_dar (const protocol_ctxt_t* const ctxt_pP,
 		//!启动timer 
 		rlc_um_start_timer_reordering(ctxt_pP, rlc_pP);
 		rlc_pP->vr_ux = rlc_pP->vr_uh;	//！更新ux = uh
-		LOG_DEBUG(RLC, PROTOCOL_RLC_UM_CTXT_FMT" RESTART t-Reordering set VR(UX) to VR(UH) =%d\n",
+		LOG_DEBUG(RLC_RX, PROTOCOL_RLC_UM_CTXT_FMT" RESTART t-Reordering set VR(UX) to VR(UH) =%d\n",
 			  PROTOCOL_RLC_UM_CTXT_ARGS(ctxt_pP, rlc_pP),
 			  rlc_pP->vr_ux);
 		
@@ -1457,7 +1457,7 @@ void	rlc_um_rx (const protocol_ctxt_t *const ctxt_pP, void *argP, struct mac_dat
 		// establishment, the RLC entity:
 		//	 - is created; and
 		//	 - enters the DATA_TRANSFER_READY state.
-		LOG_INFO(RLC, PROTOCOL_RLC_UM_CTXT_FMT" ERROR MAC_DATA_IND IN RLC_NULL_STATE\n",
+		LOG_INFO(RLC_RX, PROTOCOL_RLC_UM_CTXT_FMT" ERROR MAC_DATA_IND IN RLC_NULL_STATE\n",
 			  PROTOCOL_RLC_UM_CTXT_ARGS(ctxt_pP,l_rlc_p));
 
 		if (data_indP.data.nb_elements > 0) {
@@ -1502,7 +1502,7 @@ void	rlc_um_rx (const protocol_ctxt_t *const ctxt_pP, void *argP, struct mac_dat
 		data_indP.tb_size = data_indP.tb_size >> 3;//!按照byte 
 
 		if (data_indP.data.nb_elements > 0) {
-		  LOG_DEBUG(RLC, PROTOCOL_RLC_UM_CTXT_FMT" MAC_DATA_IND %d TBs\n",
+		  LOG_DEBUG(RLC_RX, PROTOCOL_RLC_UM_CTXT_FMT" MAC_DATA_IND %d TBs\n",
 				PROTOCOL_RLC_UM_CTXT_ARGS(ctxt_pP,l_rlc_p),
 				data_indP.data.nb_elements);
 		  tb_p = data_indP.data.head;
@@ -1541,13 +1541,13 @@ void	rlc_um_rx (const protocol_ctxt_t *const ctxt_pP, void *argP, struct mac_dat
 		// - stays in the LOCAL_SUSPEND state;
 		// - modifies only the protocol parameters and timers as indicated by
 		//	 upper layers.
-		LOG_INFO(RLC, PROTOCOL_RLC_UM_CTXT_FMT" RLC_LOCAL_SUSPEND_STATE\n",
+		LOG_INFO(RLC_RX, PROTOCOL_RLC_UM_CTXT_FMT" RLC_LOCAL_SUSPEND_STATE\n",
 			  PROTOCOL_RLC_UM_CTXT_ARGS(ctxt_pP,l_rlc_p));
 		list_free (&data_indP.data);
 		break;
 
 	  default:
-		LOG_ERROR(RLC, PROTOCOL_RLC_UM_CTXT_FMT" TX UNKNOWN PROTOCOL STATE %02X hex\n",
+		LOG_ERROR(RLC_RX, PROTOCOL_RLC_UM_CTXT_FMT" TX UNKNOWN PROTOCOL STATE %02X hex\n",
 			  PROTOCOL_RLC_UM_CTXT_ARGS(ctxt_pP,l_rlc_p),
 			  l_rlc_p->protocol_state);
 		list_free (&data_indP.data);

@@ -214,7 +214,7 @@ int   rlc_Get_Buffer_Status(rlc_buffer_rpt *buffer_status)
 #endif 
 				
 
-				LOG_WARN(RLC, "rlc_Get_Buffer_Status:ue_index:%d,lc_ch_num:%d,lc_index:%d, data_size:%d,rlc_header:%d \n",
+				LOG_WARN(RLC_TX, "rlc_Get_Buffer_Status:ue_index:%d,lc_ch_num:%d,lc_index:%d, data_size:%d,rlc_header:%d \n",
 						ue_num,buffer_status[ue_num].logic_chan_num,logic_ch_index,g_rlc_buffer_status[ue_index].data_size[logic_ch_index],
 						g_rlc_buffer_status[ue_index].rlc_header_size[logic_ch_index]);
 			}
@@ -285,7 +285,7 @@ void  rlc_ue_data_status_update(rnti_t rnti,
 
     g_rlc_buffer_status[ue_index].rlc_header_size [logical_chan_id] -= rlc_header_size;
 
-    LOG_ERROR(RLC, "%s, rnti:%d, lc:%d, update buffer status: datasize -%d,send_sdu_num:%d, rlc_header_size - %d,remaind_sdu_num:%d, \
+    LOG_ERROR(RLC_TX, "%s, rnti:%d, lc:%d, update buffer status: datasize -%d,send_sdu_num:%d, rlc_header_size - %d,remaind_sdu_num:%d, \
     remained_data_size:%d,remined_header_size:%d \n", 
           __func__,
 			rnti, 
@@ -326,7 +326,7 @@ void   rlc_Set_Buffer_Status(rnti_t rnti,
 			rlc_header_size = (((input_sdu_num - 1) * 3) / 2) + ((input_sdu_num - 1) % 2);
           }
 
-          LOG_WARN(RLC, "rnti:%d,input_sdu_num:%d , rlc_header_size:%d,data_size:%d \n",rnti,input_sdu_num,rlc_header_size,data_size );
+          LOG_WARN(RLC_TX, "rnti:%d,input_sdu_num:%d , rlc_header_size:%d,data_size:%d \n",rnti,input_sdu_num,rlc_header_size,data_size );
 
 	}
 	else 
@@ -337,7 +337,7 @@ void   rlc_Set_Buffer_Status(rnti_t rnti,
     
         
 	ue_index = dict_GetValue(g_rrc_ue_info_dict,rnti);
-	AssertFatal((ue_index < (D2D_MAX_USER_NUM + 1)), RLC, "ue num exceed max limit!!\n"); 
+	AssertFatal((ue_index < (D2D_MAX_USER_NUM + 1)), RLC_TX, "ue num exceed max limit!!\n"); 
 	
 	if (0 == g_rlc_buffer_status[ue_index].valid_flag)
 	{

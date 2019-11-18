@@ -51,6 +51,8 @@ typedef enum
     PHY,
     MAC,
     RLC,
+    RLC_TX,
+    RLC_RX,
     PDCP,
     RRC,
     NAS,

@@ -104,7 +104,7 @@ struct mac_data_ind mac_rlc_deserialize_tb (char	   *buffer_pP,
 		memcpy(((struct mac_tb_ind *) (tb_p->data))->data_ptr, &buffer_pP[tbs_size], tb_sizeP);
 
 #ifdef DEBUG_MAC_INTERFACE
-		LOG_DEBUG(RLC, "[MAC-RLC] DUMP RX PDU(%d bytes):\n", tb_sizeP);
+		LOG_DEBUG(RLC_TX, "[MAC-RLC] DUMP RX PDU(%d bytes):\n", tb_sizeP);
 		rlc_util_print_hex_octets(RLC, ((struct mac_tb_ind *) (tb_p->data))->data_ptr, tb_sizeP);
 #endif
 
@@ -164,11 +164,11 @@ void rlc_mac_ue_data_process(frame_t frameP,
 
     uint8_t      *mac_pdu_buffer_ptr = ue_pdu_buffer; 
 
-    LOG_ERROR(RLC, "----------%s start----------- \n", __func__);
+    LOG_ERROR(RLC_TX, "----------%s start----------- \n", __func__);
 	ue_rnti = rlc_data_ptr->rnti; 
 	logic_num = rlc_data_ptr->logic_chan_num; 	
 	pdu_total_size = rlc_data_ptr->tb_size; 
-	AssertFatal(pdu_total_size <= MAX_DLSCH_PAYLOAD_BYTES , RLC, "mac request pdu size exceed the maximum bytes of RLC buffer !\n"); 
+	AssertFatal(pdu_total_size <= MAX_DLSCH_PAYLOAD_BYTES , RLC_TX, "mac request pdu size exceed the maximum bytes of RLC buffer !\n"); 
 
 	
 
@@ -201,7 +201,7 @@ void rlc_mac_ue_data_process(frame_t frameP,
 		lc_pdu_component[logic_index].remain_mac_pdu_size = lc_pdu_component[logic_index].mac_reqeust_tb_size; //!initial 
 		lc_pdu_component[logic_index].logic_ch_index = logic_index; 
 		lc_pdu_component[logic_index].valid_flag = 1; 
-		LOG_DEBUG(RLC, "%s: initial para: rnti:%d; logic_index info: lc_num:%d, lc_idx:%d, is_last_subheader:%d, mac_tb_size:%d \n",
+		LOG_DEBUG(RLC_TX, "%s: initial para: rnti:%d; logic_index info: lc_num:%d, lc_idx:%d, is_last_subheader:%d, mac_tb_size:%d \n",
 			__func__, ue_rnti,logic_num,logic_index,lc_pdu_component[logic_index].is_last_sub_header_flag, 
 			lc_pdu_component[logic_index].mac_reqeust_tb_size );
     }
@@ -232,7 +232,7 @@ void rlc_mac_ue_data_process(frame_t frameP,
         										
         										
 
-		LOG_ERROR(RLC, "frame-subsfn:[%d, %d]: rnti:%d: ue_total_size:%d, logic_index:%d, mac_subheader:%d, mac_ce_header:%d, total_rlc_sdu_size:%d,\
+		LOG_ERROR(RLC_TX, "frame-subsfn:[%d, %d]: rnti:%d: ue_total_size:%d, logic_index:%d, mac_subheader:%d, mac_ce_header:%d, total_rlc_sdu_size:%d,\
 ue remained size:%d after logic chan mapping \n",
 						frameP, 
 						subframeP,
@@ -267,7 +267,7 @@ ue remained size:%d after logic chan mapping \n",
 
         
         g_rlc_debug_ue_mac_header_size += ue_pdu_size_para_ptr->remain_pdu_size; 
-		LOG_ERROR(RLC, "frame-subsfn:[%d, %d]: MAC padding header place at the head of MAC sdu ,padding header size:%d,padding size :%d\n",
+		LOG_ERROR(RLC_TX, "frame-subsfn:[%d, %d]: MAC padding header place at the head of MAC sdu ,padding header size:%d,padding size :%d\n",
 				frameP,
 				subframeP,
 				ue_pdu_size_para_ptr->remain_pdu_size,
@@ -313,14 +313,14 @@ ue remained size:%d after logic chan mapping \n",
 			}
 			default:
 			{
-				AssertFatal(0, RLC, "mac sub header type error:%d!\n", lc_pdu_component[logic_index].mac_subheader_length_type); 
+				AssertFatal(0, RLC_TX, "mac sub header type error:%d!\n", lc_pdu_component[logic_index].mac_subheader_length_type); 
 			}
 		}
 #ifdef RLC_UT_DEBUG 
 		g_rlc_debug_ue_mac_header_size += lc_pdu_component[logic_index].mac_subheader_length;
 #endif 
 
-		LOG_WARN(RLC, "lc index:%d 's mac subheader type:%d, sub header length:%d byte \n", logic_index,
+		LOG_WARN(RLC_TX, "lc index:%d 's mac subheader type:%d, sub header length:%d byte \n", logic_index,
 				 lc_pdu_component[logic_index].mac_subheader_length_type, 
 				 lc_pdu_component[logic_index].mac_subheader_length); 
     }
@@ -338,7 +338,7 @@ ue remained size:%d after logic chan mapping \n",
 		mac_subheader_length += 1; 
 		
 
-		LOG_ERROR(RLC, "frame-subsfn:[%d, %d]:UE TBS remained size:%d, pading sub header length:%d byte,padding size =%d \n",
+		LOG_ERROR(RLC_TX, "frame-subsfn:[%d, %d]:UE TBS remained size:%d, pading sub header length:%d byte,padding size =%d \n",
 		         frameP,
 		         subframeP,
 				 ue_pdu_size_para_ptr->remain_pdu_size, 
@@ -368,7 +368,7 @@ ue remained size:%d after logic chan mapping \n",
 		memset(mac_pdu_buffer_ptr,0,ue_pdu_size_para_ptr->remain_pdu_size);
     }
 
-	LOG_ERROR(RLC, "----------%s finished----------- \n", __func__);
+	LOG_ERROR(RLC_TX, "----------%s finished----------- \n", __func__);
 
    
 }
@@ -406,7 +406,7 @@ void 	rlc_mac_logicchan_data_send(const protocol_ctxt_t          ctxt,
   
  
 
-  LOG_DEBUG(RLC, PROTOCOL_CTXT_FMT"%s: logic channel:%d,tb_size=%d\n ",
+  LOG_DEBUG(RLC_TX, PROTOCOL_CTXT_FMT"%s: logic channel:%d,tb_size=%d\n ",
 	        PROTOCOL_CTXT_ARGS((&ctxt)),
 	        __func__,
 	        channel_idP,
@@ -423,7 +423,7 @@ void 	rlc_mac_logicchan_data_send(const protocol_ctxt_t          ctxt,
     rlc_mode = rlc_union_p->mode;
   } else {
     rlc_mode = RLC_MODE_NONE;
-    AssertFatal (0 , RLC,"RLC not configured key= %lld, module_id:%lld, rnti:%d, enb_flag:%d, lcid %u srb_flag %d!\n",
+    AssertFatal (0 , RLC_TX,"RLC not configured key= %lld, module_id:%lld, rnti:%d, enb_flag:%d, lcid %u srb_flag %d!\n",
     					key,  module_idP,rntiP, enb_flagP,  channel_idP, srb_flag);
   }
 
@@ -512,7 +512,7 @@ void mac_rlc_data_ind	  (
 	} else {
 		rlc_mode = RLC_MODE_NONE;
 		
-    	AssertFatal (0 , RLC,"RLC not configured key= %lld, module_id:%lld, rnti:%d, enb_flag:%d, lcid %u srb_flag %d!\n",
+    	AssertFatal (0 , RLC_TX,"RLC not configured key= %lld, module_id:%lld, rnti:%d, enb_flag:%d, lcid %u srb_flag %d!\n",
     					key,  module_idP,rntiP, enb_flagP,  channel_idP, srb_flag);
 	}
 
