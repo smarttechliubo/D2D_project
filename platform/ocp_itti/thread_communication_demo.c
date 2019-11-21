@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include<stdlib.h>
 #include <log.h>
-
+#if 0
 void * dummy_func(void *args)
 {
     int index = 0; 
@@ -90,5 +90,7 @@ int main()
     sleep(10);
 	return 0;
 }
+#endif 
+
 #endif 
 

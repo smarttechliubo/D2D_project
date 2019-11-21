@@ -33,6 +33,7 @@ void test_syslog( )
 
 
 int gdb=1;
+#if 0
 int main()
 {
 
@@ -41,6 +42,7 @@ int main()
     unsigned long end_time ;
     
     test_syslog();
+#if  0
 	itti_init(8, &tasks_info);
     rrc_module_Initial(); 
     rlc_module_initial(); 
@@ -58,8 +60,11 @@ int main()
 #else 
 	itti_create_task(TASK_D2D_DUMMY, dummy_rrc_test,29, D2D_MODE_TYPE_DESTINATION);
 #endif 
+#endif 
 
 	while(1) {}
 	
 	return 0;
 }
+#endif 
+

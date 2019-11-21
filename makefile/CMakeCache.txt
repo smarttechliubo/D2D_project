@@ -165,11 +165,20 @@ CMAKE_STRIP:FILEPATH=/usr/bin/strip
 // Studio IDE projects all commands are done without /nologo.
 CMAKE_VERBOSE_MAKEFILE:BOOL=FALSE
 
+//enable compile d2d_shared_lib
+D2D_LIB:BOOL=OFF
+
 //Value Computed by CMake
 D2D_project_BINARY_DIR:STATIC=/mnt/hgfs/eclipse_workspace/D2D_project_github/D2D_project/makefile
 
 //Value Computed by CMake
 D2D_project_SOURCE_DIR:STATIC=/mnt/hgfs/eclipse_workspace/D2D_project_github/D2D_project/makefile
+
+//Dependencies for the target
+D2D_protocol_shared_LIB_DEPENDS:STATIC=general;-lpthread;general;-lrt;
+
+//enable compile d2d_shared_lib
+LIB_D2D_SHARED:BOOL=ON
 
 
 ########################

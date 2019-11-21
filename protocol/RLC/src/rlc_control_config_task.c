@@ -456,23 +456,12 @@ void  rlc_rrc_config_process(void *message, MessagesIds         msg_type)
  * @author:  bo.liu
  * @Date:  2019年9月5日
  */
-void *rlc_rrc_config_task( )
+void *rlc_rrc_config_task(MessageDef *recv_msg)
 {
 
-	MessageDef *recv_msg;
+	rlc_rrc_config_process(recv_msg->message_ptr, recv_msg->ittiMsgHeader->MsgType);
+	itti_free_message(recv_msg);
 
-	while(1)
-	{
-		
-        if (0 == itti_receive_msg(TASK_D2D_RLC, &recv_msg))
-        {
-         	
-			rlc_rrc_config_process(recv_msg->message_ptr, recv_msg->ittiMsgHeader.messageId);
-			itti_free_message(recv_msg);
-        }
-
-
-	}
 }
  
 

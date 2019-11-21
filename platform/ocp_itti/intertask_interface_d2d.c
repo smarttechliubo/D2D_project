@@ -10,6 +10,9 @@
 #include <intertask_interface.h>
 #include <log.h>
 #include <errno.h>
+#if    0
+
+
 typedef struct timer_elm_s {
   timer_type_t      type;     ///< Timer type
   long              instance;
@@ -277,63 +280,7 @@ int itti_create_task(task_id_t task_id, void *(*start_routine)(void *), int task
     return 0;
   }
 
-#if 0
-  int timer_setup(
-    uint32_t      interval_sec,
-    uint32_t      interval_us,
-    task_id_t     task_id,
-    int32_t       instance,
-    timer_type_t  type,
-    void         *timer_arg,
-    long         *timer_id) {
-    task_list_t *t=&tasks[task_id];
 
-    do {
-      // set the taskid in the timer id to keep compatible with the legacy API
-      // timer_remove() takes only the timer id as parameter
-      *timer_id=(random()%UINT16_MAX) << 16 | task_id ;
-    } while ( t->timer_map.find(*timer_id) != t->timer_map.end());
-
-    /* Allocate new timer list element */
-    timer_elm_t timer;
-    struct timespec tp;
-    clock_gettime(CLOCK_MONOTONIC, &tp);
-
-    if (interval_us%1000 != 0)
-      LOG_W(DRIVER, "Can't set timer precision below 1ms, rounding it\n");
-
-    timer.duration  = interval_sec*1000+interval_us/1000;
-    timer.timeout= ((uint64_t)tp.tv_sec*1000+tp.tv_nsec/(1000*1000)+timer.duration);
-    timer.instance  = instance;
-    timer.type      = type;
-    timer.timer_arg = timer_arg;
-    pthread_mutex_lock (&t->queue_cond_lock);
-    t->timer_map[*timer_id]= timer;
-
-    if (timer.timeout < t->next_timer)
-      t->next_timer=timer.timeout;
-
-    eventfd_t sem_counter = 1;
-    AssertFatal ( sizeof(sem_counter) == write(t->sem_fd, &sem_counter, sizeof(sem_counter)), "");
-    pthread_mutex_unlock (&t->queue_cond_lock);
-    return 0;
-  }
-
-  int timer_remove(long timer_id) {
-    task_id_t task_id=(task_id_t)(timer_id&0xffff);
-    int ret;
-    pthread_mutex_lock (&tasks[task_id].queue_cond_lock);
-    ret=tasks[task_id].timer_map.erase(timer_id);
-    pthread_mutex_unlock (&tasks[task_id].queue_cond_lock);
-
-    if (ret==1)
-      return 0;
-    else {
-      LOG_W(DRIVER, "tried to remove a non existing timer\n");
-      return 1;
-    }
-  }
-#endif
 
   const char *itti_get_message_name(MessagesIds message_id) {
    // return messages_info[message_id].name;
@@ -351,16 +298,64 @@ int itti_create_task(task_id_t task_id, void *(*start_routine)(void *), int task
     while(1)
       sleep(24*3600);
   }
-#if 0
-  void itti_update_lte_time(uint32_t frame, uint8_t slot) {}
-  void itti_set_task_real_time(task_id_t task_id) {}
-  void itti_mark_task_ready(task_id_t task_id) {
-    // Function meaning is clear, but legacy implementation is wrong
-    // keep it void is fine: today implementation accepts messages in the queue before task is ready
-  }
-  void itti_wait_ready(int wait_tasks) {
-    // Stupid function, kept for compatibility (the parameter is meaningless!!!)
-  }
-  int signal_mask(void) { return 0;}
-#endif
+
+#endif 
+/****************************************************************************************************************/
+
+MessageDef *itti_alloc_new_message(task_id_t origin_task_id, MessagesIds message_id,
+											char *message_backup_ptr,int message_size) 
+{
+  	      
+	  MessageDef  * message; 
+	  Osp_Msg_Head *temp = OSP_Alloc_Msg(message_size);
+
+	  message = (MessageDef *)temp; 
+	  message->ittiMsgHeader = (Osp_Msg_Head *)temp;
+      message->ittiMsgHeader->MsgType = message_id;
+      message->ittiMsgHeader->MsgSize = message_size; 
+      message->ittiMsgHeader->SrcId = CURRENT_TASKID;
+
+	  message->message_ptr = MSG_HEAD_TO_COMM(temp); 
+
+	  memcpy((void *)message->message_ptr, message_backup_ptr, message_size); 
+
+	  OSP_Free_Mem(message_backup_ptr); 
+
+	  return message;
+}
+
+
+
+int itti_send_msg_to_task(task_id_t destination_task_id, instance_t instance, MessageDef *message) 
+{
+	
+    OSP_STATUS   ret;
+	message->ittiMsgHeader->DstId = destination_task_id; 
+	ret = OSP_Send_Msg(message);
+    if (OSP_OK == ret)
+    {
+
+		LOG_INFO(DRIVER,"task:%d send message:%d to task:%d successful!\n", message->ittiMsgHeader->SrcId,
+	   				message->ittiMsgHeader->MsgType, message->ittiMsgHeader->DstId);
+	   	return ret;
+	}
+	else 
+	{
+		AssertFatal(0, DRIVER, "task:%d send message:%d to task:%d fail !\n", message->ittiMsgHeader->SrcId,
+	   				message->ittiMsgHeader->MsgType, message->ittiMsgHeader->DstId)
+	}
+	
+}
+
+
+void itti_free_message(MessageDef *received_msg)
+{
+ 	OSP_Free_Msg(received_msg);
+}
+
+
+
+
+
+
 

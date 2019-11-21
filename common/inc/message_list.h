@@ -31,6 +31,7 @@
 
 
 //-----------------------------------------------------------------------------
+#if 0
 void         message_list_init (message_list_t* , char *);
 void         message_list_free (message_list_t* listP);
 MessageDef * message_list_get_head (message_list_t*);
@@ -109,6 +110,11 @@ static inline void appendVarArray(varArray_t * input, void* data) {
 static inline void freeVarArray(varArray_t * input) {
    free(input);
 }
+
+#endif 
+
+
+
 
 #endif
  

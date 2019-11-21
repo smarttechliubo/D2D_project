@@ -108,23 +108,16 @@ void rlc_rx_process(void *message, MessagesIds      msg_type)
 
 
 
-void *rlc_rx_task( )
+void *rlc_rx_task( MessageDef *recv_msg)
 {
 
-	MessageDef *recv_msg;
-
-	while(1)
-	{
-		//!TODO change RLC TASK ID 
-        if (0 == itti_receive_msg(TASK_D2D_RLC_RX, &recv_msg))
-        {
-         	
-			rlc_rx_process(recv_msg->message_ptr, recv_msg->ittiMsgHeader.messageId);
-			itti_free_message(recv_msg);
-        }
 
 
-	}
+	rlc_rx_process(recv_msg->message_ptr, recv_msg->ittiMsgHeader->MsgType);
+	itti_free_message(recv_msg);
+       
+
+
 }
   
  

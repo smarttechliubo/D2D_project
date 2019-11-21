@@ -536,23 +536,13 @@ cur process time = [%lld, %lld, %lld] \n",
 } 
 
 
-void *rlc_tx_task( )
+void *rlc_tx_task(MessageDef *recv_msg)
 {
 
-	MessageDef *recv_msg;
 
-	while(1)
-	{
-		//!TODO change RLC TASK ID 
-        if (0 == itti_receive_msg(TASK_D2D_RLC_TX, &recv_msg))
-        {
-         	
-			rlc_tx_process(recv_msg->message_ptr, recv_msg->ittiMsgHeader.messageId);
-			itti_free_message(recv_msg);
-        }
+	rlc_tx_process(recv_msg->message_ptr, recv_msg->ittiMsgHeader->MsgType);
+	itti_free_message(recv_msg);
 
-
-	}
 }
  
 

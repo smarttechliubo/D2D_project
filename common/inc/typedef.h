@@ -25,7 +25,7 @@ typedef   int   MessagesIds;
 typedef   int   instance_t;
 
 
-typedef int                bool;
+typedef unsigned char                bool;
 typedef uint32_t           frame_t;
 typedef uint32_t           sub_frame_t;
 typedef uint16_t           rnti_t;

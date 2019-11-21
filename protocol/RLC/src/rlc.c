@@ -153,7 +153,7 @@ void rlc_module_initial( )
 
     //!memory pool initial 
  
-    pool_buffer_init(); 
+  //  pool_buffer_init(); 
 
     //!initial  g_rlc_protocol_ctxt as destination 
     g_rlc_protocol_ctxt.enb_flag = 0; 

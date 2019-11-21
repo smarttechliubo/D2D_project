@@ -24,6 +24,9 @@
  */
 void rrc_module_Initial()
 {
+
+
+
 	
 	memset((void *)&g_rrc_init_para,0,sizeof(g_rrc_init_para));
 	
@@ -49,6 +52,26 @@ void rrc_module_Initial()
 	g_rrc_init_para.mib_info.pdcch_rb_num = 2; 
 
 	g_rrc_ue_info_dict = dict_init(); 
+
+
+	if (D2D_MODE_TYPE_SOURCE == rrc_GetModeType())
+	{
+		//!cell setup, initial PHY, MAC, RLC.
+		rrc_Phy_InitialConfig(g_rrc_init_para); 
+		rrc_Mac_InitialConfig(rrc_GetModeType(), g_rrc_init_para);
+ 		rrc_Rlc_InitialConfig(D2D_MODE_TYPE_SOURCE); 
+
+ 		rrc_SetStatus(RRC_STATUS_INITIAL);
+	}
+	if ( D2D_MODE_TYPE_DESTINATION == rrc_GetModeType())
+	{
+	    rrc_SetStatus(RRC_STATUS_INITIAL);
+		//！config PHY to cell search 
+		rrc_Phy_CellSearch(g_rrc_init_para.ul_freq,g_rrc_init_para.dl_freq); 
+		//!TODO  start timer 
+
+		rrc_SetStatus(RRC_STATUS_CELL_SEARCH);
+	}
 
 
 

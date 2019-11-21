@@ -748,45 +748,15 @@ int  rrc_Receive_Signal_Msg(uint16_t mode_type, void *message, MessagesIds  msg_
 
 
 
-void * rrc_Sche_Task()
+void * rrc_Sche_Task(MessageDef *recv_msg)
 {
 
-    MessageDef *recv_msg;
 
+	rrc_Receive_Signal_Msg(rrc_GetModeType(), 
+	                       recv_msg->message_ptr,
+	                       recv_msg->ittiMsgHeader->MsgType); 
+
+	itti_free_message(recv_msg);
+        
     
-
-
-	if (D2D_MODE_TYPE_SOURCE == rrc_GetModeType())
-	{
-		//!cell setup, initial PHY, MAC, RLC.
-		rrc_Phy_InitialConfig(g_rrc_init_para); 
-		rrc_Mac_InitialConfig(rrc_GetModeType(), g_rrc_init_para);
- 		rrc_Rlc_InitialConfig(D2D_MODE_TYPE_SOURCE); 
-
- 		rrc_SetStatus(RRC_STATUS_INITIAL);
-	}
-	if ( D2D_MODE_TYPE_DESTINATION == rrc_GetModeType())
-	{
-	    rrc_SetStatus(RRC_STATUS_INITIAL);
-		//！config PHY to cell search 
-		rrc_Phy_CellSearch(g_rrc_init_para.ul_freq,g_rrc_init_para.dl_freq); 
-		//!TODO  start timer 
-
-		rrc_SetStatus(RRC_STATUS_CELL_SEARCH);
-	}
-
-
-    while(1)
-    {
-		MessageDef *recv_msg;
-
-        if (0 == itti_receive_msg(TASK_D2D_RRC, &recv_msg))
-        {
-			rrc_Receive_Signal_Msg(rrc_GetModeType(), 
-			                       recv_msg->message_ptr,
-			                       recv_msg->ittiMsgHeader.messageId); 
-
-			itti_free_message(recv_msg);
-        }
-    }
 }
