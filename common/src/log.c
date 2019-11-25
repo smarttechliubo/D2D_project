@@ -28,16 +28,6 @@ static const char* s_loginfo[] = {
     [DEBUG] = "DEBUG"
 };
 
-static const char* s_comp[] = {
-	[MAIN] = "MAIN",
-	[DRIVER] = "DRIVER",
-    [PHY] = "PHY",
-    [MAC]  = "MAC",
-    [RLC]  = "RLC",
-    [PDCP] = "PDCP",
-    [RRC]  = "RRC",
-    [NAS] = "NAS"
-};
 
 static void get_timestamp(char *buffer)
 {

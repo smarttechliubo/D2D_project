@@ -58,12 +58,12 @@ void dict_SetValue(ue_info_dict *dict, uint16_t key_rnti,uint16_t value_ue_index
 {
     ue_info_node  *new_node; 
     ue_info_node *temp = dict->head; 
-	while(temp->next != NULL)
+	while(temp != dict->tail)
 	{
 		if (temp->ue_info.key_ue_rnti == key_rnti)
 		{
 			temp->ue_info.value_ue_index = value_ue_index; 
-			LOG_DEBUG(RRC,"find right node in dictionary,change the value of element\n"); 
+			LOG_INFO(RRC,"find right node in dictionary,change the value of element\n"); 
 			break; 
 		}
 		temp = temp->next;
@@ -72,12 +72,16 @@ void dict_SetValue(ue_info_dict *dict, uint16_t key_rnti,uint16_t value_ue_index
 	if (temp == dict->tail)  //!not find the key
     {
 		new_node = calloc(1,sizeof(ue_info_node)); 
-		new_node->next = NULL; 
+		new_node->next = NULL;
 		new_node->ue_info.key_ue_rnti = key_rnti; 
 		new_node->ue_info.value_ue_index = value_ue_index;
+		dict->tail->next = new_node;
+		 
 		dict->tail = new_node; 
 		dict->element_number++; 
-		LOG_DEBUG(RRC, "don't find the node, so insert new node to the dictionary\n"); 
+		LOG_INFO(RRC, "don't find the node, so insert new node to the dictionary, key_rnti = %d,value_ue_index = %d,elment_number = %d\n",
+		key_rnti,value_ue_index,dict->element_number); 
+		
     }
 
 }
@@ -115,17 +119,19 @@ uint32_t  dict_GetValue(ue_info_dict *dict, uint16_t key_rnti)
 {
     ue_info_node  *new_node; 
     ue_info_node *temp = dict->head; 
-	while(temp->next != NULL)
+   
+	while(temp != dict->tail->next)
 	{
+		LOG_DEBUG(RRC, "func:%s, dictionary's node's key = %d \n",__func__,temp->ue_info.key_ue_rnti);
 		if (temp->ue_info.key_ue_rnti == key_rnti)
 		{
-		    LOG_DEBUG(RRC, "find right node in dictionary,return the value of element\n"); 
+		    LOG_INFO(RRC, "find right node in dictionary,return the value of element\n"); 
 			return temp->ue_info.value_ue_index ;
 		}
 		temp = temp->next;
 	}
 
-	AssertFatal(temp != dict->tail , RRC, "can't find the node which's key == key_rnti,pls check it\n"); 
+	AssertFatal(temp != dict->tail->next , RRC, "can't find the node which's key == key_rnti,pls check it\n"); 
 
 } 
  
