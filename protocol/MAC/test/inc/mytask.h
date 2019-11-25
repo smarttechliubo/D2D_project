@@ -18,9 +18,22 @@
 #define PERIODIC_4MS 4
 #define PERIODIC_1MS 1
 
+typedef enum
+{
+	ERRC_TASK_SIM = 1, 
+	ERLC_TASK_SIM, 
+	EMAC_TASK_SIM,
+	EMAC_SCH_TASK_SIM,
+	EPHY_TX_TASK_SIM, 
+	EPHY_RX_TASK_SIM,
+	INTERFACE_TASK_A,
+	INTERFACE_TASK_B,
+	EMAX_TASK_SIM
+}task_id_sim;
+
 typedef struct task_list_s 
 {
-	task_id taskId;
+	task_id_sim taskId;
 	pthread_t thread;
 	//pthread_mutex_t mutex;
 	pthread_cond_t cond_4ms;
@@ -29,6 +42,7 @@ typedef struct task_list_s
 	pthread_mutex_t mutex_1ms;
 }task_info;
 
+task_id_sim get_task_id_sim(const task_id taskId);
 void init_thread(task_id taskId);
 bool thread_wait(task_id taskId, uint32_t periodic);
 bool thread_wakeup(task_id taskId, uint32_t periodic);
@@ -36,6 +50,7 @@ bool create_new_thread(task_id taskId, void *(*start_routine) (void*), void *arg
 void wait_period(uint32_t timer_fd);
 bool make_timer(uint32_t period_us, uint32_t* timer_fd, bool periodic);
 bool stop_timer(uint32_t timer_fd);
+bool close_timer(uint32_t timer_fd);
 bool restart_timer(uint32_t period_us, uint32_t timer_fd);
 
 

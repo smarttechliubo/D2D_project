@@ -141,20 +141,23 @@ uint16_t find_ue_by_ueId(const uint16_t ue_index)
 
 void mac_user_setup_cfm(const rrc_mac_connnection_setup *req, const bool result, const rnti_t rnti)
 {
-	msgDef msg;
+	msgDef* msg = NULL;
 	mac_rrc_connection_cfm *cfm;
 	msgSize msg_size = sizeof(mac_rrc_connection_cfm);
 
-	if (new_message(&msg, MAC_RRC_CONNECT_SETUP_CFG_CFM, MAC_PRE_TASK, RRC_TASK, msg_size))
+	msg = new_message(MAC_RRC_CONNECT_SETUP_CFG_CFM, TASK_D2D_MAC, TASK_D2D_RRC, msg_size);
+
+	if (msg != NULL)
 	{
-		cfm = (mac_rrc_connection_cfm*)msg.data;
+		cfm = (mac_rrc_connection_cfm*)message_ptr(msg);
 		cfm->ue_index = req->ue_index;
 		cfm->rnti = rnti;
 		cfm->status = result;
 		cfm->error_code = INVALID_U16;
 
-		if (message_send(RRC_TASK, (char *)&msg, sizeof(msgDef)))
+		if (message_send(TASK_D2D_RRC, msg, sizeof(msgDef)))
 		{
+			LOG_INFO(MAC, "LGC: MAC_RRC_CONNECT_SETUP_CFG_CFM send");
 		}
 
 		//msg_free(msg);
@@ -218,19 +221,21 @@ void mac_user_setup(const rrc_mac_connnection_setup *req)
 
 void mac_release_cfm(const rrc_mac_release_req *req, bool success)
 {
-	msgDef msg;
+	msgDef* msg = NULL;
 	mac_rrc_release_cfm *cfm;
 	msgSize msg_size = sizeof(mac_rrc_release_cfm);
 
-	if (new_message(&msg, MAC_RRC_RELEASE_CFM, MAC_PRE_TASK, RRC_TASK, msg_size))
+	msg = new_message(MAC_RRC_RELEASE_CFM, TASK_D2D_MAC, TASK_D2D_RRC, msg_size);
+
+	if (msg != NULL)
 	{
-		cfm = (mac_rrc_release_cfm*)msg.data;
+		cfm = (mac_rrc_release_cfm*)message_ptr(msg);
 		cfm->status = 1;
 		cfm->error_code = success;
 
-		if (message_send(RRC_TASK, (char *)&msg, sizeof(msgDef)))
+		if (message_send(TASK_D2D_RRC, msg, sizeof(msgDef)))
 		{
-		
+			LOG_INFO(MAC, "LGC: MAC_RRC_RELEASE_CFM send");
 		}
 	}
 	else
@@ -252,19 +257,21 @@ void mac_user_release(const rrc_mac_release_req *req)//TODO: mac reset ue releas
 
 void mac_rrc_status_report(const rnti_t rnti, bool status)
 {
-	msgDef msg;
+	msgDef* msg = NULL;
 	mac_rrc_outsync_rpt *rpt;
 	msgSize msg_size = sizeof(mac_rrc_outsync_rpt);
 
-	if (new_message(&msg, MAC_RRC_OUTSYNC_RPT, MAC_MAIN_TASK, RRC_TASK, msg_size))
+	msg = new_message(MAC_RRC_OUTSYNC_RPT, TASK_D2D_MAC_SCH, TASK_D2D_RRC, msg_size);
+
+	if (msg != NULL)
 	{
-		rpt = (mac_rrc_outsync_rpt*)msg.data;
+		rpt = (mac_rrc_outsync_rpt*)message_ptr(msg);
 		rpt->rnti = rnti;
 		rpt->outsync_flag = status;
 
-		if (message_send(RRC_TASK, (char *)&msg, sizeof(msgDef)))
+		if (message_send(TASK_D2D_RRC, msg, sizeof(msgDef)))
 		{
-
+			LOG_INFO(MAC, "LGC: MAC_RRC_OUTSYNC_RPT send");
 		}
 	}
 	else

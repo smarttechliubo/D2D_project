@@ -21,16 +21,16 @@
 #include <errno.h>
 #include "log.h"
 #include "msg_queue.h"
+#include "mytask.h"
+
 //typedef unsigned long long int uint64_t;
 
-
+/*
 static const char* s_msgq_file[] = {
-    [PHY_TASK] = "/phyQ",
 	[PHY_TX_TASK] = "/phyTxQ",
 	[PHY_RX_TASK] = "/phyRxQ",
     [MAC_TASK] = "/macQ",
-	[MAC_PRE_TASK] = "/macQ_PRE",
-	[MAC_MAIN_TASK] = "/macQ_MAIN",
+	[MAC_SCH_TASK] = "/macQ_SCH",
     [RLC_TASK] = "/rlcQ",
     [RRC_TASK] = "/rrcQ",
     [INTERFACE_TASK_A] = "/interfaceA",
@@ -38,40 +38,60 @@ static const char* s_msgq_file[] = {
 };
 
 static const char* s_msgq_file_0[] = {
-    [PHY_TASK] = "/phyQQ",
 	[PHY_TX_TASK] = "/phyTxQQ",
 	[PHY_RX_TASK] = "/phyRxQQ",
     [MAC_TASK] = "/macQQ",
-	[MAC_PRE_TASK] = "/macQQ_PRE",
-	[MAC_MAIN_TASK] = "/macQQ_MAIN",
+	[MAC_SCH_TASK] = "/macQQ_SCH",
     [RLC_TASK] = "/rlcQQ",
     [RRC_TASK] = "/rrcQQ",
 	[INTERFACE_TASK_A] = "/interfaceA",
     [INTERFACE_TASK_B] = "/interfaceB"
 };
+*/
+
+static const char* s_msgq_file[] = {
+	[ERRC_TASK_SIM] = "/rrcQ",
+	[ERLC_TASK_SIM] = "/rlcQ",
+	[EMAC_TASK_SIM] = "/macQ",
+	[EMAC_SCH_TASK_SIM] = "/macQ_SCH",
+	[EPHY_TX_TASK_SIM] = "/phyTxQ",
+	[EPHY_RX_TASK_SIM] = "/phyRxQ",
+	[INTERFACE_TASK_A] = "/interfaceA",
+	[INTERFACE_TASK_B] = "/interfaceB"
+};
 
 typedef struct
 {
+	bool open;
 	task_id taskId;
 	mqd_t msgq_id;
 }msgq_info;
 
-msgq_info q_info[MAX_TASK];
+static msgq_info q_info[EMAX_TASK_SIM];
 
-extern uint16_t g_rrc_mode;//0:source, 1:destination
+static uint16_t g_msgq_mode = 0;//0:source, 1:destination
 
-mqd_t msgq_init(task_id taskId, msg_mode mode)
+void msgInit(const uint16_t mode)
 {
-	if (taskId >= MAX_TASK)
+	g_msgq_mode = mode;
+}
+
+mqd_t msgq_init(const task_id taskId, const msg_mode mode)
+{
+	task_id_sim id = get_task_id_sim(taskId);
+
+	if (id  >= EMAX_TASK_SIM)
 		return -1;
 
-	const char *file = g_rrc_mode == 0 ? s_msgq_file[taskId] : s_msgq_file_0[taskId];
+	const char *file = s_msgq_file[id];
     struct mq_attr msgq_attr;
  
 	mqd_t msgq_id;
 	
     msgq_attr.mq_maxmsg = QUE_DEP;
     msgq_attr.mq_msgsize = MQ_MSGSIZE;
+
+	mq_unlink(file);//remove mq if it exist
 
 	if (mode == EBLOCK)
 		msgq_id = mq_open(file, O_RDWR | O_CREAT , S_IRWXU | S_IRWXG, &msgq_attr);
@@ -95,29 +115,74 @@ mqd_t msgq_init(task_id taskId, msg_mode mode)
         "large at most %ld bytes each\n\t- currently holds %ld messages\n",
         file, msgq_attr.mq_maxmsg, msgq_attr.mq_msgsize, msgq_attr.mq_curmsgs);
 
-	q_info[taskId].msgq_id = msgq_id;
-	q_info[taskId].taskId = taskId;
+	q_info[id].open = true;
+	q_info[id].msgq_id = msgq_id;
+	q_info[id].taskId = taskId;
+
+	//msgq_free_msg(msgq_id);
 
     return msgq_id;
+}
+/*
+void msgq_free_msg(task_id taskId)
+{
+	msgDef msg;
+	uint32_t msg_len = 0;
+
+
+	while(1)
+	{
+		msg_len = msgRecv(taskId, (char *)&msg, MQ_MSGSIZE);
+
+		if(msg_len>0)
+		{
+			//LOG_INFO(MAC, "msgq_free_msg, msgId:%u, source:%u, dest:%u",
+			//msg.header.msgId, msg.header.source, msg.header.destination);
+
+			msg_free(msg);
+		}
+		else
+			break;
+	}
+
+}
+*/
+void msgq_close()
+{
+	for (uint32_t i = 0; i < EMAX_TASK_SIM; i++)
+	{
+		if (q_info[i].open == true)
+		{
+
+			//msgq_free_msg(q_info[i].msgq_id);
+
+			mq_close(q_info[i].msgq_id);
+
+			LOG_INFO(MAC, "msgq_close, msgq_id:%u",q_info[i].msgq_id);
+		}
+	}
 }
 
 bool msgSend(task_id taskId, const char *msg_ptr, int msg_len)
 {
 	int ret;
-	mqd_t msgq_id = q_info[taskId].msgq_id;
+	task_id_sim id = get_task_id_sim(taskId);
 
-	if (taskId >= MAX_TASK)
+	if (id >= EMAX_TASK_SIM)
 	{
 		LOG_ERROR(MAC, "Wrong msgType:%u,msg_len:%u",taskId,msg_len);
 		return false;
 	}
 
+	mqd_t msgq_id = q_info[id].msgq_id;
+
 	ret = mq_send(msgq_id, msg_ptr, msg_len, 1);
 	if (ret == -1)
 	{
+		LOG_ERROR(MAC, "msgSend fail taskId:%u,msg_len:%u,errno:%d",taskId, msg_len, errno);
 		perror("mq_send");
-		LOG_ERROR(MAC, "msgSend fail msgType:%u,msg_len:%u,errno:%d",taskId,msg_len, errno);
-		return false;
+		LOG_ERROR(MAC, "msgSend fail taskId:%u,msg_len:%u,errno:%d",taskId, msg_len, errno);
+		return true;
 	}
 
 	return true;
@@ -127,9 +192,17 @@ uint32_t msgRecv(task_id taskId, char *msg_ptr, int msg_len)
 {
 	uint32_t ret;
 	//unsigned msg_prio = 1;
-	mqd_t msgq_id = q_info[taskId].msgq_id;
+	task_id_sim id = get_task_id_sim(taskId);
 
-	if (taskId >= MAX_TASK || msg_ptr == NULL)
+	if (id >= EMAX_TASK_SIM)
+	{
+		LOG_ERROR(MAC, "Wrong msgType:%u,msg_len:%u",taskId,msg_len);
+		return false;
+	}
+
+	mqd_t msgq_id = q_info[id].msgq_id;
+
+	if (msg_ptr == NULL)
 		return 0;
 
 	ret = mq_receive(msgq_id, msg_ptr, msg_len, NULL);

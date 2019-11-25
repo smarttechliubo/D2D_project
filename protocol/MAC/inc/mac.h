@@ -11,11 +11,13 @@
 #ifndef _SMARTLOGICTECH_MAC_H
 #define _SMARTLOGICTECH_MAC_H
 
+#include "messageDefine.h"
+
 void init_mac();
 
 void mac_reset();
-void run_period();
-void run_scheduler();
+void run_period(msgDef* msg);
+void run_scheduler(msgDef* msg);
 
 
 #endif //_SMARTLOGICTECH_MAC_H

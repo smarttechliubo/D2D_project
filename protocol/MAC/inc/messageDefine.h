@@ -12,9 +12,19 @@
 
 #include "typedef.h"
 #include "tasks_def.h"
+#include "osp_ex.h"
 
 typedef uint32_t msgId;
 typedef uint32_t msgSize;
+
+typedef enum
+{
+	EMSG_NULL,
+	EMSG_TIMER,
+	EMSG_RRC,
+	EMSG_RLC,
+	EMSG_PHY
+}MMsg_type;
 
 typedef enum
 {
@@ -34,8 +44,8 @@ typedef struct
 {
 	msgHeader header;
 	uint8_t *data;
-}MessageDef;
+}MessageDefsssss;
 
-typedef MessageDef msgDef;
+typedef Osp_Msg_Head msgDef;
 
 #endif /* _SMARTLOGICTECH_PROTOCOL_MAC_TEST_MESSAGEDEFINE_H_ */

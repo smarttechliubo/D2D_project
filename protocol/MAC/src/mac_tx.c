@@ -174,37 +174,39 @@ void handle_rlc_data_result(const rlc_mac_data_ind* ind)
 
 void handle_rlc_data_ind()
 {
-	msgDef msg;
-	uint32_t msg_len = 0;
+	msgDef* msg;
+	//uint32_t msg_len = 0;
 	msgId msg_id = 0;
+	uint32_t timeout = 1;
 
-	while (1)
+	//while (1)
 	{
-		msg_len = message_receive(MAC_MAIN_TASK, (char *)&msg, 0);
+		msg = message_receive_timeout(TASK_D2D_MAC_SCH, timeout);
 
-		if (msg_len == 0)
+		if (msg == NULL)
 		{
 			return;
 		}
 
-		msg_id = get_msgId(&msg);
+		msg_id = get_msgId(msg);
 
 		switch (msg_id)
 		{
 			case RLC_MAC_DATA_IND:
 			{
-				rlc_mac_data_ind *ind = (rlc_mac_data_ind *)msg.data;
+				rlc_mac_data_ind *ind = (rlc_mac_data_ind *)message_ptr(msg);
 
 				handle_rlc_data_result(ind);
-				message_free(ind);
 				break;
 			}
 			default:
 			{
-				LOG_ERROR(MAC, "Unknown RLC msg! msgId:%u", msg.header.msgId);
+				LOG_ERROR(MAC, "handle_rlc_data_ind, Unknown RLC msg! msgId:%u", get_msgId(msg));
 				break;
 			}
 		}
+
+		message_free(msg);
 	}
 }
 
@@ -347,7 +349,6 @@ void pre_assign_rbs(const frame_t frame, const sub_frame_t subframe)
 		if (mac->ue[i].active == false ||
 			mac->ue[i].out_of_sync == true)
 		{
-			LOG_WARN(MAC, "pre assign rbs fail for ueIndex:%u", i);
 			continue;
 		}
 
@@ -894,19 +895,21 @@ void mac_rlc_data_request(const frame_t frame, const sub_frame_t subframe)
 	uint8_t harqId = get_harqId(subframe);
 	uint16_t lc_index = 0;
 
-	msgDef msg;
+	msgDef* msg = NULL;
 	mac_rlc_data_req *req;
 	msgSize msg_size = sizeof(mac_rlc_data_req);
 
 	rlc_data_req* data = NULL;
 
-	if (!new_message(&msg, MAC_RLC_DATA_REQ, MAC_MAIN_TASK, RLC_TASK, msg_size))
+	msg = new_message(MAC_RLC_DATA_REQ, TASK_D2D_MAC_SCH, TASK_D2D_RLC, msg_size);
+
+	if (msg == NULL)
 	{
 		LOG_ERROR(MAC, "mac_rlc_data_request, new mac message fail!");
 		return;
 	}
 
-	req = (mac_rlc_data_req*)msg.data;
+	req = (mac_rlc_data_req*)message_ptr(msg);
 	req->sfn = frame;
 	req->sub_sfn = subframe;
 	req->ue_num = 0;
@@ -935,9 +938,16 @@ void mac_rlc_data_request(const frame_t frame, const sub_frame_t subframe)
 		}
 	}
 
-	if (!message_send(RLC_TASK, (char *)&msg, sizeof(msgDef)))
+	if (req->ue_num > 0)
 	{
-		LOG_ERROR(MAC, "MAC_RLC_DATA_REQ, send msg fail!");
+		if (message_send(TASK_D2D_RLC, msg, sizeof(msgDef)))
+		{
+			LOG_INFO(MAC, "LGC: MAC_RLC_DATA_REQ, send msg!");
+		}
+	}
+	else
+	{
+		message_free(msg);
 	}
 }
 
@@ -950,13 +960,20 @@ void send_pdcch_req(const frame_t frame, const sub_frame_t subframe)
 	dci_ind* common_dci = &common->dci[0];
 	dci_ind* dci = &tx->dci[0];
 
-	msgDef msg;
+	if (dci_num + common_dci_num <= 0)
+	{
+		return;
+	}
+
+	msgDef* msg = NULL;
 	PHY_PdcchSendReq* req;
 	msgSize msg_size = sizeof(PHY_PdcchSendReq);
 
-	if (new_message(&msg, MAC_PHY_PDCCH_SEND, MAC_MAIN_TASK, PHY_TASK, msg_size))
+	msg = new_message(MAC_PHY_PDCCH_SEND, TASK_D2D_MAC_SCH, TASK_D2D_PHY_TX, msg_size);
+
+	if (msg != NULL)
 	{
-		req = (PHY_PdcchSendReq*)msg.data;
+		req = (PHY_PdcchSendReq*)message_ptr(msg);
 		req->num_dci = dci_num + common_dci_num;
 		req->frame = frame;
 		req->subframe = subframe;
@@ -998,9 +1015,9 @@ void send_pdcch_req(const frame_t frame, const sub_frame_t subframe)
 			req->dci[i+common_dci_num].data[2] |= (dci[i].ndi & 0X01) << 2;
 		}
 
-		if (!message_send(PHY_TASK, (char *)&msg, sizeof(msgDef)))
+		if (message_send(TASK_D2D_PHY_TX, msg, sizeof(msgDef)))
 		{
-			LOG_ERROR(MAC, "MAC_PHY_PDCCH_SEND fail");
+			LOG_INFO(MAC, "LGC: MAC_PHY_PDCCH_SEND send");
 		}
 	}
 	else
@@ -1018,13 +1035,20 @@ void send_pusch_req(const frame_t frame, const sub_frame_t subframe)
 	sch_ind* common_sch = &common->sch[0];
 	sch_ind* sch = &tx->sch[0];
 
-	msgDef msg;
+	if (sch_num + common_sch_num <= 0)
+	{
+		return;
+	}
+
+	msgDef* msg = NULL;
 	PHY_PuschSendReq* req;
 	msgSize msg_size = sizeof(PHY_PuschSendReq);
 
-	if (new_message(&msg, MAC_PHY_PUSCH_SEND, MAC_MAIN_TASK, PHY_TASK, msg_size))
+	msg = new_message(MAC_PHY_PUSCH_SEND, TASK_D2D_MAC_SCH, TASK_D2D_PHY_TX, msg_size);
+
+	if (msg != NULL)
 	{
-		req = (PHY_PuschSendReq*)msg.data;
+		req = (PHY_PuschSendReq*)message_ptr(msg);
 		req->num = sch_num + common_sch_num;
 		req->frame = frame;
 		req->subframe = subframe;
@@ -1064,9 +1088,9 @@ void send_pusch_req(const frame_t frame, const sub_frame_t subframe)
 			req->pusch[i+common_sch_num].data = sch[i].data;
 		}
 
-		if (!message_send(PHY_TASK, (char *)&msg, sizeof(msgDef)))
+		if (message_send(TASK_D2D_PHY_TX, msg, sizeof(msgDef)))
 		{
-			LOG_ERROR(MAC, "MAC_PHY_PUSCH_SEND fail");
+			LOG_INFO(MAC, "LGC: MAC_PHY_PUSCH_SEND send");
 		}
 	}
 	else
@@ -1079,6 +1103,17 @@ void mac_phy_data_send(const frame_t frame, const sub_frame_t subframe)
 {
 	send_pdcch_req(frame, subframe);
 	send_pusch_req(frame, subframe);
+}
+
+void scheduler_data_reset(const frame_t frame, const sub_frame_t subframe)
+{
+	tx_req_info* tx = &g_sch.tx_info;
+	tx_req_info* common = &g_sch.common;
+
+	common->dci_num = 0;
+	tx->dci_num = 0;
+	common->sch_num = 0;
+	tx->sch_num = 0;
 }
 
 void mac_scheduler()
@@ -1098,5 +1133,7 @@ void mac_scheduler()
 	handle_rlc_data_ind();
 
 	mac_phy_data_send(frame, subframe);
+
+	scheduler_data_reset(frame, subframe);
 }
 

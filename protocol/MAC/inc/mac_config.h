@@ -11,6 +11,7 @@
 #ifndef _SMARTLOGICTECH_MAC_CONFIG_H
 #define _SMARTLOGICTECH_MAC_CONFIG_H
 
-void handle_rrc_msg();
+#include "messageDefine.h"
+void handle_rrc_msg(msgDef *msg);
 
 #endif //_SMARTLOGICTECH_MAC_CONFIG_H

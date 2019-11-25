@@ -107,14 +107,16 @@ uint32_t generate_mac_header(uint32_t num_sdus,
 }
 
 
-void init_rlc_sim()
+uint32_t init_rlc_sim()
 {
 	//g_runtime = 0;
 	g_rlc.num_ue = 0;
 
+	LOG_INFO(MAC,"init_rlc_sim \r\n");
+
 	memset(&g_rlc.ue[0], 0, sizeof(rlc_ue_info)*D2D_MAX_USER_NUM);
 
-	message_int(RLC_TASK, EBLOCK);
+	return 0;
 }
 
 rlc_ue_info* find_rlc_user(const uint16_t ueId)
@@ -156,9 +158,9 @@ void rlc_remove_user(rlc_ue_info* ue)
 	ue->valid = 0;
 
 	ue->ccch_data_size = 0;
-	ue->lc_num = MAX_LOGICCHAN_NUM;
+	ue->lc_num = 0;
 	
-	for (uint32_t i = 0; i < MAX_LOGICCHAN_NUM; i++)
+	//for (uint32_t i = 0; i < MAX_LOGICCHAN_NUM; i++)
 	{
 		free(ue->data_ptr);
 	}
@@ -184,7 +186,7 @@ void rlc_add_new_user(rlc_ue_info* ue, ccch_info* ccch)
 
 void handle_mac_rlc_buf_status_req(const mac_rlc_buf_status_req *req)
 {
-	msgDef msg;
+	msgDef* msg = NULL;
 	rlc_mac_buf_status_rpt *rpt;
 	msgSize msg_size = sizeof(rlc_mac_buf_status_rpt);
 
@@ -192,9 +194,11 @@ void handle_mac_rlc_buf_status_req(const mac_rlc_buf_status_req *req)
 	uint32_t  valid_ue_num = 0; 
 	uint8_t logic_chan_num = 0;
 
-	if (new_message(&msg, RLC_MAC_BUF_STATUS_RPT, RLC_TASK, MAC_MAIN_TASK, msg_size))
+	msg = new_message(RLC_MAC_BUF_STATUS_RPT, TASK_D2D_RLC, TASK_D2D_MAC_SCH, msg_size);
+
+	if (msg != NULL)
 	{
-		rpt = (rlc_mac_buf_status_rpt*)msg.data;
+		rpt = (rlc_mac_buf_status_rpt*)message_ptr(msg);
 		rpt->sfn = req->sfn;
 		rpt->sub_sfn = req->sub_sfn;
 		rpt->valid_ue_num = 0;
@@ -242,11 +246,12 @@ void handle_mac_rlc_buf_status_req(const mac_rlc_buf_status_req *req)
 
 		if (rpt->valid_ue_num > 0)
 		{
-			message_send(MAC_MAIN_TASK, (char *)&msg, sizeof(msgDef));
+			if(message_send(TASK_D2D_MAC_SCH, msg, sizeof(msgDef)))
+				LOG_INFO(RLC, "LGC: RLC_MAC_BUF_STATUS_RPT, send msg!");
 		}
 		else
 		{
-			message_free(msg.data);
+			message_free(msg);
 		}
 	}
 }
@@ -319,7 +324,7 @@ void fill_mac_sdus(rlc_mac_data_ind* ind, mac_rlc_data_req* req)
 		ind->sdu_pdu_info[ind->ue_num].valid_flag = 1;
 		ind->sdu_pdu_info[ind->ue_num].rnti = ue->rnti;
 		ind->sdu_pdu_info[ind->ue_num].tb_byte_size = dataReqSize;
-		ind->sdu_pdu_info[ind->ue_num].data_buffer_adder_ptr = ue->data_ptr;
+		ind->sdu_pdu_info[ind->ue_num].data_buffer_adder_ptr = ue->data_ptr + offset;
 		ind->ue_num++;
 	}
 }
@@ -327,20 +332,22 @@ void fill_mac_sdus(rlc_mac_data_ind* ind, mac_rlc_data_req* req)
 
 void handle_mac_rlc_data_req(mac_rlc_data_req* req)
 {
-	msgDef msg;
+	msgDef* msg = NULL;
 	rlc_mac_data_ind* ind;
 	msgSize msg_size = sizeof(rlc_mac_data_ind);
 
-	if (new_message(&msg, RLC_MAC_DATA_IND, RLC_TASK, MAC_MAIN_TASK, msg_size))
+	msg = new_message(RLC_MAC_DATA_IND, TASK_D2D_RLC, TASK_D2D_MAC_SCH, msg_size);
+
+	if (msg != NULL)
 	{
-		ind = (rlc_mac_data_ind*)msg.data;
+		ind = (rlc_mac_data_ind*)message_ptr(msg);
 		ind->ue_num = 0;
 
 		fill_mac_sdus(ind, req);
 		
-		if (message_send(MAC_MAIN_TASK, (char *)&msg, sizeof(msgDef)))
+		if (message_send(TASK_D2D_MAC_SCH, msg, sizeof(msgDef)))
 		{
-
+			LOG_INFO(RLC, "LGC: RLC_MAC_DATA_IND send");
 		}
 	}
 }
@@ -376,54 +383,90 @@ void handle_rrc_data_ind(rrc_rlc_data_ind *ind)
 	free(ind->data_addr_ptr);
 }
 
-void rlcMsgHandler()
+void handle_mac_rlc_data_rpt(mac_rlc_data_rpt* req)
 {
-	msgDef msg;
-	uint32_t msg_len = 0;
-	msgId msg_id = 0;
+    uint32_t  ue_num = req->ue_num; 
+	mac_rlc_data_info* data_ind = NULL;
+	rnti_t   rnti = 0; 
+	
+	uint16_t  logic_chan_num = 0; 
+	uint16_t  logicchannel_id = 0;
+	uint32_t  mac_pdu_size = 0;
+	char  *mac_pdu_buffer_ptr = NULL;
 
-	while (1)
-	{ 
-		msg_len = message_receive(RLC_TASK, (char *)&msg, msg_len);
+	for (uint32_t i = 0; i < ue_num; i++)
+	{
+		data_ind = &req->data_ind[i];
 
-		if (msg_len == 0)
-		{
+		if (data_ind->valid_flag)
 			continue;
+
+		rnti = data_ind->rnti;
+		logic_chan_num = data_ind->logic_chan_num;
+
+		for (uint32_t j = 0; j < logic_chan_num; j++)
+		{
+			logicchannel_id = data_ind->logicchannel_id[j];
+			mac_pdu_size = data_ind->mac_pdu_size[j];
+			mac_pdu_buffer_ptr = (char  *)data_ind->mac_pdu_buffer_ptr[j];
+
+			LOG_DEBUG(RLC, "Received MAC data report, rnti:%u, lcId:%u, pduSize:%u, pdu:%s", 
+				rnti, logicchannel_id, mac_pdu_size, mac_pdu_buffer_ptr);
 		}
 
-		msg_id = get_msgId(&msg);
+		free(data_ind->mac_pdu_buffer_ptr[0]);
+	}
+}
+
+void rlcMsgHandler(msgDef* msg)
+{
+	//msgDef* msg = NULL;
+	//uint32_t msg_len = 0;
+	msgId msg_id = 0;
+
+	//while (1)
+	{ 
+		//msg_len = message_receive(TASK_D2D_RLC, msg);
+
+		//if (msg_len == 0)
+		//{
+		//	continue;
+		//}
+
+		if (is_timer(msg))
+			return;
+		
+		msg_id = get_msgId(msg);
 
 		switch (msg_id)
 		{
 			case RRC_RLC_DATA_IND:
 			{
-				rrc_rlc_data_ind *ind = (rrc_rlc_data_ind *)msg.data;
+				rrc_rlc_data_ind *ind = (rrc_rlc_data_ind *)message_ptr(msg);
 
 				handle_rrc_data_ind(ind);
-				message_free(ind);
+				break;
 			}
 			case MAC_RLC_BUF_STATUS_REQ:
 			{
-				mac_rlc_buf_status_req *req = (mac_rlc_buf_status_req *)msg.data;
+				mac_rlc_buf_status_req *req = (mac_rlc_buf_status_req *)message_ptr(msg);
 
 				handle_mac_rlc_buf_status_req(req);
-				message_free(req);
 				break;
 			}
 			case MAC_RLC_DATA_REQ:
 			{
-				mac_rlc_data_req *req = (mac_rlc_data_req *)msg.data;
+				mac_rlc_data_req *req = (mac_rlc_data_req *)message_ptr(msg);
 
 				handle_mac_rlc_data_req(req);
-				message_free(req);
 				break;
 			}
 			case MAC_RLC_DATA_RPT:
 			{
-				mac_rlc_data_rpt *req = (mac_rlc_data_rpt *)msg.data;
+				mac_rlc_data_rpt *req = (mac_rlc_data_rpt *)message_ptr(msg);
 
-				//handle_mac_rlc_data_req(req);
-				message_free(req);
+				handle_mac_rlc_data_rpt(req);
+
 				break;
 			}
 			default:
@@ -432,20 +475,28 @@ void rlcMsgHandler()
 				break;
 			}
 		}
+
+		message_free(msg);
 	}
 }
+
+void rlc_sim_thread(msgDef* msg)
+{
+	rlcMsgHandler(msg);
+}
+
 
 void *rlc_thread()
 {
 
-	rlcMsgHandler();
+	//rlcMsgHandler();
 
 	for (uint16_t i = 0; i < D2D_MAX_USER_NUM; i++)
 	{
 		 rlc_ue_info* ue = &g_rlc.ue[i];
 
-		if (ue->valid)
-			rlc_remove_user(ue );
+		//if (ue->valid)
+		rlc_remove_user(ue );
 	}
 
 	return 0;

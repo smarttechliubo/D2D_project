@@ -64,8 +64,8 @@ typedef struct
 
 void init_rrc_src_sim();
 void init_rrc_dst_sim();
-void rrcSrsMsgHandler(const msgDef* msg, const msgId msg_id);
-void rrcDstMsgHandler(const msgDef* msg, const msgId msg_id);
+void rrcSrsMsgHandler(msgDef* msg, const msgId msg_id);
+void rrcDstMsgHandler(msgDef* msg, const msgId msg_id);
 
 void rrcSrcStatusHandler();
 void rrcSrcUserStatusHandler();

@@ -10,7 +10,9 @@
 #ifndef _SMARTLOGICTECH_PROTOCOL_MAC_INC_MAC_RX_H_
 #define _SMARTLOGICTECH_PROTOCOL_MAC_INC_MAC_RX_H_
 
-void msg_handler();
+#include "messageDefine.h"
+
+void msg_handler(msgDef* msg);
 
 
 #endif /* _SMARTLOGICTECH_PROTOCOL_MAC_INC_MAC_RX_H_ */

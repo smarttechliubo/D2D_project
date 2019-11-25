@@ -20,14 +20,13 @@
 #include "mac_rx.h"
 #include "mac_tx.h"
 #include "mac_config.h"
+#include "msg_handler.h"
 #include "pre_schedule.h"
 #include "d2d_message_type.h"
 #include "interface_rrc_mac.h"
+#include "intertask_interface.h"
 
 bool g_timing_sync = false;
-
-//extern context_s g_context;
-
 
 void init_mac()
 {
@@ -66,58 +65,79 @@ void init_mac()
 void mac_clean()
 {
 	free(g_context.mac);
+
+	LOG_INFO(MAC, "mac_clean");
 }
 
-mode_e get_mac_mode()
+void mac_pre_handler(msgDef *msg)
 {
-	return g_context.mac->mode;
-}
+	LOG_INFO(MAC, "LGC: mac_pre_handler 1");
 
-void mac_pre_handler()
-{
 	frame_t frame;
 	sub_frame_t subframe;
 
-	if (g_timing_sync == false)
-		return;
-
-	frame = g_context.frame;
-	subframe = g_context.subframe;
-
-	frame = (frame + (subframe + TIMING_ADVANCE) / MAX_SUBSFN) % MAX_SFN;
-	subframe = (subframe + TIMING_ADVANCE) % MAX_SUBSFN;
-
-	g_context.mac->frame = frame;
-	g_context.mac->subframe = subframe;
-	g_context.mac->cce_bits = 0;
-
-	LOG_INFO(MAC, "mac_pre_handler 1");
-	handle_rrc_msg();
-	LOG_INFO(MAC, "mac_pre_handler 2");
-
-	if (!pre_check(subframe))
+	if (!is_timer(msg))
 	{
-		return;
+		handle_rrc_msg(msg);
 	}
-	LOG_INFO(MAC, "mac_pre_handler 3");
+	else
+	{
+		if (g_timing_sync == false)
+			return;
 
-	pre_schedule(frame, subframe, g_context.mac);
-	LOG_INFO(MAC, "mac_pre_handler 4");
+		frame = g_context.frame;
+		subframe = g_context.subframe;
 
+		frame = (frame + (subframe + TIMING_ADVANCE) / MAX_SUBSFN) % MAX_SFN;
+		subframe = (subframe + TIMING_ADVANCE) % MAX_SUBSFN;
+
+		g_context.mac->frame = frame;
+		g_context.mac->subframe = subframe;
+		g_context.mac->cce_bits = 0;
+
+		if (!pre_check(subframe))
+		{
+			return;
+		}
+
+		pre_schedule(frame, subframe, g_context.mac);
+	}
 }
 
-extern uint32_t syncT();
+uint32_t system_run_time = 0;
+
+void syncTimingUpdate()
+{
+	system_run_time++;
+	
+	if (system_run_time%10 == 4)
+	{
+		system_run_time = system_run_time + 6;
+	}
+
+	if (system_run_time == 10240)
+		system_run_time = 0;
+}
+
+uint32_t get_syncTiming()
+{
+	 return system_run_time;
+}
+
 
 void syncTime()//TODO: sync
 {
-    // 1. get timing sync with PHY	
+	uint32_t time = 0;
+
+	// 1. get timing sync with PHY	
 	if (g_timing_sync == false)
     {
-		uint32_t time = syncT();// TODO: sync
+		time = get_syncTiming();// TODO: sync
+
 		if (time != 0xFFFFFFFF)
 		{
-			g_context.frame = time >> 16;
-			g_context.subframe = time&0xFFFF;
+			g_context.frame = time / 10;
+			g_context.subframe = time % MAX_SUBSFN;
 			g_timing_sync = true;
 		}
 		else
@@ -129,6 +149,7 @@ void syncTime()//TODO: sync
 	else if (g_timing_sync == true)
 	{
 	    g_context.subframe++;
+
 		if (g_context.subframe == MAX_SUBSFN)
 		{
 		    g_context.subframe = 0;
@@ -137,14 +158,17 @@ void syncTime()//TODO: sync
 		
 		if ((g_context.frame*10 + g_context.subframe)%TIMING_SYNC_PERIOD == 0)
 		{
-			uint32_t time = syncT();
+			time = get_syncTiming();
+
 			if (time != 0xFFFFFFFF)
 			{
-				if (time != g_context.frame*MAX_SUBSFN + g_context.subframe)
+				if (time != g_context.frame*10 + g_context.subframe)
 				{
-					g_context.frame = time >> 16;
-					g_context.subframe = time&0xFFFF;
-					LOG_WARN(MAC, "Timing sync loast!!");
+					LOG_WARN(MAC, "Timing sync loast!! time:%u, frame:%u, subframe:%u",
+						time, g_context.frame, g_context.subframe);
+
+					g_context.frame = time / 10;
+					g_context.subframe = time % MAX_SUBSFN;
 				}
 			}
 			else
@@ -155,26 +179,64 @@ void syncTime()//TODO: sync
 	}
 }
 
-// TODO: register interrupt function on platform, for now, just run with period timer 
-// interrupt function
-void run_period()
+int32_t init_mac_period()
 {
-	LOG_INFO(MAC, "run_period");
-	syncTime();		
-	mac_pre_handler();
+	void* pTimer;
+	int32_t ret;
+	
+	pTimer = OSP_timerCreateSim(TASK_D2D_MAC, 1, 4,0);
+	ret = OSP_timerStart(pTimer);
+
+	LOG_INFO(MAC,"init_mac_period pTimer is %p, ret:%d\r\n", pTimer,ret);
+
+	init_mac();
+
+	return 0;
 }
 
-void run_scheduler()
+
+// interrupt function
+void run_period(msgDef* msg)
 {
-	LOG_INFO(MAC, "run_scheduler");
+	syncTimingUpdate();//TODO: timing sync with phy
+	syncTime();
 
-	msg_handler();
+	LOG_INFO(MAC, "run_period current time frame：%u，subframe:%u", g_context.frame, g_context.subframe);
 
-	if (!pre_check(g_context.mac->subframe))
+	mac_pre_handler(msg);
+}
+
+int32_t init_mac_scheduler()
+{
+	void* pTimer;
+	int32_t ret;
+	
+	pTimer = OSP_timerCreateSim(TASK_D2D_MAC_SCH, 1, 4, 1);
+	ret = OSP_timerStart(pTimer);
+
+	LOG_INFO(MAC,"init_mac_scheduler pTimer is %p, ret:%d\r\n", pTimer,ret);
+
+	init_mac();
+
+	return 0;
+}
+
+void run_scheduler(msgDef* msg)
+{
+	LOG_INFO(MAC, "run_scheduler， frame:%u, subframe:%u", g_context.mac->frame, g_context.mac->subframe);
+
+	if (!is_timer(msg))
 	{
-		return;
+		msg_handler(msg);
 	}
+	else
+	{
+		if (!pre_check(g_context.mac->subframe))
+		{
+			return;
+		}
 
-	mac_scheduler();
+		mac_scheduler();
+	}
 }
 

@@ -20,11 +20,62 @@
 #include "log.h"
 
 
-task_info mytask[MAX_TASK];
+task_info mytask[EMAX_TASK_SIM];
+
+task_id_sim get_task_id_sim(const task_id taskId)
+{
+	task_id_sim mqid = 0;
+
+	switch (taskId)
+	{
+		case TASK_D2D_RRC:
+		{
+			mqid = ERRC_TASK_SIM;
+			break;
+		}
+		case TASK_D2D_RLC:
+		{
+			mqid = ERLC_TASK_SIM;
+			break;
+		}
+		case TASK_D2D_MAC:
+		{
+			mqid = EMAC_TASK_SIM;
+			break;
+		}
+		case TASK_D2D_MAC_SCH:
+		{
+			mqid = EMAC_SCH_TASK_SIM;
+			break;
+		}
+		case TASK_D2D_PHY_TX:
+		{
+			mqid = EPHY_TX_TASK_SIM;
+			break;
+		}
+		case TASK_D2D_PHY_RX:
+		{
+			mqid = EPHY_RX_TASK_SIM;
+			break;
+		}
+		default:
+			break;
+	}
+
+	return mqid;
+}
 
 void init_thread(task_id taskId)
 {
-	task_info* task = &mytask[taskId];
+	task_id_sim id = get_task_id_sim(taskId);
+
+	if (id >= EMAX_TASK_SIM)
+	{
+		LOG_ERROR(MAC, "init_thread, Wrong taskId:%u",taskId);
+		return;
+	}
+
+	task_info* task = &mytask[id];
 
 	pthread_mutex_init(&task->mutex_4ms,NULL);
 	pthread_cond_init(&task->cond_4ms,NULL);
@@ -34,8 +85,16 @@ void init_thread(task_id taskId)
 }
 
 bool thread_wakeup(task_id taskId, uint32_t periodic)
-{
-	task_info* task = &mytask[taskId];
+{	
+	task_id_sim id = get_task_id_sim(taskId);
+
+	if (id >= EMAX_TASK_SIM)
+	{
+		LOG_ERROR(MAC, "thread_wakeup, Wrong taskId:%u",taskId);
+		return false;
+	}
+
+	task_info* task = &mytask[id];
 
 	if (periodic == PERIODIC_4MS)// 4ms periodic timer
 	{
@@ -55,7 +114,15 @@ bool thread_wakeup(task_id taskId, uint32_t periodic)
 
 bool thread_wait(task_id taskId, uint32_t periodic)
 {
-	task_info* task = &mytask[taskId];
+	task_id_sim id = get_task_id_sim(taskId);
+
+	if (id >= EMAX_TASK_SIM)
+	{
+		LOG_ERROR(MAC, "thread_wait, Wrong taskId:%u",taskId);
+		return false;
+	}
+
+	task_info* task = &mytask[id];
 
 	if (periodic == PERIODIC_4MS)// 4ms periodic timer
 	{
@@ -75,9 +142,17 @@ bool thread_wait(task_id taskId, uint32_t periodic)
 
 bool create_new_thread(task_id taskId, void *(*start_routine) (void*), void *arg)
 {
+	task_id_sim id = get_task_id_sim(taskId);
+
+	if (id >= EMAX_TASK_SIM)
+	{
+		LOG_ERROR(MAC, "create_new_thread, Wrong taskId:%u",taskId);
+		return false;
+	}
+
 	int policy;
 	
-    if ((taskId >= MAX_TASK) || (pthread_create(&mytask[taskId].thread, NULL, start_routine, arg) != 0))
+    if ((id >= EMAX_TASK_SIM) || (pthread_create(&mytask[id].thread, NULL, start_routine, arg) != 0))
     {
 		LOG_ERROR(MAC, "[TEST]: create task error, taskId:%u",taskId);
 		return false;
@@ -89,7 +164,7 @@ bool create_new_thread(task_id taskId, void *(*start_routine) (void*), void *arg
 	sparam.sched_priority = sched_get_priority_max(SCHED_FIFO)-10;
 	policy = SCHED_FIFO ; 
 
-	if (pthread_setschedparam(mytask[taskId].thread, policy, &sparam) != 0) 
+	if (pthread_setschedparam(mytask[id].thread, policy, &sparam) != 0) 
 	{
 		//
 	}
@@ -132,6 +207,13 @@ bool make_timer(uint32_t period_us, uint32_t* timer_fd, bool periodic)
 		perror("timerfd_create");
 		return false;
     }
+
+	return true;
+}
+
+bool close_timer(uint32_t timer_fd)
+{
+	close(timer_fd);
 
 	return true;
 }

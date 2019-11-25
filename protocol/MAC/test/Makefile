@@ -1,25 +1,45 @@
 
 CFLAGS := 
-#CFLAGS += -DMAC_TEST
+CFLAGS += -DMAC_TEST
 
-MAC_SRCS += $(wildcard ../src/*.c src/*.c ../../../common/src/log.c)
-MAC_OBJS += $(MAC_SRCS:.c=.o)
-MAC_DEPS += $(MAC_SRCS:.c=.d)
+#for mac test
 
-INCFLAGS = -I. -I../../../common/inc/ -I../../../interface/ -I./../inc -I./inc/
+MAC_SRCS_TEST += $(wildcard ../src/*.c src/*.c ../../../common/src/log.c)
+#MAC_SRCS_TEST += $(wildcard ../src/*.c ../../../common/src/log.c ../../../platform/ocp_itti/task_define.c)
+MAC_OBJS_TEST += $(MAC_SRCS_TEST:.c=.o)
+MAC_DEPS_TEST += $(MAC_SRCS_TEST:.c=.d)
 
--include $(MAC_DEPS)
+INCFLAGS += -I. 
+INCFLAGS += -I../../../common/inc/ 
+INCFLAGS += -I../../../platform/osp_lib/
+INCFLAGS += -I../../../platform/ocp_itti/
+INCFLAGS += -I../../../interface/ 
+INCFLAGS += -I./../inc 
+INCFLAGS += -I./inc/
+#INCFLAGS = -I. -I../../../common/inc/ -I../../../platform/osp_lib/ -I../../../platform/ocp_itti -I../../../interface/ -I./../inc
 
-%.o:%.c
-	@echo "Compiling obj"
-	gcc $(CFLAGS) $(INCFLAGS) -c -g -Wall $< -o $@ -MD -MF $*.d -MP
+-include $(MAC_DEPS_TEST)
 
-mac:$(MAC_OBJS)
-	@echo "Compiling start"
-	gcc $^ -o $@  -g  -lrt -ldl -lpthread
-	rm -f  $(MAC_OBJS) $(MAC_DEPS)
+MAC_LIB_TEST=libD2D_protocol_shared.so
+
+mac_test:$(MAC_LIB_TEST)
+	gcc $^ -o $@  -g $(MAC_LIB_TEST) -losp -lrt -ldl -lpthread
+	cp ../../../platform/osp_lib/libosp.so /lib
+	cp $(MAC_LIB_TEST) /lib
+
+$(MAC_OBJS_TEST):%.o:%.c
+	@echo "Compiling MAC_OBJS_TEST"
+	gcc $(CFLAGS) $(INCFLAGS) -c  -fPIC -g -Wall $< -o $@ -MD -MF $*.d -MP
+
+$(MAC_LIB_TEST):$(MAC_OBJS_TEST)
+	@echo "Compiling start MAC_LIB_TEST"
+	gcc -shared -fPIC -o $(MAC_LIB_TEST) $^ -o $@  -g
+	rm -f  $(MAC_OBJS_TEST) $(MAC_DEPS_TEST)
 
 clean:
 	@echo "Make clean"
-	rm -f  *.d *.o mac
-	rm -f  $(MAC_OBJS) $(MAC_DEPS) mac
+	rm -f  *.d *.o mac_test
+	rm -f  $(MAC_OBJS_TEST) $(MAC_DEPS_TEST) mac_test
+
+
+.PHONY: clean

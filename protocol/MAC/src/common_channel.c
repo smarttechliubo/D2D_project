@@ -21,18 +21,21 @@
 
 bool send_pbch_msg(const frame_t frame, const sub_frame_t subframe, const common_channel_s *common_channel)
 {
-	msgDef msg;
+	msgDef* msg = NULL;
 	PHY_PBCHSendReq *cfm;
 	msgSize msg_size = sizeof(PHY_PBCHSendReq);
 
-	if (new_message(&msg, MAC_PHY_PBCH_TX_REQ, MAC_PRE_TASK, PHY_TASK, msg_size))
+	msg = new_message(MAC_PHY_PBCH_TX_REQ, TASK_D2D_MAC, TASK_D2D_PHY_TX, msg_size);
+
+	if (msg != NULL)
 	{
-		cfm = (PHY_PBCHSendReq*)msg.data;
+		cfm = (PHY_PBCHSendReq*)message_ptr(msg);
 		cfm->frame = frame;
 		cfm->subframe = subframe;
 
-		if (message_send(PHY_TASK, (char *)&msg, sizeof(msgDef)))
+		if (message_send(TASK_D2D_PHY_TX, msg, sizeof(msgDef)))
 		{
+			LOG_INFO(MAC, "LGC: MAC_PHY_PBCH_TX_REQ send");
 			return true;
 		}
 	}

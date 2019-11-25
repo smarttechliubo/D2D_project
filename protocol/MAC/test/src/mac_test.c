@@ -18,7 +18,7 @@
 #include "log.h"
 #include "mytask.h"
 #include "msg_handler.h"
-
+/*
 bool g_run_enable = false;
 uint32_t run_time = 0;
 
@@ -29,10 +29,30 @@ extern void *rrc_thread();
 extern void *rlc_thread();
 extern void *phy_tx_thread();
 extern void *phy_rx_thread();
+extern void mac_clean();
+
+uint32_t g_systemTing = 0;
+
 
 uint32_t syncT()
 {
 	return run_time;
+}
+
+void timing_update()
+{
+	run_time++;
+	
+	if (run_time%10 == 4)
+	{
+		run_time = run_time + 6;
+	}
+	
+	if (run_time == 100)
+	{
+		run_time = 0;
+		g_run_enable = 0;
+	}
 }
 
 void *mac_thread()
@@ -49,9 +69,9 @@ void *mac_thread()
 		return NULL;
 	}
 
-    while(g_run_enable)
+    while(1)
 	{
-		thread_wakeup(MAC_TASK, PERIODIC_4MS);
+		thread_wakeup(TASK_D2D_MAC, PERIODIC_4MS);
 
 		if (!make_timer(period_us_1, &timer_fd_1, false))
 		{
@@ -61,30 +81,22 @@ void *mac_thread()
 
 		wait_period(timer_fd_1);
 		
-		stop_timer(timer_fd_1);
+		close_timer(timer_fd_1);
 
-		thread_wakeup(MAC_TASK, PERIODIC_1MS);
+		thread_wakeup(TASK_D2D_MAC, PERIODIC_1MS);
 
+		wait_period(timer_fd_4);
 
-		if (g_run_enable) 
-		{
-			wait_period(timer_fd_4);
-		}
+		timing_update();
 
-		run_time++;
-
-		if (run_time >= 20)
-		{
-			g_run_enable = false;
-			break;
-		}}
+	}
 
 	return 0;
 }
 
 void *mac_pre_thread()
 {
-	while(thread_wait(MAC_TASK, PERIODIC_4MS))
+	while(thread_wait(TASK_D2D_MAC, PERIODIC_4MS))
 	{
 		run_period();
 	}
@@ -93,31 +105,35 @@ void *mac_pre_thread()
 
 void *mac_main_thread()
 {
-	while(thread_wait(MAC_TASK, PERIODIC_1MS))
+	while(thread_wait(TASK_D2D_MAC, PERIODIC_1MS))
 	{
 		run_scheduler();
 	}
+
 	return NULL;
 }
 
 void create_task()
 {
-	create_new_thread(MAC_TASK, mac_thread, NULL);
-	create_new_thread(MAC_PRE_TASK, mac_pre_thread, NULL);
-	create_new_thread(MAC_PRE_TASK, mac_main_thread, NULL);
-	create_new_thread(RRC_TASK, rrc_thread, NULL);
-	create_new_thread(RLC_TASK, rlc_thread, NULL);
-	create_new_thread(PHY_TX_TASK, phy_tx_thread, NULL);
-	create_new_thread(PHY_RX_TASK, phy_rx_thread, NULL);
+	create_new_thread(TASK_D2D_MAC, mac_thread, NULL);
+	create_new_thread(TASK_D2D_MAC, mac_pre_thread, NULL);
+	create_new_thread(TASK_D2D_MAC_SCH, mac_main_thread, NULL);
+	create_new_thread(TASK_D2D_RRC, rrc_thread, NULL);
+	create_new_thread(TASK_D2D_RLC, rlc_thread, NULL);
+	create_new_thread(TASK_D2D_PHY_TX, phy_tx_thread, NULL);
+	create_new_thread(TASK_D2D_PHY_RX, phy_rx_thread, NULL);
 }
 
 void init_mac_sim()
 {
 	init_mac();
-	init_thread(MAC_TASK);//used to sync
-	message_int(MAC_TASK, ENONBLOCK);
-	message_int(MAC_PRE_TASK, ENONBLOCK);
-	message_int(MAC_MAIN_TASK, ENONBLOCK);
+	init_thread(TASK_D2D_MAC);//used to sync
+}
+
+void mac_test_clean()
+{
+	mac_clean();
+	message_close();
 }
 
 void init_sim(const uint16_t mode)
@@ -125,31 +141,25 @@ void init_sim(const uint16_t mode)
 	g_run_enable = true;
 	run_time = 0;
 
-	init_mac_sim();
+	//init_mac_sim();
 	init_rrc_sim(mode);
-	init_rlc_sim();
-	init_phy_sim();
+	init_rlc_sim(mode);
+	init_phy_sim(mode);
 
-	//for (uint32_t i = 0; i < MAX_TASK; i++)
-	//{
-	//	message_int((task_id)i);
-	//}
 }
-
-int main(int argc,char *argv[])
+int gdb=0;
+int main_______(int argc,char *argv[])
 {
 	LOG_INFO(MAC, "[TEST]: MAC main start");
 
 	uint16_t mode = 0; //0:source, 1:destination
-
+	while(gdb);
 	if (argc >= 2)
 	{
 		mode = (*argv[1] == '1') ? 1 : 0;
 		
 		LOG_INFO(MAC, "[TEST]: MAC main start mode:%u", mode);
 	}
-
-	return 1;
 	
 	init_sim(mode);
 	create_task();
@@ -158,5 +168,9 @@ int main(int argc,char *argv[])
 	{
 
 	}
+
+	mac_test_clean();
+
 	return 1;
 }
+*/

@@ -22,20 +22,22 @@
 
 void handle_buffer_status_req(const frame_t frame, const sub_frame_t subframe)
 {
-	msgDef msg;
+	msgDef* msg = NULL;
 
 	mac_rlc_buf_status_req *req;
 	msgSize msg_size = sizeof(mac_rlc_buf_status_req);
 
-	if (new_message(&msg, MAC_RLC_BUF_STATUS_REQ, MAC_PRE_TASK, RLC_TASK, msg_size))
+	msg = new_message(MAC_RLC_BUF_STATUS_REQ, TASK_D2D_MAC, TASK_D2D_RLC, msg_size);
+
+	if (msg != NULL)
 	{	
-		req = (mac_rlc_buf_status_req*)msg.data;
+		req = (mac_rlc_buf_status_req*)message_ptr(msg);
 		req->sfn = frame;
 		req->sub_sfn = subframe;
 	
-		if (!message_send(RLC_TASK, (char *)&msg, sizeof(msgDef)))
+		if (message_send(TASK_D2D_RLC, msg, sizeof(msgDef)))
 		{
-			LOG_ERROR(MAC, "mac_rlc_buf_status_req send");
+			LOG_INFO(MAC, "LGC: mac_rlc_buf_status_req send, frame:%u, subframe:%u", frame, subframe);
 		}
 	}
 	else

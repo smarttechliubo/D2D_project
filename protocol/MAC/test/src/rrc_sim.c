@@ -19,55 +19,52 @@
 #include "msg_handler.h"
 
 //rrc_info g_rrc;
-static uint32_t g_runtime = 0;
 uint16_t g_rrc_mode = 0;//0:source, 1:destination
 
 
-void init_rrc_sim(const uint16_t mode)
+uint32_t init_rrc_sim()
 {
-	g_runtime = 0;
-	g_rrc_mode = mode;
+	void* pTimer;
+	int32_t ret;
+	
+	pTimer = OSP_timerCreateSim(TASK_D2D_RRC, 1, 4,0);
+	ret = OSP_timerStart(pTimer);
 
-	if (mode == 0)
+	LOG_INFO(MAC,"init_rrc_sim pTimer is %p, ret:%u\r\n", pTimer, ret);
+
+	if (g_rrc_mode == 0)
 		init_rrc_src_sim();
 	else
 		init_rrc_dst_sim();
 
-	message_int(RRC_TASK, ENONBLOCK);
+	return 0;
 }
 
 uint16_t get_rrc_mode()
 {
 	return g_rrc_mode;
 }
-void rrcMsgHandler()
+
+void rrcMsgHandler(msgDef* msg)
 {
-	msgDef msg;
-	uint32_t msg_len = 0;
+	//msgDef* msg = NULL;
 	msgId msg_id = 0;
 
-	while (1)
+	//while (1)
 	{
-		msg_len = message_receive(RRC_TASK, (char *)&msg, msg_len);
-
-		if (msg_len == 0)
-		{
-			return;
-		}
-
-		msg_id = get_msgId(&msg);
+		msg_id = get_msgId(msg);
 
 		switch (msg_id)
 		{
 			case MAC_RRC_BCCH_MIB_RPT:
 			case MAC_RRC_BCCH_SIB1_RPT:
 			{
-				rrcDstMsgHandler(&msg, msg_id);
+				rrcDstMsgHandler(msg, msg_id);
 				break;
 			}
 			case MAC_RRC_BCCH_PARA_CFG_CFM:
 			{
-				rrcSrsMsgHandler(&msg, msg_id);
+				rrcSrsMsgHandler(msg, msg_id);
 				break;
 			}
 			case MAC_RRC_INITIAL_CFM:
@@ -78,11 +75,11 @@ void rrcMsgHandler()
 			{
 				if (g_rrc_mode == 0)
 				{
-					rrcSrsMsgHandler(&msg, msg_id);
+					rrcSrsMsgHandler(msg, msg_id);
 				}
 				else
 				{
-					rrcDstMsgHandler(&msg, msg_id);
+					rrcDstMsgHandler(msg, msg_id);
 				}
 
 				break;
@@ -93,9 +90,31 @@ void rrcMsgHandler()
 				break;
 			}
 		}
+
+		message_free(msg);
 	}
 }
 
+void rrc_sim_thread(msgDef* msg)
+{	
+
+	if (!is_timer(msg))
+	{
+		rrcMsgHandler(msg);
+	}
+	else if (g_rrc_mode == 0)
+	{
+		rrcSrcStatusHandler();
+		rrcSrcUserStatusHandler();
+	}
+	else if (g_rrc_mode == 1)
+	{
+		rrcDstcStatusHandler();
+		rrcDstUserStatusHandler();
+	}
+}
+
+/*
 void *rrc_thread()
 {
 	uint32_t timer_fd = 0;
@@ -109,7 +128,7 @@ void *rrc_thread()
 
 	while(1)
 	{
-		rrcMsgHandler();
+		rrcMsgHandler(msg);
 
 		if (g_rrc_mode == 0)
 		{
@@ -122,16 +141,9 @@ void *rrc_thread()
 			rrcDstUserStatusHandler();
 		}
 
-		if (g_runtime < 20)
-		{
-			g_runtime++;
-			wait_period(timer_fd);
-		}
-		else 
-		{
-			break;
-		}
+		wait_period(timer_fd);
 	}
+
 	return 0;
 }
-
+*/

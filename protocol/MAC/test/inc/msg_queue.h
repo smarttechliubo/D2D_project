@@ -18,6 +18,8 @@
 #define MQ_MSGSIZE 128
 
 mqd_t msgq_init(task_id type, msg_mode mode);
+void msgq_free_msg(task_id taskId);
+void msgq_close();
 bool msgSend(task_id type, const char *msg_ptr, int msg_len);
 uint32_t msgRecv(task_id type, char *msg_ptr, int msg_len);
 msgDef *new_msg(msgSize msg_size);

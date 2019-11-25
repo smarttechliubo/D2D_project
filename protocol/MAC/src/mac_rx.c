@@ -28,20 +28,22 @@ void init_mac_rx()
 
 void mac_rrc_bcch_received(const frame_t frame, const sub_frame_t subframe)
 {
-	msgDef msg;
+	msgDef* msg = NULL;
 	mac_rrc_bcch_mib_rpt *bcch;
 	msgSize msg_size = sizeof(mac_rrc_bcch_mib_rpt);
 
-	if (new_message(&msg, MAC_RRC_BCCH_MIB_RPT, MAC_PRE_TASK, RRC_TASK, msg_size))
+	msg = new_message(MAC_RRC_BCCH_MIB_RPT, TASK_D2D_MAC_SCH, TASK_D2D_RRC, msg_size);
+
+	if (msg != NULL)
 	{
-		bcch = (mac_rrc_bcch_mib_rpt*)msg.data;
+		bcch = (mac_rrc_bcch_mib_rpt*)message_ptr(msg);
 		bcch->SFN = frame;
 		bcch->subsfn = subframe;
 		bcch->mib_receive_flag = 1;
 
-		if (!message_send(RRC_TASK, (char *)&msg, sizeof(msgDef)))
+		if (message_send(TASK_D2D_RRC, msg, sizeof(msgDef)))
 		{
-			LOG_ERROR(MAC, "send bcch fail!");
+			LOG_INFO(MAC, "LGC: MAC_RRC_BCCH_MIB_RPT send");
 		}
 
 		//msg_free(msg);
@@ -54,20 +56,23 @@ void mac_rrc_bcch_received(const frame_t frame, const sub_frame_t subframe)
 
 void mac_rrc_data_ind(const frame_t frame, const sub_frame_t subframe, const uint16_t rx_length, const uint8_t* payload)
 {
-	msgDef msg;
+	msgDef* msg = NULL;
 	mac_rrc_ccch_rpt *ind;
 	msgSize msg_size = sizeof(mac_rrc_ccch_rpt);
 
-	if (new_message(&msg, MAC_RRC_CCCH_RPT, MAC_MAIN_TASK, RRC_TASK, msg_size))
+	msg = new_message(MAC_RRC_CCCH_RPT, TASK_D2D_MAC_SCH, TASK_D2D_RRC, msg_size);
+
+	if (msg != NULL)
 	{
-		ind = (mac_rrc_ccch_rpt*)msg.data;
+		ind = (mac_rrc_ccch_rpt*)message_ptr(msg);
 		ind->sfn = frame;
 		ind->subsfn = subframe;
 		ind->data_size = rx_length;
 		ind->data_ptr = (uint32_t*)payload;
 
-		if (message_send(RRC_TASK, (char *)&msg, sizeof(msgDef)))
+		if (message_send(TASK_D2D_RRC, msg, sizeof(msgDef)))
 		{
+			LOG_INFO(MAC, "LGC: MAC_RRC_CCCH_RPT send");
 		}
 
 		//msg_free(msg);
@@ -91,9 +96,9 @@ void fill_rlc_data_ind(const uint16_t rx_length,
 
 void mac_rlc_data_ind(msgDef* msg)
 {
-	if (message_send(RLC_TASK, (char *)&msg, sizeof(msgDef)))
+	if (message_send(TASK_D2D_RLC, msg, sizeof(msgDef)))
 	{
-	
+		LOG_INFO(MAC, "LGC: mac_rlc_data_ind send");
 	}
 }
 
@@ -387,13 +392,15 @@ void handlePuschReceivedInd(PHY_PuschReceivedInd *req)
 	mac_rlc_data_info* data_ind = NULL;
 	bool hasData = false;
 
-	msgDef msg;
+	msgDef* msg = NULL;
 	msgSize msg_size = sizeof(mac_rlc_data_rpt);
 	mac_rlc_data_rpt *rpt = NULL;
 
-	if (new_message(&msg, MAC_RLC_DATA_RPT, MAC_MAIN_TASK, RLC_TASK, msg_size))
+	msg = new_message(MAC_RLC_DATA_RPT, TASK_D2D_MAC_SCH, TASK_D2D_RLC, msg_size);
+
+	if (msg != NULL)
 	{
-		rpt = (mac_rlc_data_rpt *)msg.data;
+		rpt = (mac_rlc_data_rpt *)message_ptr(msg);
 	}
 	else
 	{
@@ -459,7 +466,7 @@ void handlePuschReceivedInd(PHY_PuschReceivedInd *req)
 
 	}
 
-	mac_rlc_data_ind(&msg);
+	mac_rlc_data_ind(msg);
 }
 
 void handlePbchReceivedInd(const PHY_PBCHReceivedInd* ind)
@@ -550,15 +557,15 @@ void handle_buffer_status_ind(msgDef* msg)
 		{
 			case RLC_MAC_BUF_STATUS_RPT:
 			{
-				rlc_mac_buf_status_rpt *rpt = (rlc_mac_buf_status_rpt *)msg->data;
+				rlc_mac_buf_status_rpt *rpt = (rlc_mac_buf_status_rpt *)message_ptr(msg);
 
+				LOG_INFO(MAC, "RLC_MAC_BUF_STATUS_RPT");
 				handle_buffer_status(rpt);
-				message_free(rpt);
 				break;
 			}
 			default:
 			{
-				LOG_ERROR(MAC, "Unknown RLC msg! msgId:%u", msg->header.msgId);
+				LOG_ERROR(MAC, "handle_buffer_status_ind, Unknown RLC msg! msgId:%u", get_msgId(msg));
 				break;
 			}
 		}
@@ -573,88 +580,84 @@ void handle_phy_msg(msgDef* msg)
 	{
 		case PHY_MAC_PBCH_PDU_RPT:
 		{
-			PHY_PBCHReceivedInd* ind = (PHY_PBCHReceivedInd *)msg->data; //TODO:
+			PHY_PBCHReceivedInd* ind = (PHY_PBCHReceivedInd *)message_ptr(msg); //TODO:
 
 			handlePbchReceivedInd(ind);
-			message_free(ind);
 			break;
 		}
 		case PHY_MAC_DECOD_DATA_RPT:
 		{
-			PHY_PuschReceivedInd* req = (PHY_PuschReceivedInd *)msg->data; //TODO:
+			PHY_PuschReceivedInd* req = (PHY_PuschReceivedInd *)message_ptr(msg); //TODO:
 
 			handlePuschReceivedInd(req);
-			message_free(req);
 			break;
 		}
 		case PHY_MAC_ACK_RPT:
 		{
-			PHY_ACKInd* ind = (PHY_ACKInd *)msg->data; //TODO:
+			PHY_ACKInd* ind = (PHY_ACKInd *)message_ptr(msg); //TODO:
 
 			handle_ack(ind);
-			message_free(ind);
 			break;
 		}
 		case PHY_MAC_CQI_IND:
 		{
-			PHY_CQIInd* ind = (PHY_CQIInd*) msg->data;
+			PHY_CQIInd* ind = (PHY_CQIInd*) message_ptr(msg);
 
 			handle_cqi(ind);
-			message_free(ind);
 			break;
 		}
 		case PHY_MAC_LINK_STATUS_IND:
 		{
-			PHY_LinkStatusReportInd* ind = (PHY_LinkStatusReportInd*) msg->data;
+			PHY_LinkStatusReportInd* ind = (PHY_LinkStatusReportInd*) message_ptr(msg);
 
 			handle_linkStatusReport(ind);
-			message_free(ind);
 			break;
 		}
 		default:
 		{
-			LOG_ERROR(MAC, "unknow PHY msg id:%u", msg->header.msgId);
+			LOG_ERROR(MAC, "unknow PHY msg id:%u", get_msgId(msg));
 			break;
 		}
 	}
 }
 
-void msg_handler()
+void msg_handler(msgDef* msg)
 {
-	msgDef msg;
-	uint32_t msg_len = 0;
-	msgId msg_id = 0;
+	//msgDef* msg = NULL;
+	//uint32_t msg_len = 0;
+	task_id taskId = 0;
 
-	while(1)
+	//while(1)
 	{
-		msg_len = message_receive(MAC_MAIN_TASK, (char *)&msg, 0);
+	//	msg_len = message_receive(TASK_D2D_MAC_SCH, msg);
 
-		if (msg_len == 0)
+		//if (msg_len == 0)
+		//{
+		//	return;
+	//	}
+
+		taskId = get_SrcId(msg);
+
+		switch (taskId)
 		{
-			return;
-		}
-
-		msg_id = get_msgId(&msg);
-
-		switch (msg_id)
-		{
-			case RLC_TASK:
+			case TASK_D2D_RLC:
 			{
-				handle_buffer_status_ind(&msg);
+				handle_buffer_status_ind(msg);
 				break;
 			}
-			case PHY_TASK:
+			case TASK_D2D_PHY_RX:
 			{
-				handle_phy_msg(&msg);
-				message_free(msg.data);
+				handle_phy_msg(msg);
 				break;
 			}
 			default:
 			{
-				LOG_ERROR(MAC, "UNknown task msg msg_id:%u", msg_id);
+				LOG_ERROR(MAC, "msg_handler, unknown task msg msg_id:%u", taskId);
 				break;
 			}
 		}
+
+		message_free(msg);
 	}
 }
 

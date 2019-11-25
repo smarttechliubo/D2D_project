@@ -25,19 +25,22 @@ extern context_s g_context;
 // MAC_TEST
 bool mac_config_cfm(bool success)
 {
-	msgDef msg;
+	msgDef* msg = NULL;
 	mac_rrc_initial_cfm *cfm;
 	msgSize msg_size = sizeof(mac_rrc_initial_cfm);
 
-	if (new_message(&msg, MAC_RRC_INITIAL_CFM, MAC_PRE_TASK, RRC_TASK, msg_size))
+	msg = new_message(MAC_RRC_INITIAL_CFM, TASK_D2D_MAC, TASK_D2D_RRC, msg_size);
+
+	if (msg != NULL)
 	{
 
-		cfm = (mac_rrc_initial_cfm*)msg.data;
+		cfm = (mac_rrc_initial_cfm*)message_ptr(msg);
 		cfm->status = 1;
 		cfm->error_code = success;
 
-		if (message_send(RRC_TASK, (char *)&msg, sizeof(msgDef)))
+		if (message_send(TASK_D2D_RRC, msg, sizeof(msgDef)))
 		{
+			LOG_INFO(MAC, "LGC: MAC_RRC_INITIAL_CFM send");
 			return true;
 		}
 
@@ -91,20 +94,22 @@ void mac_config(const rrc_mac_initial_req *req)
 
 void rrc_mac_bcch_cfm(bool success)
 {
-	msgDef msg;
+	msgDef* msg = NULL;
 	mac_rrc_bcch_para_config_cfm *cfm;
 	msgSize msg_size = sizeof(mac_rrc_bcch_para_config_cfm);
 
-	if (new_message(&msg, MAC_RRC_BCCH_PARA_CFG_CFM, MAC_PRE_TASK, RRC_TASK, msg_size))
+	msg = new_message(MAC_RRC_BCCH_PARA_CFG_CFM, TASK_D2D_MAC, TASK_D2D_RRC, msg_size);
+
+	if (msg != NULL)
 	{
-		cfm = (mac_rrc_bcch_para_config_cfm*)msg.data;
+		cfm = (mac_rrc_bcch_para_config_cfm*)message_ptr(msg);
 		cfm->flag = 3;
 		cfm->status = 1;
 		cfm->error_code = success;
 
-		if (message_send(RRC_TASK, (char *)&msg, sizeof(msgDef)))
+		if (message_send(TASK_D2D_RRC, msg, sizeof(msgDef)))
 		{
-		
+			LOG_INFO(MAC, "LGC: MAC_RRC_BCCH_PARA_CFG_CFM send");
 		}
 	}
 	else
@@ -151,82 +156,81 @@ void rrc_mac_bcch_req(const rrc_mac_bcch_para_config_req *req)
 
 }
 
-void handle_rrc_msg()
+void handle_rrc_msg(msgDef *msg)
 {
-//MAC_TEST
-	msgDef msg;
-	uint32_t msg_len = 0;
+	//msgDef* msg = NULL;
+	//uint32_t msg_len = 0;
 	msgId msg_id = 0;
 
-	while (1)
+	//while (1)
 	{
-		msg_len = message_receive(MAC_PRE_TASK, (char *)&msg, 0);
+		//msg_len = message_receive(TASK_D2D_MAC, msg);
 
-		if (msg_len == 0)
-		{
-			return;
-		}
+		//if (msg_len == 0)
+		//{
+		//	return;
+		//}
 
-		msg_id = get_msgId(&msg);
+		msg_id = get_msgId(msg);
 
 		switch (msg_id)
 		{
 			case RRC_MAC_INITIAL_REQ:
 			{
-				rrc_mac_initial_req *req = (rrc_mac_initial_req *)msg.data; //TODO: add msg body handler function
+				rrc_mac_initial_req *req = (rrc_mac_initial_req *)message_ptr(msg); //TODO: add msg body handler function
 
-				LOG_INFO(MAC, "RRC_MAC_INITIAL_REQ, msgId:%u,source:%u, dest:%u, cellId:%u, mode:%u, bw:%u", msg.header.msgId,msg.header.source,msg.header.destination,
+				LOG_INFO(MAC, "RRC_MAC_INITIAL_REQ, cellId:%u, mode:%u, bw:%u", 
 					req->cellId,req->mode,req->bandwith);
 
 				mac_config(req);
-				message_free(req);
 				break;
 			}
 			case RRC_MAC_RELEASE_REQ:
 			{
-				rrc_mac_release_req *req = (rrc_mac_release_req *)msg.data; //TODO: add msg body handler function
+				rrc_mac_release_req *req = (rrc_mac_release_req *)message_ptr(msg); //TODO: add msg body handler function
 
 				LOG_INFO(MAC, "RRC_MAC_RELEASE_REQ, cellId:%u, ue_index:%u, releaseCause:%u", 
 					req->cellId,req->ue_index,req->releaseCause);
 
 				mac_user_release(req);
-				message_free(req);
 				break;
 			}
 			case RRC_MAC_CONNECT_SETUP_CFG_REQ:
 			{
-				rrc_mac_connnection_setup *req = (rrc_mac_connnection_setup *)msg.data;
+				rrc_mac_connnection_setup *req = (rrc_mac_connnection_setup *)message_ptr(msg);
 
 				LOG_INFO(MAC, "RRC_MAC_CONNECT_SETUP_CFG_REQ, ue_index:%u, maxHARQ_Tx:%u", 
 					req->ue_index,req->maxHARQ_Tx);
 
 				mac_user_setup(req);
-				message_free(req);
 				break;
 			}
 			case RRC_MAC_BCCH_PARA_CFG_REQ:
 			{
-				rrc_mac_bcch_para_config_req *req = (rrc_mac_bcch_para_config_req *)msg.data;
+				rrc_mac_bcch_para_config_req *req = (rrc_mac_bcch_para_config_req *)message_ptr(msg);
 				
 				LOG_INFO(MAC, "RRC_MAC_BCCH_PARA_CFG_REQ, flag:%u", req->flag);
 
 				rrc_mac_bcch_req(req);
-				message_free(req);
 				break;
 			}
 			case RRC_MAC_BCCH_SIB1_REQ:
 			{
-				//rrc_mac_bcch_s *req = (rrc_mac_bcch_para_config_req *)msg.data;
+				//rrc_mac_bcch_s *req = (rrc_mac_bcch_para_config_req *)message_ptr(msg);
 				
-				LOG_INFO(MAC, "RRC_MAC_BCCH_PARA_CFG_REQ");
+				LOG_INFO(MAC, "RRC_MAC_BCCH_SIB1_REQ");
 
 				//rrc_mac_sib_update(req);
-				//message_free(req);
 				break;
 			}
 			default:
+			{
+				LOG_WARN(MAC, "unknown rrc msg:msgId:%u",msg_id);
 				break;
+			}
 		}
+
+		message_free(msg);
 	}
 }
 
