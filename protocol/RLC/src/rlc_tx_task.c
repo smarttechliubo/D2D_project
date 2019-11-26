@@ -19,6 +19,10 @@
 #include <intertask_interface.h>
 #include <time.h>
 #include <test_time.h>
+#include <osp_ex.h>
+
+
+
 long   g_rlc_tx_max_process_time = 0;
 long   g_rlc_tx_max_process_time_sn = 0; 
 
@@ -160,12 +164,7 @@ rlc_op_status_t rlc_get_tx_data(const protocol_ctxt_t *const ctxt_pP,
 		return RLC_OP_STATUS_OUT_OF_RESSOURCES;
 	}
 
-#if defined(TRACE_RLC_PAYLOAD)
-	LOG_DEBUG(RLC, PROTOCOL_CTXT_FMT"[RB %u] Display of rlc_data_req:\n",
-				PROTOCOL_CTXT_ARGS(ctxt_pP),
-				rb_idP);
-	rlc_util_print_hex_octets(RLC, (unsigned char *)sdu_pP, sdu_sizeP);
-#endif
+
 
   
 	switch (rlc_mode) {
@@ -540,7 +539,7 @@ void *rlc_tx_task(MessageDef *recv_msg)
 {
 
 
-	rlc_tx_process(recv_msg->message_ptr, recv_msg->ittiMsgHeader->MsgType);
+	rlc_tx_process(MSG_HEAD_TO_COMM(recv_msg), recv_msg->ittiMsgHeader.MsgType);
 	itti_free_message(recv_msg);
 
 }

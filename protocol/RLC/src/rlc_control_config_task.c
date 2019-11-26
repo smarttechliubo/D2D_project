@@ -16,8 +16,7 @@
 #include <d2d_message_type.h>
 #include <rrc_global_def.h>
 #include <pthread.h>
-
-
+#include <osp_ex.h>
 
 rlc_op_status_t rrc_rlc_remove_rlc   (
   const protocol_ctxt_t* const ctxt_pP,
@@ -295,7 +294,7 @@ void  rlc_rrc_config_process(void *message, MessagesIds         msg_type)
             //! response to rrc 
             rlc_Rrc_Configure_Cfm(RLC_RRC_INITIAL_CFM); 
             
-			break; 
+			break;   
 		}
 		case RRC_RLC_RELEASE_REQ: 
 		{
@@ -459,7 +458,7 @@ void  rlc_rrc_config_process(void *message, MessagesIds         msg_type)
 void *rlc_rrc_config_task(MessageDef *recv_msg)
 {
 
-	rlc_rrc_config_process(recv_msg->message_ptr, recv_msg->ittiMsgHeader->MsgType);
+	rlc_rrc_config_process(MSG_HEAD_TO_COMM(recv_msg), recv_msg->ittiMsgHeader.MsgType);
 	itti_free_message(recv_msg);
 
 }

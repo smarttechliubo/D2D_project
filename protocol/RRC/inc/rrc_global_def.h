@@ -106,21 +106,21 @@ extern uint16_t  g_rrc_mac_report_rnti;
 /*************************************extern function****************************/
 extern int rrc_GetModeType( ); 
 extern rrc_status_e  rrc_GetCurrentStatus( );
-extern void rrc_module_Initial();
+extern int rrc_module_Initial();
 extern void  *rrc_Sche_Task();
 extern int EncodeD2dMib(uint8_t *encode_buffer, uint32_t max_buffersize, uint32_t *encode_size );
 extern int EncodeD2dSib1(uint8_t *encode_buffer, uint32_t max_buffersize, uint32_t *encode_size );
 extern int EncodeD2dRrcConnectionSetup(uint8_t  *encode_buffer, uint32_t buffersize); 
 extern int EncodeD2dRrcConnectRequest(uint8_t  *encode_buffer, uint32_t buffersize);
 extern int EncodeD2dRrcConnectRelease(uint8_t  *encode_buffer, uint32_t buffersize);
-extern int DecodeD2dMib(MasterInformationBlock_t       *bch_msg,uint8_t *buf,uint32_t size );
-extern int DecodeD2dSib1(SystemInformationBlockType1_t       *decode_msg,uint8_t *buf,uint32_t size );
+extern int DecodeD2dMib(MasterInformationBlock_t       **bch_msg,uint8_t *buf,uint32_t size );
+extern int DecodeD2dSib1(SystemInformationBlockType1_t       **decode_msg,uint8_t *buf,uint32_t size );
 extern int DecodeD2dRrcConnectSetup(RRCConnectionSetup_t       *decode_msg,uint8_t *buf,uint32_t size );
 extern int DecodeD2dRrcConnectRequest(RRCConnectionRequest_t           *decode_msg,uint8_t *buf,uint32_t size );
 extern int DecodeD2dRrcConnectRelease(RRCConnectionRelease_t           *decode_msg,uint8_t *buf,uint32_t size );
 extern int EncodeD2dCcch(uint8_t  *encode_buffer, uint32_t max_buffersize, 
                    uint32_t *encode_size,  CCCH_MessageType_PR ccch_messsage_type);
-extern int DecodeD2dCcch(CCCH_Message_t           *decode_msg,uint8_t *buf,uint32_t size ); 
+extern int DecodeD2dCcch(CCCH_Message_t     **decode_msg,uint8_t *buf,uint32_t size ); 
 
 extern rb_info rrc_Rlc_Rbinfo_Generate(rb_type_e rb_type, uint8_t rb_id, 
                                     uint8_t logicch_type,uint8_t logicch_id,

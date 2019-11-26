@@ -401,12 +401,11 @@ void  rlc_um_reassembly (const protocol_ctxt_t* const ctxt_pP,
       rlc_pP->output_sdu_in_construction->data[rlc_pP->output_sdu_size_to_write] = 0;
       LOG_T(RLC, PROTOCOL_RLC_UM_CTXT_FMT"[REASSEMBLY] DATA :",
             PROTOCOL_RLC_UM_CTXT_ARGS(ctxt_pP,rlc_pP));
-      rlc_util_print_hex_octets(RLC, (unsigned char*)rlc_pP->output_sdu_in_construction->data, rlc_pP->output_sdu_size_to_write);
+      
 #endif
     } else {
 
 	//! MAC 上报的PDU 太大了，超出了SDU 的最大size 
-
       AssertFatal(0, RLC,PROTOCOL_RLC_UM_CTXT_FMT" RLC_UM_DATA_IND, SDU TOO BIG, DROPPED\n",
                   PROTOCOL_RLC_UM_CTXT_ARGS(ctxt_pP,rlc_pP));
 #if 0
@@ -1143,9 +1142,6 @@ void   rlc_um_receive_process_dar (const protocol_ctxt_t* const ctxt_pP,
 					rlc_pP->vr_ur,
 					in_window);
 
-#if TRACE_RLC_PAYLOAD
-	rlc_util_print_hex_octets(RLC, &pdu_pP->b1, tb_sizeP);
-#endif
 
     AssertFatal(in_window != -2, RLC, "SN is lower than vr_uh - windowssize, the SDU maybe retransmited SDU,drop it\n"); 
     

@@ -58,18 +58,19 @@ rlc_union_t 	*rlc_Get_HashNode(const protocol_ctxt_t* const ctxt_pP,
 
 
 
-void rlc_util_print_hex_octets(comp_name_t componentP, unsigned char *dataP, const signed long sizeP)
+void rlc_util_print_hex_octets(char *module_name, unsigned char *dataP, const signed long sizeP)
 //-----------------------------------------------------------------------------
 {
+#if 0
   unsigned long octet_index = 0;
 
   if (dataP == NULL) {
     return;
   }
 
-  LOG_DEBUG(componentP, "+-----+-------------------------------------------------+\n");
-  LOG_DEBUG(componentP, "|     |  0  1  2  3  4  5  6  7  8  9  a  b  c  d  e  f |\n");
-  LOG_DEBUG(componentP, "+-----+-------------------------------------------------+\n");
+  LOG_DEBUG(module_name, "+-----+-------------------------------------------------+\n");
+  LOG_DEBUG(module_name, "|     |  0  1  2  3  4  5  6  7  8  9  a  b  c  d  e  f |\n");
+  LOG_DEBUG(module_name, "+-----+-------------------------------------------------+\n");
 
   for (octet_index = 0; octet_index < sizeP; octet_index++) {
 
@@ -101,6 +102,8 @@ void rlc_util_print_hex_octets(comp_name_t componentP, unsigned char *dataP, con
   }
 
   LOG_DEBUG(componentP, " |\n");
+ #endif 
+ 
 }
 
 
@@ -143,7 +146,7 @@ void rb_free_rlc_union (void *rlcu_pP)
 
  
 
-void rlc_module_initial( )
+int  rlc_module_initial( )
 {
 
   
@@ -165,7 +168,7 @@ void rlc_module_initial( )
    
     memset((void *)g_rlc_buffer_status,0,sizeof(g_rlc_buffer_status));
 
-    
+    return 0;
 
 
 }

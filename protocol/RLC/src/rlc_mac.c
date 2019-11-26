@@ -103,10 +103,7 @@ struct mac_data_ind mac_rlc_deserialize_tb (char	   *buffer_pP,
 
 		memcpy(((struct mac_tb_ind *) (tb_p->data))->data_ptr, &buffer_pP[tbs_size], tb_sizeP);
 
-#ifdef DEBUG_MAC_INTERFACE
-		LOG_DEBUG(RLC_TX, "[MAC-RLC] DUMP RX PDU(%d bytes):\n", tb_sizeP);
-		rlc_util_print_hex_octets(RLC, ((struct mac_tb_ind *) (tb_p->data))->data_ptr, tb_sizeP);
-#endif
+
 
 		nb_tb_read = nb_tb_read + 1;
 		tbs_size	 = tbs_size   + tb_sizeP;

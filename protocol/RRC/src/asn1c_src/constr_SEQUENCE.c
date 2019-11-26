@@ -7,7 +7,6 @@
 #include <constr_SEQUENCE.h>
 #include <OPEN_TYPE.h>
 #include <per_opentype.h>
-
 /*
  * Number of bytes left for this structure.
  * (ctx->left) indicates the number of bytes _transferred_ for the structure.

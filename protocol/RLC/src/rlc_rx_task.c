@@ -17,6 +17,7 @@
 #include <log.h>
 #include <intertask_interface.h>
 #include <rlc_type.h>
+#include <osp_ex.h>
 
 
 
@@ -113,7 +114,7 @@ void *rlc_rx_task( MessageDef *recv_msg)
 
 
 
-	rlc_rx_process(recv_msg->message_ptr, recv_msg->ittiMsgHeader->MsgType);
+	rlc_rx_process(MSG_HEAD_TO_COMM(recv_msg), recv_msg->ittiMsgHeader.MsgType);
 	itti_free_message(recv_msg);
        
 

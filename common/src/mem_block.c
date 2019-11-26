@@ -184,7 +184,7 @@ void   *pool_buffer_clean (void *arg)
 void  free_mem_block (mem_block_t * leP, const char* caller)
 {
   //-----------------------------------------------------------------------------
-
+#ifndef USING_OSP_LIB
   if (!(leP)) {
     LOG_WARN (RLC,"[MEM_MNGT][FREE] WARNING FREE NULL MEM_BLOCK\n");
     return;
@@ -220,13 +220,26 @@ void  free_mem_block (mem_block_t * leP, const char* caller)
 #ifdef MEMBLOCK_BIG_LOCK
 //  if (pthread_mutex_unlock(&mtex)) abort();
 #endif
+
+
+#else 
+	if (!(leP)) {
+	  AssertFatal(0, DRIVER," FREE NULL MEM_BLOCK,ERROR, caller: %s\n",caller);
+	}
+
+	OSP_Free_Mem((char *)leP);
+	LOG_DEBUG(DRIVER,"FREE MEM_BLOCK, caller:%s",caller); 
+
+#endif 
 }
 
 //-----------------------------------------------------------------------------
 mem_block_t   *get_free_mem_block(uint32_t sizeP, const char* caller)
 {
+#ifndef USING_OSP_LIB
   //-----------------------------------------------------------------------------
   mem_block_t      *le = NULL;
+
   int             pool_selected;
   int             size;
 
@@ -293,9 +306,26 @@ mem_block_t   *get_free_mem_block(uint32_t sizeP, const char* caller)
 #endif
 
   return NULL;
+#else 
+    mem_block_t      *le = NULL;
+	char *alloc_buffer = NULL; 
+	uint16_t  offset = sizeof(mem_block_t) - sizeof(alloc_buffer);
+	alloc_buffer = OSP_Alloc_Mem(sizeP  + offset); 
+	if (alloc_buffer == NULL)
+	{
+		AssertFatal(0, DRIVER, "get_free_mem_block failed,caller: %s \n", caller);
+    }
+    else
+    {
+		le = (mem_block_t *)alloc_buffer;
+		le->data = alloc_buffer + offset; 
+	    return le;
+    }
+#endif 	
 };
 
 //-----------------------------------------------------------------------------
+#ifndef USING_OSP_LIB
 mem_block_t      *
 get_free_copy_mem_block (void)
 {
@@ -674,3 +704,5 @@ check_free_mem_block (mem_block_t * leP)
 
   // the block is ok
 }
+
+#endif 

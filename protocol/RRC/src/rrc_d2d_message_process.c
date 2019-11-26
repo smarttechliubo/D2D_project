@@ -446,7 +446,9 @@ int EncodeD2dCcch(uint8_t      *encode_buffer, uint32_t max_buffersize,
     FILE *fp;
 	asn_enc_rval_t ec; 
 
-	uint16_t ueip = 0xf01e; //!15bit,注意这里是按照大端模式编码
+	uint16_t *ueip  = NULL;
+
+	
 
 	RRCConnectionSetup_t    *rrc_connect_setup; 
 
@@ -473,12 +475,19 @@ int EncodeD2dCcch(uint8_t      *encode_buffer, uint32_t max_buffersize,
     {
     	case CCCH_MessageType_PR_rrcConnectionrequest:
     	{
+    	 
+    		
 	    	encode_msg->message.present = CCCH_MessageType_PR_rrcConnectionrequest; 
 			encode_msg->message.choice.rrcConnectionrequest.ue_Identity =  0; //![0-8]
 			encode_msg->message.choice.rrcConnectionrequest.establishmentCause = RRCConnectionRequest__establishmentCause_normal; 
-			encode_msg->message.choice.rrcConnectionrequest.ue_Ip.buf = &ueip;
+			encode_msg->message.choice.rrcConnectionrequest.ue_Ip.buf = MALLOC(2);
+			encode_msg->message.choice.rrcConnectionrequest.ue_Ip.buf[0] = 0x1e; 
+			encode_msg->message.choice.rrcConnectionrequest.ue_Ip.buf[1] = 0xf0; 
 			encode_msg->message.choice.rrcConnectionrequest.ue_Ip.size = 2; 
-			encode_msg->message.choice.rrcConnectionrequest.ue_Ip.bits_unused = 1;
+			encode_msg->message.choice.rrcConnectionrequest.ue_Ip.bits_unused = 0;
+		
+			
+			LOG_DEBUG(MAC, "Dummy send CCCH_MessageType_PR_rrcConnectionrequest to rrc \n"); 
 			break; 
 	    }
 		case CCCH_MessageType_PR_rrcConnectionsetup:
@@ -537,12 +546,14 @@ int EncodeD2dCcch(uint8_t      *encode_buffer, uint32_t max_buffersize,
 			ASN_SEQUENCE_ADD(&(rrc_connect_setup->drb_ToReleaselist->list),&drb_id);
 			*/
 			encode_msg->message.choice.rrcConnectionsetup = *rrc_connect_setup; 
+			LOG_DEBUG(MAC, "Dummy send CCCH_MessageType_PR_rrcConnectionsetup to rrc \n"); 
 			break;
 		}
 		case CCCH_MessageType_PR_rrcConectioncomplete:
 		{
 			encode_msg->message.present = CCCH_MessageType_PR_rrcConectioncomplete; 
 			encode_msg->message.choice.rrcConectioncomplete.complete_status = 1;
+			LOG_DEBUG(MAC, "Dummy send CCCH_MessageType_PR_rrcConectioncomplete to rrc \n"); 
 
 			break; 
 		}
@@ -568,12 +579,12 @@ int EncodeD2dCcch(uint8_t      *encode_buffer, uint32_t max_buffersize,
  * @param: *buf :             [message buffer ]
  * @param: size :             [message buffer size ]
  */
-int DecodeD2dMib(MasterInformationBlock_t       *bch_msg,uint8_t *buf,uint32_t size )
+int DecodeD2dMib(MasterInformationBlock_t      **bch_msg,uint8_t *buf,uint32_t size )
 {
 
 	asn_dec_rval_t ec; 
 	const char *filename; 
-
+    MasterInformationBlock_t      *bch_msg_temp = NULL; 
 
 	
 	
@@ -581,8 +592,9 @@ int DecodeD2dMib(MasterInformationBlock_t       *bch_msg,uint8_t *buf,uint32_t s
     //!<encode BCH 
     ec = asn_decode(0,ATS_UNALIGNED_BASIC_PER,
                     &asn_DEF_MasterInformationBlock,
-                    (void **)&bch_msg, buf, size); 
-   
+                    (void **)&bch_msg_temp, buf, size); 
+                    
+    *bch_msg = bch_msg_temp;
 	AssertFatal(ec.code == RC_OK, RRC, "%s: Broken  decoding at byte %ld\n", __func__,(long)ec.consumed); 
 	
 	/* Also print the constructed Rectangle XER encoded (XML) */
@@ -604,21 +616,21 @@ int DecodeD2dMib(MasterInformationBlock_t       *bch_msg,uint8_t *buf,uint32_t s
  * @param: *buf :             [message buffer ]
  * @param: size :             [message buffer size ]
  */
-int DecodeD2dSib1(SystemInformationBlockType1_t       *decode_msg,uint8_t *buf,uint32_t size )
+int DecodeD2dSib1(SystemInformationBlockType1_t       **decode_msg,uint8_t *buf,uint32_t size )
 {
 
 	asn_dec_rval_t ec; 
 	const char *filename; 
 
 	
-	
+	SystemInformationBlockType1_t       *decode_msg_temp = NULL; 
 
     //!<encode BCH 
     ec = asn_decode(0,ATS_UNALIGNED_BASIC_PER,
                     &asn_DEF_SystemInformationBlockType1,
-                    (void **)&decode_msg, buf, size); 
+                    (void **)&decode_msg_temp, buf, size); 
    
-
+    *decode_msg = decode_msg_temp;
 	AssertFatal(ec.code == RC_OK, RRC, "%s: Broken  decoding at byte %ld\n", __func__,(long)ec.consumed); 
 	
 	/* Also print the constructed Rectangle XER encoded (XML) */
@@ -812,24 +824,29 @@ int DecodeD2dRrcConnectRelease(RRCConnectionRelease_t           *decode_msg,uint
  * @param: *buf :             [param description ]
  * @param: size :             [param description ]
  */
-int DecodeD2dCcch(CCCH_Message_t           *decode_msg,uint8_t *buf,uint32_t size )
+int DecodeD2dCcch(CCCH_Message_t **decode_msg,uint8_t *buf,uint32_t size)
 {
 
 
 	asn_dec_rval_t ec; 
 	const char *filename; 
-	
+	CCCH_Message_t    *decode_msg_temp = NULL; 
 
     //!<encode BCH 
     ec = asn_decode(0,ATS_UNALIGNED_BASIC_PER,
                     &asn_DEF_CCCH_Message,
-                    (void **)&decode_msg, buf, size); 
-   
-	
+                    (void **)&decode_msg_temp, buf, size); 
+
+    *decode_msg = decode_msg_temp; 
+    
+	LOG_DEBUG(RRC, "%s, decodoing byte = %d,decode_msg = %x\n", __func__,(long)ec.consumed,*decode_msg);
 	AssertFatal(ec.code == RC_OK, RRC, "%s: Broken  decoding at byte %ld\n", __func__,(long)ec.consumed); 
 	
+    
+	
+	
 	/* Also print the constructed Rectangle XER encoded (XML) */
-	//xer_fprint(stdout, &asn_DEF_BCCH_BCH_Message, bch_msg); //!<
+	//asn_fprint(stdout, &asn_DEF_CCCH_Message, decode_msg); //!<
     //asn_fprint(stdout, &asn_DEF_RRCConnectionRelease, decode_msg);  
     
 	return RRC_MESSAGE_EN_DECODE_OK; /* Encoding finished successfully */

@@ -307,19 +307,20 @@ MessageDef *itti_alloc_new_message(task_id_t origin_task_id, MessagesIds message
 {
   	      
 	  MessageDef  * message; 
+	  char * message_content_ptr; 
 	  Osp_Msg_Head *temp = OSP_Alloc_Msg(message_size);
+	  temp->MsgType = message_id; 
+	  temp->MsgSize = message_size; 
+	  temp->SrcId = origin_task_id;
 
 	  message = (MessageDef *)temp; 
-	  message->ittiMsgHeader = (Osp_Msg_Head *)temp;
-      message->ittiMsgHeader->MsgType = message_id;
-      message->ittiMsgHeader->MsgSize = message_size; 
-      message->ittiMsgHeader->SrcId = CURRENT_TASKID;
+	  message->ittiMsgHeader = *(Osp_Msg_Head *)temp;
+  
+	  message_content_ptr = MSG_HEAD_TO_COMM(temp); 
 
-	  message->message_ptr = MSG_HEAD_TO_COMM(temp); 
+	  memcpy((void *)(message_content_ptr), message_backup_ptr, message_size); 
 
-	  memcpy((void *)message->message_ptr, message_backup_ptr, message_size); 
-
-	  OSP_Free_Mem(message_backup_ptr); 
+	  free(message_backup_ptr); //!calloc 对应free, osp_alloc_mem 对应osp_free_mem 
 
 	  return message;
 }
@@ -330,19 +331,19 @@ int itti_send_msg_to_task(task_id_t destination_task_id, instance_t instance, Me
 {
 	
     OSP_STATUS   ret;
-	message->ittiMsgHeader->DstId = destination_task_id; 
+	message->ittiMsgHeader.DstId = destination_task_id; 
 	ret = OSP_Send_Msg(message);
     if (OSP_OK == ret)
     {
 
-		LOG_INFO(DRIVER,"task:%d send message:%d to task:%d successful!\n", message->ittiMsgHeader->SrcId,
-	   				message->ittiMsgHeader->MsgType, message->ittiMsgHeader->DstId);
+		LOG_INFO(DRIVER,"task:%d send message:%d to task:%d successful!\n", message->ittiMsgHeader.SrcId,
+	   				message->ittiMsgHeader.MsgType, message->ittiMsgHeader.DstId);
 	   	return ret;
 	}
 	else 
 	{
-		AssertFatal(0, DRIVER, "task:%d send message:%d to task:%d fail !\n", message->ittiMsgHeader->SrcId,
-	   				message->ittiMsgHeader->MsgType, message->ittiMsgHeader->DstId)
+		AssertFatal(0, DRIVER, "task:%d send message:%d to task:%d fail !\n", message->ittiMsgHeader.SrcId,
+	   				message->ittiMsgHeader.MsgType, message->ittiMsgHeader.DstId)
 	}
 	
 }
@@ -359,3 +360,4 @@ void itti_free_message(MessageDef *received_msg)
 
 
 
+           

@@ -267,7 +267,7 @@ typedef struct task_list_s {
 
 typedef  struct 
 {
-	Osp_Msg_Head *ittiMsgHeader; /*message header */
+	Osp_Msg_Head ittiMsgHeader; /*message header */
 
 	char *message_ptr;     /** message content */
 

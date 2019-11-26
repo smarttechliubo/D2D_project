@@ -11,7 +11,8 @@
 #include <time.h>
 #include <sys/time.h>
 #include <stdint.h>
-#include <syslog.h>
+#include "osp_ex.h"
+
 
 #ifndef LOG_H_
 #define LOG_H_
@@ -38,38 +39,44 @@
 
 typedef enum
 {
-    ERROR = 1,
-    WARN  = 2,
-    INFO  = 3,
-    DEBUG = 4
+    ERROR = ERR_DEBUG_LEVEL,
+    WARN  = WARNING_DEBUG_LEVEL,
+    INFO  = RUN_DEBUG_LEVEL,
+    DEBUG = RUN_DEBUG_LEVEL
 } LogLevel;
 
 typedef enum 
 {
-	MAIN,
-	DRIVER,
-    PHY,
-    MAC,
-    RLC,
-    RLC_TX,
-    RLC_RX,
-    PDCP,
-    RRC,
-    NAS,
-    IP,
-
+	NOT_USING
 } comp_name_t;
 
-
+#define MAIN "[MAIN]"
+#define DRIVER "[DRIVER]"
+#define PHY "[PHY]"
+#define MAC "[MAC]"
+#define RLC "[RLC]"
+#define RLC_TX "[RLC_TX]"
+#define RLC_RX "[RLC_RX]"
+#define PDCP "[PDCP]"
+#define RRC "[RRC]"
+#define NAS "[NAS]"
+#define IP "[IP]"
+#define DUMMY "[DUMMY]"
 
 
 void log_info(const char* filename, int line, comp_name_t comp, LogLevel level, const char* fmt, ...) __attribute__((format(printf,5,6)));
 
+#if 0
 #define LOG_ERROR(comp, format, ...) log_info(__FILE__, __LINE__, comp, ERROR, format, ## __VA_ARGS__)
 #define LOG_WARN(comp, format, ...)  log_info(__FILE__, __LINE__, comp, WARN, format, ## __VA_ARGS__)
 #define LOG_INFO(comp, format, ...)  log_info(__FILE__, __LINE__, comp, INFO, format, ## __VA_ARGS__)
 #define LOG_DEBUG(comp, format, ...) log_info(__FILE__, __LINE__, comp, DEBUG, format, ## __VA_ARGS__)
-
+#else
+#define LOG_ERROR(comp, format, ...) DebugOut(ERROR,  comp  ": [%s:%d] "format"\n", __FILE__, __LINE__,  ## __VA_ARGS__)
+#define LOG_WARN(comp, format, ...)  DebugOut(WARN,  comp  ": [%s:%d] "format"\n", __FILE__, __LINE__,  ## __VA_ARGS__)
+#define LOG_INFO(comp, format, ...)  DebugOut(INFO,  comp  ": [%s:%d] "format"\n", __FILE__, __LINE__,  ## __VA_ARGS__)
+#define LOG_DEBUG(comp, format, ...) DebugOut(DEBUG,  comp  ": [%s:%d] "format"\n", __FILE__, __LINE__,  ## __VA_ARGS__)
+#endif
 
 #define _Assert_Exit_  {                       \
 	exit(1);                                     \

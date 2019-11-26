@@ -18,19 +18,19 @@
  
  
 /*************************function declare**********************************************************/
-extern void rrc_module_Initial();
+extern int rrc_module_Initial();
 
 extern void *rrc_Sche_Task(MessageDef *recv_msg); 
 
 
-extern void rlc_module_initial( ); 
+extern int rlc_module_initial( ); 
 extern void *rlc_rrc_config_task(MessageDef *recv_msg);
 
 extern void *rlc_tx_task(MessageDef *recv_msg);
 
 extern void *rlc_rx_task( MessageDef *recv_msg); 
 
-extern 
+extern void dummy_test_task(MessageDef *rece_msg);
 
-
+extern int dummy_init( );
 #endif

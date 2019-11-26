@@ -23,6 +23,8 @@
 #include <log.h> 
 #include <intertask_interface.h>
 #include <dictionary.h>
+#include <osp_ex.h>
+
 /**************************function******************************/
  
  /*!   
@@ -195,12 +197,13 @@
  * @param: *message :         [message content pointer ]
   * @param: msg_type :        [message id ]
  */
+
 int  rrc_Receive_Signal_Msg(uint16_t mode_type, void *message, MessagesIds  msg_type)
 {
 	//! process signal msg,include BCCH_MSG,CCCH_MSG 
     mac_rrc_bcch_sib1_rpt  *sib1_rpt; 
-    SystemInformationBlockType1_t      sib1_decode; 
-    CCCH_Message_t   ccch_message; 
+    SystemInformationBlockType1_t      *sib1_decode = NULL; 
+    CCCH_Message_t   *ccch_message = NULL; 
     mac_rrc_ccch_rpt  *ccch_message_rpt; 
     RRCConnectionRequest_t    rrc_connect_request; 
     uint8_t           *encode_buffer  = g_rrc_messge_encode; 
@@ -394,19 +397,19 @@ int  rrc_Receive_Signal_Msg(uint16_t mode_type, void *message, MessagesIds  msg_
             DecodeD2dSib1(&sib1_decode, (uint8_t *)(sib1_rpt->data_ptr),sib1_rpt->data_size);
            
             //! config destination MAC & PHY SIB1 info 
-            pusch_config.hop_mode = sib1_decode.radioResourceConfigCommon.psush_Hop_Config.hop_mode; 
-            pusch_config.pusch_hop_offset = sib1_decode.radioResourceConfigCommon.psush_Hop_Config.hop_offset; 
+            pusch_config.hop_mode = sib1_decode->radioResourceConfigCommon.psush_Hop_Config.hop_mode; 
+            pusch_config.pusch_hop_offset = sib1_decode->radioResourceConfigCommon.psush_Hop_Config.hop_offset; 
 
             
             ref_signal_pusch_config.grp_hop_enabled = 
-            sib1_decode.radioResourceConfigCommon.ul_ref_signal_pusch.group_hopping_enable; 
+            sib1_decode->radioResourceConfigCommon.ul_ref_signal_pusch.group_hopping_enable; 
             
             ref_signal_pusch_config.seq_hop_enabled = 
-            sib1_decode.radioResourceConfigCommon.ul_ref_signal_pusch.seq_hopping_enable;
+            sib1_decode->radioResourceConfigCommon.ul_ref_signal_pusch.seq_hopping_enable;
             ref_signal_pusch_config.grp_assign_pusch = 
-            sib1_decode.radioResourceConfigCommon.ul_ref_signal_pusch.group_assign_pusch;
+            sib1_decode->radioResourceConfigCommon.ul_ref_signal_pusch.group_assign_pusch;
             
-			ref_signal_pusch_config.cyc_shift = sib1_decode.radioResourceConfigCommon.ul_ref_signal_pusch.cycle_shift;
+			ref_signal_pusch_config.cyc_shift = sib1_decode->radioResourceConfigCommon.ul_ref_signal_pusch.cycle_shift;
 
 			rrc_Phy_BcchPara_Config(pusch_config , ref_signal_pusch_config);
 			break; 
@@ -607,10 +610,14 @@ int  rrc_Receive_Signal_Msg(uint16_t mode_type, void *message, MessagesIds  msg_
  				
         	  **********************************************************************/	
  			ccch_message_rpt = (mac_rrc_ccch_rpt *)(message); 
- 			DecodeD2dCcch(&ccch_message,  (uint8_t *)(ccch_message_rpt->data_ptr), \
+ 			
+ 			
+ 			DecodeD2dCcch(&ccch_message, (uint8_t *)(ccch_message_rpt->data_ptr), \
  			               ccch_message_rpt->data_size);
-          
-            if (CCCH_MessageType_PR_rrcConnectionrequest == ccch_message.message.present)
+
+            
+            
+            if (CCCH_MessageType_PR_rrcConnectionrequest == ccch_message->message.present)
             {
 		
 				AssertFatal(mode_type ==  D2D_MODE_TYPE_SOURCE, 
@@ -620,7 +627,7 @@ int  rrc_Receive_Signal_Msg(uint16_t mode_type, void *message, MessagesIds  msg_
 			         
                 rrc_SetStatus(RRC_STATUS_CONNECT_REQUEST);
                 
-				rrc_connect_request = ccch_message.message.choice.rrcConnectionrequest; 
+				rrc_connect_request = ccch_message->message.choice.rrcConnectionrequest; 
 				if (RRCConnectionRequest__establishmentCause_normal == rrc_connect_request.establishmentCause)
 				{
 
@@ -654,7 +661,7 @@ int  rrc_Receive_Signal_Msg(uint16_t mode_type, void *message, MessagesIds  msg_
 
 
             }
-            else if (CCCH_MessageType_PR_rrcConnectionsetup == ccch_message.message.present)
+            else if (CCCH_MessageType_PR_rrcConnectionsetup == ccch_message->message.present)
             {
 
               
@@ -668,7 +675,7 @@ int  rrc_Receive_Signal_Msg(uint16_t mode_type, void *message, MessagesIds  msg_
                
                  //! RRC CONFIG PHY 
                 RadioResourceConfigDedicate_ptr = \
-                	&ccch_message.message.choice.rrcConnectionsetup.radioResourceConfigCommon; 
+                	&ccch_message->message.choice.rrcConnectionsetup.radioResourceConfigCommon; 
 
                 g_rrc_mac_report_rnti = RadioResourceConfigDedicate_ptr->pusch_dedi_config.c_rnti; 
 				LOG_INFO(RRC,"RRC CONNECT SETUP:PHY info:beta_off_ack_ind = %d\n",\
@@ -687,7 +694,7 @@ int  rrc_Receive_Signal_Msg(uint16_t mode_type, void *message, MessagesIds  msg_
                                             logic_channel_config);
 
 				  //! RRC CONFIG RLC and MAC 
-                rrc_rbinfo_decode_connect_setup(ccch_message.message.choice.rrcConnectionsetup,
+                rrc_rbinfo_decode_connect_setup(ccch_message->message.choice.rrcConnectionsetup,
                                                 &srb_add,
                                                 &drb_add,
                                                 logic_channel_config, 
@@ -706,7 +713,7 @@ int  rrc_Receive_Signal_Msg(uint16_t mode_type, void *message, MessagesIds  msg_
  
 				
             }
-            else if (CCCH_MessageType_PR_rrcConectioncomplete == ccch_message.message.present)
+            else if (CCCH_MessageType_PR_rrcConectioncomplete == ccch_message->message.present)
             {
 				AssertFatal(D2D_MODE_TYPE_SOURCE == mode_type, 
 				       RRC, 
@@ -751,10 +758,11 @@ int  rrc_Receive_Signal_Msg(uint16_t mode_type, void *message, MessagesIds  msg_
 void * rrc_Sche_Task(MessageDef *recv_msg)
 {
 
+   
 
 	rrc_Receive_Signal_Msg(rrc_GetModeType(), 
-	                       recv_msg->message_ptr,
-	                       recv_msg->ittiMsgHeader->MsgType); 
+	                       MSG_HEAD_TO_COMM(recv_msg),
+	                       recv_msg->ittiMsgHeader.MsgType); 
 
 	itti_free_message(recv_msg);
         

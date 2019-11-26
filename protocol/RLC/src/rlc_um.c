@@ -1087,9 +1087,7 @@ test_e_li_length:%d,the real data pdu length %d,E_LI length:%d\n" ,\
 	rlc_pP->stat_tx_data_pdu	+= 1;
 	rlc_pP->stat_tx_data_bytes += pdu_tb_req_p->tb_size;
 	
-#if TRACE_RLC_PAYLOAD
-	rlc_util_print_hex_octets(RLC, pdu_mem_p->data, data_pdu_size); 
-#endif
+
 	//AssertFatal( pdu_tb_req_p->tb_size > 0 , "SEGMENT10: FINAL RLC UM PDU LENGTH %d", pdu_tb_req_p->tb_size);
 	if(pdu_tb_req_p->tb_size <= 0) {
 	  LOG_ERROR(RLC_TX, "SEGMENT10: FINAL RLC UM PDU LENGTH %d\n", pdu_tb_req_p->tb_size);
