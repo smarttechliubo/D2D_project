@@ -122,16 +122,16 @@ uint32_t  dict_GetValue(ue_info_dict *dict, uint16_t key_rnti)
    
 	while(temp != dict->tail->next)
 	{
-		LOG_DEBUG(RRC, "func:%s, dictionary's node's key = %d \n",__func__,temp->ue_info.key_ue_rnti);
+		//LOG_DEBUG(RRC, "func:%s, dictionary's node's key = %d \n",__func__,temp->ue_info.key_ue_rnti);
 		if (temp->ue_info.key_ue_rnti == key_rnti)
 		{
-		    LOG_INFO(RRC, "find right node in dictionary,return the value of element\n"); 
+		   // LOG_INFO(RRC, "find right node in dictionary,return the value of element\n"); 
 			return temp->ue_info.value_ue_index ;
 		}
 		temp = temp->next;
 	}
 
-	AssertFatal(temp != dict->tail->next , RRC, "can't find the node which's key == key_rnti,pls check it\n"); 
+	AssertFatal((temp != dict->tail->next), RRC, "can't find the node which's key == key_rnti,pls check it\n"); 
 
 } 
  

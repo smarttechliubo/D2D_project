@@ -210,26 +210,32 @@ rlc_op_status_t rlc_get_tx_data(const protocol_ctxt_t *const ctxt_pP,
 		return RLC_OP_STATUS_OUT_OF_RESSOURCES;
 	  }
 #endif
-      LOG_INFO(RLC_TX, "start get memory time");
+    
 	  //！这里申请出来的data 的首地址指向的是包含了rlc_um_data_req_alloc这个结构体的
 	  new_sdu_p = get_free_mem_block (sdu_sizeP + sizeof (struct rlc_um_tx_sdu_management), __func__);
-      LOG_INFO(RLC_TX, "end get  memory time");
+      
 
 
       
 	  if (new_sdu_p != NULL) {
-	//    pthread_mutex_lock(&(rlc_union_p->rlc_union_mtex));
-		// PROCESS OF COMPRESSION HERE:
-		memset (new_sdu_p->data, 0, sizeof (struct rlc_um_tx_sdu_management));
+	
 
-		um_tx_sdu_header_ptr = ((struct rlc_um_tx_sdu_management *) (new_sdu_p->data)); 
+
+
+		new_sdu_p->pool_id = 1;
+		new_sdu_p->size = 100;
+     
+		
+
 		//！copy 数据到新申请buffer中
-		memcpy (&new_sdu_p->data[sizeof (struct rlc_um_tx_sdu_management)], sdu_pP, sdu_sizeP);
-		//！这里的头部是rlc_um_data_req_alloc ,是一个union 
+		memcpy (((uint8_t *)(new_sdu_p->data) + sizeof(struct  rlc_um_tx_sdu_management)), sdu_pP, sdu_sizeP);
+
+		um_tx_sdu_header_ptr = ((struct rlc_um_tx_sdu_management *)(new_sdu_p->data)); 
 		um_tx_sdu_header_ptr->data_size = sdu_sizeP; 
 
 		um_tx_sdu_header_ptr->data_offset = sizeof(struct rlc_um_tx_sdu_management);
 
+        
 		
 
 		//free_mem_block(sdu_pP, __func__);
@@ -257,7 +263,7 @@ rlc_op_status_t rlc_get_tx_data(const protocol_ctxt_t *const ctxt_pP,
 		// PROCESS OF COMPRESSION HERE:
 	//	pthread_mutex_lock(&(rlc_union_p->rlc_union_mtex));
 		memset (new_sdu_p->data, 0, sizeof (struct rlc_tm_data_req_alloc));
-		memcpy (&new_sdu_p->data[sizeof (struct rlc_tm_data_req_alloc)], sdu_pP, sdu_sizeP);
+		memcpy ((uint8_t *)(new_sdu_p->data) + sizeof (struct rlc_tm_data_req_alloc), sdu_pP, sdu_sizeP);
 		((struct rlc_tm_data_req *) (new_sdu_p->data))->data_size = sdu_sizeP;
 		((struct rlc_tm_data_req *) (new_sdu_p->data))->data_offset = sizeof (struct rlc_tm_data_req_alloc);
 
@@ -376,7 +382,7 @@ void rlc_tx_process(void *message, MessagesIds      msg_type)
 	long   process_time = 0;
 
 	
-	LOG_WARN(RLC_TX, "RLC_TX receive message = %d\n",msg_type);
+	//LOG_WARN(RLC_TX, "RLC_TX receive message = %d\n",msg_type);
 	switch (msg_type)
 	{
 		case RRC_RLC_BUF_STATUS_REQ: 
@@ -449,15 +455,18 @@ cur process time = [%lld, %lld, %lld] \n",
 		case MAC_RLC_BUF_STATUS_REQ:
 		{
 			mac_data_buffer_req_ptr = (mac_rlc_buf_status_req *)message; 
-
+  
 			sfn = mac_data_buffer_req_ptr->sfn; 
 			subsfn = mac_data_buffer_req_ptr->sub_sfn; 
 
 			
 			//!srb0/srb1/drb's buffer status report to mac 
           	ue_num =  rlc_Get_Buffer_Status(rlc_buf_sta); 
-            
+#ifndef  RLC_UT_DEBUG             
             rlc_Mac_BufferSta_Rpt(sfn,subsfn,ue_num,rlc_buf_sta);
+            LOG_INFO(RLC_TX, "message:%d,[sfn--subsfn]:[%d,%d] send rlc buffer status to mac \n",
+            		msg_type,sfn,subsfn);
+#endif 
             if (ue_num != 0)
             {
 				
@@ -472,12 +481,13 @@ cur process time = [%lld, %lld, %lld] \n",
 		    //! send MAC_RLC_DATA_REQ message to RLC_TX 
 		    if (1 != g_rlc_no_data_transfer)
 		    {
-				mac_Rlc_data_Req(sfn, subsfn, 1, &mac_data_req_to_rlc); 
+				mac_Rlc_data_Req(sfn, subsfn, 1, &mac_data_req_to_rlc); 
+				
+            	LOG_INFO(RLC_TX, "message:%d,[sfn--subsfn]:[%d,%d] send rlc buffer status to mac,the data req message flag:%d \n",
+            		msg_type,sfn,subsfn,!g_rlc_no_data_transfer);
 			}
 #endif 
 
-            LOG_INFO(RLC_TX, "message:%d,[sfn--subsfn]:[%d,%d] send rlc buffer status to mac,the data req message flag:%d \n",
-            		msg_type,sfn,subsfn,!g_rlc_no_data_transfer);
             }
 
 			break; 

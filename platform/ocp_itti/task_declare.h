@@ -33,4 +33,5 @@ extern void *rlc_rx_task( MessageDef *recv_msg);
 extern void dummy_test_task(MessageDef *rece_msg);
 
 extern int dummy_init( );
+extern void ip_task( );
 #endif

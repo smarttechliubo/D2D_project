@@ -309,8 +309,9 @@ mem_block_t   *get_free_mem_block(uint32_t sizeP, const char* caller)
 #else 
     mem_block_t      *le = NULL;
 	char *alloc_buffer = NULL; 
-	uint16_t  offset = sizeof(mem_block_t) - sizeof(alloc_buffer);
+	uint16_t  offset = sizeof(mem_block_t);
 	alloc_buffer = OSP_Alloc_Mem(sizeP  + offset); 
+	LOG_DEBUG(DRIVER,"OSP_Alloc_Mem = %d \n",sizeP  + offset );
 	if (alloc_buffer == NULL)
 	{
 		AssertFatal(0, DRIVER, "get_free_mem_block failed,caller: %s \n", caller);
@@ -318,7 +319,7 @@ mem_block_t   *get_free_mem_block(uint32_t sizeP, const char* caller)
     else
     {
 		le = (mem_block_t *)alloc_buffer;
-		le->data = alloc_buffer + offset; 
+		le->data = (long )(alloc_buffer + offset); 
 	    return le;
     }
 #endif 	
@@ -433,7 +434,7 @@ check_mem_area (void)
 #endif
 
   for (index = 0; index < MEM_MNGT_MB0_NB_BLOCKS; index++) {
-    if ((memory->mem_blocks[index].data != (unsigned char*)&(memory->mem_pool0[index][0])) && (memory->mem_blocks[index].pool_id != MEM_MNGT_POOL_ID0)) {
+    if ((memory->mem_blocks[index].data !=(long) (unsigned char*)&(memory->mem_pool0[index][0])) && (memory->mem_blocks[index].pool_id != MEM_MNGT_POOL_ID0)) {
       LOG_DEBUG (RLC,"[MEM] ERROR POOL0 block index %d\n", index);
     }
   }

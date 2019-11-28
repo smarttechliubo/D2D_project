@@ -45,7 +45,7 @@ typedef struct mem_block_t {
 	  struct mem_block_t *previous;
 	  size_t size;
 	  unsigned char pool_id; //!<从哪个pool中获取的
-	  unsigned char *data;  //！数据地址
+	  long   data;  //用long 保存数据地址
 } mem_block_t;
 
 

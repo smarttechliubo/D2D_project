@@ -395,7 +395,7 @@ void  rlc_um_reassembly (const protocol_ctxt_t* const ctxt_pP,
     if ((rlc_pP->output_sdu_size_to_write + lengthP) <= sdu_max_size) {
 	 	
 	 //！将PDU中的data field copy到SDU的buffer中 
-      memcpy (&rlc_pP->output_sdu_in_construction->data[rlc_pP->output_sdu_size_to_write], src_pP, lengthP);
+      memcpy (((uint8_t  *)rlc_pP->output_sdu_in_construction->data + rlc_pP->output_sdu_size_to_write), src_pP, lengthP);
       rlc_pP->output_sdu_size_to_write += lengthP;
 #if TRACE_RLC_UM_DISPLAY_ASCII_DATA
       rlc_pP->output_sdu_in_construction->data[rlc_pP->output_sdu_size_to_write] = 0;

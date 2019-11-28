@@ -88,6 +88,8 @@ typedef struct tag_OSP_TASKMSG_REG
 #define ERR_DEBUG_LEVEL 1
 #define WARNING_DEBUG_LEVEL 2
 #define RUN_DEBUG_LEVEL 3
+#define DBG_DEBUG_LEVEL 4
+
 /*ms unit*/
 OSP_STATUS OSP_delay(U32 delay);
 /* osp send timer-msg to DstTaskId*/
@@ -104,6 +106,12 @@ void OSP_Free_Msg( Osp_Msg_Head* pHead);
 OSP_STATUS DebugOut(int level, char *fmt,...);
 ULONG getOspTicks(void);
 ULONG getOspCycel(void);
+void OSP_atomicInc(int* pVar);
+void OSP_atomicDec(int* pVar);
+int OSP_atomicGet(int* pVar);
+void OSP_atomicSet(int* pVar, int val);
+void DebugOutSetLevel(int level);
+OSP_STATUS DebugOutWithTime(int level, char *fmt,...);
 
 
 

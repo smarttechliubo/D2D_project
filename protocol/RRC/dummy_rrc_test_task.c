@@ -173,7 +173,7 @@ void dummy_rrc_rpt_message(uint16_t msg_id,CCCH_MessageType_PR ccch_message)
 	        mib_rpt_ptr->SFN = 0x256; 
 	        mib_rpt_ptr->subsfn = 0x1;
 	        mib_rpt_ptr->mib_receive_flag = 1; 
-
+            
 	        message = itti_alloc_new_message(TASK_D2D_MAC, MAC_RRC_BCCH_MIB_RPT, 
 				                      (char *) mib_rpt_ptr, sizeof(mac_rrc_bcch_mib_rpt)); 
 		    itti_send_msg_to_task(TASK_D2D_RRC, 0,  message);
@@ -236,6 +236,7 @@ int dummy_init( )
 
 }
 
+uint gdummy_timer_cnt = 0;
 void dummy_test_task(MessageDef *recv_msg)
 {
 	uint32_t rrc_mode = rrc_GetModeType(); 
@@ -243,7 +244,8 @@ void dummy_test_task(MessageDef *recv_msg)
 
 	if(IS_TIMER_MSG(pMsg))
 	{
-	
+		gdummy_timer_cnt++; 
+		LOG_DEBUG(DUMMY,"gdummy_timer_cnt = %d \n", gdummy_timer_cnt);
 		if (D2D_MODE_TYPE_SOURCE == rrc_mode)
 		{
 	       
@@ -278,7 +280,7 @@ void dummy_test_task(MessageDef *recv_msg)
 #endif 
 			while (RRC_STATUS_CONNECTED !=  rrc_GetCurrentStatus()) 
 			{	
-				sleep(1); 
+				
 				LOG_DEBUG(RRC, "SOURCE wait for connect complete message  \n");
 			}
 			//!send rrc conncet complete message to source 

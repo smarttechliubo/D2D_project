@@ -487,7 +487,7 @@ int EncodeD2dCcch(uint8_t      *encode_buffer, uint32_t max_buffersize,
 			encode_msg->message.choice.rrcConnectionrequest.ue_Ip.bits_unused = 0;
 		
 			
-			LOG_DEBUG(MAC, "Dummy send CCCH_MessageType_PR_rrcConnectionrequest to rrc \n"); 
+			LOG_DEBUG(DUMMY, "Dummy send CCCH_MessageType_PR_rrcConnectionrequest to rrc \n"); 
 			break; 
 	    }
 		case CCCH_MessageType_PR_rrcConnectionsetup:
@@ -546,14 +546,14 @@ int EncodeD2dCcch(uint8_t      *encode_buffer, uint32_t max_buffersize,
 			ASN_SEQUENCE_ADD(&(rrc_connect_setup->drb_ToReleaselist->list),&drb_id);
 			*/
 			encode_msg->message.choice.rrcConnectionsetup = *rrc_connect_setup; 
-			LOG_DEBUG(MAC, "Dummy send CCCH_MessageType_PR_rrcConnectionsetup to rrc \n"); 
+			LOG_DEBUG(DUMMY, "Dummy send CCCH_MessageType_PR_rrcConnectionsetup to rrc \n"); 
 			break;
 		}
 		case CCCH_MessageType_PR_rrcConectioncomplete:
 		{
 			encode_msg->message.present = CCCH_MessageType_PR_rrcConectioncomplete; 
 			encode_msg->message.choice.rrcConectioncomplete.complete_status = 1;
-			LOG_DEBUG(MAC, "Dummy send CCCH_MessageType_PR_rrcConectioncomplete to rrc \n"); 
+			LOG_DEBUG(DUMMY, "Dummy send CCCH_MessageType_PR_rrcConectioncomplete to rrc \n"); 
 
 			break; 
 		}

@@ -79,10 +79,11 @@ struct mac_data_ind mac_rlc_deserialize_tb (char	   *buffer_pP,
 													uint32_t	num_tbP)
 {
 	//-----------------------------------------------------------------------------
-	struct mac_data_ind  data_ind;
+	struct mac_data_ind    data_ind;
 	mem_block_t*		   tb_p;
 	uint32_t			   nb_tb_read;
-	tbs_size_t		   tbs_size;
+	tbs_size_t		       tbs_size;
+	struct mac_tb_ind *    mac_tb_ind_ptr = NULL ; 
 
 	nb_tb_read = 0;
 	tbs_size	 = 0;
@@ -95,13 +96,14 @@ struct mac_data_ind mac_rlc_deserialize_tb (char	   *buffer_pP,
 		tb_p = get_free_mem_block(sizeof (mac_rlc_max_rx_header_size_t) + tb_sizeP, __func__);
 
 		if (tb_p != NULL) {
-		((struct mac_tb_ind *) (tb_p->data))->first_bit = 0;
-		((struct mac_tb_ind *) (tb_p->data))->data_ptr = (uint8_t*)&tb_p->data[sizeof (mac_rlc_max_rx_header_size_t)];
-		((struct mac_tb_ind *) (tb_p->data))->size = tb_sizeP;
-		((struct mac_tb_ind *) (tb_p->data))->error_indication = 0; //! CRC is not used
+			mac_tb_ind_ptr = (struct mac_tb_ind *)(tb_p->data); 
+		mac_tb_ind_ptr->first_bit = 0;
+		mac_tb_ind_ptr->data_ptr = (uint8_t*)(tb_p->data) + sizeof(mac_rlc_max_rx_header_size_t);
+		mac_tb_ind_ptr->size = tb_sizeP;
+		mac_tb_ind_ptr->error_indication = 0; //! CRC is not used
 		
-
-		memcpy(((struct mac_tb_ind *) (tb_p->data))->data_ptr, &buffer_pP[tbs_size], tb_sizeP);
+      
+		memcpy(mac_tb_ind_ptr->data_ptr, &buffer_pP[tbs_size], tb_sizeP);
 
 
 

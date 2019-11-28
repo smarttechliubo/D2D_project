@@ -336,8 +336,8 @@ int itti_send_msg_to_task(task_id_t destination_task_id, instance_t instance, Me
     if (OSP_OK == ret)
     {
 
-		LOG_INFO(DRIVER,"task:%d send message:%d to task:%d successful!\n", message->ittiMsgHeader.SrcId,
-	   				message->ittiMsgHeader.MsgType, message->ittiMsgHeader.DstId);
+	//	LOG_INFO(DRIVER,"task:%d send message:%d to task:%d successful!\n", message->ittiMsgHeader.SrcId,
+	//   				message->ittiMsgHeader.MsgType, message->ittiMsgHeader.DstId);
 	   	return ret;
 	}
 	else 

@@ -31,10 +31,10 @@
 //char *vm_addr1 = "192.168.1.168";
 //char *vm_addr2= "192.168.84.129";
 
-char *vm_addr1 = "192.168.0.127";
+char *vm_addr1 = "192.168.0.136";
 char *vm_addr2= "192.168.84.1";
 
-char *PC_src_ip = "192.168.1.135";
+char *PC_src_ip = "192.168.84.1";
 char *PC_dst_ip = "192.168.84.1";
 char msg_buffer[MAX_BUFFER_LENGTH] = {0};
 char msg_buffer_2[MAX_BUFFER_LENGTH] = {0};
@@ -163,7 +163,7 @@ void ip_task( )
 	
 
 	timerfd_settime(timerfd_1, 0, &ts1, NULL); 
-#if 1
+#if 0
 	timerfd_2 = timerfd_create(CLOCK_MONOTONIC,0);
     //!sleep 1ms ,and then start timer2 
 	if (clock_gettime(CLOCK_MONOTONIC, &timer2_request) == -1)
@@ -190,7 +190,7 @@ void ip_task( )
 		max_fd = (sockfd_1>=sockfd_2) ? sockfd_1:sockfd_2;
 #ifdef RLC_UT_DEBUG 
 		max_fd = (max_fd >= timerfd_1)?max_fd:timerfd_1; 
-		max_fd = (max_fd >= timerfd_2)?max_fd:timerfd_2; 
+	//	max_fd = (max_fd >= timerfd_2)?max_fd:timerfd_2; 
 #endif 
 
 	    max_fd = max_fd +1;
@@ -216,7 +216,7 @@ void ip_task( )
 			mac_Rlc_Bufstat_Req(g_d2d_sfn,g_d2d_subsfn);
 #endif 
 		}
-
+#if 0
 		if (FD_ISSET(timerfd_2,&rset))
 		{
 			read(timerfd_2,&timer_expire_count[1],sizeof(timer_expire_count[1]));
@@ -228,14 +228,15 @@ void ip_task( )
 			//LOG_INFO(IP, "timerfd_1,expire count:%lld, cycle:%lld, elapse cycle = %lld \n",timer_expire_count,current_cycle, current_cycle - old_cycle);
 			//old_cycle = current_cycle;
 		}
-		
+#endif 		
 		if (FD_ISSET(sockfd_1,&rset))
 		{
-
+            
 			errno = 0;
 			recv_length = recvfrom(sockfd_1,msg_buffer,MAX_BUFFER_LENGTH,0,NULL,NULL); //!获取PC 发送的地址
+			
 			inet_ntop(AF_INET,&PC_addr_src.sin_addr.s_addr, pc_addr_ip,sizeof(pc_addr_ip));
-			LOG_DEBUG(IP,"message buffer = %s\n",msg_buffer);
+			//LOG_DEBUG(IP,"message buffer = %s\n",msg_buffer);
 
 			if (0 == errno)
 	 		{

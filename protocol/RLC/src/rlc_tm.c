@@ -188,7 +188,7 @@ void  rlc_tm_no_segment (const protocol_ctxt_t* const  ctxt_pP,
 		pdu_mngt_p = (struct rlc_tm_tx_pdu_management *) (pdu_p->data);
 		memset (pdu_p->data, 0, sizeof (struct rlc_tm_tx_pdu_management));
 		//!指向buffer中的data地址，加上一个偏移
-		pdu_mngt_p->first_byte = (uint8_t*)&pdu_p->data[sizeof (struct rlc_tm_tx_data_pdu_struct)];
+		pdu_mngt_p->first_byte = (uint8_t*)pdu_p->data + sizeof (struct rlc_tm_tx_data_pdu_struct);
 
 		//从sdu 的首地址 向pdu的首地址copy 数据，byte对齐的
 		memcpy (pdu_mngt_p->first_byte, sdu_mngt_p->first_byte, tm_sdu_size);
@@ -262,7 +262,7 @@ void  rlc_tm_data_req (
 	rlc_p->buffer_occupancy += ((struct rlc_tm_tx_sdu_management *) (sdu_pP->data))->sdu_size;
 	rlc_p->nb_sdu += 1;
 	((struct rlc_tm_tx_sdu_management *) (sdu_pP->data))->first_byte = \
-									 (uint8_t*)&sdu_pP->data[sizeof (struct rlc_tm_data_req_alloc)];
+									 (uint8_t*)(sdu_pP->data) + sizeof (struct rlc_tm_data_req_alloc);
 	rlc_p->input_sdus[rlc_p->next_sdu_index] = sdu_pP;
 	rlc_p->next_sdu_index = (rlc_p->next_sdu_index + 1) % rlc_p->size_input_sdus_buffer;
 
@@ -326,7 +326,7 @@ void  rlc_tm_send_sdu(const protocol_ctxt_t* const  ctxt_pP,
 
 	if ((rlc_pP->output_sdu_in_construction)) {
 	 
-	  memcpy (&rlc_pP->output_sdu_in_construction->data[rlc_pP->output_sdu_size_to_write], srcP, length_in_bytes);
+	  memcpy ((uint8_t *)(rlc_pP->output_sdu_in_construction->data) + rlc_pP->output_sdu_size_to_write, srcP, length_in_bytes);
      #if 0
 	  rlc_data_ind (
 		ctxt_pP,

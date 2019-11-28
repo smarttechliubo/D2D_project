@@ -217,9 +217,9 @@ int   rlc_Get_Buffer_Status(rlc_buffer_rpt *buffer_status)
 #endif 
 				
 
-				LOG_WARN(RLC_TX, "rlc_Get_Buffer_Status:ue_index:%d,lc_ch_num:%d,lc_index:%d, data_size:%d,rlc_header:%d \n",
-						ue_num,buffer_status[ue_num].logic_chan_num,logic_ch_index,g_rlc_buffer_status[ue_index].data_size[logic_ch_index],
-						g_rlc_buffer_status[ue_index].rlc_header_size[logic_ch_index]);
+			 //LOG_WARN(RLC_TX, "rlc_Get_Buffer_Status:ue_index:%d,lc_ch_num:%d,lc_index:%d, data_size:%d,rlc_header:%d \n",
+			//			ue_num,buffer_status[ue_num].logic_chan_num,logic_ch_index,g_rlc_buffer_status[ue_index].data_size[logic_ch_index],
+			//			g_rlc_buffer_status[ue_index].rlc_header_size[logic_ch_index]);
 			}
 			
 			memcpy((void *)buffer_status[ue_num].logicchannel_id,

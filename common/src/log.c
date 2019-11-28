@@ -16,7 +16,7 @@
 #include "log.h"
 
 #ifndef LOGLEVEL
-#define LOGLEVEL DEBUG
+#define LOGLEVEL ERROR
 #endif
 
 // 使用了GNU C扩展语法，只在gcc（C语言）生效，
