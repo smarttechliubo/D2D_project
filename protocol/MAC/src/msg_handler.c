@@ -39,18 +39,11 @@ bool is_timer(msgDef* msg)
 	return false;
 }
 
-void message_int(const task_id taskId, const msg_mode mode)
-{
-	//msgq_type type = get_msgq_type(taskId);
-
-	//msgq_init(taskId, mode);
-}
-
 void message_close()
 {
 	//msgq_close();
 }
-
+/*
 MMsg_type message_type(msgDef* msg)
 {
 	
@@ -76,6 +69,7 @@ MMsg_type message_type(msgDef* msg)
 
 	return EMSG_NULL;
 }
+*/
 msgDef* new_message(const int32_t msgId, const task_id source, const task_id dest, msgSize msg_size)
 {
 	msgDef* msg = OSP_Alloc_Msg(msg_size);
@@ -96,27 +90,6 @@ msgDef* new_message(const int32_t msgId, const task_id source, const task_id des
 	}
 
 	return msg;
-
-/*
-	msg->data = (uint8_t*)msg_malloc(msg_size);
-
-	if (msg->data != NULL)
-	{
-		msg->header.msgId = msgId;
-		msg->header.source = source;
-		msg->header.destination = dest;
-		msg->header.msgSize = msg_size;
-
-		return true;
-	}
-	else
-	{
-		LOG_ERROR(MAC, "new mac message fail! msgId:%u", msgId);
-		return false;
-	}
-
-	return false;
-*/
 }
 
 
@@ -146,7 +119,7 @@ msgDef * message_receive_timeout(const task_id taskId, uint32_t timeout)
 
 	if (msg == NULL)
 	{
-		LOG_ERROR(MAC, "message_receive_try, taskId:%u", taskId);
+		//LOG_ERROR(MAC, "message_receive_try, taskId:%u", taskId);
 	}
 	else
 	{	

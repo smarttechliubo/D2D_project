@@ -25,6 +25,7 @@
 #include "d2d_message_type.h"
 #include "interface_rrc_mac.h"
 #include "intertask_interface.h"
+#include "mac_osp_interface.h"
 
 bool g_timing_sync = false;
 
@@ -32,7 +33,7 @@ void init_mac()
 {
 	uint32_t i = 0;
 
-	mac_info_s *mac = (mac_info_s*) malloc(sizeof(mac_info_s));
+	mac_info_s *mac = (mac_info_s*) mem_alloc(sizeof(mac_info_s));
     bzero(mac, sizeof(mac_info_s));
 
 	mac->status = ESTATUS_NONE;
@@ -64,15 +65,34 @@ void init_mac()
 
 void mac_clean()
 {
-	free(g_context.mac);
+	mem_free((char*)g_context.mac);
 
 	LOG_INFO(MAC, "mac_clean");
 }
 
+bool pre_check(const sub_frame_t subframe)
+{
+	mac_info_s *mac = g_context.mac;
+
+	if (mac->status != ESTATUS_ACTIVE)
+	{
+		return false;
+	}
+
+	if ((mac->mode == EMAC_SRC) && (subframe == 0 || subframe == 1))
+	{
+		return true;
+	}
+	else if((mac->mode == EMAC_DEST) && (subframe == 2 || subframe == 3))
+	{
+		return true;
+	}
+
+	return false;
+}
+
 void mac_pre_handler(msgDef *msg)
 {
-	LOG_INFO(MAC, "LGC: mac_pre_handler 1");
-
 	frame_t frame;
 	sub_frame_t subframe;
 
@@ -103,7 +123,7 @@ void mac_pre_handler(msgDef *msg)
 		pre_schedule(frame, subframe, g_context.mac);
 	}
 }
-
+/*
 uint32_t system_run_time = 0;
 
 void syncTimingUpdate()
@@ -123,10 +143,20 @@ uint32_t get_syncTiming()
 {
 	 return system_run_time;
 }
-
+*/
+extern	int32_t get_sysSfn();
 
 void syncTime()//TODO: sync
 {
+
+	int time = get_sysSfn();
+
+	g_context.frame = time >> 2;
+	g_context.subframe = time % MAX_SUBSFN;
+
+	if (g_timing_sync == false)
+		g_timing_sync = true;
+/*
 	uint32_t time = 0;
 
 	// 1. get timing sync with PHY	
@@ -177,6 +207,7 @@ void syncTime()//TODO: sync
 			}
 		}
 	}
+	*/
 }
 
 int32_t init_mac_period()
@@ -184,8 +215,8 @@ int32_t init_mac_period()
 	void* pTimer;
 	int32_t ret;
 	
-	pTimer = OSP_timerCreateSim(TASK_D2D_MAC, 1, 4,0);
-	ret = OSP_timerStart(pTimer);
+	pTimer = _timerCreate(TASK_D2D_MAC, 1, 4,0);
+	ret = _timerStart(pTimer);
 
 	LOG_INFO(MAC,"init_mac_period pTimer is %p, ret:%d\r\n", pTimer,ret);
 
@@ -198,12 +229,14 @@ int32_t init_mac_period()
 // interrupt function
 void run_period(msgDef* msg)
 {
-	syncTimingUpdate();//TODO: timing sync with phy
+	//syncTimingUpdate();//TODO: timing sync with phy
 	syncTime();
 
 	LOG_INFO(MAC, "run_period current time frame：%u，subframe:%u", g_context.frame, g_context.subframe);
 
 	mac_pre_handler(msg);
+
+	message_free(msg);
 }
 
 int32_t init_mac_scheduler()
@@ -211,12 +244,10 @@ int32_t init_mac_scheduler()
 	void* pTimer;
 	int32_t ret;
 	
-	pTimer = OSP_timerCreateSim(TASK_D2D_MAC_SCH, 1, 4, 1);
-	ret = OSP_timerStart(pTimer);
+	pTimer = _timerCreate(TASK_D2D_MAC_SCH, 1, 4, 1);
+	ret = _timerStart(pTimer);
 
 	LOG_INFO(MAC,"init_mac_scheduler pTimer is %p, ret:%d\r\n", pTimer,ret);
-
-	init_mac();
 
 	return 0;
 }
@@ -229,14 +260,11 @@ void run_scheduler(msgDef* msg)
 	{
 		msg_handler(msg);
 	}
-	else
+	else if (pre_check(g_context.mac->subframe))
 	{
-		if (!pre_check(g_context.mac->subframe))
-		{
-			return;
-		}
-
 		mac_scheduler();
 	}
+
+	message_free(msg);
 }
 

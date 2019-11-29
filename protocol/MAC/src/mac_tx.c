@@ -745,7 +745,13 @@ void handle_ue_result(ueInfo* ue, const sub_frame_t subframe)
 	handle_ue_logic_channel(ue, lc_index, lc_num, subframe);
 }
 
-bool fill_dci_result(ueInfo* ue, dci_ind* dci, uint16_t dci_num, const uint32_t rb_num, const uint32_t rb_start, const uint8_t mcs)
+bool fill_dci_result(ueInfo* ue, 
+	dci_ind* dci, 
+	uint16_t dci_num, 
+	const uint32_t rb_num, 
+	const uint32_t rb_start, 
+	const uint8_t mcs,
+	const uint8_t data_ind)
 {
 	int32_t cce_offset = -1;
 	uint16_t aggregation_level = 2;//get_aggregation_level(bandwith, EFORMAT0, 2);
@@ -763,7 +769,7 @@ bool fill_dci_result(ueInfo* ue, dci_ind* dci, uint16_t dci_num, const uint32_t 
 		dci[dci_num].rb_num = rb_num;
 		dci[dci_num].rb_start = rb_start;
 		dci[dci_num].mcs = mcs;
-		dci[dci_num].data_ind = 2;
+		dci[dci_num].data_ind = data_ind;
 		dci[dci_num].ndi = 0;
 		dci[dci_num].rv = 0;
 		dci_num++;
@@ -814,6 +820,7 @@ bool fill_schedule_result(ueInfo* ue, const sub_frame_t subframe)
 	uint32_t rb_num  = 0;
 	uint8_t mcs = 0;
 	uint8_t rv = 0;
+	uint8_t data_ind = 3;// 1:ACK/NACK; 2:DATA;  3:DATA + ACK/NACK
 
 	if (ue->harq[harqId].reTx)
 	{
@@ -830,7 +837,7 @@ bool fill_schedule_result(ueInfo* ue, const sub_frame_t subframe)
 		rv = 0;
 	}
 
-	ret = fill_dci_result(ue, dci, dci_num, rb_num, rb_start, mcs);
+	ret = fill_dci_result(ue, dci, dci_num, rb_num, rb_start, mcs, data_ind);
 
 	if (ret)
 	{

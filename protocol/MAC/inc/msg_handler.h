@@ -16,7 +16,6 @@ msgId get_msgId(const msgDef* msg);
 task_id get_SrcId(const msgDef* msg);
 task_id get_DstId(const msgDef* msg);
 bool is_timer(msgDef* msg);
-void message_int(const task_id taskId, const msg_mode mode);
 void message_close();
 msgDef* new_message(const int32_t msgId, const task_id source, const task_id dest, msgSize msg_size);
 bool message_send(const task_id dest, msgDef *msg_ptr, int msg_len);

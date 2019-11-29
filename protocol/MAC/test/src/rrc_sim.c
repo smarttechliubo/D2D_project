@@ -17,22 +17,22 @@
 #include "d2d_message_type.h"
 #include "log.h"
 #include "msg_handler.h"
+#include "mac_osp_interface.h"
 
 //rrc_info g_rrc;
-uint16_t g_rrc_mode = 0;//0:source, 1:destination
-
+extern uint16_t g_testing_mode;//0:source, 1:destination
 
 uint32_t init_rrc_sim()
 {
 	void* pTimer;
 	int32_t ret;
 	
-	pTimer = OSP_timerCreateSim(TASK_D2D_RRC, 1, 4,0);
-	ret = OSP_timerStart(pTimer);
+	pTimer = _timerCreate(TASK_D2D_RRC, 1, 4,0);
+	ret = _timerStart(pTimer);
 
 	LOG_INFO(MAC,"init_rrc_sim pTimer is %p, ret:%u\r\n", pTimer, ret);
 
-	if (g_rrc_mode == 0)
+	if (g_testing_mode == 0)
 		init_rrc_src_sim();
 	else
 		init_rrc_dst_sim();
@@ -42,7 +42,7 @@ uint32_t init_rrc_sim()
 
 uint16_t get_rrc_mode()
 {
-	return g_rrc_mode;
+	return g_testing_mode;
 }
 
 void rrcMsgHandler(msgDef* msg)
@@ -53,6 +53,7 @@ void rrcMsgHandler(msgDef* msg)
 	//while (1)
 	{
 		msg_id = get_msgId(msg);
+		LOG_ERROR(RRC, "rrcMsgHandler msg_id:%u", msg_id);
 
 		switch (msg_id)
 		{
@@ -73,7 +74,7 @@ void rrcMsgHandler(msgDef* msg)
 			case MAC_RRC_CCCH_RPT:
 			case MAC_RRC_CONNECT_SETUP_CFG_CFM:
 			{
-				if (g_rrc_mode == 0)
+				if (g_testing_mode == 0)
 				{
 					rrcSrsMsgHandler(msg, msg_id);
 				}
@@ -91,7 +92,6 @@ void rrcMsgHandler(msgDef* msg)
 			}
 		}
 
-		message_free(msg);
 	}
 }
 
@@ -102,16 +102,18 @@ void rrc_sim_thread(msgDef* msg)
 	{
 		rrcMsgHandler(msg);
 	}
-	else if (g_rrc_mode == 0)
+	else if (g_testing_mode == 0)
 	{
 		rrcSrcStatusHandler();
 		rrcSrcUserStatusHandler();
 	}
-	else if (g_rrc_mode == 1)
+	else if (g_testing_mode == 1)
 	{
 		rrcDstcStatusHandler();
 		rrcDstUserStatusHandler();
 	}
+
+	message_free(msg);
 }
 
 /*
@@ -130,7 +132,7 @@ void *rrc_thread()
 	{
 		rrcMsgHandler(msg);
 
-		if (g_rrc_mode == 0)
+		if (g_testing_mode == 0)
 		{
 			rrcSrcStatusHandler();
 			rrcSrcUserStatusHandler();

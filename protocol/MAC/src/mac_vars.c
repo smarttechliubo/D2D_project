@@ -142,22 +142,13 @@ uint32_t get_available_rbs(const uint16_t bandwith)
 
 uint8_t get_harqId(const sub_frame_t subframe)
 {
-	uint8_t harqId = INVALID_U8;
-	mac_info_s *mac = g_context.mac;
-	mode_e mode = mac->mode;
+	uint8_t harqId = 0;
 
-	if ((mode == EMAC_SRC && subframe > 1) || (mode == EMAC_DEST && subframe <= 1))
-	{
-		harqId = 0;
-		LOG_ERROR(MAC, "get_harqId error, subframe:%u", subframe);
-		return harqId;
-	}
-
-	if (mode == EMAC_SRC)
+	if (subframe <= 1)
 	{
 		harqId = subframe % MAX_SUBSFN;
 	}
-	else
+	else if (subframe > 1)
 	{
 		harqId = (subframe % MAX_SUBSFN) - 2;
 	}
@@ -175,26 +166,5 @@ uint16_t cqi_to_mcs(const uint16_t cqi)
 		i = 15;
 
 	return cqi_2_mcs[i];
-}
-
-bool pre_check(const sub_frame_t subframe)
-{
-	mac_info_s *mac = g_context.mac;
-
-	if (mac->status != ESTATUS_ACTIVE)
-	{
-		return false;
-	}
-
-	if ((mac->mode == EMAC_SRC) && (subframe == 0 || subframe == 1))
-	{
-		return true;
-	}
-	else if((mac->mode == EMAC_DEST) && (subframe == 2 || subframe == 3))
-	{
-		return true;
-	}
-
-	return false;
 }
 

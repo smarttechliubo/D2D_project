@@ -33,7 +33,7 @@ typedef struct
 
 typedef struct
 {
-	crc_result_e crc;
+	crc_result_e crc[MAX_HARQ_NUM];
 	uint16_t cqi;
 	uint16_t mcs;
 	uint16_t coefficient;

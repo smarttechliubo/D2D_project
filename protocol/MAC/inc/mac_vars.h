@@ -26,7 +26,6 @@ uint32_t get_first_rb(uint16_t bandwith);
 uint32_t get_available_rbs(const uint16_t bandwith);
 uint8_t get_harqId(const sub_frame_t subframe);
 uint16_t cqi_to_mcs(const uint16_t cqi);
-bool pre_check(const sub_frame_t subframe);
 
 
 #endif  //_SMARTLOGICTECH_MAC_VARS_H

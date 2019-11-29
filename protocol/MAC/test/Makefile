@@ -33,7 +33,7 @@ $(MAC_OBJS_TEST):%.o:%.c
 
 $(MAC_LIB_TEST):$(MAC_OBJS_TEST)
 	@echo "Compiling start MAC_LIB_TEST"
-	gcc -shared -fPIC -o $(MAC_LIB_TEST) $^ -o $@  -g
+	gcc -shared -fPIC -o $(MAC_LIB_TEST) $^ -o $@  -g  -lrt
 	rm -f  $(MAC_OBJS_TEST) $(MAC_DEPS_TEST)
 
 clean:

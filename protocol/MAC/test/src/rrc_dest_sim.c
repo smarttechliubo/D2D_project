@@ -18,6 +18,7 @@
 #include "d2d_message_type.h"
 #include "log.h"
 #include "msg_handler.h"
+#include "mac_osp_interface.h"
 
 rrc_info g_rrc_dst;
 uint16_t g_ueId = 0;
@@ -90,7 +91,7 @@ void dst_user_setup_complete(const uint16_t ueId, const rnti_t rnti, const uint1
 	rrc_rlc_data_ind *ind;
 	msgSize msg_size = sizeof(rrc_rlc_data_ind);
 	uint16_t data_size = sizeof(ccch_info);
-	ccch_info* ccch = (ccch_info *)malloc(data_size);
+	ccch_info* ccch = (ccch_info *)mem_alloc(data_size);
 
 	msg = new_message(RRC_RLC_DATA_IND, TASK_D2D_RRC, TASK_D2D_RLC, msg_size);
 
@@ -169,7 +170,7 @@ void dst_user_setup_req(const uint16_t ueId, const uint16_t flag)
 	rrc_rlc_data_ind *ind;
 	msgSize msg_size = sizeof(rrc_rlc_data_ind);
 	uint16_t data_size = sizeof(ccch_info);
-	ccch_info* ccch = (ccch_info *)malloc(data_size);
+	ccch_info* ccch = (ccch_info *)mem_alloc(data_size);
 
 	if (!dst_add_new_user(ueId, INVALID_U16))
 	{
@@ -309,7 +310,7 @@ void rrcDstcStatusHandler()
 
 		if (msg != NULL)
 		{
-			uint8_t *sib_pdu = (uint8_t *)malloc(8);
+			uint8_t *sib_pdu = (uint8_t *)mem_alloc(8);
 
 			req = (rrc_mac_bcch_para_config_req*)message_ptr(msg);
 			req->flag = 3;
@@ -346,9 +347,13 @@ void rrcDstUserStatusHandler()
 	if (g_rrc_dst.status == ERRC_BCCH_CFM)
 	{
 		g_rrc_dst.status = ERRC_NONE;
-		ueId = g_ueId++;
 
-		dst_user_setup_req(ueId, 0);
+		if (g_rrc_dst.num_ue == 0)
+		{
+			ueId = g_ueId++;
+
+			dst_user_setup_req(ueId, 0);
+		}
 	}
 
 	num_ue = g_rrc_dst.num_ue;

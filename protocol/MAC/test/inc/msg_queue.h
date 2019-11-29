@@ -12,17 +12,50 @@
 
 #include <mqueue.h>
 #include "messageDefine.h"
+#include "mytask.h"
 
 
 #define QUE_DEP 10
-#define MQ_MSGSIZE 128
+#define MQ_MSGSIZE 2048
 
-mqd_t msgq_init(task_id type, msg_mode mode);
-void msgq_free_msg(task_id taskId);
+typedef enum
+{
+	EMSG_NULL,
+	EMSG_TIMER,
+	EMSG_RRC,
+	EMSG_RLC,
+	EMSG_PHY
+}MMsg_type;
+
+typedef enum
+{
+	EBLOCK,
+	ENONBLOCK
+}msg_mode;
+
+typedef struct
+{
+	msgId msgId;
+	task_id source;
+	task_id destination;
+	msgSize msgSize;
+}msgHeader;
+
+typedef struct
+{
+	msgHeader header;
+	uint8_t *data;
+}MsgqDef;
+
+#define MQ_MSG_HEADER_SIZE sizeof(msgHeader)
+#define MQ_MSG_CONTENT_PTR(x) (char *)(x + MQ_MSG_HEADER_SIZE)
+
+mqd_t msgq_init(task_id_sim type, msg_mode mode);
+void msgq_free_msg(task_id_sim taskId);
 void msgq_close();
-bool msgSend(task_id type, const char *msg_ptr, int msg_len);
-uint32_t msgRecv(task_id type, char *msg_ptr, int msg_len);
-msgDef *new_msg(msgSize msg_size);
+bool msgSend(task_id_sim type, char *msg_ptr, int msg_len);
+uint32_t msgRecv(task_id_sim type, char *msg_ptr, int msg_len);
+msgHeader *new_msg(const int32_t msgId, const task_id source, const task_id dest, msgSize msg_size);
 int msg_free(void *ptr);
 void *msg_malloc(uint32_t size);
 

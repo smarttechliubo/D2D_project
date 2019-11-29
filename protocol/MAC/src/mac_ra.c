@@ -16,6 +16,7 @@
 #include "mac_defs.h"
 #include "ue_index.h"
 #include "mac_vars.h"
+#include "mac_osp_interface.h"
 
 ra_t g_ra;
 uint16_t g_raId = 0;
@@ -33,7 +34,7 @@ void init_ra(const uint16_t cellId)
 
 ra_list* createNode()
 {
-	ra_list* node = (ra_list*)malloc(sizeof(ra_list));
+	ra_list* node = (ra_list*)mem_alloc(sizeof(ra_list));
 	if (node == NULL)
 	{
 		LOG_ERROR(MAC, "memory alloc for new ra ue fail!");
@@ -111,7 +112,7 @@ void remove_ra(const uint16_t    raId)
 				else
 					cur = cur->next;
 				
-				free(node);
+				mem_free((char*)node);
 				break;
 			}
 			pre = cur;

@@ -16,6 +16,7 @@
 #include "d2d_message_type.h"
 #include "log.h"
 #include "ue_index.h"
+#include "mac_osp_interface.h"
 
 #include "messageDefine.h"//MAC_TEST
 #include "msg_handler.h"
@@ -42,7 +43,7 @@ rnti_t new_rnti(const uint16_t cellId, const uint16_t ueIndex)
 
 ueInfo* createPtr()
 {
-	ueInfo* node = (ueInfo*)malloc(sizeof(ueInfo));
+	ueInfo* node = (ueInfo*)mem_alloc(sizeof(ueInfo));
 	if (node == NULL)
 	{
 		LOG_ERROR(MAC, "memory alloc for new ue fail!");
@@ -65,7 +66,7 @@ bool remove_ue(uint16_t ueIndex)
 	release_index(ue->ueIndex);
 	ue->active = false;
 	ue->ueIndex = INVALID_U16;
-	free(ue);
+	mem_free((char*)ue);
 
 	return true;
 }
@@ -85,7 +86,7 @@ ueInfo* new_ue(const uint16_t cellId, const uint16_t ueIndex)
 		}
 		else
 		{
-			free(ue);
+			mem_free((char*)ue);
 		}
 	}
 	return ue;
@@ -286,11 +287,12 @@ void get_csi_paras(const uint16_t ueIndex, uint16_t* cqi_periodic)
 	//ueInfo* ue = &g_context.mac->ue[ueIndex];
 }
 
-bool update_crc_result(rnti_t rnti, uint16_t crc)
+bool update_crc_result(const sub_frame_t subframe, const rnti_t rnti, const uint16_t crc)
 {
 	uint16_t ueIndex = find_ue(rnti);
 	ueInfo* ue = NULL;
 	crc_result_e c = ECRC_NULL;
+	uint8_t harqId = get_harqId(subframe);
 
 	if (ueIndex == INVALID_U16)
 	{
@@ -301,7 +303,7 @@ bool update_crc_result(rnti_t rnti, uint16_t crc)
 	c = (crc == 0) ? ECRC_NACK : ECRC_ACK;
 
 	ue = &g_context.mac->ue[ueIndex];
-	ue->sch_info.crc = c;
+	ue->sch_info.crc[harqId] = c;
 
 	return true;
 }

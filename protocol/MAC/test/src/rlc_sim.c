@@ -19,6 +19,7 @@
 #include "interface_mac_rlc.h"
 #include "rrc_sim.h"
 #include "mac_header.h"
+#include "mac_osp_interface.h"
 
 rlc_info g_rlc;
 //static uint32_t g_runtime = 0;
@@ -162,7 +163,7 @@ void rlc_remove_user(rlc_ue_info* ue)
 	
 	//for (uint32_t i = 0; i < MAX_LOGICCHAN_NUM; i++)
 	{
-		free(ue->data_ptr);
+		mem_free((char*)ue->data_ptr);
 	}
 }
 
@@ -181,7 +182,7 @@ void rlc_add_new_user(rlc_ue_info* ue, ccch_info* ccch)
 		ue->data_size[i] = 1024;
 	}
 
-	ue->data_ptr = (uint32_t  *)malloc(5120);
+	ue->data_ptr = (uint32_t  *)mem_alloc(5120);
 }
 
 void handle_mac_rlc_buf_status_req(const mac_rlc_buf_status_req *req)
@@ -380,7 +381,7 @@ void handle_rrc_data_ind(rrc_rlc_data_ind *ind)
 	LOG_INFO(RLC, "CCCH received, flag:%u, cause:%u, ueId:%u, rnti:%u", 
 		ccch->flag, ccch->cause, ccch->ueId, ccch->rnti);
 
-	free(ind->data_addr_ptr);
+	mem_free((char*)ind->data_addr_ptr);
 }
 
 void handle_mac_rlc_data_rpt(mac_rlc_data_rpt* req)
@@ -396,7 +397,7 @@ void handle_mac_rlc_data_rpt(mac_rlc_data_rpt* req)
 
 	for (uint32_t i = 0; i < ue_num; i++)
 	{
-		data_ind = &req->data_ind[i];
+		data_ind = &req->sdu_data_rpt[i];
 
 		if (data_ind->valid_flag)
 			continue;
@@ -414,7 +415,7 @@ void handle_mac_rlc_data_rpt(mac_rlc_data_rpt* req)
 				rnti, logicchannel_id, mac_pdu_size, mac_pdu_buffer_ptr);
 		}
 
-		free(data_ind->mac_pdu_buffer_ptr[0]);
+		mem_free((char*)data_ind->mac_pdu_buffer_ptr[0]);
 	}
 }
 
@@ -444,12 +445,16 @@ void rlcMsgHandler(msgDef* msg)
 			{
 				rrc_rlc_data_ind *ind = (rrc_rlc_data_ind *)message_ptr(msg);
 
+				LOG_INFO(RLC, "RRC_RLC_DATA_IND");
+				
 				handle_rrc_data_ind(ind);
 				break;
 			}
 			case MAC_RLC_BUF_STATUS_REQ:
 			{
 				mac_rlc_buf_status_req *req = (mac_rlc_buf_status_req *)message_ptr(msg);
+
+				LOG_INFO(RLC, "MAC_RLC_BUF_STATUS_REQ");
 
 				handle_mac_rlc_buf_status_req(req);
 				break;
@@ -458,6 +463,8 @@ void rlcMsgHandler(msgDef* msg)
 			{
 				mac_rlc_data_req *req = (mac_rlc_data_req *)message_ptr(msg);
 
+				LOG_INFO(RLC, "MAC_RLC_DATA_REQ");
+
 				handle_mac_rlc_data_req(req);
 				break;
 			}
@@ -465,27 +472,30 @@ void rlcMsgHandler(msgDef* msg)
 			{
 				mac_rlc_data_rpt *req = (mac_rlc_data_rpt *)message_ptr(msg);
 
+				LOG_INFO(RLC, "MAC_RLC_DATA_RPT");
+
 				handle_mac_rlc_data_rpt(req);
 
 				break;
 			}
 			default:
 			{
-				LOG_ERROR(MAC, "UNknown RLC msg, msgId:%u", msg_id);
+				LOG_ERROR(RLC, "UNknown RLC msg, msgId:%u", msg_id);
 				break;
 			}
 		}
 
-		message_free(msg);
 	}
 }
 
 void rlc_sim_thread(msgDef* msg)
 {
 	rlcMsgHandler(msg);
+
+	message_free(msg);
 }
 
-
+/*
 void *rlc_thread()
 {
 
@@ -502,4 +512,4 @@ void *rlc_thread()
 	return 0;
 }
 
-
+*/

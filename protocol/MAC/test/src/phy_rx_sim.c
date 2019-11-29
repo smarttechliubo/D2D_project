@@ -19,16 +19,23 @@
 #include "phy_sim.h"
 #include "emac_enum_def.h"
 #include "mac_defs.h"
+#include "msg_queue.h"
+#include "mac_osp_interface.h"
 
 phy_rx_info g_phyRx;
 bool g_timing_sync_phyRx = false;
 
-extern uint32_t get_syncTiming();
-uint16_t g_phy_rx_mode = 0;//0:source, 1:destination
+extern int get_sysSfn();
+extern uint16_t g_testing_mode;//0:source, 1:destination
 
 void syncTimePhyRx()//TODO: sync
 {
-    uint32_t time = 0;
+	int time = get_sysSfn();
+
+	g_phyRx.frame = time >> 2;
+	g_phyRx.subframe = time % MAX_SUBSFN;
+/*
+	uint32_t time = 0;
 
 	// 1. get timing sync
 	if (g_timing_sync_phyRx == false)
@@ -77,45 +84,56 @@ void syncTimePhyRx()//TODO: sync
 				LOG_WARN(MAC, "Timing sync failed with PHY");
 			}
 		}
-	}
+	}*/
 }
 
 uint32_t init_phy_rx_sim()
 {
-	g_phy_rx_mode = 0;
-
 	void* pTimer;
 	int32_t ret;
 
-	pTimer = OSP_timerCreateSim(TASK_D2D_PHY_RX, 1, 4,0);
-	ret = OSP_timerStart(pTimer);
+	pTimer = _timerCreate(TASK_D2D_PHY_RX, 1, 4,0);
+	ret = _timerStart(pTimer);
 
 	LOG_INFO(MAC,"init_phy_rx_sim pTimer is %p, ret:%u\r\n", pTimer, ret);
+
+	for (uint32_t i = 0; i < MAX_TX_UE; i++)
+	{
+		g_phyRx.pusch.pusch[i].data = (uint8_t *)mem_alloc(1024);
+	}
+	msgq_init(INTERFACE_TASK_A,ENONBLOCK);
+	msgq_init(INTERFACE_TASK_B,ENONBLOCK);
 
 	return 0;
 }
 
-void phyRxMsgHandler(msgDef *msg)
+void phyRxMsgHandler(msgDef *msgddd)
 {
-	//msgDef* msg = NULL;
-	//uint32_t msg_len = 0;
+	msgHeader* msg;
+	uint32_t msg_len = 0;
 	msgId msg_id = 0;
-	//mode_e mode = g_phy_rx_mode;
-	//task_id taskId = (mode == EMAC_SRC) ? INTERFACE_TASK_A : INTERFACE_TASK_B;
+	mode_e mode = g_testing_mode;
+	task_id taskId = (mode == EMAC_SRC) ? INTERFACE_TASK_A : INTERFACE_TASK_B;
 
-	message_free(msg);
-	return;
-	//while (1)
-	{ 
-		//msg_len = get_SrcId(msg);
+	msg = (msgHeader*)mem_alloc(MQ_MSGSIZE);
 
-		msg_id = get_msgId(msg);
+	while (1)
+	{
+		msg_len = msgRecv(taskId, (char*)msg, MQ_MSGSIZE);
+
+		if (msg_len <= 0)
+		{
+			mem_free((char*)msg);
+			return;
+		}
+
+		msg_id = msg->msgId;
 
 		switch (msg_id)
 		{
 			case MAC_PHY_PBCH_TX_REQ:
 			{
-				PHY_PBCHSendReq* req = (PHY_PBCHSendReq*)message_ptr(msg);
+				PHY_PBCHSendReq* req = (PHY_PBCHSendReq*)MQ_MSG_CONTENT_PTR(msg);
 
 				g_phyRx.flag_pbch = true;
 				memcpy(&g_phyRx.pbch, req, sizeof(PHY_PBCHSendReq));
@@ -124,7 +142,7 @@ void phyRxMsgHandler(msgDef *msg)
 			}
 			case MAC_PHY_PDCCH_SEND:
 			{				
-				PHY_PdcchSendReq* req = (PHY_PdcchSendReq*)message_ptr(msg);
+				PHY_PdcchSendReq* req = (PHY_PdcchSendReq*)MQ_MSG_CONTENT_PTR(msg);
 
 				g_phyRx.flag_pdcch = true;
 				memcpy(&g_phyRx.pdcch, req, sizeof(PHY_PdcchSendReq));
@@ -133,10 +151,19 @@ void phyRxMsgHandler(msgDef *msg)
 			}
 			case MAC_PHY_PUSCH_SEND:
 			{				
-				PHY_PuschSendReq* req = (PHY_PuschSendReq*)message_ptr(msg);
+				PHY_PuschSendReq* req = (PHY_PuschSendReq*)MQ_MSG_CONTENT_PTR(msg);
 
 				g_phyRx.flag_pusch = true;
-				memcpy(&g_phyRx.pdcch, req, sizeof(PHY_PuschSendReq));
+
+				g_phyRx.pusch.frame = req->frame;
+				g_phyRx.pusch.subframe = req->subframe;
+				g_phyRx.pusch.num = req->num;
+
+				for (uint32_t i = 0; i < g_phyRx.pusch.num ; i++)
+				{
+					memcpy(g_phyRx.pusch.pusch[i].data, req->pusch[i].data, req->pusch[i].pdu_len);
+				}
+				//memcpy(&g_phyRx.pusch, req, sizeof(PHY_PuschSendReq));
 		
 				break;
 			}
@@ -146,15 +173,15 @@ void phyRxMsgHandler(msgDef *msg)
 				break;
 			}
 		}
-
-		message_free(msg);
 	}
+
+	mem_free((char*)msg);
 }
 
 void handle_pusch(const      frame_t frame, const sub_frame_t subframe)
 {
-	frame_t pusch_frame = g_phyRx.pbch.frame;
-	sub_frame_t pusch_subframe = g_phyRx.pbch.subframe;
+	frame_t pusch_frame = g_phyRx.pusch.frame;
+	sub_frame_t pusch_subframe = g_phyRx.pusch.subframe;
 
 	pusch_frame = (pusch_frame + (pusch_frame + 1) / MAX_SUBSFN) % MAX_SFN;
 	pusch_frame = (pusch_frame + 1) % MAX_SUBSFN;
@@ -332,26 +359,27 @@ void phy_rx_sim_thread(msgDef *msg)
 {
 	frame_t frame;
 	sub_frame_t subframe;
+	bool isTimer = is_timer(msg);
 
-	syncTimePhyRx();
+	if (isTimer)
+		syncTimePhyRx();
 
-	if (g_timing_sync_phyRx != false)
+	frame = g_phyRx.frame;
+	subframe = g_phyRx.subframe;
+	
+	//frame = (frame + (subframe + 1) / MAX_SUBSFN) % MAX_SFN;
+	//subframe = (subframe + 1) % MAX_SUBSFN;
+
+	if (!isTimer)
 	{
-		frame = g_phyRx.frame;
-		subframe = g_phyRx.subframe;
-		
-		//frame = (frame + (subframe + 1) / MAX_SUBSFN) % MAX_SFN;
-		//subframe = (subframe + 1) % MAX_SUBSFN;
-
-		if (!is_timer(msg))
-		{
-			phyRxMsgHandler(msg);
-		}
-		else
-		{
-			handle_phy_rx(frame, subframe);
-		}
+		phyRxMsgHandler(msg);
 	}
+	else
+	{
+		handle_phy_rx(frame, subframe);
+	}
+
+	message_free(msg);
 }
 
 /*

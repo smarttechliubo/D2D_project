@@ -18,6 +18,7 @@
 #include "d2d_message_type.h"
 #include "log.h"
 #include "msg_handler.h"
+#include "mac_osp_interface.h"
 
 rrc_info g_rrc_src;
 
@@ -88,7 +89,7 @@ void src_user_setup(const uint16_t ueId, const rnti_t rnti, const uint16_t flag,
 	rrc_rlc_data_ind *ind;
 	msgSize msg_size = sizeof(rrc_rlc_data_ind);
 	uint16_t data_size = sizeof(ccch_info);
-	ccch_info* ccch = (ccch_info *)malloc(data_size);
+	ccch_info* ccch = (ccch_info *)mem_alloc(data_size);
 
 	msg = new_message(RRC_RLC_DATA_IND, TASK_D2D_RRC, TASK_D2D_RLC, msg_size);
 
@@ -280,10 +281,10 @@ void rrcSrcStatusHandler()
 
 		if (msg != NULL)
 		{
-			uint8_t *sib_pdu = (uint8_t *)malloc(8);
+			uint8_t *sib_pdu = (uint8_t *)mem_alloc(8);
 
 			req = (rrc_mac_bcch_para_config_req*)message_ptr(msg);
-			req->flag = 3;
+			req->flag = 1;
 			req->mib.systemFrameNumber = 0;
 			req->mib.pdcch_config.rb_num = 2;
 			req->mib.pdcch_config.rb_start_index = 2;

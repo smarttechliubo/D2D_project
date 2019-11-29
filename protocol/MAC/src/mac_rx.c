@@ -230,7 +230,7 @@ void handlePuschSdu(const frame_t frame, const sub_frame_t subframe,
 	uint8_t rx_lcIds[MAX_LOGICCHAN_NUM];
 	uint16_t rx_lengths[MAX_LOGICCHAN_NUM];
 	uint16_t offset = 0;
-	mac_rlc_data_info* data_ind = &rpt->data_ind[rpt->ue_num];
+	mac_rlc_data_info* data_ind = &rpt->sdu_data_rpt[rpt->ue_num];
 	bool hasData = false;
 
 	payload = parse_mac_header(payload, &num_ce, &num_sdu, rx_ceIds, rx_lcIds, rx_lengths, tb_length);
@@ -307,7 +307,7 @@ void handle_cqi(const PHY_CQIInd* ind)
 		}
 	}
 }
-
+/*
 void handleCrcFail(const frame_t frame, const sub_frame_t subframe, const pusch_result* result)
 {
 	rnti_t rnti = result->rnti;
@@ -338,7 +338,7 @@ void handleCrcOK(const frame_t frame, const sub_frame_t subframe,
 	update_crc_result(rnti, crc);
 	handlePuschSdu(frame, subframe, result, rpt);
 }
-
+*/
 void handle_ack(const PHY_ACKInd* ind)
 {
 	//frame_t frame = ind->frame;
@@ -416,7 +416,7 @@ void handlePuschReceivedInd(PHY_PuschReceivedInd *req)
 		payload = result->dataptr;
 		tb_length = result->dataSize;
 
-		update_crc_result(rnti, crc);
+		update_crc_result(subframe, rnti, crc);
 
 		//handlePuschSdu(frame, subframe, result, rpt);
 	
@@ -429,7 +429,7 @@ void handlePuschReceivedInd(PHY_PuschReceivedInd *req)
 			return;
 		}
 	
-		data_ind = &rpt->data_ind[rpt->ue_num];
+		data_ind = &rpt->sdu_data_rpt[rpt->ue_num];
 
 		for (uint32_t i = 0; i < num_sdu; i++)
 		{
@@ -459,8 +459,8 @@ void handlePuschReceivedInd(PHY_PuschReceivedInd *req)
 		if (hasData)
 		{
 			hasData = false;
-			rpt->data_ind[rpt->ue_num].valid_flag = 1;
-			rpt->data_ind[rpt->ue_num].rnti = rnti;
+			rpt->sdu_data_rpt[rpt->ue_num].valid_flag = 1;
+			rpt->sdu_data_rpt[rpt->ue_num].rnti = rnti;
 			rpt->ue_num++;
 		}
 
@@ -656,8 +656,6 @@ void msg_handler(msgDef* msg)
 				break;
 			}
 		}
-
-		message_free(msg);
 	}
 }
 

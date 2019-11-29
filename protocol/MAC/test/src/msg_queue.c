@@ -21,7 +21,7 @@
 #include <errno.h>
 #include "log.h"
 #include "msg_queue.h"
-#include "mytask.h"
+#include "mac_osp_interface.h"
 
 //typedef unsigned long long int uint64_t;
 
@@ -76,10 +76,8 @@ void msgInit(const uint16_t mode)
 	g_msgq_mode = mode;
 }
 
-mqd_t msgq_init(const task_id taskId, const msg_mode mode)
+mqd_t msgq_init(const task_id_sim id, const msg_mode mode)
 {
-	task_id_sim id = get_task_id_sim(taskId);
-
 	if (id  >= EMAX_TASK_SIM)
 		return -1;
 
@@ -117,7 +115,7 @@ mqd_t msgq_init(const task_id taskId, const msg_mode mode)
 
 	q_info[id].open = true;
 	q_info[id].msgq_id = msgq_id;
-	q_info[id].taskId = taskId;
+	q_info[id].taskId = id;
 
 	//msgq_free_msg(msgq_id);
 
@@ -126,7 +124,7 @@ mqd_t msgq_init(const task_id taskId, const msg_mode mode)
 /*
 void msgq_free_msg(task_id taskId)
 {
-	msgDef msg;
+	msgHeader msg;
 	uint32_t msg_len = 0;
 
 
@@ -163,40 +161,40 @@ void msgq_close()
 	}
 }
 
-bool msgSend(task_id taskId, const char *msg_ptr, int msg_len)
+bool msgSend(task_id_sim id, char *msg_ptr, int msg_len)
 {
 	int ret;
-	task_id_sim id = get_task_id_sim(taskId);
 
 	if (id >= EMAX_TASK_SIM)
 	{
-		LOG_ERROR(MAC, "Wrong msgType:%u,msg_len:%u",taskId,msg_len);
+		LOG_ERROR(MAC, "Wrong msgType:%u,msg_len:%u",id,msg_len);
+		msg_free(msg_ptr);
 		return false;
 	}
 
 	mqd_t msgq_id = q_info[id].msgq_id;
 
 	ret = mq_send(msgq_id, msg_ptr, msg_len, 1);
+
 	if (ret == -1)
 	{
-		LOG_ERROR(MAC, "msgSend fail taskId:%u,msg_len:%u,errno:%d",taskId, msg_len, errno);
+		LOG_ERROR(MAC, "msgSend fail taskId:%u,msg_len:%u,errno:%d",id, msg_len, errno);
+
 		perror("mq_send");
-		LOG_ERROR(MAC, "msgSend fail taskId:%u,msg_len:%u,errno:%d",taskId, msg_len, errno);
-		return true;
 	}
+
+	msg_free(msg_ptr);
 
 	return true;
 }
 
-uint32_t msgRecv(task_id taskId, char *msg_ptr, int msg_len)
+uint32_t msgRecv(task_id_sim id, char *msg_ptr, int msg_len)
 {
 	uint32_t ret;
-	//unsigned msg_prio = 1;
-	task_id_sim id = get_task_id_sim(taskId);
 
 	if (id >= EMAX_TASK_SIM)
 	{
-		LOG_ERROR(MAC, "Wrong msgType:%u,msg_len:%u",taskId,msg_len);
+		LOG_ERROR(MAC, "Wrong msgType:%u,msg_len:%u",id,msg_len);
 		return false;
 	}
 
@@ -212,7 +210,7 @@ uint32_t msgRecv(task_id taskId, char *msg_ptr, int msg_len)
 		if (errno != EAGAIN)// TODO: how to handle O_NONBLOCK
 		{
 			perror("mq_receive");
-			LOG_ERROR(MAC, "msgRecv fail taskId:%u,msg_len:%u,errno:%d",taskId,msg_len, errno);
+			LOG_ERROR(MAC, "msgRecv fail taskId:%u,msg_len:%u,errno:%d",id,msg_len, errno);
 		}
 		return 0;
 	}
@@ -223,23 +221,35 @@ uint32_t msgRecv(task_id taskId, char *msg_ptr, int msg_len)
 void *msg_malloc(uint32_t size)
 {
 	void *ptr = NULL;
-	AssertFatal ((ptr=malloc (size)) != NULL, MAC, "Memory allocation failed");
+	AssertFatal ((ptr=mem_alloc (size)) != NULL, MAC, "Memory allocation failed");
 	return ptr;
 }
 
 int msg_free(void *ptr)
 {
 	AssertFatal (ptr != NULL, MAC, "Trying to free a NULL pointer");
-	free (ptr);
+	mem_free (ptr);
 	return (EXIT_SUCCESS);
 }
 
-msgDef *new_msg(msgSize msg_size)
+msgHeader *new_msg(const int32_t msgId, const task_id source, const task_id dest, msgSize msg_size)
 {
 	int size = sizeof(msgHeader) + msg_size;
 
-	msgDef *msg = (msgDef *)msg_malloc(size);
+	msgHeader *msg = (msgHeader *)msg_malloc(size);
+
+	if (msg != NULL)
+	{
+		msg->msgId = msgId;
+		msg->source = source;
+		msg->destination = dest;
+		msg->msgSize = msg_size;
+	}
+	else
+	{
+		LOG_ERROR(MAC, "new mac message fail! msgId:%u", msgId);
+	}
+
 	return msg;
 }
-
 
