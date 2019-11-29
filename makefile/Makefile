@@ -366,32 +366,59 @@ home/boliu/D2D_project/D2D_project_github/D2D_project/platform/ocp_itti/thread_c
 	$(MAKE) -f CMakeFiles/D2D_protocol_shared.dir/build.make CMakeFiles/D2D_protocol_shared.dir/home/boliu/D2D_project/D2D_project_github/D2D_project/platform/ocp_itti/thread_communication_demo.c.s
 .PHONY : home/boliu/D2D_project/D2D_project_github/D2D_project/platform/ocp_itti/thread_communication_demo.c.s
 
-home/boliu/D2D_project/D2D_project_github/D2D_project/protocol/IP/ip_task.o: home/boliu/D2D_project/D2D_project_github/D2D_project/protocol/IP/ip_task.c.o
+home/boliu/D2D_project/D2D_project_github/D2D_project/protocol/IP/ip_msg_task.o: home/boliu/D2D_project/D2D_project_github/D2D_project/protocol/IP/ip_msg_task.c.o
 
-.PHONY : home/boliu/D2D_project/D2D_project_github/D2D_project/protocol/IP/ip_task.o
+.PHONY : home/boliu/D2D_project/D2D_project_github/D2D_project/protocol/IP/ip_msg_task.o
 
 # target to build an object file
-home/boliu/D2D_project/D2D_project_github/D2D_project/protocol/IP/ip_task.c.o:
-	$(MAKE) -f CMakeFiles/D2D_protocol_shared.dir/build.make CMakeFiles/D2D_protocol_shared.dir/home/boliu/D2D_project/D2D_project_github/D2D_project/protocol/IP/ip_task.c.o
-.PHONY : home/boliu/D2D_project/D2D_project_github/D2D_project/protocol/IP/ip_task.c.o
+home/boliu/D2D_project/D2D_project_github/D2D_project/protocol/IP/ip_msg_task.c.o:
+	$(MAKE) -f CMakeFiles/D2D_protocol_shared.dir/build.make CMakeFiles/D2D_protocol_shared.dir/home/boliu/D2D_project/D2D_project_github/D2D_project/protocol/IP/ip_msg_task.c.o
+.PHONY : home/boliu/D2D_project/D2D_project_github/D2D_project/protocol/IP/ip_msg_task.c.o
 
-home/boliu/D2D_project/D2D_project_github/D2D_project/protocol/IP/ip_task.i: home/boliu/D2D_project/D2D_project_github/D2D_project/protocol/IP/ip_task.c.i
+home/boliu/D2D_project/D2D_project_github/D2D_project/protocol/IP/ip_msg_task.i: home/boliu/D2D_project/D2D_project_github/D2D_project/protocol/IP/ip_msg_task.c.i
 
-.PHONY : home/boliu/D2D_project/D2D_project_github/D2D_project/protocol/IP/ip_task.i
+.PHONY : home/boliu/D2D_project/D2D_project_github/D2D_project/protocol/IP/ip_msg_task.i
 
 # target to preprocess a source file
-home/boliu/D2D_project/D2D_project_github/D2D_project/protocol/IP/ip_task.c.i:
-	$(MAKE) -f CMakeFiles/D2D_protocol_shared.dir/build.make CMakeFiles/D2D_protocol_shared.dir/home/boliu/D2D_project/D2D_project_github/D2D_project/protocol/IP/ip_task.c.i
-.PHONY : home/boliu/D2D_project/D2D_project_github/D2D_project/protocol/IP/ip_task.c.i
+home/boliu/D2D_project/D2D_project_github/D2D_project/protocol/IP/ip_msg_task.c.i:
+	$(MAKE) -f CMakeFiles/D2D_protocol_shared.dir/build.make CMakeFiles/D2D_protocol_shared.dir/home/boliu/D2D_project/D2D_project_github/D2D_project/protocol/IP/ip_msg_task.c.i
+.PHONY : home/boliu/D2D_project/D2D_project_github/D2D_project/protocol/IP/ip_msg_task.c.i
 
-home/boliu/D2D_project/D2D_project_github/D2D_project/protocol/IP/ip_task.s: home/boliu/D2D_project/D2D_project_github/D2D_project/protocol/IP/ip_task.c.s
+home/boliu/D2D_project/D2D_project_github/D2D_project/protocol/IP/ip_msg_task.s: home/boliu/D2D_project/D2D_project_github/D2D_project/protocol/IP/ip_msg_task.c.s
 
-.PHONY : home/boliu/D2D_project/D2D_project_github/D2D_project/protocol/IP/ip_task.s
+.PHONY : home/boliu/D2D_project/D2D_project_github/D2D_project/protocol/IP/ip_msg_task.s
 
 # target to generate assembly for a file
-home/boliu/D2D_project/D2D_project_github/D2D_project/protocol/IP/ip_task.c.s:
-	$(MAKE) -f CMakeFiles/D2D_protocol_shared.dir/build.make CMakeFiles/D2D_protocol_shared.dir/home/boliu/D2D_project/D2D_project_github/D2D_project/protocol/IP/ip_task.c.s
-.PHONY : home/boliu/D2D_project/D2D_project_github/D2D_project/protocol/IP/ip_task.c.s
+home/boliu/D2D_project/D2D_project_github/D2D_project/protocol/IP/ip_msg_task.c.s:
+	$(MAKE) -f CMakeFiles/D2D_protocol_shared.dir/build.make CMakeFiles/D2D_protocol_shared.dir/home/boliu/D2D_project/D2D_project_github/D2D_project/protocol/IP/ip_msg_task.c.s
+.PHONY : home/boliu/D2D_project/D2D_project_github/D2D_project/protocol/IP/ip_msg_task.c.s
+
+home/boliu/D2D_project/D2D_project_github/D2D_project/protocol/IP/ip_udp_msg.o: home/boliu/D2D_project/D2D_project_github/D2D_project/protocol/IP/ip_udp_msg.c.o
+
+.PHONY : home/boliu/D2D_project/D2D_project_github/D2D_project/protocol/IP/ip_udp_msg.o
+
+# target to build an object file
+home/boliu/D2D_project/D2D_project_github/D2D_project/protocol/IP/ip_udp_msg.c.o:
+	$(MAKE) -f CMakeFiles/D2D_protocol_shared.dir/build.make CMakeFiles/D2D_protocol_shared.dir/home/boliu/D2D_project/D2D_project_github/D2D_project/protocol/IP/ip_udp_msg.c.o
+.PHONY : home/boliu/D2D_project/D2D_project_github/D2D_project/protocol/IP/ip_udp_msg.c.o
+
+home/boliu/D2D_project/D2D_project_github/D2D_project/protocol/IP/ip_udp_msg.i: home/boliu/D2D_project/D2D_project_github/D2D_project/protocol/IP/ip_udp_msg.c.i
+
+.PHONY : home/boliu/D2D_project/D2D_project_github/D2D_project/protocol/IP/ip_udp_msg.i
+
+# target to preprocess a source file
+home/boliu/D2D_project/D2D_project_github/D2D_project/protocol/IP/ip_udp_msg.c.i:
+	$(MAKE) -f CMakeFiles/D2D_protocol_shared.dir/build.make CMakeFiles/D2D_protocol_shared.dir/home/boliu/D2D_project/D2D_project_github/D2D_project/protocol/IP/ip_udp_msg.c.i
+.PHONY : home/boliu/D2D_project/D2D_project_github/D2D_project/protocol/IP/ip_udp_msg.c.i
+
+home/boliu/D2D_project/D2D_project_github/D2D_project/protocol/IP/ip_udp_msg.s: home/boliu/D2D_project/D2D_project_github/D2D_project/protocol/IP/ip_udp_msg.c.s
+
+.PHONY : home/boliu/D2D_project/D2D_project_github/D2D_project/protocol/IP/ip_udp_msg.s
+
+# target to generate assembly for a file
+home/boliu/D2D_project/D2D_project_github/D2D_project/protocol/IP/ip_udp_msg.c.s:
+	$(MAKE) -f CMakeFiles/D2D_protocol_shared.dir/build.make CMakeFiles/D2D_protocol_shared.dir/home/boliu/D2D_project/D2D_project_github/D2D_project/protocol/IP/ip_udp_msg.c.s
+.PHONY : home/boliu/D2D_project/D2D_project_github/D2D_project/protocol/IP/ip_udp_msg.c.s
 
 home/boliu/D2D_project/D2D_project_github/D2D_project/protocol/RLC/src/hashtable.o: home/boliu/D2D_project/D2D_project_github/D2D_project/protocol/RLC/src/hashtable.c.o
 
@@ -2967,9 +2994,12 @@ help:
 	@echo "... home/boliu/D2D_project/D2D_project_github/D2D_project/platform/ocp_itti/thread_communication_demo.o"
 	@echo "... home/boliu/D2D_project/D2D_project_github/D2D_project/platform/ocp_itti/thread_communication_demo.i"
 	@echo "... home/boliu/D2D_project/D2D_project_github/D2D_project/platform/ocp_itti/thread_communication_demo.s"
-	@echo "... home/boliu/D2D_project/D2D_project_github/D2D_project/protocol/IP/ip_task.o"
-	@echo "... home/boliu/D2D_project/D2D_project_github/D2D_project/protocol/IP/ip_task.i"
-	@echo "... home/boliu/D2D_project/D2D_project_github/D2D_project/protocol/IP/ip_task.s"
+	@echo "... home/boliu/D2D_project/D2D_project_github/D2D_project/protocol/IP/ip_msg_task.o"
+	@echo "... home/boliu/D2D_project/D2D_project_github/D2D_project/protocol/IP/ip_msg_task.i"
+	@echo "... home/boliu/D2D_project/D2D_project_github/D2D_project/protocol/IP/ip_msg_task.s"
+	@echo "... home/boliu/D2D_project/D2D_project_github/D2D_project/protocol/IP/ip_udp_msg.o"
+	@echo "... home/boliu/D2D_project/D2D_project_github/D2D_project/protocol/IP/ip_udp_msg.i"
+	@echo "... home/boliu/D2D_project/D2D_project_github/D2D_project/protocol/IP/ip_udp_msg.s"
 	@echo "... home/boliu/D2D_project/D2D_project_github/D2D_project/protocol/RLC/src/hashtable.o"
 	@echo "... home/boliu/D2D_project/D2D_project_github/D2D_project/protocol/RLC/src/hashtable.i"
 	@echo "... home/boliu/D2D_project/D2D_project_github/D2D_project/protocol/RLC/src/hashtable.s"

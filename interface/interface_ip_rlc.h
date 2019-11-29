@@ -17,14 +17,26 @@
 
 typedef struct ip_rlc_data_ind_s
 {
-   rb_type_e   rb_type;  /** 0:srb0; 1:srb1; 3:drb */
+   rb_type_e    rb_type;  /** 0:srb0; 1:srb1; 3:drb */
 	rb_id_t     rb_id; 
 	rnti_t      rnti;
 	uint32_t    data_sn; 
-	uint32_t   data_size; /**unit: byte*/
-	uint32_t   *data_addr_ptr; /**data address*/
+	uint32_t    data_size; /**unit: byte*/
+	uint32_t    *data_addr_ptr; /**data address*/
 }ip_rlc_data_ind;
- 
+
+
+typedef struct rlc_ip_data_rpt_s
+{
+    frame_t              frame; 
+    sub_frame_t          sub_frame; 
+    rb_type_e            rb_type;  /** 0:srb0; 1:srb1; 3:drb */
+	rb_id_t             rb_id; 
+	rnti_t              rnti;
+	uint32_t            data_sn; 
+	uint32_t            data_size; /**unit: byte*/
+	uint32_t            *data_addr_ptr; /**data address*/
+}rlc_ip_data_rpt;
  
  
 #endif

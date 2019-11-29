@@ -785,8 +785,7 @@ padding byte = %d!\n",
 
 	 //!calculate how many SDU will fill into the PDU 
 	while ((sdu_in_buffer) && (continue_fill_pdu_with_sdu > 0)) {
-	 LOG_DEBUG(RLC, "new SDU get from list,  addr: %x \n", sdu_in_buffer);
-	  LOG_DEBUG(RLC, "new SDU get from list,  data_addr: %x \n", sdu_in_buffer->data);
+
 	  sdu_mngt_p = ((struct rlc_um_tx_sdu_management *) (sdu_in_buffer->data));
 
 	  //! 

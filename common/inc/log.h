@@ -63,7 +63,9 @@ typedef enum
 #define RRC "[RRC]"
 #define NAS "[NAS]"
 #define DUMMY "[DUMMY]"
-#define IP "[IP]"
+#define IP_UDP "[IP_UDP]"
+#define IP_MSG "[IP_MSG]"
+
 
 
 

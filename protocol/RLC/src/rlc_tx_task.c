@@ -532,7 +532,7 @@ cur process time = [%lld, %lld, %lld] \n",
 		    mac_rlc_data_rpt_temp.mac_pdu_buffer_ptr[0] = (uint32_t *)((uint8_t *)(&g_rlc_pdu_buffer[0 * MAX_DLSCH_PAYLOAD_BYTES]) 
 		    											+ g_rlc_debug_ue_mac_header_size);
 		    
-			mac_Rlc_data_Rpt(sfn,sfn,1, &mac_rlc_data_rpt_temp);
+			mac_Rlc_data_Rpt(sfn,subsfn,1, &mac_rlc_data_rpt_temp);
 
 #endif 		
 			break; 

@@ -12,7 +12,8 @@
 /**************************include******************************/
 #include <typedef.h>
 #include <rlc.h>
-
+#include <interface_ip_rlc.h>
+#include <d2d_message_type.h>
 
 
 void rlc_um_init_timer_reordering(
@@ -118,8 +119,9 @@ signed int rlc_um_get_pdu_infos(const protocol_ctxt_t* const ctxt_pP,
 
 
 
-  LOG_INFO(RLC_RX,"RLC rx header info:SN:%d, headersize:%d, LI number:%d,sum of LI:%d, tbsize:%d,hiddensize :%d \n", 
-  							 pdu_info_pP->sn,
+  LOG_INFO(RLC_RX,"RLC rx header info:function:%s,SN:%d, headersize:%d, LI number:%d,sum of LI:%d, tbsize:%d,hiddensize :%d \n", 
+                            __func__,
+  							pdu_info_pP->sn,
 							pdu_info_pP->header_size,
 							pdu_info_pP->num_li,
 							pdu_info_pP->payload_size, 
@@ -228,9 +230,44 @@ void   rlc_um_clear_rx_sdu (const protocol_ctxt_t* const ctxt_pP, rlc_um_entity_
 }
 
 
+void rlc_um_ip_rpt(
+	                  const rb_id_t            rb_id, 
+					  const rnti_t              rntiP,
+					  const frame_t             sfn, 
+					  const sub_frame_t         subsfn,
+					  const uint32_t            data_sn,
+					  char                     *buffer_pP,
+					  const tb_size_t           tb_sizeP)
+{
+
+	/*!send sdu to ip_msg_task */
+	MessageDef  *message = NULL; 
+	
+	rlc_ip_data_rpt *sdu_send_ptr = calloc(1,sizeof(rlc_ip_data_rpt)); 
+
+	sdu_send_ptr->frame = sfn; 
+	sdu_send_ptr->sub_frame = subsfn; 
+
+	sdu_send_ptr->rb_type = RLC_MODE_UM;  /** 0:srb0; 1:srb1; 3:drb */
+	sdu_send_ptr->rb_id = rb_id; 
+	sdu_send_ptr->rnti = rntiP;
+	sdu_send_ptr->data_sn = data_sn; 
+	sdu_send_ptr->data_size = tb_sizeP; /**unit: byte*/
+	
+	sdu_send_ptr->data_addr_ptr = buffer_pP; /**data address*/
+
+	message = itti_alloc_new_message(TASK_D2D_RLC_RX, RLC_IP_DATA_RPT,
+	                       ( char *)sdu_send_ptr, sizeof(rlc_ip_data_rpt ));
+    
+	itti_send_msg_to_task(TASK_D2D_IP_MSG,0, message);
+	LOG_DEBUG(RLC_RX,"%s send SN %d ,tbsize = %d, to IP_MSG task \n",__func__, data_sn, tb_sizeP);
+
+
+}
+
 //！UM 发送SDU 
 //! 这个函数要做到将SDU 上报给上层之后，释放申请的内存。
-void  rlc_um_send_sdu (const protocol_ctxt_t* const ctxt_pP, rlc_um_entity_t *rlc_pP)
+void  rlc_um_send_sdu (const protocol_ctxt_t* const ctxt_pP, uint32_t sn , rlc_um_entity_t *rlc_pP)
 {
   if ((rlc_pP->output_sdu_in_construction)) {
    LOG_ERROR(RLC_RX, PROTOCOL_RLC_UM_CTXT_FMT" SEND_SDU SN:%d to upper layers %d bytes sdu %p\n",
@@ -244,17 +281,10 @@ void  rlc_um_send_sdu (const protocol_ctxt_t* const ctxt_pP, rlc_um_entity_t *rl
       rlc_pP->stat_rx_pdcp_sdu += 1;
       rlc_pP->stat_rx_pdcp_bytes += rlc_pP->output_sdu_size_to_write;
        
-      // msg("[RLC] DATA IND ON MOD_ID %d RB ID %d, size %d\n",rlc_pP->module_id, rlc_pP->rb_id, ctxt_pP->frame,rlc_pP->output_sdu_size_to_write);
-       //! //!正式代码：将RLC的数据上报给PDCP 
-       #if 0
-      rlc_data_ind (
-        ctxt_pP,
-        BOOL_NOT(rlc_pP->is_data_plane), //！是SRB,还是DRB 的flag
-        rlc_pP->is_mxch,
-        rlc_pP->rb_id,
-        rlc_pP->output_sdu_size_to_write,
-        rlc_pP->output_sdu_in_construction); //!在此函数中释放memory
-       #endif 
+     
+       rlc_um_ip_rpt(rlc_pP->rb_id,rlc_pP->rnti, ctxt_pP->frame, ctxt_pP->subframe,sn, 
+       					rlc_pP->output_sdu_in_construction, (rlc_pP->output_sdu_size_to_write + sizeof(mem_block_t))); 
+       					    
       rlc_pP->output_sdu_in_construction = NULL;  //！释放指针
     } else {
       LOG_ERROR(RLC_RX, PROTOCOL_RLC_UM_CTXT_FMT"[SEND_SDU] ERROR SIZE <= 0 ... DO NOTHING, SET SDU SIZE TO 0\n",
@@ -263,6 +293,7 @@ void  rlc_um_send_sdu (const protocol_ctxt_t* const ctxt_pP, rlc_um_entity_t *rl
 
     rlc_pP->output_sdu_size_to_write = 0; //！清空当前实体的SDU size 
   }
+  
 }
 
 
@@ -397,22 +428,11 @@ void  rlc_um_reassembly (const protocol_ctxt_t* const ctxt_pP,
 	 //！将PDU中的data field copy到SDU的buffer中 
       memcpy (((uint8_t  *)rlc_pP->output_sdu_in_construction->data + rlc_pP->output_sdu_size_to_write), src_pP, lengthP);
       rlc_pP->output_sdu_size_to_write += lengthP;
-#if TRACE_RLC_UM_DISPLAY_ASCII_DATA
-      rlc_pP->output_sdu_in_construction->data[rlc_pP->output_sdu_size_to_write] = 0;
-      LOG_T(RLC, PROTOCOL_RLC_UM_CTXT_FMT"[REASSEMBLY] DATA :",
-            PROTOCOL_RLC_UM_CTXT_ARGS(ctxt_pP,rlc_pP));
-      
-#endif
     } else {
 
 	//! MAC 上报的PDU 太大了，超出了SDU 的最大size 
       AssertFatal(0, RLC,PROTOCOL_RLC_UM_CTXT_FMT" RLC_UM_DATA_IND, SDU TOO BIG, DROPPED\n",
                   PROTOCOL_RLC_UM_CTXT_ARGS(ctxt_pP,rlc_pP));
-#if 0
-      LOG_ERROR(RLC_RX, PROTOCOL_RLC_UM_CTXT_FMT"[REASSEMBLY] [max_sdu size %d] ERROR  SDU SIZE OVERFLOW SDU GARBAGED\n",
-            PROTOCOL_RLC_UM_CTXT_ARGS(ctxt_pP,rlc_pP),
-            sdu_max_size);
-#endif 
       // erase  SDU
       rlc_pP->output_sdu_size_to_write = 0;
     }
@@ -530,8 +550,9 @@ CONTIGUOUS WITH LAST REASSEMBLIED SN (%03d) \n",
 			case RLC_FI_1ST_BYTE_DATA_IS_1ST_BYTE_SDU_LAST_BYTE_DATA_IS_LAST_BYTE_SDU:
 			{
 
-				  LOG_DEBUG(RLC_RX, PROTOCOL_RLC_UM_CTXT_FMT" TRY REASSEMBLY PDU NO E_LI FI= (00) \n",
-						PROTOCOL_RLC_UM_CTXT_ARGS(ctxt_pP, rlc_pP));
+				  LOG_DEBUG(RLC_RX, PROTOCOL_RLC_UM_CTXT_FMT" TRY REASSEMBLY PDU NO E_LI, FI= (00)[%s] \n",
+						PROTOCOL_RLC_UM_CTXT_ARGS(ctxt_pP, rlc_pP),
+						"RLC_FI_1ST_BYTE_DATA_IS_1ST_BYTE_SDU_LAST_BYTE_DATA_IS_LAST_BYTE_SDU");
 
 				  // one complete SDU
 				  //LGrlc_um_send_sdu(rlc_pP,ctxt_pP->frame,ctxt_pP->enb_flag); // may be not necessary
@@ -541,7 +562,7 @@ CONTIGUOUS WITH LAST REASSEMBLIED SN (%03d) \n",
 				  //! 将data_p的数据往SDU 的接收buffer中放
 				  rlc_um_reassembly (ctxt_pP, rlc_pP, data_p, size);
 				  
-				  rlc_um_send_sdu(ctxt_pP, rlc_pP); //!将当前SDU中的数据发送给PDCP 
+				  rlc_um_send_sdu(ctxt_pP, sn, rlc_pP); //!将当前SDU中的数据发送给PDCP 
 				  rlc_pP->reassembly_missing_sn_detected = 0;
 
 				  break;
@@ -549,8 +570,9 @@ CONTIGUOUS WITH LAST REASSEMBLIED SN (%03d) \n",
 			case RLC_FI_1ST_BYTE_DATA_IS_1ST_BYTE_SDU_LAST_BYTE_DATA_IS_NOT_LAST_BYTE_SDU:
 			{
 
-				  LOG_DEBUG(RLC_RX, PROTOCOL_RLC_UM_CTXT_FMT" TRY REASSEMBLY PDU NO E_LI FI= (01) \n",
-						PROTOCOL_RLC_UM_CTXT_ARGS(ctxt_pP, rlc_pP));
+				  LOG_DEBUG(RLC_RX, PROTOCOL_RLC_UM_CTXT_FMT" TRY REASSEMBLY PDU NO E_LI, FI= (01)[%s] \n",
+						PROTOCOL_RLC_UM_CTXT_ARGS(ctxt_pP, rlc_pP),
+						"RLC_FI_1ST_BYTE_DATA_IS_1ST_BYTE_SDU_LAST_BYTE_DATA_IS_NOT_LAST_BYTE_SDU");
 
 				  // one beginning segment of SDU in PDU
 				  //LG rlc_um_send_sdu(rlc_pP,ctxt_pP->frame,ctxt_pP->enb_flag); // may be not necessary
@@ -565,15 +587,16 @@ CONTIGUOUS WITH LAST REASSEMBLIED SN (%03d) \n",
 			case RLC_FI_1ST_BYTE_DATA_IS_NOT_1ST_BYTE_SDU_LAST_BYTE_DATA_IS_LAST_BYTE_SDU:
 			{
 
-				  LOG_DEBUG(RLC_RX, PROTOCOL_RLC_UM_CTXT_FMT" TRY REASSEMBLY PDU NO E_LI FI= (10) \n",
-						PROTOCOL_RLC_UM_CTXT_ARGS(ctxt_pP, rlc_pP));
+				  LOG_DEBUG(RLC_RX, PROTOCOL_RLC_UM_CTXT_FMT" TRY REASSEMBLY PDU NO E_LI, FI= (10)[%s] \n",
+						PROTOCOL_RLC_UM_CTXT_ARGS(ctxt_pP, rlc_pP),
+						"RLC_FI_1ST_BYTE_DATA_IS_NOT_1ST_BYTE_SDU_LAST_BYTE_DATA_IS_LAST_BYTE_SDU");
 
 
 				  // one last segment of SDU
 				  if (rlc_pP->reassembly_missing_sn_detected == 0) {
 					//！最后一个byte接收到，则上报SDU 
 					rlc_um_reassembly (ctxt_pP, rlc_pP, data_p, size);
-					rlc_um_send_sdu(ctxt_pP, rlc_pP);
+					rlc_um_send_sdu(ctxt_pP, sn, rlc_pP);
 				  } else {
 					//clear sdu already done
 					rlc_pP->stat_rx_data_pdu_dropped += 1;
@@ -586,8 +609,9 @@ CONTIGUOUS WITH LAST REASSEMBLIED SN (%03d) \n",
 			case RLC_FI_1ST_BYTE_DATA_IS_NOT_1ST_BYTE_SDU_LAST_BYTE_DATA_IS_NOT_LAST_BYTE_SDU:
 			{
 
-				  LOG_DEBUG(RLC_RX, PROTOCOL_RLC_UM_CTXT_FMT" TRY REASSEMBLY PDU NO E_LI FI= (11)\n",
-						PROTOCOL_RLC_UM_CTXT_ARGS(ctxt_pP, rlc_pP));
+				  LOG_DEBUG(RLC_RX, PROTOCOL_RLC_UM_CTXT_FMT" TRY REASSEMBLY PDU NO E_LI, FI= (11)[%s]\n",
+						PROTOCOL_RLC_UM_CTXT_ARGS(ctxt_pP, rlc_pP),
+						"RLC_FI_1ST_BYTE_DATA_IS_NOT_1ST_BYTE_SDU_LAST_BYTE_DATA_IS_NOT_LAST_BYTE_SDU");
 
 
 				  if (rlc_pP->reassembly_missing_sn_detected == 0) {
@@ -597,7 +621,7 @@ CONTIGUOUS WITH LAST REASSEMBLIED SN (%03d) \n",
 				  } else {
 				   //！如果reassembly_missing_sn_detected = 1,说明之前的包丢失了，没有收到包含有数据头的包
 
-					LOG_WARN(RLC, PROTOCOL_RLC_UM_CTXT_FMT" TRY REASSEMBLY PDU NO E_LI FI=00 (11) MISSING SN DETECTED\n",
+					LOG_WARN(RLC, PROTOCOL_RLC_UM_CTXT_FMT" TRY REASSEMBLY PDU NO E_LI, FI=00 (11) MISSING SN DETECTED\n",
 						  PROTOCOL_RLC_UM_CTXT_ARGS(ctxt_pP, rlc_pP));
 
 					//LOG_DEBUG(RLC_RX, "[MSC_NBOX][FRAME %05u][%s][RLC_UM][MOD %u/%u][RB %u][Missing SN detected][RLC_UM][MOD %u/%u][RB %u]\n",
@@ -652,7 +676,7 @@ CONTIGUOUS WITH LAST REASSEMBLIED SN (%03d) \n",
 					//!说明存在多个完整的SDU,将多个SDU 逐个的上报
 					for (i = 0; i < num_li; i++) {
 					  rlc_um_reassembly (ctxt_pP, rlc_pP, data_p, li_array[i]);
-					  rlc_um_send_sdu(ctxt_pP, rlc_pP);
+					  rlc_um_send_sdu(ctxt_pP,sn, rlc_pP);
 					  data_p = &data_p[li_array[i]]; //!更新地址
 					}
 					//！最后一个data segment 没有LI,所以直接处理，
@@ -660,7 +684,7 @@ CONTIGUOUS WITH LAST REASSEMBLIED SN (%03d) \n",
 					if (size > 0) { // normally should always be > 0 but just for help debug
 					  // data_p is already ok, done by last loop above
 					  rlc_um_reassembly (ctxt_pP, rlc_pP, data_p, size);
-					  rlc_um_send_sdu(ctxt_pP, rlc_pP);  //!最后一个data segment 也是完整的PDU 
+					  rlc_um_send_sdu(ctxt_pP, sn ,rlc_pP);  //!最后一个data segment 也是完整的PDU 
 					}
 
 					rlc_pP->reassembly_missing_sn_detected = 0;
@@ -686,7 +710,7 @@ CONTIGUOUS WITH LAST REASSEMBLIED SN (%03d) \n",
 					 //!前面的SDU都是完整的，直接整理并发送
 					for (i = 0; i < num_li; i++) {
 					  rlc_um_reassembly (ctxt_pP, rlc_pP, data_p, li_array[i]);
-					  rlc_um_send_sdu(ctxt_pP, rlc_pP);
+					  rlc_um_send_sdu(ctxt_pP, sn, rlc_pP);
 					  data_p = &data_p[li_array[i]];
 					}
 					//！最后一个data segment是不完整的SDU，所以只copy数据，不上报
@@ -724,14 +748,14 @@ CONTIGUOUS WITH LAST REASSEMBLIED SN (%03d) \n",
 					// one last segment of SDU + N complete SDUs in PDU
 					for (i = reassembly_start_index; i < num_li; i++) {
 					  rlc_um_reassembly (ctxt_pP, rlc_pP, data_p, li_array[i]);
-					  rlc_um_send_sdu(ctxt_pP, rlc_pP);
+					  rlc_um_send_sdu(ctxt_pP, sn, rlc_pP);
 					  data_p = &data_p[li_array[i]];
 					}
 				   
 					if (size > 0) { // normally should always be > 0 but just for help debug
 					  // data_p is already ok, done by last loop above
 					  rlc_um_reassembly (ctxt_pP, rlc_pP, data_p, size);
-					  rlc_um_send_sdu(ctxt_pP, rlc_pP);
+					  rlc_um_send_sdu(ctxt_pP,sn, rlc_pP);
 					}
 
 					rlc_pP->reassembly_missing_sn_detected = 0;
@@ -768,7 +792,7 @@ CONTIGUOUS WITH LAST REASSEMBLIED SN (%03d) \n",
 					 //！将中间的包都上报
 					for (i = reassembly_start_index; i < num_li; i++) {
 					  rlc_um_reassembly (ctxt_pP, rlc_pP, data_p, li_array[i]);
-					  rlc_um_send_sdu(ctxt_pP, rlc_pP);
+					  rlc_um_send_sdu(ctxt_pP,sn, rlc_pP);
 					  data_p = &data_p[li_array[i]];
 					}
 
@@ -1316,7 +1340,7 @@ void   rlc_um_receive_process_dar (const protocol_ctxt_t* const ctxt_pP,
 		rlc_pP->vr_ur = (rlc_pP->vr_ur+1) % rlc_pP->rx_sn_modulo;
 	  } while (rlc_um_get_pdu_from_dar_buffer(ctxt_pP, rlc_pP, rlc_pP->vr_ur));  //! &&(rlc_pP->vr_ur != rlc_pP->vr_uh)
 
-	  LOG_DEBUG(RLC_RX, "judge 5: sn == UR, and SN have stored in buffer,update the UR = %d ,and the handle PDU < UR \n", rlc_pP->vr_ur); 
+	  LOG_DEBUG(RLC_RX, "judge 5: sn == UR, and SN have stored in buffer,update the UR = %d ,and then handle PDU < UR \n", rlc_pP->vr_ur); 
 
 	   //!将SN < 更新后的ur 的PDU,进行去header处理，从SN 往上处理，处理到更新后的UR结束。
 	  rlc_um_try_reassembly(ctxt_pP, rlc_pP, sn, rlc_pP->vr_ur);
@@ -1394,7 +1418,7 @@ void   rlc_um_receive_process_dar (const protocol_ctxt_t* const ctxt_pP,
 		//!启动timer 
 		rlc_um_start_timer_reordering(ctxt_pP, rlc_pP);
 		rlc_pP->vr_ux = rlc_pP->vr_uh;	//！更新ux = uh
-		LOG_DEBUG(RLC_RX, PROTOCOL_RLC_UM_CTXT_FMT" RESTART t-Reordering set VR(UX) to VR(UH) =%d\n",
+		LOG_DEBUG(RLC_RX, PROTOCOL_RLC_UM_CTXT_FMT"START t-Reordering set VR(UX) to VR(UH) =%d\n",
 			  PROTOCOL_RLC_UM_CTXT_ARGS(ctxt_pP, rlc_pP),
 			  rlc_pP->vr_ux);
 		
