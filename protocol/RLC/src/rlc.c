@@ -288,7 +288,7 @@ void  rlc_ue_data_status_update(rnti_t rnti,
 
     g_rlc_buffer_status[ue_index].rlc_header_size [logical_chan_id] -= rlc_header_size;
 
-    LOG_ERROR(RLC_TX, "%s, rnti:%d, lc:%d, update buffer status: datasize -%d,send_sdu_num:%d, rlc_header_size - %d,remaind_sdu_num:%d, \
+    LOG_ERROR(RLC_TX, "%s, rnti:%d, lc:%d, update buffer status: datasize substarct %d,send_sdu_num:%d, rlc_header_size substract %d,remaind_sdu_num:%d, \
     remained_data_size:%d,remined_header_size:%d \n", 
           __func__,
 			rnti, 
@@ -298,7 +298,7 @@ void  rlc_ue_data_status_update(rnti_t rnti,
 			rlc_header_size, 
 			remaind_sdu_num,
 			g_rlc_buffer_status[ue_index].data_size[logical_chan_id],
-			g_rlc_buffer_status[ue_index].rlc_header_size [logical_chan_id] ); 
+			g_rlc_buffer_status[ue_index].rlc_header_size[logical_chan_id] ); 
 
 
 }

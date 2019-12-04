@@ -474,16 +474,16 @@ cur process time = [%lld, %lld, %lld] \n",
             rlc_data_req   mac_data_req_to_rlc;
             mac_data_req_to_rlc.rnti = 101; 
             mac_data_req_to_rlc.logic_chan_num = 1; 
-            mac_data_req_to_rlc.tb_size = 1380;   //!total size ,unit:byte
+            mac_data_req_to_rlc.tb_size = 400;   //!total size ,unit:byte
             mac_data_req_to_rlc.logicchannel_id[0] =3;  //!DRB = 3
             
-            mac_data_req_to_rlc.mac_pdu_byte_size[0] = 1380; //!logic channel's size ,unit:byte
+            mac_data_req_to_rlc.mac_pdu_byte_size[0] = 400; //!logic channel's size ,unit:byte
 		    //! send MAC_RLC_DATA_REQ message to RLC_TX 
 		    if (1 != g_rlc_no_data_transfer)
 		    {
 				mac_Rlc_data_Req(sfn, subsfn, 1, &mac_data_req_to_rlc); 
 				
-            	LOG_INFO(RLC_TX, "message:%d,[sfn--subsfn]:[%d,%d] send rlc buffer status to mac,the data req message flag:%d \n",
+            	LOG_ERROR(RLC_TX, " \n\n message:%d,[sfn--subsfn]:[%d,%d] send rlc buffer status to mac,the data req message flag:%d \n",
             		msg_type,sfn,subsfn,!g_rlc_no_data_transfer);
 			}
 #endif 

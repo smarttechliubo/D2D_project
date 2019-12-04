@@ -23,7 +23,7 @@ OSP_TASKMSG_REG TaskRegTbl[]=
 	{TASK_D2D_RLC_RX,		"task_rlc_rx",		RT_MSG_PRI(72), 	NULL,	(OSP_FUNCPTR)rlc_rx_task,0},
 	{TASK_D2D_DUMMY,        "task_dummy_test",	RT_MSG_PRI(60), 	(OSP_FUNCPTR)dummy_init,	(OSP_FUNCPTR)dummy_test_task,0},
 	{TASK_D2D_IP_UDP,           "task_ip_udp",       	RT_NOMSG_PRI(50), 	NULL,	(OSP_FUNCPTR)ip_udp_task,0},
-	{TASK_D2D_IP_MSG,           "task_ip_msg",       	RT_MSG_PRI(55), 	NULL,	(OSP_FUNCPTR)ip_msg_task,0},
+	{TASK_D2D_IP_MSG,           "task_ip_msg",       	RT_MSG_PRI(55), 	(OSP_FUNCPTR)ip_rlc_sdu_udp_initial,	(OSP_FUNCPTR)ip_msg_task,0},
 
 };
 /*OSP_TASKMSG_REG num name must be "TegTaskNum" */

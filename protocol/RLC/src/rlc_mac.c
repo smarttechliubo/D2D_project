@@ -259,7 +259,7 @@ ue remained size:%d after logic chan mapping \n",
 
 		for (pading_header_i = 0; pading_header_i <ue_pdu_size_para_ptr->remain_pdu_size;pading_header_i++)
 		{
-        	memcpy((void *)ue_mac_subheader_ptr,(void *)mac_subheader_without_l,1); 
+        	memcpy((void *)ue_mac_subheader_ptr,(void *)&mac_subheader_without_l,1); 
 			ue_mac_subheader_ptr += 1; 
 			mac_subheader_length ++; 
         }

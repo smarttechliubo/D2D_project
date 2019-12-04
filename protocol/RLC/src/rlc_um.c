@@ -394,7 +394,7 @@ void rlc_um_data_req (const protocol_ctxt_t *const ctxt_pP, void *rlc_pP, mem_bl
 	
 	//！将新的sdu 加入到rlc->input_sdu中 ，更新节点中的地址
 	list_add_tail_eurecom(sdu_pP, &rlc_p->input_sdus);
-	LOG_DEBUG(RLC, "3  sdu->data = %x \n", sdu_pP->data);
+	
 
 	//! update buffer status 
 	rlc_Set_Buffer_Status(ctxt_pP->rnti, 
@@ -618,8 +618,8 @@ int  rlc_um_segment_10(const protocol_ctxt_t* const ctxt_pP,
 			}
 		} 
 
-		LOG_DEBUG(RLC_TX, "1st time calculate the mac subheader:lc:%d's mac subheader length:%d \n ",lc_pdu_component_ptr->logic_ch_index,
-						lc_pdu_component_ptr->mac_subheader_length); 	
+		LOG_DEBUG(RLC_TX, "1st time calculate the mac subheader:lc:%d's mac subheader length:%d,is_last_subheader_ornot:%d \n ",lc_pdu_component_ptr->logic_ch_index,
+						lc_pdu_component_ptr->mac_subheader_length, lc_pdu_component_ptr->is_last_sub_header_flag); 	
 
 		//!update the lc's tb-size 
 	    nb_bytes_to_transmit = nb_bytes_to_transmit - lc_pdu_component_ptr->mac_subheader_length; 
@@ -873,11 +873,11 @@ padding byte = %d!\n",
 	  // there is a LI that is not necessary
 	  test_num_li = num_fill_sdu - 1;  //!<最后一个data segment不需要LI  
 	  //!<pdu_remaining_size 再次更新
-	  pdu_remaining_size = pdu_remaining_size - test_e_li_length; //!从PDU 中减去LI 的header size 
+	//  pdu_remaining_size = pdu_remaining_size - test_e_li_length; //!从PDU 中减去LI 的header size 
 	}
 
-  
-	buffer_status_sub_size = pdu_remaining_size;
+    //! buffer_status_sub_size 不包含E+LI的size, pdu_remaining_size 是RLC PDU，是包含 E+LI的size的
+	buffer_status_sub_size = pdu_remaining_size - test_e_li_length;
 
    	LOG_WARN(RLC_TX, "sdu fill para result: %d sdu filled in RLC PDU,test_remaining_num_li_to_substract = %d,test_num_li = %d,\ 
 test_e_li_length:%d,the real data pdu length %d,E_LI length:%d\n" ,\
@@ -939,6 +939,7 @@ test_e_li_length:%d,the real data pdu length %d,E_LI length:%d\n" ,\
 		sdu_mngt_p->sdu_remaining_size = sdu_mngt_p->sdu_remaining_size - pdu_remaining_size;
 		sdu_mngt_p->sdu_segmented_size = sdu_mngt_p->sdu_segmented_size + pdu_remaining_size;
 		fi_last_byte_pdu_is_last_byte_sdu = 0; //!< last byte in PDU is not the last byte of SDU 
+		fill_num_sdu++;
 		// no LI
 		rlc_pP->buffer_occupancy -= pdu_remaining_size; //!分配出去一个PDU的size 
 		continue_fill_pdu_with_sdu = 0;  
@@ -949,7 +950,7 @@ test_e_li_length:%d,the real data pdu length %d,E_LI length:%d\n" ,\
 		 		 sdu_mngt_p->sdu_creation_sn);
 		//!< SDU size = PDU size ,直接copy 
 		memcpy(data, data_sdu_p, pdu_remaining_size);
-		
+		fill_num_sdu++;
 		// free SDU
 		rlc_pP->buffer_occupancy -= sdu_mngt_p->sdu_remaining_size;
 
@@ -977,7 +978,7 @@ test_e_li_length:%d,the real data pdu length %d,E_LI length:%d\n" ,\
         //!当E+LI = 奇数个时，是计算rlc header的周期，每2个rlc header = 3byte.
 		if (li_length_in_bytes	== 2) {  //!奇数个LI时
 		 //!如果是奇数个E+LI,并且等于最后一个segment,则不需要再填写header了。 
-		  if (fill_num_sdu == num_fill_sdu) {
+		  if (fill_num_sdu == num_fill_sdu - 1) {
 			//!e_li_p->e1  = 0;
 			e_li_p->b1 = 0;  
 		  } else {
@@ -991,6 +992,7 @@ test_e_li_length:%d,the real data pdu length %d,E_LI length:%d\n" ,\
 		  e_li_p->b1 = e_li_p->b1 | (sdu_mngt_p->sdu_remaining_size >> 4);	
 		  e_li_p->b2 = sdu_mngt_p->sdu_remaining_size << 4; //! 左移4bit,作为b2的高4bit
 		   LOG_WARN(RLC_TX, "sdu fill data: sdu：%d, set e_li_p->b1=%02X set e_li_p->b2=%02X fill_num_sdu=%d num_fill_sdu=%d\n",
+                sdu_mngt_p->sdu_creation_sn,
 				e_li_p->b1,
 				e_li_p->b2,
 				fill_num_sdu,
@@ -998,7 +1000,7 @@ test_e_li_length:%d,the real data pdu length %d,E_LI length:%d\n" ,\
 
 		} else { //!偶数个LI+E
 		  //！偶数个LI,占3个byte的整数倍
-		  if (fill_num_sdu != num_fill_sdu) {
+		  if (fill_num_sdu != (num_fill_sdu - 1)) {
 			e_li_p->b2	= e_li_p->b2 | 0x08; //！第二个E = 1,表示后面是E+L1,在byte2的bit4 
 		  }
 
@@ -1031,6 +1033,7 @@ test_e_li_length:%d,the real data pdu length %d,E_LI length:%d\n" ,\
 		// reduce the size of the PDU
 		continue_fill_pdu_with_sdu = 0;//!最多还剩下一个byte的空间， 这里不再继续填充SDU了，所以这里存在一个空洞。
 		fi_last_byte_pdu_is_last_byte_sdu = 1; //PDU 的当前byte 中的最后一个byte 是SDU的最后一个。
+		fill_num_sdu++;
 		//！PDU中还能容纳SDU 
 		pdu_remaining_size = pdu_remaining_size - sdu_mngt_p->sdu_remaining_size; 
 		// free SDU
@@ -1050,6 +1053,8 @@ test_e_li_length:%d,the real data pdu length %d,E_LI length:%d\n" ,\
 	}
     
 
+     pdu_p->b1 = 0;  //!initial to zero
+     pdu_p->b2 = 0; 
 	 //！开始填写固定的2Byte header信息，include [FI,E,SN] field  
 	// set framing info
 	if (fi_first_byte_pdu_is_first_byte_sdu) {
@@ -1064,8 +1069,9 @@ test_e_li_length:%d,the real data pdu length %d,E_LI length:%d\n" ,\
 	 //!SN = 10时，FI 占bit[3-4]
 	pdu_p->b1 =  (fi << 3); //pdu_p->b1 |
 
+
 	// set fist e bit
-	if (fill_num_sdu > 0) {
+	if (fill_num_sdu > 1) {
 		e_in_fixheader = 1; 
 	  pdu_p->b1 = pdu_p->b1 | 0x04;  //! E 占bit[2] 
 	}
@@ -1075,7 +1081,7 @@ test_e_li_length:%d,the real data pdu length %d,E_LI length:%d\n" ,\
 	pdu_p->b2 = rlc_pP->vt_us & 0xFF;  //！SN保留低8bit在b2中 
 	
 
-	LOG_ERROR(RLC_TX, "RLC PDU fixed header info: b1 =%d, b2 = %d, fi = %d, e_in_fixheader = %d, SN =%d \n",
+	LOG_ERROR(RLC_TX, "RLC PDU fixed header info: b1 =0x%x, b2 = 0x%x, fi = 0x%x, e_in_fixheader = %d, SN =%d \n",
 			pdu_p->b1 ,
 			pdu_p->b2, 
             fi,
@@ -1111,7 +1117,7 @@ test_e_li_length:%d,the real data pdu length %d,E_LI length:%d\n" ,\
 								rlc_pP->input_sdus.nb_elements,
 								lc_pdu_component_ptr->logic_ch_index,
 								buffer_status_sub_size);
-
+    LOG_WARN(RLC_TX, "--------------rlc_pP->buffer_occupancy = %d -------------------\n", rlc_pP->buffer_occupancy); 
 	LOG_WARN(RLC_TX, "-------------- TX sdu data process finished !--------------------\n"); 
   }
 

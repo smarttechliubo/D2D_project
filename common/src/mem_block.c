@@ -311,7 +311,7 @@ mem_block_t   *get_free_mem_block(uint32_t sizeP, const char* caller)
 	char *alloc_buffer = NULL; 
 	uint16_t  offset = sizeof(mem_block_t);
 	alloc_buffer = OSP_Alloc_Mem(sizeP  + offset); 
-	LOG_DEBUG(DRIVER,"OSP_Alloc_Mem = %d,alloc_addr = %x, caller:%s \n",sizeP  + offset,alloc_buffer,caller);
+	LOG_DEBUG(DRIVER,"OSP_Alloc_Mem = %d,alloc_addr = %x, offset = %d,caller:%s \n",sizeP  + offset,alloc_buffer,offset,caller);
 	if (alloc_buffer == NULL)
 	{
 		AssertFatal(0, DRIVER, "get_free_mem_block failed,caller: %s \n", caller);

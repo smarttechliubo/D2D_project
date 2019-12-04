@@ -163,7 +163,7 @@ void ip_udp_task( )
 	
 
 	timerfd_settime(timerfd_1, 0, &ts1, NULL); 
-#if 0
+#if 1
 	timerfd_2 = timerfd_create(CLOCK_MONOTONIC,0);
     //!sleep 1ms ,and then start timer2 
 	if (clock_gettime(CLOCK_MONOTONIC, &timer2_request) == -1)
@@ -190,7 +190,7 @@ void ip_udp_task( )
 		max_fd = (sockfd_1>=sockfd_2) ? sockfd_1:sockfd_2;
 #ifdef RLC_UT_DEBUG 
 		max_fd = (max_fd >= timerfd_1)?max_fd:timerfd_1; 
-	//	max_fd = (max_fd >= timerfd_2)?max_fd:timerfd_2; 
+		//max_fd = (max_fd >= timerfd_2)?max_fd:timerfd_2; 
 #endif 
 
 	    max_fd = max_fd +1;
@@ -207,21 +207,22 @@ void ip_udp_task( )
 				g_d2d_sfn = g_d2d_sfn % 1024; 
 			}
 			curtime[0] = GetTimeUs();
-			//LOG_ERROR(IP,"******timerfd_1,expire count:%lld,[sfn-subsfn]:[%d--%d],elapse time:%lld(us) \n",timer_expire_count[0],
-			//		g_d2d_sfn,g_d2d_subsfn,
-			//		 ((curtime[0].tv_sec*1000000 + curtime[0].tv_usec) - (oldtime[0].tv_sec*1000000 + oldtime[0].tv_usec)) );
+		//	LOG_ERROR(IP_UDP,"******timerfd_1,expire count:%lld,[sfn-subsfn]:[%d--%d],elapse time:%lld(us) \n",timer_expire_count[0],
+		//			g_d2d_sfn,g_d2d_subsfn,
+		//			 ((curtime[0].tv_sec*1000000 + curtime[0].tv_usec) - (oldtime[0].tv_sec*1000000 + oldtime[0].tv_usec)) );
  
 			oldtime[0] = curtime[0];
 #ifdef     RLC_UT_DEBUG 
-			mac_Rlc_Bufstat_Req(g_d2d_sfn,g_d2d_subsfn);
+				mac_Rlc_Bufstat_Req(g_d2d_sfn,g_d2d_subsfn);
+			
 #endif 
 		}
-#if 0
+#if 1
 		if (FD_ISSET(timerfd_2,&rset))
 		{
 			read(timerfd_2,&timer_expire_count[1],sizeof(timer_expire_count[1]));
 			curtime[1] = GetTimeUs();
-			//LOG_ERROR(IP,"------timerfd_2,expire count:%lld, time:%lld(s), %lld(us),elapse time:%lld(us) \n",timer_expire_count[1],curtime[1].tv_sec, curtime[1].tv_usec,
+			//LOG_ERROR(IP_UDP,"------timerfd_2,expire count:%lld, time:%lld(s), %lld(us),elapse time:%lld(us) \n",timer_expire_count[1],curtime[1].tv_sec, curtime[1].tv_usec,
 			//		 ((curtime[1].tv_sec*1000000 + curtime[1].tv_usec) - (oldtime[1].tv_sec*1000000 + oldtime[1].tv_usec)) );
 			oldtime[1] = curtime[1];
 			//current_cycle = GetCpuCycle();
@@ -242,7 +243,7 @@ void ip_udp_task( )
 	 		{
 		       // LOG_DEBUG(IP,"receive data from ip:%s, port: %d, length:%d ! \n",pc_addr_ip,ntohs(PC_addr_src.sin_port),recv_length);
 				LOG_INFO(IP_UDP,"channel:0 -- receive data no.: %d \n",recv_cnt[0]++);
-				LOG_ERROR(IP_UDP,"\n channel:0 --data_length = %d, send data no.: %d \n",recv_length,send_cnt[0]);
+				LOG_ERROR(IP_UDP,"channel:0 --data_length = %d, send data no.: %d \n",recv_length,send_cnt[0]);
 #ifdef RLC_UT_DEBUG
 				//! 组包消息，向RLC 发送消息
 				Ip_Rlc_Data_Send(RB_TYPE_DRB,

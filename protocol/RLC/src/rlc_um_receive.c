@@ -39,6 +39,7 @@ signed int rlc_um_get_pdu_infos(const protocol_ctxt_t* const ctxt_pP,
 									  const uint8_t                sn_lengthP)
 {
   sdu_size_t         sum_li = 0;
+  sdu_size_t         li_header_size = 0;
   memset(pdu_info_pP, 0, sizeof (rlc_um_pdu_info_t));
 
   
@@ -84,6 +85,8 @@ signed int rlc_um_get_pdu_infos(const protocol_ctxt_t* const ctxt_pP,
         pdu_info_pP->li_list[pdu_info_pP->num_li] |= (((uint8_t)(e_li_p->b2 >> 4)) & 0x000F);//!取高4bit,并组装成11bit的LI
         li_to_read = e_li_p->b1 & 0x80; //是否还需要继续读LI 
         pdu_info_pP->header_size  += 2;
+        li_header_size += 2; 
+        LOG_DEBUG(RLC_RX, "+2,pdu_info_pP->header_size = %d\n",pdu_info_pP->header_size); 
       } 
       else 
       { //!如果还有下一个E+LI,则从b2开始读取
@@ -93,6 +96,8 @@ signed int rlc_um_get_pdu_infos(const protocol_ctxt_t* const ctxt_pP,
         li_to_read = e_li_p->b2 & 0x08;
         e_li_p++; //!每次更新3个byte 
         pdu_info_pP->header_size  += 1;
+        li_header_size += 1;
+        LOG_DEBUG(RLC_RX, "+1,pdu_info_pP->header_size = %d \n",pdu_info_pP->header_size); 
       }
 
    
@@ -119,10 +124,11 @@ signed int rlc_um_get_pdu_infos(const protocol_ctxt_t* const ctxt_pP,
 
 
 
-  LOG_INFO(RLC_RX,"RLC rx header info:function:%s,SN:%d, headersize:%d, LI number:%d,sum of LI:%d, tbsize:%d,hiddensize :%d \n", 
+  LOG_INFO(RLC_RX,"RLC rx header info:function:%s,SN:%d, fixed_headersize:%d, LI headersize:%d, LI number:%d,sum of LI:%d, tbsize:%d,hiddensize :%d \n", 
                             __func__,
   							pdu_info_pP->sn,
-							pdu_info_pP->header_size,
+  							2,
+							li_header_size,
 							pdu_info_pP->num_li,
 							pdu_info_pP->payload_size, 
 							total_sizeP,
@@ -322,6 +328,8 @@ int rlc_um_read_length_indicators(unsigned char**data_ppP,
 	*data_size_pP = *data_size_pP - li1 - 2;  //！减去第一个data segment ，还要减去2，是减去E+LI的字节数 
 	*num_li_pP = *num_li_pP +1;
 
+	LOG_DEBUG(RLC_RX, "e1 = %d, li = %d, remained data size = %d\n", e1,li1,*data_size_pP);
+
 	if ((e1)) { //！如果E1表示后面还有一个E+LI
 	  e2 = ((unsigned int)e_liP->b2 & 0x00000008) >> 3; //!第二个E
 	  li2 = (((unsigned int)e_liP->b2 & 0x00000007) << 8) + ((unsigned int)e_liP->b3 & 0x000000FF);
@@ -369,22 +377,25 @@ int rlc_um_read_length_indicators(unsigned char**data_ppP,
 		  (e_liP-(continue_loop-1)+2)->b3);
 	  	  continue_loop = 0;
 	  }
-	  // AssertFatal(*data_size_pP >= 0, "Invalid data_size!");
+	  AssertFatal(*data_size_pP >= 0,RLC_RX, "Invalid data_size!");
 	}
 
 	if (*num_li_pP > RLC_UM_SEGMENT_NB_MAX_LI_PER_PDU) {
 	  return -1;
 	}
+
+	continue_loop = 0;	//!后面没有扩展部分了，停止读取LI
   }
 
   *data_ppP = *data_ppP + (((*num_li_pP*3) +1) >> 1); //!偏移掉LI,来到data field
   if (*data_size_pP > 0) {  //!最后一个data segment 还有数据
+  	LOG_WARN(RLC_RX,"Last RLC SDU size is %d \n", *data_size_pP);
 	return 0;
   } else if (*data_size_pP == 0) { //！最后没有数据了
-	LOG_WARN(RLC, "Last RLC SDU size is zero!\n");
+	LOG_WARN(RLC_RX, "Last RLC SDU size is zero!\n");
 	return -1;
   } else {
-	LOG_WARN(RLC, "Last RLC SDU size is negative %d!\n", *data_size_pP);
+	LOG_WARN(RLC_RX, "Last RLC SDU size is negative %d!\n", *data_size_pP);
 	return -1;
   }
 }
@@ -399,10 +410,10 @@ void  rlc_um_reassembly (const protocol_ctxt_t* const ctxt_pP,
 {
   sdu_size_t      sdu_max_size;
 
-  LOG_DEBUG(RLC_RX,PROTOCOL_RLC_UM_CTXT_FMT"REASSEMBLY reassembly()  %d bytes %d bytes start to reassemble\n",
+  LOG_DEBUG(RLC_RX,PROTOCOL_RLC_UM_CTXT_FMT"REASSEMBLY  output_sdu_size_to_write = %d bytes，start to reassembly()  %d bytes,\n",
         PROTOCOL_RLC_UM_CTXT_ARGS(ctxt_pP,rlc_pP),
-        lengthP,
-        rlc_pP->output_sdu_size_to_write);
+        rlc_pP->output_sdu_size_to_write,
+        lengthP);
 
   if (lengthP <= 0) {
     return;
@@ -658,8 +669,8 @@ CONTIGUOUS WITH LAST REASSEMBLIED SN (%03d) \n",
 			  case RLC_FI_1ST_BYTE_DATA_IS_1ST_BYTE_SDU_LAST_BYTE_DATA_IS_LAST_BYTE_SDU:
 			  {
 
-					LOG_DEBUG(RLC_RX, PROTOCOL_RLC_UM_CTXT_FMT" TRY REASSEMBLY PDU FI=11 (00) Li=",
-						  PROTOCOL_RLC_UM_CTXT_ARGS(ctxt_pP, rlc_pP));
+					LOG_DEBUG(RLC_RX, PROTOCOL_RLC_UM_CTXT_FMT" TRY REASSEMBLY PDU FI=11 (00),LI=%d\n ",
+						  PROTOCOL_RLC_UM_CTXT_ARGS(ctxt_pP, rlc_pP),num_li);
 
 					for (i=0; i < num_li; i++) {
 					  LOG_DEBUG(RLC_RX, "%d ",li_array[i]);
@@ -694,14 +705,14 @@ CONTIGUOUS WITH LAST REASSEMBLIED SN (%03d) \n",
 			  case RLC_FI_1ST_BYTE_DATA_IS_1ST_BYTE_SDU_LAST_BYTE_DATA_IS_NOT_LAST_BYTE_SDU:
 			  {
 
-					LOG_DEBUG(RLC_RX, PROTOCOL_RLC_UM_CTXT_FMT" TRY REASSEMBLY PDU FI=10 (01) Li=",
-						  PROTOCOL_RLC_UM_CTXT_ARGS(ctxt_pP, rlc_pP));
+					LOG_DEBUG(RLC_RX, PROTOCOL_RLC_UM_CTXT_FMT" TRY REASSEMBLY PDU FI=10 (01), LI = %d \n",
+						  PROTOCOL_RLC_UM_CTXT_ARGS(ctxt_pP, rlc_pP),num_li);
 
 					for (i=0; i < num_li; i++) {
-					  LOG_DEBUG(RLC_RX, "%d ",li_array[i]);
+					  LOG_DEBUG(RLC_RX, "LI index = %d, li = %d ",i, li_array[i]);
 					}
 
-					LOG_DEBUG(RLC_RX, " remaining size %d\n",size);
+					LOG_DEBUG(RLC_RX, " last sdu remaining size %d\n",size);
 
 					// N complete SDUs + one segment of SDU in PDU
 					//LG rlc_um_send_sdu(rlc_pP,ctxt_pP->frame,ctxt_pP->enb_flag);
@@ -725,8 +736,8 @@ CONTIGUOUS WITH LAST REASSEMBLIED SN (%03d) \n",
 			  case RLC_FI_1ST_BYTE_DATA_IS_NOT_1ST_BYTE_SDU_LAST_BYTE_DATA_IS_LAST_BYTE_SDU:
 			  {
 
-					LOG_DEBUG(RLC_RX, PROTOCOL_RLC_UM_CTXT_FMT" TRY REASSEMBLY PDU FI=01 (10) Li=",
-						  PROTOCOL_RLC_UM_CTXT_ARGS(ctxt_pP, rlc_pP));
+					LOG_DEBUG(RLC_RX, PROTOCOL_RLC_UM_CTXT_FMT" TRY REASSEMBLY PDU FI=01 (10),LI = %d \n",
+						  PROTOCOL_RLC_UM_CTXT_ARGS(ctxt_pP, rlc_pP),num_li);
 
 					for (i=0; i < num_li; i++) {
 					  LOG_DEBUG(RLC_RX, "%d ",li_array[i]);
@@ -764,7 +775,7 @@ CONTIGUOUS WITH LAST REASSEMBLIED SN (%03d) \n",
 			  case RLC_FI_1ST_BYTE_DATA_IS_NOT_1ST_BYTE_SDU_LAST_BYTE_DATA_IS_NOT_LAST_BYTE_SDU:
 			  {
 
-					LOG_DEBUG(RLC_RX, PROTOCOL_RLC_UM_CTXT_FMT" TRY REASSEMBLY PDU FI=00 (11) Li=",
+					LOG_DEBUG(RLC_RX, PROTOCOL_RLC_UM_CTXT_FMT" TRY REASSEMBLY PDU FI=00 (11) Li= %d \n",
 						  PROTOCOL_RLC_UM_CTXT_ARGS(ctxt_pP, rlc_pP),
 						  num_li);
 

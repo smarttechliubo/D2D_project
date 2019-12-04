@@ -28,6 +28,64 @@
 #include <test_time.h> 
 
 
+#define	SA	      (struct sockaddr *)
+
+char *local_ip = "192.168.57.135";
+char *rlc_sdu_uplayer_ip = "192.168.57.1";
+
+int   g_iprlc_send_sdu_fd = 0; 
+uint32_t  g_rlcip_data_cnt = 0; 
+
+int  ip_rlc_sdu_udp_initial(void )
+{
+   int sockfd_1;
+
+	struct sockaddr_in sver_addr, cli_addr;
+
+
+
+
+
+
+	sockfd_1 = socket(AF_INET,SOCK_DGRAM,0);
+	bzero(&sver_addr,sizeof(sver_addr));
+
+	sver_addr.sin_family = AF_INET;
+	inet_pton(AF_INET, local_ip,&(sver_addr.sin_addr.s_addr));
+	sver_addr.sin_port = htons(1234);
+
+	bind(sockfd_1,SA&sver_addr,sizeof(sver_addr));
+
+    g_iprlc_send_sdu_fd = sockfd_1; 
+	return 0; 
+
+}
+void  ip_rlc_sdu_udp_send(int sockfd_1,uint8_t *buffer,uint32_t recv_length,uint32_t sn)
+{
+
+    struct sockaddr_in PC_addr_src, PC_addr_dst;
+   	int  PC_addr_dst_length;
+   
+	PC_addr_dst.sin_family = AF_INET;
+	inet_pton(AF_INET, rlc_sdu_uplayer_ip,&(PC_addr_dst.sin_addr.s_addr));
+	PC_addr_dst.sin_port = htons(8888);
+	
+    errno = 0; 
+    LOG_DEBUG(IP_MSG, "%.100s\n",buffer);
+    PC_addr_dst_length = sendto(sockfd_1,buffer,recv_length,0,SA&PC_addr_dst,sizeof(PC_addr_dst));
+    if (-1 == PC_addr_dst_length)
+    {
+		AssertFatal(0, IP_MSG, "%s send data to uplayer failed,errno = %d \n",__func__,errno); 
+    }
+    else 
+    {
+    	
+		LOG_ERROR(IP_MSG,"IP_MSG send data counter = %d,  SN = %d, %d bytes to uplayer! \n",g_rlcip_data_cnt,sn, PC_addr_dst_length );
+		g_rlcip_data_cnt++;
+    }
+
+}
+
 void ip_msg_process(void *message, MessagesIds      msg_type)
 {
 
@@ -60,7 +118,7 @@ void ip_msg_process(void *message, MessagesIds      msg_type)
 data_addr = %x\n", receive_frame,receive_subsfn,sn, rlc_report_data_ptr->data_size,tbsize,sdu_buffer_addr,sdu_real_data_addr); 
 
             /*!write data to socket **/
- 
+            ip_rlc_sdu_udp_send(g_iprlc_send_sdu_fd,sdu_real_data_addr,tbsize,sn);
              /*!free buffer */
 			free_mem_block(sdu_buffer_addr,__func__);
 

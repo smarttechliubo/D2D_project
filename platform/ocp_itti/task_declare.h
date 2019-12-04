@@ -36,4 +36,5 @@ extern int dummy_init( );
 extern void ip_udp_task( );
 
 extern void *ip_msg_task(MessageDef *rec_msg);
+extern int  ip_rlc_sdu_udp_initial(void );
 #endif
