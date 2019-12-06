@@ -42,7 +42,7 @@ typedef enum
     ERROR = ERR_DEBUG_LEVEL,
     WARN  = WARNING_DEBUG_LEVEL,
     INFO  = RUN_DEBUG_LEVEL,
-    DEBUG = RUN_DEBUG_LEVEL
+    DEBUG = DBG_DEBUG_LEVEL
 } LogLevel;
 
 typedef enum 
@@ -55,9 +55,14 @@ typedef enum
 #define PHY "[PHY]"
 #define MAC "[MAC]"
 #define RLC "[RLC]"
+#define RLC_TX "[RLC_TX]"
+#define RLC_RX "[RLC_RX]"
 #define PDCP "[PDCP]"
 #define RRC "[RRC]"
 #define NAS "[NAS]"
+#define DUMMY "[DUMMY]"
+#define IP "[IP]"
+
 
 void log_info(const char* filename, int line, comp_name_t comp, LogLevel level, const char* fmt, ...) __attribute__((format(printf,5,6)));
 
@@ -67,10 +72,10 @@ void log_info(const char* filename, int line, comp_name_t comp, LogLevel level, 
 #define LOG_INFO(comp, format, ...)  log_info(__FILE__, __LINE__, comp, INFO, format, ## __VA_ARGS__)
 #define LOG_DEBUG(comp, format, ...) log_info(__FILE__, __LINE__, comp, DEBUG, format, ## __VA_ARGS__)
 #else
-#define LOG_ERROR(comp, format, ...) DebugOut(ERROR,  comp  ": [%s:%d] "format"\n", __FILE__, __LINE__,  ## __VA_ARGS__)
-#define LOG_WARN(comp, format, ...)  DebugOut(WARN,  comp  ": [%s:%d] "format"\n", __FILE__, __LINE__,  ## __VA_ARGS__)
-#define LOG_INFO(comp, format, ...)  DebugOut(INFO,  comp  ": [%s:%d] "format"\n", __FILE__, __LINE__,  ## __VA_ARGS__)
-#define LOG_DEBUG(comp, format, ...) DebugOut(DEBUG,  comp  ": [%s:%d] "format"\n", __FILE__, __LINE__,  ## __VA_ARGS__)
+#define LOG_ERROR(comp, format, ...) DebugOutWithTime(ERROR,  "[ERROR]" comp  ": [%s:%d] "format"\n", __FILE__, __LINE__,  ## __VA_ARGS__)
+#define LOG_WARN(comp, format, ...)  DebugOutWithTime(WARN,  "[WARN]" comp  ": [%s:%d] "format"\n", __FILE__, __LINE__,  ## __VA_ARGS__)
+#define LOG_INFO(comp, format, ...)  DebugOutWithTime(INFO,  "[INFO]" comp  ": [%s:%d] "format"\n", __FILE__, __LINE__,  ## __VA_ARGS__)
+#define LOG_DEBUG(comp, format, ...) DebugOutWithTime(DEBUG,  "[DEBUG]" comp  ": [%s:%d] "format"\n", __FILE__, __LINE__,  ## __VA_ARGS__)
 #endif
 
 #define _Assert_Exit_  {                       \
