@@ -25,6 +25,7 @@
 phy_rx_info g_phyRx;
 bool g_timing_sync_phyRx = false;
 
+extern void set_sysSfn(frame_t frame, sub_frame_t subframe);
 extern int get_sysSfn();
 extern uint16_t g_testing_mode;//0:source, 1:destination
 
@@ -101,19 +102,19 @@ uint32_t init_phy_rx_sim()
 	{
 		g_phyRx.pusch.pusch[i].data = (uint8_t *)mem_alloc(1024);
 	}
-	msgq_init(INTERFACE_TASK_A,ENONBLOCK);
-	msgq_init(INTERFACE_TASK_B,ENONBLOCK);
 
 	return 0;
 }
 
-void phyRxMsgHandler(msgDef *msgddd)
+void phyRxMsgHandler(msgDef *msg)
 {
-	msgHeader* msg;
-	uint32_t msg_len = 0;
 	msgId msg_id = 0;
-	mode_e mode = g_testing_mode;
-	task_id taskId = (mode == EMAC_SRC) ? INTERFACE_TASK_A : INTERFACE_TASK_B;
+	//mode_e mode = g_testing_mode;
+
+#ifdef MAC_MQ_TEST
+	msgHeader* msg;
+	task_id taskId = ETASK_A;
+	uint32_t msg_len = 0;
 
 	msg = (msgHeader*)mem_alloc(MQ_MSGSIZE);
 
@@ -128,6 +129,9 @@ void phyRxMsgHandler(msgDef *msgddd)
 		}
 
 		msg_id = msg->msgId;
+#else
+		msg_id = get_msgId(msg);
+#endif
 
 		switch (msg_id)
 		{
@@ -137,6 +141,17 @@ void phyRxMsgHandler(msgDef *msgddd)
 
 				g_phyRx.flag_pbch = true;
 				memcpy(&g_phyRx.pbch, req, sizeof(PHY_PBCHSendReq));
+
+				LOG_INFO(PHY, "MAC_PHY_PBCH_TX_REQ received, frame:%u,subframe:%u, current frame:%u,subframe:%u",
+					req->frame, req->subframe, g_phyRx.frame,g_phyRx.subframe);
+
+				//set_sysSfn(req->frame, req->subframe);
+
+				if (g_timing_sync_phyRx == false)
+				{
+					syncTimePhyRx();
+					g_timing_sync_phyRx = true;
+				}
 
 				break;
 			}
@@ -173,9 +188,10 @@ void phyRxMsgHandler(msgDef *msgddd)
 				break;
 			}
 		}
+#ifdef MAC_MQ_TEST
 	}
-
 	mem_free((char*)msg);
+#endif
 }
 
 void handle_pusch(const      frame_t frame, const sub_frame_t subframe)
@@ -369,6 +385,7 @@ void phy_rx_sim_thread(msgDef *msg)
 	
 	//frame = (frame + (subframe + 1) / MAX_SUBSFN) % MAX_SFN;
 	//subframe = (subframe + 1) % MAX_SUBSFN;
+	LOG_INFO(PHY, "phy_rx_sim_thread frame:%u, subframe:%u, isTimer:%u", frame, subframe, isTimer);
 
 	if (!isTimer)
 	{

@@ -137,6 +137,7 @@ void src_user_setup_req(uint16_t ueId)
 	if (msg != NULL)
 	{
 		setup = (rrc_mac_connnection_setup*)message_ptr(msg);
+		setup->mode = 0;
 		setup->ue_index = ueId;
 		setup->maxHARQ_Tx = 4;
 		setup->max_out_sync = 4;
@@ -149,6 +150,8 @@ void src_user_setup_req(uint16_t ueId)
 		{
 			LOG_INFO(RRC, "LGC: RRC_MAC_CONNECT_SETUP_CFG_REQ send");
 		}
+
+		g_rrc_src.status = ERRC_SETUPING_UE;
 	}
 }
 
@@ -343,22 +346,28 @@ void rrcSrsMsgHandler(msgDef* msg, const msgId msg_id)
 	{
 		case MAC_RRC_INITIAL_CFM:
 		{
-			mac_rrc_initial_cfm *cfm = (mac_rrc_initial_cfm *)message_ptr(msg);
+			if (g_rrc_src.status == ERRC_INITAIL)
+			{
+				mac_rrc_initial_cfm *cfm = (mac_rrc_initial_cfm *)message_ptr(msg);
 
-			LOG_INFO(RRC, "[TEST] mac_rrc_initial_cfm, status:%u, error_:%u",
-				cfm->status, cfm->error_code);
+				LOG_INFO(RRC, "[TEST] mac_rrc_initial_cfm, status:%u, error_:%u",
+					cfm->status, cfm->error_code);
 
-			g_rrc_src.status = ERRC_INITAIL_CFM;
+				g_rrc_src.status = ERRC_INITAIL_CFM;
+			}
 			break;
 		}
 		case MAC_RRC_BCCH_PARA_CFG_CFM:
 		{
-			mac_rrc_bcch_para_config_cfm *cfm = (mac_rrc_bcch_para_config_cfm *)message_ptr(msg);
+			if (g_rrc_src.status == ERRC_BCCH_SEND)
+			{
+				mac_rrc_bcch_para_config_cfm *cfm = (mac_rrc_bcch_para_config_cfm *)message_ptr(msg);
 
-			LOG_INFO(RRC, "[TEST] mac_rrc_bcch_para_config_cfm, status:%u,flag:%u,error:%u", 
-				cfm->status,cfm->flag,cfm->error_code);
+				LOG_INFO(RRC, "[TEST] mac_rrc_bcch_para_config_cfm, status:%u,flag:%u,error:%u", 
+					cfm->status,cfm->flag,cfm->error_code);
 
-			g_rrc_src.status = ERRC_BCCH_CFM;
+				g_rrc_src.status = ERRC_BCCH_CFM;
+			}
 			break;
 		}
 		case MAC_RRC_OUTSYNC_RPT:
@@ -372,21 +381,29 @@ void rrcSrsMsgHandler(msgDef* msg, const msgId msg_id)
 		case MAC_RRC_CCCH_RPT:
 		{
 			mac_rrc_ccch_rpt *rpt = (mac_rrc_ccch_rpt *)message_ptr(msg);
+			ccch_info* ccch = (ccch_info*)rpt->data_ptr;
 
-			LOG_INFO(RRC, "[TEST] mac_rrc_ccch_rpt");
-			handle_ccch_rpt_src(rpt);
+			if (ccch->flag == 0 || ccch->flag == 2)
+			{
+				LOG_INFO(RRC, "[TEST] mac_rrc_ccch_rpt");
+				handle_ccch_rpt_src(rpt);
+			}
 
 			break;
 		}
 		case MAC_RRC_CONNECT_SETUP_CFG_CFM:
 		{
-			mac_rrc_connection_cfm *cfm = (mac_rrc_connection_cfm *)message_ptr(msg);
+			if (g_rrc_src.status == ERRC_SETUPING_UE)
+			{
+				mac_rrc_connection_cfm *cfm = (mac_rrc_connection_cfm *)message_ptr(msg);
 
-			LOG_INFO(RRC, "[TEST] mac_rrc_connection_cfm, status:%u,ue_index:%u,rnti:%u,error:%u",
-				cfm->status,cfm->ue_index,cfm->rnti,cfm->error_code);
+				LOG_INFO(RRC, "[TEST] mac_rrc_connection_cfm, status:%u,ue_index:%u,rnti:%u,error:%u",
+					cfm->status,cfm->ue_index,cfm->rnti,cfm->error_code);
 
-			src_user_setup_cfm(cfm);
+				src_user_setup_cfm(cfm);
 
+				g_rrc_src.status = ERRC_DONE;
+			}
 			break;
 		}
 		case MAC_RRC_RELEASE_CFM:

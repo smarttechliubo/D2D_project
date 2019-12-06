@@ -20,7 +20,9 @@ typedef enum
 	ERRC_INITAIL,
 	ERRC_INITAIL_CFM,
 	ERRC_BCCH_SEND,
-	ERRC_BCCH_CFM
+	ERRC_BCCH_CFM,
+	ERRC_SETUPING_UE,
+	ERRC_DONE
 }rrc_status_e;
 
 typedef enum
@@ -69,7 +71,7 @@ void rrcDstMsgHandler(msgDef* msg, const msgId msg_id);
 
 void rrcSrcStatusHandler();
 void rrcSrcUserStatusHandler();
-void rrcDstcStatusHandler();
+void rrcDstStatusHandler();
 void rrcDstUserStatusHandler();
 
 #endif /* _SMARTLOGICTECH_PROTOCOL_MAC_TEST_RRC_SIM_H_ */

@@ -13,8 +13,8 @@
 #include "typedef.h"
 
 void init_index();
-uint16_t new_index();
-uint16_t release_index(const uint16_t index);
+uint16_t new_index(const uint32_t mode);
+uint16_t release_index(const uint16_t index, const uint32_t mode);
 
 
 #endif /* _SMARTLOGICTECH_PROTOCOL_MAC_INC_UE_INDEX_H_ */

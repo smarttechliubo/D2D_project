@@ -60,6 +60,8 @@ void pre_schedule(const frame_t frame, const sub_frame_t subframe, mac_info_s *m
 {
 	g_sch.frame = frame;
 	g_sch.subframe = subframe;
+	g_sch.tx_info.dci_num = 0;
+	g_sch.tx_info.sch_num = 0;
 
 	handle_buffer_status_req(frame, subframe);
 

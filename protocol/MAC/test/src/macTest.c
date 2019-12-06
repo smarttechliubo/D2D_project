@@ -71,10 +71,10 @@ OSP_TASKMSG_REG TaskRegTbl[]=
 {
 	{TASK_D2D_RRC,			"task_rrc",			RT_MSG_PRI(60), (OSP_FUNCPTR)init_rrc_sim,	    (OSP_FUNCPTR)rrc_sim_thread,0},
 	{TASK_D2D_RLC,			"task_rlc",			RT_MSG_PRI(60), (OSP_FUNCPTR)init_rlc_sim,	    (OSP_FUNCPTR)rlc_sim_thread,0},
-	{TASK_D2D_PHY_TX,		"task_phy_tx",		RT_MSG_PRI(75), (OSP_FUNCPTR)init_phy_tx_sim,	(OSP_FUNCPTR)phy_tx_sim_thread,1},
-	{TASK_D2D_PHY_RX,		"task_phy_rx",		RT_MSG_PRI(75), (OSP_FUNCPTR)init_phy_rx_sim,	(OSP_FUNCPTR)phy_rx_sim_thread,1},
-	{TASK_D2D_MAC,		    "task_mac",		    RT_MSG_PRI(70), (OSP_FUNCPTR)init_mac_sim,	    (OSP_FUNCPTR)sim_run_period,0},
-	{TASK_D2D_MAC_SCH,		"task_mac_schedule",RT_MSG_PRI(70), (OSP_FUNCPTR)init_mac_sch_sim,	(OSP_FUNCPTR)sim_run_scheduler,0},
+	{TASK_D2D_PHY_TX,		"task_phy_tx",		RT_MSG_PRI(71), (OSP_FUNCPTR)init_phy_tx_sim,	(OSP_FUNCPTR)phy_tx_sim_thread,0},
+	{TASK_D2D_PHY_RX,		"task_phy_rx",		RT_MSG_PRI(70), (OSP_FUNCPTR)init_phy_rx_sim,	(OSP_FUNCPTR)phy_rx_sim_thread,0},
+	{TASK_D2D_MAC,		    "task_mac",		    RT_MSG_PRI(69), (OSP_FUNCPTR)init_mac_sim,	    (OSP_FUNCPTR)sim_run_period,0},
+	{TASK_D2D_MAC_SCH,		"task_mac_schedule",RT_MSG_PRI(69), (OSP_FUNCPTR)init_mac_sch_sim,	(OSP_FUNCPTR)sim_run_scheduler,0},
 };
 /*OSP_TASKMSG_REG num name must be "TegTaskNum" */
 U32 TegTaskNum =sizeof(TaskRegTbl)/sizeof(TaskRegTbl[0]);

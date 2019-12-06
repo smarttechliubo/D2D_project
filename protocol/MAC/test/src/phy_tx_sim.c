@@ -42,6 +42,15 @@ void sysTimingUpdate()
 	}
 }
 
+void set_sysSfn(frame_t frame, sub_frame_t subframe)
+{
+	uint16_t time = (frame << 2) | (subframe & 0X3);
+	
+	OSP_atomicSet(&sysSFN, time);
+
+	LOG_INFO(PHY, "set_sysSfn, frame:%u, subframe:%u, time:%u, sysSFN:%u",frame, subframe, time, sysSFN);
+}
+
 int32_t get_sysSfn()
 {
 	int sfn = OSP_atomicGet(&sysSFN);
@@ -120,8 +129,16 @@ uint32_t init_phy_tx_sim()
 
 	LOG_INFO(MAC,"init_phy_tx_sim pTimer is %p, ret:%u\r\n", pTimer, ret);
 
-	msgq_init(INTERFACE_TASK_A,ENONBLOCK);
-	msgq_init(INTERFACE_TASK_B,ENONBLOCK);
+#ifdef MAC_MQ_TEST
+	if(g_testing_mode == 1)
+	{
+		msgq_unlink(ETASK_A);
+		msgq_unlink(ETASK_B);
+	}
+
+	msgq_init(ETASK_A,ENONBLOCK);
+	msgq_init(ETASK_B,ENONBLOCK);
+#endif
 
 	return 0;
 }
@@ -163,7 +180,7 @@ void phyTxMsgHandler(msgDef* msg)
 			LOG_INFO(PHY, "MAC_PHY_PUSCH_SEND received. frame:%u, subframe:%u", req->frame, req->subframe);
 
 			g_phyTx.flag_pusch = true;
-			memcpy(&g_phyTx.pdcch, req, sizeof(PHY_PuschSendReq));
+			memcpy(&g_phyTx.pusch, req, sizeof(PHY_PuschSendReq));
 
 			break;
 		}
@@ -178,17 +195,22 @@ void phyTxMsgHandler(msgDef* msg)
 
 void handle_phy_tx(const      frame_t frame, const sub_frame_t subframe)
 {
-	mode_e mode = g_testing_mode;
-	task_id taskId = (mode == EMAC_DEST) ? INTERFACE_TASK_A : INTERFACE_TASK_B;
+	//mode_e mode = g_testing_mode;
+#ifdef MAC_MQ_TEST
+	task_id taskId = ETASK_B;
 
 	msgHeader* msg = NULL;
+#else
+	msgDef* msg = NULL;
+#endif
+	
 	msgSize msg_size = 0;
 
 	if (g_phyTx.flag_pbch && 
 		(g_phyTx.pbch.frame == frame && g_phyTx.pbch.subframe == subframe))
 	{
 		msg_size = sizeof(PHY_PBCHSendReq);
-		
+#ifdef MAC_MQ_TEST
 		msg = new_msg(MAC_PHY_PBCH_TX_REQ, TASK_D2D_PHY_TX, taskId, msg_size);
 
 		if (msg != NULL)
@@ -197,9 +219,24 @@ void handle_phy_tx(const      frame_t frame, const sub_frame_t subframe)
 
 			if (msgSend(taskId, (char*)msg, sizeof(msgHeader) + msg_size))
 			{
-				LOG_INFO(PHY, "LGC: MAC_PHY_PBCH_TX_REQ send");
+				LOG_INFO(PHY, "LGC: MAC_PHY_PBCH_TX_REQ send, pbch frame:%u, subframe:%u, current frame:%u, subframe:%u",
+					g_phyTx.pbch.frame,g_phyTx.pbch.subframe,g_phyTx.frame,g_phyTx.subframe);
 			}
 		}
+#else
+		msg = new_message(MAC_PHY_PBCH_TX_REQ, TASK_D2D_PHY_TX, TASK_D2D_PHY_RX, msg_size);
+
+		if (msg != NULL)
+		{
+			memcpy(MSG_HEAD_TO_COMM(msg), &g_phyTx.pbch, msg_size);
+
+			if (message_send(TASK_D2D_PHY_RX, msg, sizeof(msgDef)))
+			{
+				LOG_INFO(PHY, "LGC: MAC_PHY_PBCH_TX_REQ send, pbch frame:%u, subframe:%u, current frame:%u, subframe:%u",
+					g_phyTx.pbch.frame,g_phyTx.pbch.subframe,g_phyTx.frame,g_phyTx.subframe);
+			}
+		}
+#endif
 
 		g_phyTx.flag_pbch = false;
 	}
@@ -208,7 +245,8 @@ void handle_phy_tx(const      frame_t frame, const sub_frame_t subframe)
 		(g_phyTx.pdcch.frame == frame && g_phyTx.pdcch.subframe == subframe))
 	{
 		msg_size = sizeof(PHY_PdcchSendReq);
-		
+
+#ifdef MAC_MQ_TEST	
 		msg = new_msg(MAC_PHY_PDCCH_SEND, TASK_D2D_PHY_TX, taskId, msg_size);
 
 		if (msg != NULL)
@@ -220,7 +258,21 @@ void handle_phy_tx(const      frame_t frame, const sub_frame_t subframe)
 				LOG_INFO(PHY, "LGC: MAC_PHY_PDCCH_SEND send");
 			}
 		}
+#else
+		msg = new_message(MAC_PHY_PDCCH_SEND, TASK_D2D_PHY_TX, TASK_D2D_PHY_RX, msg_size);
 
+		if (msg != NULL)
+		{
+			memcpy(MSG_HEAD_TO_COMM(msg), &g_phyTx.pdcch, msg_size);
+
+			if (message_send(TASK_D2D_PHY_RX, msg, sizeof(msgDef)))
+			{
+				LOG_INFO(PHY, "LGC: MAC_PHY_PDCCH_SEND send, pdcch frame:%u, subframe:%u, current frame:%u, subframe:%u",
+					g_phyTx.pdcch.frame,g_phyTx.pdcch.subframe,g_phyTx.frame,g_phyTx.subframe);
+			}
+		}
+
+#endif
 		g_phyTx.flag_pdcch = false;
 	}
 
@@ -228,7 +280,8 @@ void handle_phy_tx(const      frame_t frame, const sub_frame_t subframe)
 		(g_phyTx.pusch.frame == frame && g_phyTx.pusch.subframe == subframe))
 	{
 		msg_size = sizeof(PHY_PuschSendReq);
-		
+
+#ifdef MAC_MQ_TEST
 		msg = new_msg(MAC_PHY_PUSCH_SEND, TASK_D2D_PHY_TX, taskId, msg_size);
 
 		if (msg != NULL)
@@ -240,7 +293,21 @@ void handle_phy_tx(const      frame_t frame, const sub_frame_t subframe)
 				LOG_INFO(PHY, "LGC: MAC_PHY_PUSCH_SEND send");
 			}
 		}
+#else
+		msg = new_message(MAC_PHY_PUSCH_SEND, TASK_D2D_PHY_TX, TASK_D2D_PHY_RX, msg_size);
 
+		if (msg != NULL)
+		{
+			memcpy(MSG_HEAD_TO_COMM(msg), &g_phyTx.pusch, msg_size);
+
+			if (message_send(TASK_D2D_PHY_RX, msg, sizeof(msgDef)))
+			{
+				LOG_INFO(PHY, "LGC: MAC_PHY_PUSCH_SEND send, pdcch frame:%u, subframe:%u, current frame:%u, subframe:%u",
+					g_phyTx.pusch.frame,g_phyTx.pusch.subframe,g_phyTx.frame,g_phyTx.subframe);
+			}
+		}
+
+#endif
 		g_phyTx.flag_pusch = false;
 	}
 }
@@ -256,7 +323,8 @@ void phy_tx_sim_thread(msgDef* msg)
 
 	frame = g_phyTx.frame;
 	subframe = g_phyTx.subframe;
-	
+
+	LOG_INFO(PHY, "phy_tx_sim_thread frame:%u, subframe:%u, isTimer:%u", g_phyTx.frame,g_phyTx.subframe, isTimer);
 	//frame = (frame + (subframe + TIMING_ADVANCE) / MAX_SUBSFN) % MAX_SFN;
 	//subframe = (subframe + TIMING_ADVANCE) % MAX_SUBSFN;
 	if (!isTimer)

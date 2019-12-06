@@ -181,6 +181,8 @@ bool add_ra(const uint16_t cellId, mode_e mode)
 	ra->state = (mode == EMAC_SRC) ? RA_MSG1_RECEIVED : RA_ADDED;
 	ra->ra_timer = 0;
 
+	LOG_INFO(MAC, "add new ra ue, raId:%u, ra_rnti:%u",ra->raId, ra->ra_rnti);
+
 	return true;
 }
 
@@ -264,7 +266,7 @@ void update_ra_buffer(rlc_buffer_rpt buffer)
 	{	
 		for(uint32_t i = 0; i < logic_chan_num; i++)// TODO: for ra ue, chan_num == 1
 		{
-			ra->dataSize += buffer.buffer_byte_size[i];
+			ra->dataSize += buffer.buffer_byte_size[i] + buffer.rlc_header_byte_size[i];
 		}
 	}
 	else
@@ -275,7 +277,7 @@ void update_ra_buffer(rlc_buffer_rpt buffer)
 
 void ra_msg(const frame_t frame, const sub_frame_t subframe, ra_list *ra)
 {
-	mac_info_s *mac = g_context.mac;
+	mac_info_s *mac = g_sch_mac;
 	uint16_t bandwith = mac->bandwith;
 	tx_req_info *tx_info = &g_sch.tx_info;
 	uint16_t sch_num = tx_info->sch_num;
@@ -286,7 +288,7 @@ void ra_msg(const frame_t frame, const sub_frame_t subframe, ra_list *ra)
 	uint32_t rbs_req = 0;
 	uint8_t mcs = 2;// TODO: for msg1, mcs=?
 	uint32_t tbs = get_tbs(mcs, rbg_size);
-	uint32_t first_rb = get_first_rb(bandwith);
+	uint32_t first_rb = get_first_rb(bandwith, mac);
 	uint8_t harqId = get_harqId(subframe);
 
 	if (first_rb > MAX_RBS)
@@ -349,6 +351,9 @@ bool check_ra_timer(ra_list *ra)
 
 void schedule_ra(const frame_t frame, const sub_frame_t subframe)
 {
+	if (g_sch_mac->mode != EMAC_DEST)
+		return;
+
 	ra_list *ra = g_ra.ra_list;
 
 	while (ra != NULL)

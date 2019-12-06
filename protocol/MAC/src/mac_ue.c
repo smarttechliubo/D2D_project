@@ -20,7 +20,7 @@
 
 #include "messageDefine.h"//MAC_TEST
 #include "msg_handler.h"
-
+/*
 bool get_ue_status(const uint16_t ueIndex)
 {
 	if (ueIndex >= MAX_UE)
@@ -35,7 +35,7 @@ void set_ue_status(const uint16_t ueIndex, const uint16_t status)
 		return;
 	g_context.mac->ue[ueIndex].out_of_sync = status;
 }
-
+*/
 rnti_t new_rnti(const uint16_t cellId, const uint16_t ueIndex)
 {
 	return (cellId + 1) * 1000 + ueIndex;
@@ -52,21 +52,13 @@ ueInfo* createPtr()
 
 	return node;
 }
-bool remove_ue(uint16_t ueIndex)
+
+bool remove_ue(ueInfo* ue, const uint32_t mode)
 {
-	ueInfo* ue;
-
-	if (ueIndex >= MAX_UE)
-	{
-		LOG_ERROR(MAC, "remove ue fail, Invalid ueIndex:%u", ueIndex);
-		return false;
-	}
-
-	ue = &g_context.mac->ue[ueIndex];
-	release_index(ue->ueIndex);
+	release_index(ue->ueIndex, mode);
 	ue->active = false;
 	ue->ueIndex = INVALID_U16;
-	mem_free((char*)ue);
+	//mem_free((char*)ue);
 
 	return true;
 }
@@ -99,7 +91,7 @@ uint16_t find_ue(const rnti_t rnti)
 
 	for(uint32_t i = 0; i < MAX_UE; i++)
 	{
-		ue = g_context.mac->ue[i];
+		ue = g_sch_mac->ue[i];
 
 		if(ue.active == true &&
 			ue.rnti == rnti)
@@ -171,28 +163,29 @@ void mac_user_setup_cfm(const rrc_mac_connnection_setup *req, const bool result,
 
 void mac_user_setup(const rrc_mac_connnection_setup *req)
 {
-	mac_info_s *mac = g_context.mac;
+	mac_info_s *mac = (req->mode == 0) ? g_context.mac : g_context.macd;
 	ueInfo *ue = NULL;
 	uint16_t ueIndex = INVALID_U16;
 	rnti_t rnti = INVALID_U16;
 	uint16_t cellId = mac->cellId;
 	bool result = false;
 
-	ueIndex = new_index();
+	ueIndex = new_index(req->mode);
 
-	if(g_context.mac->count_ue >= MAX_UE || ueIndex >= MAX_UE)
+	if(mac->count_ue >= MAX_UE || ueIndex >= MAX_UE)
 	{
 		LOG_ERROR(MAC, "mac user setup fail!");
 	}
 	else
 	{
-		ue = new_ue(cellId, ueIndex);
+		//ue = new_ue(cellId, ueIndex);
+		ue = &mac->ue[ueIndex];
 
-		if (ue != NULL)
+		if (ue->active == false)
 		{
-			ue = &mac->ue[ueIndex];
 			ue->active = true;
 			ue->ueId = req->ue_index;
+			ue->rnti = new_rnti(cellId, ueIndex);
 			ue->ueIndex = ueIndex;
 
 			ue->maxHARQ_Tx = req->maxHARQ_Tx;
@@ -207,13 +200,14 @@ void mac_user_setup(const rrc_mac_connnection_setup *req)
 
 			rnti = ue->rnti;
 			result = true;
-			g_context.mac->count_ue++;
+			mac->count_ue++;
 
 			//ue_push_back(ue);
 		}
 		else
 		{
-			release_index(ueIndex);
+			LOG_ERROR(MAC, "mac_user_setup ue already exist, ueIndex:%u",ueIndex);
+			release_index(ueIndex, req->mode);
 		}
 	}
 
@@ -247,11 +241,46 @@ void mac_release_cfm(const rrc_mac_release_req *req, bool success)
 
 void mac_user_release(const rrc_mac_release_req *req)//TODO: mac reset ue release
 {
-	uint16_t ueIndex;
+	//uint16_t ueIndex;
+	uint32_t mode = 0;
 	bool ret;
+	bool find = false;
 
-	ueIndex = find_ue_by_ueId(req->ue_index);
-	ret = remove_ue(ueIndex);
+	ueInfo* ue = NULL;
+
+	for(uint32_t i = 0; i < MAX_UE; i++)
+	{
+		ue = &g_context.mac->ue[i];
+
+		if(ue->active == true &&
+			ue->ueId == req->ue_index)
+		{
+			find = true;
+			mode = 0;
+			break;
+		}
+
+		ue = &g_context.macd->ue[i];
+
+		if(ue->active == true &&
+			ue->ueId == req->ue_index)
+		{
+			find = true;
+			mode = 1;
+			break;;
+		}
+	}
+
+	if (find == false)
+	{
+		LOG_ERROR(MAC, "ue ueId:%u does not exist!", req->ue_index);
+		ret = false;
+	}
+	else
+	{
+		//ueIndex = find_ue_by_ueId(req->ue_index);
+		ret = remove_ue(ue, mode);
+	}
 
 	mac_release_cfm(req, ret);
 }
@@ -302,7 +331,7 @@ bool update_crc_result(const sub_frame_t subframe, const rnti_t rnti, const uint
 
 	c = (crc == 0) ? ECRC_NACK : ECRC_ACK;
 
-	ue = &g_context.mac->ue[ueIndex];
+	ue = &g_sch_mac->ue[ueIndex];
 	ue->sch_info.crc[harqId] = c;
 
 	return true;
@@ -322,7 +351,7 @@ bool update_ue_cqi(const rnti_t rnti, const uint16_t cqi)
 
 	get_csi_paras(ueIndex, &cqi_periodic);
 
-	ue = &g_context.mac->ue[ueIndex];
+	ue = &g_sch_mac->ue[ueIndex];
 
 	ue->sch_info.cqi = cqi;
 	ue->sch_info.mcs = cqi_to_mcs(cqi);
@@ -342,7 +371,7 @@ void update_harq_info(const sub_frame_t subframe, const rnti_t rnti, const uint1
 		return;
 	}
 
-	ue = &g_context.mac->ue[ueIndex];
+	ue = &g_sch_mac->ue[ueIndex];
 
 	if (ack == 0)//nack
 	{
@@ -378,15 +407,15 @@ void update_ue_status(const rnti_t rnti, const uint16_t status)
 		return;
 	}
 
-	ue = &g_context.mac->ue[ueIndex];
+	ue = &g_sch_mac->ue[ueIndex];
 
 	if (status == 0) //outOfSync
 	{
 		ue->out_sync_count++;
 
-		if (!get_ue_status(ueIndex))
+		if (!ue->out_of_sync)
 		{
-			set_ue_status(ueIndex, true);
+			ue->out_of_sync = true;
 		}
 
 		if (ue->out_sync_count >= ue->max_out_sync)
@@ -396,10 +425,10 @@ void update_ue_status(const rnti_t rnti, const uint16_t status)
 	}
 	else if (status == 1)// inSync
 	{
-		if (get_ue_status(ueIndex))
+		if (ue->out_of_sync == true)
 		{
 			ue->out_sync_count = 0;
-			set_ue_status(ueIndex, false);
+			ue->out_of_sync = false;
 			mac_rrc_status_report(ue->rnti, false);
 		}
 	}

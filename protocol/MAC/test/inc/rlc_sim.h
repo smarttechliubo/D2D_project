@@ -19,6 +19,7 @@ typedef struct
 	uint16_t valid;
 	uint16_t ueId;
 	rnti_t   rnti;
+	uint16_t mode;
 	uint16_t  ccch_data_size;
 	uint32_t  ccch_data[128]; 
 

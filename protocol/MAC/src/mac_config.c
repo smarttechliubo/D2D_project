@@ -56,7 +56,7 @@ bool mac_config_cfm(bool success)
 void mac_config(const rrc_mac_initial_req *req)
 {
 	bool success = false;
-	mac_info_s *mac = g_context.mac;
+	mac_info_s *mac = (req->mode == 0) ? g_context.mac : g_context.macd;
 
 	if(mac != NULL && mac->status == ESTATUS_NONE)
 	{
@@ -84,8 +84,9 @@ void mac_config(const rrc_mac_initial_req *req)
 		}
 	}
 	else
-	{
-		LOG_ERROR(MAC, "MAC config error");
+	{	
+		mac_config_cfm(success);
+		LOG_ERROR(MAC, "MAC config error, mode:%u, mac:%u, status:%u", req->mode, mac != NULL, mac->status);
 	}
 
 

@@ -76,11 +76,11 @@ bool d2d_dst_fill_pusch(pusch_info* pusch, ue_sim_info* ue)
 		pusch->harqId = 1;
 		pusch->ack = 1;
 
-		pusch->padding_len;
+		pusch->padding_len = 0;
 		pusch->pdu_len = 8;
 		//pusch->data = ue->ccch;
 	}
-
+	return true;
 }
 
 void d2d_dst_send_pusch()
@@ -102,7 +102,7 @@ void d2d_dst_send_pusch()
 		req->subframe = g_d2d_dst.subframe;
 		req->num = 0;
 
-		for (uint32_t i = 0; i = D2D_MAX_USER_NUM; i++)
+		for (uint32_t i = 0; i < D2D_MAX_USER_NUM; i++)
 		{
 			ue = &g_d2d_dst.ue[i];
 
@@ -212,7 +212,7 @@ void d2dDstMsgHandler(msgDef* msg)
 		}
 		case MAC_PHY_PDCCH_SEND:
 		{
-			PHY_PdcchSendReq* req = (PHY_PdcchSendReq*)message_ptr(msg);
+			//PHY_PdcchSendReq* req = (PHY_PdcchSendReq*)message_ptr(msg);
 			break;
 		}
 		case MAC_PHY_PUSCH_SEND:

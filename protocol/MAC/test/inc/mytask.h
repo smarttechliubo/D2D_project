@@ -20,15 +20,9 @@
 
 typedef enum
 {
-	ERRC_TASK_SIM = 1, 
-	ERLC_TASK_SIM, 
-	EMAC_TASK_SIM,
-	EMAC_SCH_TASK_SIM,
-	EPHY_TX_TASK_SIM, 
-	EPHY_RX_TASK_SIM,
-	INTERFACE_TASK_A,
-	INTERFACE_TASK_B,
-	EMAX_TASK_SIM
+	ETASK_A,
+	ETASK_B,
+	ETASK_MAX
 }task_id_sim;
 
 typedef struct task_list_s 

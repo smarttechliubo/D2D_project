@@ -492,7 +492,7 @@ void update_buffer_status(rlc_buffer_rpt buffer)
 		return;
 	}
 
-	ue = &g_context.mac->ue[ueIndex];
+	ue = &g_sch_mac->ue[ueIndex];
 
 	if (ue->active == false ||
 		ue->out_of_sync)
@@ -511,7 +511,7 @@ void update_buffer_status(rlc_buffer_rpt buffer)
 	{
 		ue_buffer->lc_rbs_alloc[i] = 0;
 		ue_buffer->chan_id[i] = buffer.logicchannel_id[i];
-		ue_buffer->buffer_size[i] = buffer.buffer_byte_size[i];
+		ue_buffer->buffer_size[i] = buffer.buffer_byte_size[i] + buffer.rlc_header_byte_size[i];
 		ue_buffer->buffer_total += buffer.buffer_byte_size[i];
 	}
 

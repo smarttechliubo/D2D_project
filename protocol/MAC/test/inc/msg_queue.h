@@ -36,8 +36,8 @@ typedef enum
 typedef struct
 {
 	msgId msgId;
-	task_id source;
-	task_id destination;
+	task_id_sim source;
+	task_id_sim destination;
 	msgSize msgSize;
 }msgHeader;
 
@@ -48,14 +48,15 @@ typedef struct
 }MsgqDef;
 
 #define MQ_MSG_HEADER_SIZE sizeof(msgHeader)
-#define MQ_MSG_CONTENT_PTR(x) (char *)(x + MQ_MSG_HEADER_SIZE)
+#define MQ_MSG_CONTENT_PTR(x) (char *)((unsigned long)x + MQ_MSG_HEADER_SIZE)
 
+void msgq_unlink(const task_id_sim id);
 mqd_t msgq_init(task_id_sim type, msg_mode mode);
 void msgq_free_msg(task_id_sim taskId);
 void msgq_close();
 bool msgSend(task_id_sim type, char *msg_ptr, int msg_len);
 uint32_t msgRecv(task_id_sim type, char *msg_ptr, int msg_len);
-msgHeader *new_msg(const int32_t msgId, const task_id source, const task_id dest, msgSize msg_size);
+msgHeader *new_msg(const int32_t msgId, const task_id_sim source, const task_id_sim dest, msgSize msg_size);
 int msg_free(void *ptr);
 void *msg_malloc(uint32_t size);
 

@@ -17,6 +17,7 @@
 
 context_s g_context;
 schedule_result_s g_sch;
+mac_info_s *g_sch_mac = NULL;
 
 uint32_t g_prbmap[5] = {54, 108, 216, 432, 720}; //0: 1.5M, 1: 3M, 2: 6M, 3: 12M, 4:20M
 
@@ -110,9 +111,8 @@ uint32_t get_rb_start(const uint16_t bandwith)
 	return 4;// d2d case, first rb is 4.
 }
 
-uint32_t get_first_rb(uint16_t bandwith)
+uint32_t get_first_rb(const uint16_t bandwith, mac_info_s *mac)
 {
-	mac_info_s *mac = g_context.mac;
 	uint32_t rb_start_index = get_rb_start(bandwith);
 	uint32_t i = 0;
 	

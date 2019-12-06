@@ -29,7 +29,7 @@
 
 bool g_timing_sync = false;
 
-void init_mac()
+mac_info_s* init_mac_info()
 {
 	uint32_t i = 0;
 
@@ -59,36 +59,36 @@ void init_mac()
 		mac->ue[j].ueIndex = INVALID_U16;
 	}
 
-	g_context.mac = mac;
+	return mac;
+}
+
+void init_mac()
+{
+	g_context.mac = init_mac_info();
+	g_context.macd = init_mac_info();
 	g_timing_sync = false;
 }
 
 void mac_clean()
 {
 	mem_free((char*)g_context.mac);
+	mem_free((char*)g_context.macd);
 
 	LOG_INFO(MAC, "mac_clean");
 }
 
-bool pre_check(const sub_frame_t subframe)
+int32_t pre_check(const sub_frame_t subframe)
 {
-	mac_info_s *mac = g_context.mac;
-
-	if (mac->status != ESTATUS_ACTIVE)
+	if ((g_context.mac->status == ESTATUS_ACTIVE) && (subframe == 0 || subframe == 1))
 	{
-		return false;
+		return 0;
+	}
+	else if((g_context.macd->status == ESTATUS_ACTIVE) && (subframe == 2 || subframe == 3))
+	{
+		return 1;
 	}
 
-	if ((mac->mode == EMAC_SRC) && (subframe == 0 || subframe == 1))
-	{
-		return true;
-	}
-	else if((mac->mode == EMAC_DEST) && (subframe == 2 || subframe == 3))
-	{
-		return true;
-	}
-
-	return false;
+	return -1;
 }
 
 void mac_pre_handler(msgDef *msg)
@@ -96,32 +96,36 @@ void mac_pre_handler(msgDef *msg)
 	frame_t frame;
 	sub_frame_t subframe;
 
-	if (!is_timer(msg))
+	if (g_timing_sync == false)
+		return;
+
+	frame = g_context.frame;
+	subframe = g_context.subframe;
+
+	frame = (frame + (subframe + TIMING_ADVANCE) / MAX_SUBSFN) % MAX_SFN;
+	subframe = (subframe + TIMING_ADVANCE) % MAX_SUBSFN;
+
+	g_context.mac->frame = frame;
+	g_context.mac->subframe = subframe;
+	g_context.mac->cce_bits = 0;
+
+	g_context.macd->frame = frame;
+	g_context.macd->subframe = subframe;
+	g_context.macd->cce_bits = 0;
+
+	int32_t ret = pre_check(subframe);
+
+	g_sch_mac = ((ret == 0) ? g_context.mac : g_context.macd);
+
+	if (ret == 0)
 	{
-		handle_rrc_msg(msg);
+		pre_schedule(frame, subframe, g_context.mac);
 	}
 	else
 	{
-		if (g_timing_sync == false)
-			return;
-
-		frame = g_context.frame;
-		subframe = g_context.subframe;
-
-		frame = (frame + (subframe + TIMING_ADVANCE) / MAX_SUBSFN) % MAX_SFN;
-		subframe = (subframe + TIMING_ADVANCE) % MAX_SUBSFN;
-
-		g_context.mac->frame = frame;
-		g_context.mac->subframe = subframe;
-		g_context.mac->cce_bits = 0;
-
-		if (!pre_check(subframe))
-		{
-			return;
-		}
-
-		pre_schedule(frame, subframe, g_context.mac);
+		pre_schedule(frame, subframe, g_context.macd);
 	}
+
 }
 /*
 uint32_t system_run_time = 0;
@@ -229,12 +233,22 @@ int32_t init_mac_period()
 // interrupt function
 void run_period(msgDef* msg)
 {
-	//syncTimingUpdate();//TODO: timing sync with phy
-	syncTime();
+	bool isTimer = is_timer(msg);
 
-	LOG_INFO(MAC, "run_period current time frame：%u，subframe:%u", g_context.frame, g_context.subframe);
+	if (isTimer)
+	{
+		syncTime();
+	}
+	LOG_INFO(MAC, "run_period current time frame：%u，subframe:%u, isTimer:%u", g_context.frame, g_context.subframe, isTimer);
 
-	mac_pre_handler(msg);
+	if (!isTimer)
+	{
+		handle_rrc_msg(msg);
+	}
+	else
+	{
+		mac_pre_handler(msg);
+	}
 
 	message_free(msg);
 }
@@ -254,14 +268,20 @@ int32_t init_mac_scheduler()
 
 void run_scheduler(msgDef* msg)
 {
-	LOG_INFO(MAC, "run_scheduler， frame:%u, subframe:%u", g_context.mac->frame, g_context.mac->subframe);
+	sub_frame_t subframe = (g_context.subframe + TIMING_ADVANCE) % MAX_SUBSFN;
 
-	if (!is_timer(msg))
+	bool isTimer = is_timer(msg);
+	int32_t ret = pre_check(subframe);
+
+	LOG_INFO(MAC, "run_scheduler， frame:%u, subframe:%u, isTimer:%u", 
+		g_context.mac->frame, g_context.mac->subframe, isTimer);
+	
+	if (!isTimer)
 	{
 		msg_handler(msg);
 	}
-	else if (pre_check(g_context.mac->subframe))
-	{
+	else if(ret >= 0)
+	{			
 		mac_scheduler();
 	}
 

@@ -120,15 +120,15 @@ uint32_t init_rlc_sim()
 	return 0;
 }
 
-rlc_ue_info* find_rlc_user(const uint16_t ueId)
+rlc_ue_info* find_rlc_user(const uint16_t ueId, const uint16_t mode)
 {
-	rlc_ue_info* ue = NULL;
+	rlc_ue_info* ue = &g_rlc.ue[0];
 
 	for (uint16_t i = 0; i < D2D_MAX_USER_NUM; i++)
 	{
 		ue = &g_rlc.ue[i];
 
-		if (ue->valid != 0 && ue->ueId == ueId)
+		if (ue->valid != 0 && ue->ueId == ueId && ue->mode == mode)
 		{
 			return ue;
 		}
@@ -137,7 +137,7 @@ rlc_ue_info* find_rlc_user(const uint16_t ueId)
 	return NULL;
 }
 
-rlc_ue_info* find_rlc_user_by_rnti(const rnti_t rnti)
+rlc_ue_info* find_rlc_user_by_rnti(const rnti_t rnti, const uint16_t mode)
 {
 	rlc_ue_info* ue = NULL;
 
@@ -145,7 +145,7 @@ rlc_ue_info* find_rlc_user_by_rnti(const rnti_t rnti)
 	{
 		ue = &g_rlc.ue[i];
 
-		if (ue->valid != 0 && ue->rnti == rnti)
+		if (ue->valid != 0 && ue->rnti == rnti && ue->mode == mode)
 		{
 			return ue;
 		}
@@ -167,8 +167,34 @@ void rlc_remove_user(rlc_ue_info* ue)
 	}
 }
 
-void rlc_add_new_user(rlc_ue_info* ue, ccch_info* ccch)
+rlc_ue_info* rlc_add_new_user(ccch_info* ccch)
 {
+	rlc_ue_info* ue = NULL;
+
+	for (uint32_t i = 0; i < D2D_MAX_USER_NUM; i++)
+	{
+		ue = &g_rlc.ue[i];
+
+		if (ue->valid == 0)
+		{
+			break;
+		}
+		else if (i == D2D_MAX_USER_NUM)
+		{
+			LOG_ERROR(RLC, "rlc_add_new_user reach max ue number!");
+			return NULL;
+		}
+	}
+
+	if (ccch->flag == 0)
+	{
+		ue->mode = 1;
+	}
+	else if (ccch->flag == 1)
+	{
+		ue->mode = 0;
+	}
+
 	ue->valid = 1;
 	ue->ueId = ccch->ueId;
 	ue->rnti = ccch->rnti;
@@ -179,14 +205,20 @@ void rlc_add_new_user(rlc_ue_info* ue, ccch_info* ccch)
 
 	for (uint32_t i = 0; i < MAX_LOGICCHAN_NUM; i++)
 	{
-		ue->data_size[i] = 1024;
+		ue->data_size[i] = 0;
 	}
 
 	ue->data_ptr = (uint32_t  *)mem_alloc(5120);
+
+	LOG_INFO(RLC, "rlc_add_new_user UE ueId:%u, rnti:%u!", ue->ueId, ue->rnti);
+
+	return ue;
 }
 
 void handle_mac_rlc_buf_status_req(const mac_rlc_buf_status_req *req)
 {
+	uint16_t mode = (req->sub_sfn == 0 || req->sub_sfn == 1) ? 0 : 1;
+
 	msgDef* msg = NULL;
 	rlc_mac_buf_status_rpt *rpt;
 	msgSize msg_size = sizeof(rlc_mac_buf_status_rpt);
@@ -210,7 +242,7 @@ void handle_mac_rlc_buf_status_req(const mac_rlc_buf_status_req *req)
 		{
 			ue = &g_rlc.ue[i];
 
-			if (!ue->valid)
+			if (!ue->valid || ue->mode != mode)
 				continue;
 
 			logic_chan_num = 0;
@@ -225,6 +257,8 @@ void handle_mac_rlc_buf_status_req(const mac_rlc_buf_status_req *req)
 				rpt->rlc_buffer_rpt[valid_ue_num].logicchannel_id[logic_chan_num] = 0;
 				rpt->rlc_buffer_rpt[valid_ue_num].buffer_byte_size[logic_chan_num] = ue->ccch_data_size;
 				logic_chan_num++;
+
+				ue->ccch_data_size = 0;
 			}
 
 			for (uint32_t i = 1; i < ue->lc_num; i++)
@@ -240,7 +274,10 @@ void handle_mac_rlc_buf_status_req(const mac_rlc_buf_status_req *req)
 
 			rpt->rlc_buffer_rpt[valid_ue_num].logic_chan_num = logic_chan_num;
 
-			valid_ue_num++;
+			if (logic_chan_num > 0)
+			{
+				valid_ue_num++;
+			}
 		}
 
 		rpt->valid_ue_num = valid_ue_num;
@@ -259,6 +296,8 @@ void handle_mac_rlc_buf_status_req(const mac_rlc_buf_status_req *req)
 
 void fill_mac_sdus(rlc_mac_data_ind* ind, mac_rlc_data_req* req)
 {
+	uint16_t mode = (req->sub_sfn == 0 || req->sub_sfn == 1) ? 0 : 1;
+
 	rlc_data_req* dataReq = NULL;
 	//rnti_t rnti = 0;
 	rlc_ue_info* ue = NULL;
@@ -278,7 +317,7 @@ void fill_mac_sdus(rlc_mac_data_ind* ind, mac_rlc_data_req* req)
 	{
 		dataReq = &req->rlc_data_request[i];
 
-		ue = find_rlc_user_by_rnti(dataReq->rnti);
+		ue = find_rlc_user_by_rnti(dataReq->rnti, mode);
 
 		if (ue == NULL)
 		{
@@ -357,6 +396,7 @@ void handle_rrc_data_ind(rrc_rlc_data_ind *ind)
 {
 	ccch_info* ccch = NULL;
 	rlc_ue_info* ue = NULL;
+	uint16_t mode = 0;
 
 	if (ind->rb_type != RB_TYPE_SRB0)
 	{
@@ -366,11 +406,28 @@ void handle_rrc_data_ind(rrc_rlc_data_ind *ind)
 
 	ccch = (ccch_info*)ind->data_addr_ptr;
 
-	ue  = find_rlc_user(ccch->ueId);
+	if (ccch->flag == 0)
+	{
+		mode = 1;
+	}
+	else if (ccch->flag == 1)
+	{
+		mode = 0;
+	}
+
+	ue  = find_rlc_user(ccch->ueId, mode);
 
 	if (ue == NULL)
 	{
-		rlc_add_new_user(ue, ccch);
+		ue = rlc_add_new_user(ccch);
+	}
+
+	if (ue == NULL)
+		return;
+
+	if (ccch->flag == 2)
+	{
+		ue->rnti = ccch->rnti;
 	}
 
 	ue->ccch_data_size = ind->data_size;
@@ -490,6 +547,7 @@ void rlcMsgHandler(msgDef* msg)
 
 void rlc_sim_thread(msgDef* msg)
 {
+	LOG_INFO(RLC, "rlc_sim_thread ");
 	rlcMsgHandler(msg);
 
 	message_free(msg);

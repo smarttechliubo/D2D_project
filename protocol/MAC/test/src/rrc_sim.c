@@ -32,17 +32,10 @@ uint32_t init_rrc_sim()
 
 	LOG_INFO(MAC,"init_rrc_sim pTimer is %p, ret:%u\r\n", pTimer, ret);
 
-	if (g_testing_mode == 0)
-		init_rrc_src_sim();
-	else
-		init_rrc_dst_sim();
+	init_rrc_src_sim();
+	init_rrc_dst_sim();
 
 	return 0;
-}
-
-uint16_t get_rrc_mode()
-{
-	return g_testing_mode;
 }
 
 void rrcMsgHandler(msgDef* msg)
@@ -53,7 +46,6 @@ void rrcMsgHandler(msgDef* msg)
 	//while (1)
 	{
 		msg_id = get_msgId(msg);
-		LOG_ERROR(RRC, "rrcMsgHandler msg_id:%u", msg_id);
 
 		switch (msg_id)
 		{
@@ -74,11 +66,11 @@ void rrcMsgHandler(msgDef* msg)
 			case MAC_RRC_CCCH_RPT:
 			case MAC_RRC_CONNECT_SETUP_CFG_CFM:
 			{
-				if (g_testing_mode == 0)
+				//if (g_testing_mode == 0)
 				{
 					rrcSrsMsgHandler(msg, msg_id);
 				}
-				else
+				//else
 				{
 					rrcDstMsgHandler(msg, msg_id);
 				}
@@ -102,6 +94,16 @@ void rrc_sim_thread(msgDef* msg)
 	{
 		rrcMsgHandler(msg);
 	}
+	else
+	{
+		rrcSrcStatusHandler();
+		rrcSrcUserStatusHandler();
+
+		rrcDstStatusHandler();
+		rrcDstUserStatusHandler();
+
+	}
+/*
 	else if (g_testing_mode == 0)
 	{
 		rrcSrcStatusHandler();
@@ -109,10 +111,10 @@ void rrc_sim_thread(msgDef* msg)
 	}
 	else if (g_testing_mode == 1)
 	{
-		rrcDstcStatusHandler();
+		rrcDstStatusHandler();
 		rrcDstUserStatusHandler();
 	}
-
+*/
 	message_free(msg);
 }
 

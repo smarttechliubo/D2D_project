@@ -16,13 +16,14 @@
 
 extern context_s g_context;
 extern schedule_result_s g_sch;
+extern mac_info_s *g_sch_mac;
 
 uint32_t get_rb_num(uint16_t bandwith);
 uint32_t get_rb_start(const uint16_t bandwith);
 uint32_t get_tbs(const uint8_t mcs, const uint8_t num_rb);
 uint8_t get_rv(uint8_t tx_num);
 uint32_t get_rbg_size(const uint16_t bandwith);
-uint32_t get_first_rb(uint16_t bandwith);
+uint32_t get_first_rb(const uint16_t bandwith, mac_info_s *mac);
 uint32_t get_available_rbs(const uint16_t bandwith);
 uint8_t get_harqId(const sub_frame_t subframe);
 uint16_t cqi_to_mcs(const uint16_t cqi);

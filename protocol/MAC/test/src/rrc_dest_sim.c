@@ -148,6 +148,7 @@ void dst_user_setup(const uint16_t       ueId, const rnti_t rnti, const uint16_t
 	if (msg != NULL)
 	{
 		setup = (rrc_mac_connnection_setup*)message_ptr(msg);
+		setup->mode = 1;
 		setup->ue_index = ue->ueId;
 		setup->maxHARQ_Tx = 4;
 		setup->max_out_sync = 4;
@@ -160,6 +161,8 @@ void dst_user_setup(const uint16_t       ueId, const rnti_t rnti, const uint16_t
 		{
 			LOG_INFO(RRC, "LGC: RRC_MAC_CONNECT_SETUP_CFG_REQ, send msg!");
 		}
+
+		g_rrc_dst.status = ERRC_SETUPING_UE;
 	}
 	
 }
@@ -189,7 +192,7 @@ void dst_user_setup_req(const uint16_t ueId, const uint16_t flag)
 			ind->data_addr_ptr = (uint32_t*)ccch;
 			ccch->flag = flag;
 			ccch->ueId = ueId;
-			ccch->rnti = INVALID_U16;
+			ccch->rnti = RA_RNTI;
 
 			if (message_send(TASK_D2D_RLC, msg, sizeof(msgDef)))
 			{
@@ -266,7 +269,7 @@ void handle_ccch_rpt_dst(mac_rrc_ccch_rpt *rpt)
 	}
 }
 
-void rrcDstcStatusHandler()
+void rrcDstStatusHandler()
 {
 	msgDef* msg = NULL;
 
@@ -285,7 +288,7 @@ void rrcDstcStatusHandler()
 			req->pdcch_config.rb_num = 2;
 			req->pdcch_config.rb_start_index = 2;
 			req->subframe_config = 0;
-			req->mode = 0;
+			req->mode = 1;
 
 			if (message_send(TASK_D2D_MAC, msg, sizeof(msgDef)))
 			{
@@ -344,9 +347,9 @@ void rrcDstUserStatusHandler()
 	uint16_t flag = 2; // 0:setup req, 1:setup, 2:setup complete, 
 	uint16_t cause = 0;
 
-	if (g_rrc_dst.status == ERRC_BCCH_CFM)
+	if (g_rrc_dst.status == ERRC_INITAIL_CFM)
 	{
-		g_rrc_dst.status = ERRC_NONE;
+		g_rrc_dst.status = ERRC_DONE;
 
 		if (g_rrc_dst.num_ue == 0)
 		{
@@ -385,11 +388,23 @@ void rrcDstMsgHandler(msgDef* msg, const msgId msg_id)
 	{
 		case MAC_RRC_INITIAL_CFM:
 		{
-			mac_rrc_initial_cfm *cfm = (mac_rrc_initial_cfm *)message_ptr(msg);
+ 			if (g_rrc_dst.status == ERRC_INITAIL)
+			{
+				mac_rrc_initial_cfm *cfm = (mac_rrc_initial_cfm *)message_ptr(msg);
 
-			LOG_INFO(RRC, "[TEST] mac_rrc_initial_cfm, status:%u, error_:%u",cfm->status, cfm->error_code);
 
-			g_rrc_dst.status = ERRC_INITAIL_CFM;
+				if (cfm->error_code == 1)
+				{
+					LOG_INFO(RRC, "[TEST] mac_rrc_initial_cfm, status:%u, error_:%u",cfm->status, cfm->error_code);
+					g_rrc_dst.status = ERRC_INITAIL_CFM;
+				}
+				else
+				{
+					LOG_ERROR(RRC, "[TEST] mac_rrc_initial_cfm, FAIL status:%u, error_:%u",
+						cfm->status, cfm->error_code);
+				}
+			}
+
 			break;
 		}
 		/*
@@ -409,7 +424,7 @@ void rrcDstMsgHandler(msgDef* msg, const msgId msg_id)
 		{
 			mac_rrc_bcch_mib_rpt *rpt = (mac_rrc_bcch_mib_rpt *)message_ptr(msg);
 
-			LOG_INFO(RRC, "[TEST] mac_rrc_bcch_mib_rpt, SFN:%u,subsfn:%u", 
+			LOG_INFO(RRC, "[TEST] MAC_RRC_BCCH_MIB_RPT, SFN:%u,subsfn:%u", 
 				rpt->SFN, rpt->subsfn);
 
 			if (g_rrc_dst.status == ERRC_NONE)
@@ -439,21 +454,26 @@ void rrcDstMsgHandler(msgDef* msg, const msgId msg_id)
 		case MAC_RRC_CCCH_RPT:
 		{
 			mac_rrc_ccch_rpt *rpt = (mac_rrc_ccch_rpt *)message_ptr(msg);
-
-			LOG_INFO(RRC, "[TEST] mac_rrc_ccch_rpt");
-			handle_ccch_rpt_dst(rpt);
-
+			ccch_info* ccch = (ccch_info*)rpt->data_ptr;
+			if (ccch->flag == 1)
+			{
+				LOG_INFO(RRC, "[TEST] mac_rrc_ccch_rpt");
+				handle_ccch_rpt_dst(rpt);
+			}
 			break;
 		}
 		case MAC_RRC_CONNECT_SETUP_CFG_CFM:
 		{
-			mac_rrc_connection_cfm *cfm = (mac_rrc_connection_cfm *)message_ptr(msg);
+			if (g_rrc_dst.status == ERRC_SETUPING_UE)
+			{
+				mac_rrc_connection_cfm *cfm = (mac_rrc_connection_cfm *)message_ptr(msg);
 
-			LOG_INFO(RRC, "[TEST] mac_rrc_connection_cfm, status:%u,ue_index:%u,rnti:%u,error:%u",
-				cfm->status,cfm->ue_index,cfm->rnti,cfm->error_code);
+				LOG_INFO(RRC, "[TEST] mac_rrc_connection_cfm, status:%u,ue_index:%u,rnti:%u,error:%u",
+					cfm->status,cfm->ue_index,cfm->rnti,cfm->error_code);
 
-			dst_user_setup_cfm(cfm);
-
+				dst_user_setup_cfm(cfm);
+				g_rrc_dst.status = ERRC_DONE;
+			}
 			break;
 		}
 		case MAC_RRC_RELEASE_CFM:

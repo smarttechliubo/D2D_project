@@ -20,12 +20,12 @@
 #include "log.h"
 
 
-task_info mytask[EMAX_TASK_SIM];
+task_info mytask[ETASK_MAX];
 
 task_id_sim get_task_id_sim(const task_id taskId)
 {
-	task_id_sim mqid = 0;
-
+	task_id_sim mqid = ETASK_MAX;
+/*
 	switch (taskId)
 	{
 		case TASK_D2D_RRC:
@@ -61,7 +61,7 @@ task_id_sim get_task_id_sim(const task_id taskId)
 		default:
 			break;
 	}
-
+*/
 	return mqid;
 }
 
@@ -69,7 +69,7 @@ void init_thread(task_id taskId)
 {
 	task_id_sim id = get_task_id_sim(taskId);
 
-	if (id >= EMAX_TASK_SIM)
+	if (id >= ETASK_MAX)
 	{
 		LOG_ERROR(MAC, "init_thread, Wrong taskId:%u",taskId);
 		return;
@@ -88,7 +88,7 @@ bool thread_wakeup(task_id taskId, uint32_t periodic)
 {	
 	task_id_sim id = get_task_id_sim(taskId);
 
-	if (id >= EMAX_TASK_SIM)
+	if (id >= ETASK_MAX)
 	{
 		LOG_ERROR(MAC, "thread_wakeup, Wrong taskId:%u",taskId);
 		return false;
@@ -116,7 +116,7 @@ bool thread_wait(task_id taskId, uint32_t periodic)
 {
 	task_id_sim id = get_task_id_sim(taskId);
 
-	if (id >= EMAX_TASK_SIM)
+	if (id >= ETASK_MAX)
 	{
 		LOG_ERROR(MAC, "thread_wait, Wrong taskId:%u",taskId);
 		return false;
@@ -144,7 +144,7 @@ bool create_new_thread(task_id taskId, void *(*start_routine) (void*), void *arg
 {
 	task_id_sim id = get_task_id_sim(taskId);
 
-	if (id >= EMAX_TASK_SIM)
+	if (id >= ETASK_MAX)
 	{
 		LOG_ERROR(MAC, "create_new_thread, Wrong taskId:%u",taskId);
 		return false;
@@ -152,7 +152,7 @@ bool create_new_thread(task_id taskId, void *(*start_routine) (void*), void *arg
 
 	int policy;
 	
-    if ((id >= EMAX_TASK_SIM) || (pthread_create(&mytask[id].thread, NULL, start_routine, arg) != 0))
+    if ((id >= ETASK_MAX) || (pthread_create(&mytask[id].thread, NULL, start_routine, arg) != 0))
     {
 		LOG_ERROR(MAC, "[TEST]: create task error, taskId:%u",taskId);
 		return false;

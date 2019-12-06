@@ -25,7 +25,8 @@ MAC_LIB_TEST=libD2D_protocol_shared.so
 mac_test:$(MAC_LIB_TEST)
 	gcc $^ -o $@  -g $(MAC_LIB_TEST) -losp -lrt -ldl -lpthread
 	cp ../../../platform/osp_lib/libosp.so /lib
-	cp $(MAC_LIB_TEST) /lib
+#	cp $(MAC_LIB_TEST) /lib
+	rm -rf  $(MAC_OBJS_TEST) $(MAC_DEPS_TEST)
 
 $(MAC_OBJS_TEST):%.o:%.c
 	@echo "Compiling MAC_OBJS_TEST"
@@ -34,12 +35,12 @@ $(MAC_OBJS_TEST):%.o:%.c
 $(MAC_LIB_TEST):$(MAC_OBJS_TEST)
 	@echo "Compiling start MAC_LIB_TEST"
 	gcc -shared -fPIC -o $(MAC_LIB_TEST) $^ -o $@  -g  -lrt
-	rm -f  $(MAC_OBJS_TEST) $(MAC_DEPS_TEST)
+	rm -rf  $(MAC_OBJS_TEST) $(MAC_DEPS_TEST)
 
 clean:
 	@echo "Make clean"
-	rm -f  *.d *.o mac_test
-	rm -f  $(MAC_OBJS_TEST) $(MAC_DEPS_TEST) mac_test
+	rm -rf  *.d *.o mac_test
+	rm -rf  $(MAC_OBJS_TEST) $(MAC_DEPS_TEST) mac_test
 
 
 .PHONY: clean
