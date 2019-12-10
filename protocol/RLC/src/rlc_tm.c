@@ -212,7 +212,7 @@ void  rlc_tm_no_segment (const protocol_ctxt_t* const  ctxt_pP,
 		
 	}
     logic_ch_pdu_component_ptr->rlc_header_length = 0; //!no header for tm
-    logic_ch_pdu_component_ptr->padding_byte = mac_pdu_size; //!padding byte for tm 
+    logic_ch_pdu_component_ptr->tail_padding_byte = mac_pdu_size; //!padding byte for tm 
     logic_ch_pdu_component_ptr->rlc_data_length = rlc_pP->rlc_pdu_size ; 
     if (1 == logic_ch_pdu_component_ptr->is_last_sub_header_flag)
     {

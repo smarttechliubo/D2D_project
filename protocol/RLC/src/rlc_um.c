@@ -402,7 +402,7 @@ void rlc_um_data_req (const protocol_ctxt_t *const ctxt_pP, void *rlc_pP, mem_bl
 						um_tx_sdu_header->data_size);
 
 
-	LOG_WARN(RLC_TX, "rlc_p->stat_tx_pdcp_sdu: %d  , rlc_p->stat_tx_pdcp_bytes: %lld ,rlc_p->buffer_occupancy = %d, UM tx sdu List element count = %d\n", 
+	LOG_ERROR(RLC_TX, "rlc_p->stat_tx_pdcp_sdu: %d  , rlc_p->stat_tx_pdcp_bytes: %lld ,rlc_p->buffer_occupancy = %d, UM tx sdu List element count = %d\n", 
 				rlc_p->stat_tx_pdcp_sdu , rlc_p->stat_tx_pdcp_bytes,rlc_p->buffer_occupancy,
 				rlc_p->input_sdus.nb_elements);
 	RLC_UM_MUTEX_UNLOCK(&rlc_p->lock_input_sdus);
@@ -421,9 +421,8 @@ void    rlc_um_set_nb_bytes_requested_by_mac( void         *rlc_pP,
 
 
 
-
-
-void	rlc_um_mac_data_request(const protocol_ctxt_t *const ctxt_pP, 
+ 
+int32_t	rlc_um_mac_data_request(const protocol_ctxt_t *const ctxt_pP, 
                                                     const tb_size_t   logicch_tb_sizeP,
 													void *rlc_pP,
 													const eNB_flag_t  enb_flagP,
@@ -437,12 +436,13 @@ void	rlc_um_mac_data_request(const protocol_ctxt_t *const ctxt_pP,
 
 	rlc_um_pdu_info_t	pdu_info;
 	int 				octet_index, index;
+	int32_t             logic_ch_status = 0; 
 	rlc_um_entity_t *l_rlc_p = (rlc_um_entity_t *) rlc_pP;
 
 	l_rlc_p->nb_bytes_requested_by_mac = logicch_tb_sizeP;
 	
 	//！把填好的PDU 添加到rlc_p->pdus_to_mac_layer 链表中，
-	rlc_um_get_pdus(ctxt_pP, l_rlc_p,lc_pdu_component_ptr,ue_mac_pdu_size_ptr);
+	logic_ch_status = rlc_um_get_pdus(ctxt_pP, l_rlc_p,lc_pdu_component_ptr,ue_mac_pdu_size_ptr);
      
     
 	//！将pdus_to_mac_layer 链表添加到data 这个链表中
@@ -451,7 +451,8 @@ void	rlc_um_mac_data_request(const protocol_ctxt_t *const ctxt_pP,
 	
     data_req->buffer_occupancy_in_bytes +=  l_rlc_p->buffer_occupancy;
 
-    
+
+	return logic_ch_status;
 #if 0
 	if (data_req.data.nb_elements > 0) 
 	{ //!data 是一个链表，链表中的成员个数> 0 
@@ -484,11 +485,12 @@ void	rlc_um_mac_data_request(const protocol_ctxt_t *const ctxt_pP,
 
 
 
-int  rlc_um_segment_10(const protocol_ctxt_t* const ctxt_pP, 
+int32_t  rlc_um_segment_10(const protocol_ctxt_t* const ctxt_pP, 
 							    rlc_um_entity_t *rlc_pP,
 							    logic_channel_pdu_component  *lc_pdu_component_ptr,
 							    mac_pdu_size_para  *ue_mac_pdu_size_ptr)
 {
+
   list_t			  pdus;
   signed int		  pdu_remaining_size;
   signed int          buffer_status_sub_size ; 
@@ -523,12 +525,13 @@ int  rlc_um_segment_10(const protocol_ctxt_t* const ctxt_pP,
   tb_size_t                       next_lc_pdu_size ; 
 
   uint32_t                        rlc_sdu_length ; 
-
+  int32_t                          logic_ch_status; 
+  uint32_t                         temp_mac_header_size = 0; 
 
   //!calculate the actually PDU size for transmission 
   remain_byte_to_allocate  = ue_mac_pdu_size_ptr->remain_pdu_size;
 
- 
+  //!each logic channel's transmit data size 
   nb_bytes_to_transmit = rlc_pP->nb_bytes_requested_by_mac;	
 
 
@@ -540,23 +543,27 @@ int  rlc_um_segment_10(const protocol_ctxt_t* const ctxt_pP,
  
   
   
-  //!如果要传输的byte < 3,也直接return 
-  if (nb_bytes_to_transmit < 3) {
-	LOG_WARN(RLC, PROTOCOL_RLC_UM_CTXT_FMT" NO SEGMENTATION nb_bytes to transmit = %d\n",
+  //!如果要传输的byte  - 固定的fixed header size ,小于3个byte,则可能只能容纳mac header,则本次不进行传输了
+  if ((nb_bytes_to_transmit - 2) < 3) {
+	LOG_WARN(RLC, PROTOCOL_RLC_UM_CTXT_FMT" NO SEGMENTATION nb_bytes to transmit, lc_index:%d, nb_bytes_to_transmit = %d, function return 0\n",
 		  PROTOCOL_RLC_UM_CTXT_ARGS(ctxt_pP,rlc_pP),
+		  lc_pdu_component_ptr->logic_ch_index,
 		  nb_bytes_to_transmit);
+    logic_ch_status = 0; 
 
-	return -1;
+	return logic_ch_status;
   }
 
-  if ((0 == remain_byte_to_allocate ) && (1 == lc_pdu_component_ptr->is_last_sub_header_flag))
+  if (0 == remain_byte_to_allocate ) 
   {
 
-	LOG_ERROR(RLC_TX, PROTOCOL_RLC_UM_CTXT_FMT" NO SPACE remained for the last logic channel: %d, has occupied by channel %d !\n",
+	LOG_ERROR(RLC_TX, PROTOCOL_RLC_UM_CTXT_FMT" NO SPACE remained for the  logic channel: %d, has occupied by channel %d !\n",
 			  PROTOCOL_RLC_UM_CTXT_ARGS(ctxt_pP,rlc_pP),
 			  lc_pdu_component_ptr->logic_ch_index,
 			  lc_pdu_component_ptr->occupy_by_previous_lc_idx); 
-	return -2; 
+	logic_ch_status = 0; 
+
+	return logic_ch_status;
   }
 
 
@@ -566,17 +573,10 @@ int  rlc_um_segment_10(const protocol_ctxt_t* const ctxt_pP,
   pdu_mem_p = NULL;
 
   
- // RLC_UM_MUTEX_LOCK(&rlc_pP->lock_input_sdus, ctxt_pP, rlc_pP); //!加锁
-
-  
-  
-   //!从rlc_pp的input_sdu链表中，获取每个节点，进行如下处理： 
+  // RLC_UM_MUTEX_LOCK(&rlc_pP->lock_input_sdus, ctxt_pP, rlc_pP); //!加锁
+  //!从rlc_pp的input_sdu链表中，获取每个节点，进行如下处理： 
   while ((list_get_head(&rlc_pP->input_sdus)) && (nb_bytes_to_transmit > 0)) {
-
-	LOG_WARN(RLC_TX, "-----------start to process  sdu data, BO: %d: lc_idx:%d ,lc_tb_size:%d---------\n",
-		  rlc_pP->buffer_occupancy,
-		  lc_pdu_component_ptr->logic_ch_index,
-		  nb_bytes_to_transmit);
+  
 
 	// pdu_p management
 	//!< UM PDU是由一个或多个data segment 组成的，每个data segment对应一个SDU或者SDU 分段
@@ -592,19 +592,42 @@ int  rlc_um_segment_10(const protocol_ctxt_t* const ctxt_pP,
 			max_li_overhead = (((rlc_pP->input_sdus.nb_elements - 1) * 3) / 2) + ((rlc_pP->input_sdus.nb_elements - 1) % 2);
 		  }
 
+		  
+
+
 		 
           //!RLC total size 
-		 rlc_sdu_length =  (rlc_pP->buffer_occupancy + rlc_pP->tx_header_min_length_in_bytes + max_li_overhead); 
+		rlc_sdu_length =  (rlc_pP->buffer_occupancy + rlc_pP->tx_header_min_length_in_bytes + max_li_overhead); 
 
-	    
-         //! calculate the mac subheader for the first time 
-		if (1 == lc_pdu_component_ptr->is_last_sub_header_flag)
-		{
-			lc_pdu_component_ptr->mac_subheader_length = 1; 
-			lc_pdu_component_ptr->mac_subheader_length_type = 1; 
-		}
-		else
-		{	
+		LOG_ERROR(RLC_TX, "-----------start to process  sdu data,lc_idx:%d , BO: %d, rlc fix header:2, sdu_num:%d,  E+LI:%d, \
+lc_tb_size:%d,rlc_sdu_size:%d\n",
+						  lc_pdu_component_ptr->logic_ch_index,
+						  rlc_pP->buffer_occupancy,
+						  rlc_pP->input_sdus.nb_elements,
+						  max_li_overhead,
+						  nb_bytes_to_transmit,
+						  rlc_sdu_length);
+
+		//!对MAC 上报的逻辑信道tb size 进行检查
+		temp_mac_header_size = (rlc_sdu_length >= 128)?3:2; 
+
+		//！真实场景下，是不应该存在这种情况的，但是UT 测试时，由于timer中断出现阻塞，导致多条buffer 
+		// status 中的tb size 一样，当处理第二条消息时，就会发现逻辑信道的tb size > 现有的tb size,则会assert .
+#ifndef RLC_UT_DEBUG 		
+		AssertFatal((nb_bytes_to_transmit <= (rlc_sdu_length+temp_mac_header_size)), RLC_TX, "MAC logic ch's TB size:%d exceed RLC logic ch's \
+size [rlc_sdu:%d + mac_subheader:%d] ",nb_bytes_to_transmit,  rlc_sdu_length,temp_mac_header_size); 
+#endif 
+      
+
+        lc_pdu_component_ptr->rlc_data_length  = rlc_sdu_length;
+	    if (1 == lc_pdu_component_ptr->is_last_sub_header_flag)
+	    {
+	    	lc_pdu_component_ptr->mac_subheader_length = 1; 
+			lc_pdu_component_ptr->mac_subheader_length_type  = 1; 
+
+	    }
+	    else 
+	    {
 			if (lc_pdu_component_ptr->rlc_data_length < 128)
 			{
 				lc_pdu_component_ptr->mac_subheader_length = 2; 
@@ -616,138 +639,132 @@ int  rlc_um_segment_10(const protocol_ctxt_t* const ctxt_pP,
 				lc_pdu_component_ptr->mac_subheader_length_type  = 3;
 
 			}
-		} 
 
-		LOG_DEBUG(RLC_TX, "1st time calculate the mac subheader:lc:%d's mac subheader length:%d,is_last_subheader_ornot:%d \n ",lc_pdu_component_ptr->logic_ch_index,
-						lc_pdu_component_ptr->mac_subheader_length, lc_pdu_component_ptr->is_last_sub_header_flag); 	
+	    }
 
-		//!update the lc's tb-size 
-	    nb_bytes_to_transmit = nb_bytes_to_transmit - lc_pdu_component_ptr->mac_subheader_length; 
-	    
-        LOG_WARN(RLC_TX, "initial RLC all SDU overhead+MAC subheader:total_sdu_num:%d, BO:%d,  max_li_overhead:%d,fixed_RLC_header:%d,\
-MAC subheeader:%d,total_RLC_SDU_bytes:%d \n",
-		  			rlc_pP->input_sdus.nb_elements,rlc_pP->buffer_occupancy,max_li_overhead, 2,lc_pdu_component_ptr->mac_subheader_length ,
-		  			rlc_sdu_length); 
-	     //!如果mac tb size 大于RLC total size , 则要发送的data_pdu_size就是实际大小,然后加padding 
-		if  (nb_bytes_to_transmit >= rlc_sdu_length) 
+	    LOG_DEBUG(RLC_TX, "1st calculate the mac subheader:lc:%d's mac subheader length:%d,is_last_subheader_ornot:%d,rlc_sdu_size = %d\n ",lc_pdu_component_ptr->logic_ch_index,
+						lc_pdu_component_ptr->mac_subheader_length, lc_pdu_component_ptr->is_last_sub_header_flag,lc_pdu_component_ptr->rlc_data_length); 	
+	   
+	   
+	     /*如果是最后一个逻辑信道，因为MAC 计算Header时是按照实际长度计算的，不是按照1个byte的header计算的，则可能会出现大于的情况，
+			其他逻辑信道，不会出现大于的情况，在上面已经通过assert 判断过了
+	     */
+		if  (nb_bytes_to_transmit >= (rlc_sdu_length + lc_pdu_component_ptr->mac_subheader_length)) 
 		{
+			
 			data_pdu_size = rlc_sdu_length;
 
-			lc_pdu_component_ptr->final_mac_sdu_size = rlc_sdu_length; 
+			lc_pdu_component_ptr->final_rlc_pdu_size = rlc_sdu_length; 
+			lc_pdu_component_ptr->tail_padding_byte = nb_bytes_to_transmit - rlc_sdu_length; 
+			
+            //!如果是最后一个lc, 则根据总的tb size 确定padding size .
 			if (1 == lc_pdu_component_ptr->is_last_sub_header_flag)
-			{
-				lc_pdu_component_ptr->padding_byte = nb_bytes_to_transmit - rlc_sdu_length; 
+			{ 
+				ue_mac_pdu_size_ptr->padding_size = remain_byte_to_allocate - data_pdu_size - lc_pdu_component_ptr->mac_subheader_length; 
+				if (ue_mac_pdu_size_ptr->padding_size > 2)//!总的tbsize > lc_tb_size,需要增加Padding,则恢复成原本的mac_subheader 长度
+				{
+					if (lc_pdu_component_ptr->rlc_data_length < 128)
+					{
+						lc_pdu_component_ptr->mac_subheader_length = 2; 
+						lc_pdu_component_ptr->mac_subheader_length_type  = 2; 
+						
+					}
+					else 
+					{
+						lc_pdu_component_ptr->mac_subheader_length = 3; 
+						lc_pdu_component_ptr->mac_subheader_length_type  = 3;
+
+					}
+
+					//!更新mac header 的size之后，更新padding size .
+					ue_mac_pdu_size_ptr->padding_size = remain_byte_to_allocate - rlc_sdu_length - lc_pdu_component_ptr->mac_subheader_length; 
+					//!此时插入1个padding 在逻辑信道的MAC subheader之后，作为最后一个sub header 
+					ue_mac_pdu_size_ptr->tail_padding_header_size = 1;  
+					ue_mac_pdu_size_ptr->padding_size -= 1;  //!padding的size 要减去一个Padding header size 
+				}
+				else  //!padding header 小于等于2，则在头部插入padding header 
+				{
+					ue_mac_pdu_size_ptr->head_padding_header_size = ue_mac_pdu_size_ptr->padding_size; 
+					ue_mac_pdu_size_ptr->padding_size = 0; 
+				}
 			}
-			else 
-			{
-				lc_pdu_component_ptr->padding_byte = 0; 
-			}
-			LOG_WARN(RLC_TX, "total SDU send without split, last lc flag:%d, MAC TB size [%d] >= (rlc sdu size)[%d], final pdu size[%d],\
-padding byte = %d!\n",
+
+			LOG_WARN(RLC_TX, "total SDU send without split, lc_index:%d, last lc flag:%d, MAC TB size [%d] >= (rlc sdu size)[%d], final pdu size[%d],\
+mac subheader size:%d, UE TB's padding info:[tail_padding header:%d, padding byte:%d, head_padding header:%d] !\n",
+				  lc_pdu_component_ptr->logic_ch_index, 
 				  lc_pdu_component_ptr->is_last_sub_header_flag,
 				  nb_bytes_to_transmit,
 				  rlc_sdu_length,
 				  data_pdu_size,
-				  lc_pdu_component_ptr->padding_byte);
-
+				  lc_pdu_component_ptr->mac_subheader_length, 
+				  ue_mac_pdu_size_ptr->tail_padding_header_size,
+				  ue_mac_pdu_size_ptr->padding_size,
+				  ue_mac_pdu_size_ptr->head_padding_header_size
+				  );
 		} 
-		else  
-		 //!如果RLC SDU size > 逻辑信道的传输size ，则需要分割成SDU分段进行传输,或者占用其他逻辑信道的空间进行传输
+		else  //!说明此时可能RLC的buffer有所更新，或者是由于物理层资源不够分配，逻辑信道的数据需要拆分
 		{		
-			
+
+			data_pdu_size = nb_bytes_to_transmit - lc_pdu_component_ptr->mac_subheader_length;
+			lc_pdu_component_ptr->final_rlc_pdu_size = data_pdu_size; 
+			lc_pdu_component_ptr->tail_padding_byte = 0; 
+			lc_pdu_component_ptr->tail_padding_header_size = 0;
+
+			  //!如果是最后一个lc, 则根据总的tb size 确定padding size (存在tb_size > sum(lc's tb size)); 
+			//!如果是最后一个lc, 则根据总的tb size 确定padding size .
 			if (1 == lc_pdu_component_ptr->is_last_sub_header_flag)
-			{
-				data_pdu_size = nb_bytes_to_transmit;
-				lc_pdu_component_ptr->final_mac_sdu_size = nb_bytes_to_transmit; 	
-				LOG_WARN(RLC_TX, "the last SDU need to split,  last lc flag:%d, MAC TB size [%d] < (rlc sdu size)[%d],the final RLC PDU size:[%d]\n",
-				  1,
+			{ 
+				ue_mac_pdu_size_ptr->padding_size = remain_byte_to_allocate - data_pdu_size - lc_pdu_component_ptr->mac_subheader_length; 
+				if (ue_mac_pdu_size_ptr->padding_size > 2)//!总的tbsize > lc_tb_size,需要增加Padding,则恢复成原本的mac_subheader 长度
+				{
+					if (lc_pdu_component_ptr->rlc_data_length < 128)
+					{
+						lc_pdu_component_ptr->mac_subheader_length = 2; 
+						lc_pdu_component_ptr->mac_subheader_length_type  = 2; 
+						
+					}
+					else 
+					{
+						lc_pdu_component_ptr->mac_subheader_length = 3; 
+						lc_pdu_component_ptr->mac_subheader_length_type  = 3;
+
+					}
+
+					//!更新mac header 的size之后，更新padding size .
+					ue_mac_pdu_size_ptr->padding_size = remain_byte_to_allocate - rlc_sdu_length - lc_pdu_component_ptr->mac_subheader_length; 
+					//!此时插入1个padding 在逻辑信道的MAC subheader之后，作为最后一个sub header 
+					ue_mac_pdu_size_ptr->tail_padding_header_size = 1;  
+					ue_mac_pdu_size_ptr->padding_size -= 1; 
+				}
+				else  //!padding header 小于等于2，则在头部插入padding header 
+				{
+					ue_mac_pdu_size_ptr->head_padding_header_size = ue_mac_pdu_size_ptr->padding_size; 
+					ue_mac_pdu_size_ptr->padding_size = 0; 
+				}
+			}
+			
+		LOG_WARN(RLC_TX, "the  SDU may be need to split,lc_index:%d, last lc flag:%d, MAC TB size [%d] >= (rlc sdu size)[%d], final pdu size[%d],\
+mac subheader size:%d, UE TB's padding info:[tail_padding header:%d, padding byte:%d, head_padding header:%d] !\n",
+				  lc_pdu_component_ptr->logic_ch_index, 
+				  lc_pdu_component_ptr->is_last_sub_header_flag,
 				  nb_bytes_to_transmit,
 				  rlc_sdu_length,
-				  data_pdu_size);
-			}
-			else  //!this logic channel's data will occupy the next logic channel's space
-			{
-				next_lc_pdu_ptr = lc_pdu_component_ptr + 1;
-				//!calculate the next logic channle's occupied space 
-				while (next_lc_pdu_ptr->valid_flag != 0)
-				{
-					next_lc_pdu_size = next_lc_pdu_ptr->remain_mac_pdu_size; 
-					if (next_lc_pdu_size != 0)
-					{
-						if ((nb_bytes_to_transmit + next_lc_pdu_size) < rlc_sdu_length)
-						{
-							lc_pdu_component_ptr->final_mac_sdu_size = lc_pdu_component_ptr->final_mac_sdu_size + next_lc_pdu_size;
-							next_lc_pdu_ptr->occupy_by_previous_lc_flag = 1; 
-							next_lc_pdu_ptr->occupy_by_previous_lc_idx = lc_pdu_component_ptr->logic_ch_index;
-							next_lc_pdu_ptr->remain_mac_pdu_size = 0;
-							LOG_WARN(RLC_TX, "lc:%d occupied the whole space of lc:%d, added next lc's tbsize  %d,current lc tbsize:%d, continue!\n",
-									 lc_pdu_component_ptr->logic_ch_index,
-									 lc_pdu_component_ptr->logic_ch_index,
-									 next_lc_pdu_size,
-									 lc_pdu_component_ptr->final_mac_sdu_size );
-							
-						}
-						else 
-						{
-							//!update the occupied logic channel's info 
-							next_lc_pdu_ptr->remain_mac_pdu_size = next_lc_pdu_size - 
-								                                     (rlc_sdu_length - lc_pdu_component_ptr->final_mac_sdu_size); 
-								                                     
-							lc_pdu_component_ptr->final_mac_sdu_size = rlc_sdu_length;
-
-							next_lc_pdu_ptr->occupy_by_previous_lc_flag = 1; 
-							next_lc_pdu_ptr->occupy_by_previous_lc_idx = lc_pdu_component_ptr->logic_ch_index;
-
-							LOG_WARN(RLC_TX, "lc:%d occupied the partial spase of lc:%d, added next lc's tbsize  %d,current lc tbsize:%d! stop!\n",
-									 lc_pdu_component_ptr->logic_ch_index,
-									 lc_pdu_component_ptr->logic_ch_index,
-									 (rlc_sdu_length - lc_pdu_component_ptr->final_mac_sdu_size),
-									 lc_pdu_component_ptr->final_mac_sdu_size );
-									 
-							break; 
-						}
-					}
-					next_lc_pdu_ptr = next_lc_pdu_ptr + 1;
-					 
-				}
-
-				data_pdu_size = lc_pdu_component_ptr->final_mac_sdu_size; //!this logic channel's final SDU size 
-				
-				LOG_WARN(RLC_TX, "the final SDU need to split to segment  or occupy other lc's space,lc tb size:%d, rlc_sdu_length:%d,the final send PDU size:[%d]\n",
-							  nb_bytes_to_transmit,
-							  rlc_sdu_length,
-							  data_pdu_size);
-			}
-
+				  lc_pdu_component_ptr->final_rlc_pdu_size,
+				  lc_pdu_component_ptr->mac_subheader_length, 
+				  ue_mac_pdu_size_ptr->tail_padding_header_size,
+				  ue_mac_pdu_size_ptr->padding_size,
+				  ue_mac_pdu_size_ptr->head_padding_header_size
+				  );
+			
 			
 
 		}
 
-       //!set this logic channel's mac subheader type and mac subheader length 
-		lc_pdu_component_ptr->rlc_data_length = data_pdu_size; 
+        //!set this logic channel's mac subheader type and mac subheader length 
+	    lc_pdu_component_ptr->rlc_data_length = data_pdu_size; 
 
-		if (1 == lc_pdu_component_ptr->is_last_sub_header_flag)
-		{
-			lc_pdu_component_ptr->mac_subheader_length = 1; 
-			lc_pdu_component_ptr->mac_subheader_length_type = 1; 
-		}
-		else
-		{	
-			if (lc_pdu_component_ptr->rlc_data_length < 128)
-			{
-				lc_pdu_component_ptr->mac_subheader_length = 2; 
-				lc_pdu_component_ptr->mac_subheader_length_type  = 2; 
-			}
-			else 
-			{
-				lc_pdu_component_ptr->mac_subheader_length = 3; 
-				lc_pdu_component_ptr->mac_subheader_length_type  = 3;
-
-			}
-		} 
-
-		LOG_WARN(RLC_TX, "final  RLC SDU overhead+MAC subheader:total_sdu_num:%d, BO:%d,  max_li_overhead:%d,fixed_RLC_header:%d,MAC subheeader:%d,total_RLC_SDU_bytes:%d  \n",
-		  			rlc_pP->input_sdus.nb_elements,rlc_pP->buffer_occupancy,max_li_overhead, 2,lc_pdu_component_ptr->mac_subheader_length ,
+		LOG_WARN(RLC_TX, "final  RLC SDU overhead+MAC subheader:total_sdu_num:%d,MAC subheeader:%d,fixed_RLC_header:%d, max_li_overhead:%d,BO:%d,total_RLC_SDU_bytes:%d\n",
+		  			rlc_pP->input_sdus.nb_elements,lc_pdu_component_ptr->mac_subheader_length,2,max_li_overhead,rlc_pP->buffer_occupancy, 
 		  			data_pdu_size); 
       
 	   
@@ -766,7 +783,7 @@ padding byte = %d!\n",
 	  //!<开头是mac_tb_req,然后才是pdu
 	  pdu_tb_req_p = (struct mac_tb_req*) (pdu_mem_p->data);
 	  //！先清0
-	  memset (pdu_mem_p->data, 0, sizeof (rlc_um_pdu_sn_10_t)+sizeof(struct mac_tb_req));
+	  memset ((void *)pdu_mem_p->data, 0, sizeof (rlc_um_pdu_sn_10_t)+sizeof(struct mac_tb_req));
 	  li_length_in_bytes = 1;
 	}
 
@@ -811,13 +828,15 @@ padding byte = %d!\n",
 		test_pdu_remaining_size = 0;
 		test_e_li_length += 0;
 		test_remaining_num_li_to_substract += 0;
+	
 
 		
 	  } else if ((sdu_mngt_p->sdu_remaining_size + (test_li_length_in_bytes ^ 3)) == test_pdu_remaining_size ) {
 		// no LI
-		//！SDU 的size 小于PDU的size,但是SDU的size +2个byte就 = PDU size ,
-		//！	
-		LOG_WARN(RLC_TX, "sdu fill param: sdu sn:%d, sdu_remain_size:%d + LI header:%d ==  pdu_remain_size:%d,fill stoped  \n", 
+		//！SDU 的size 小于PDU的size,但是SDU的size +1个E+L1的header = PDU size ,说明此时是最后一个RLC  SDU,则不需要E+LI header 
+			
+		LOG_WARN(RLC_TX, "sdu fill param: sdu sn:%d, sdu_remain_size:%d + LI header:%d ==  pdu_remain_size:%d,sdu is the last sdu, should be \
+no E+LI, fill stoped  \n", 
 		 			sdu_mngt_p->sdu_creation_sn,
 		 			sdu_mngt_p->sdu_remaining_size,
 		 			(test_li_length_in_bytes ^ 3),
@@ -827,7 +846,7 @@ padding byte = %d!\n",
 		test_pdu_remaining_size = 0;
 		test_e_li_length += 0;
 		test_remaining_num_li_to_substract += 0;
-		//pdu_remaining_size = pdu_remaining_size - (test_li_length_in_bytes ^ 3);
+		pdu_remaining_size = pdu_remaining_size - (test_li_length_in_bytes ^ 3); //!最后一个SDU，所以不需要E+LI header 
 	
 	  } else if ((sdu_mngt_p->sdu_remaining_size + (test_li_length_in_bytes ^ 3)) < test_pdu_remaining_size ) {
 		//！SDU 的size 小于PDU的size,但是SDU的size +2个byte		 <	PDU size ,
@@ -880,8 +899,7 @@ padding byte = %d!\n",
 	buffer_status_sub_size = pdu_remaining_size - test_e_li_length;
 
    	LOG_WARN(RLC_TX, "sdu fill para result: %d sdu filled in RLC PDU,test_remaining_num_li_to_substract = %d,test_num_li = %d,\ 
-test_e_li_length:%d,the real data pdu length %d,E_LI length:%d\n" ,\
-					num_fill_sdu, 
+test_e_li_length:%d,the real data pdu length %d,E_LI length:%d\n", num_fill_sdu, 
 					test_remaining_num_li_to_substract,
 					test_num_li,
 					test_e_li_length,
@@ -991,12 +1009,12 @@ test_e_li_length:%d,the real data pdu length %d,E_LI length:%d\n" ,\
 		  //!右移4bit,剩下7bit和E 组成一个byte
 		  e_li_p->b1 = e_li_p->b1 | (sdu_mngt_p->sdu_remaining_size >> 4);	
 		  e_li_p->b2 = sdu_mngt_p->sdu_remaining_size << 4; //! 左移4bit,作为b2的高4bit
-		   LOG_WARN(RLC_TX, "sdu fill data: sdu：%d, set e_li_p->b1=%02X set e_li_p->b2=%02X fill_num_sdu=%d num_fill_sdu=%d\n",
+		   LOG_WARN(RLC_TX, "sdu fill data: sdu：%d, set e_li_p->b1=%02X set e_li_p->b2=%02X  fill_sdu_totalnum=%d,fill_sdu_index=%d \n",
                 sdu_mngt_p->sdu_creation_sn,
 				e_li_p->b1,
 				e_li_p->b2,
-				fill_num_sdu,
-				num_fill_sdu);
+				num_fill_sdu,
+				fill_num_sdu);
 
 		} else { //!偶数个LI+E
 		  //！偶数个LI,占3个byte的整数倍
@@ -1009,6 +1027,7 @@ test_e_li_length:%d,the real data pdu length %d,E_LI length:%d\n" ,\
 		  e_li_p->b3 = sdu_mngt_p->sdu_remaining_size & 0xFF; //!B3是LI 的低8bit 
 
 		  LOG_WARN(RLC_TX, "sdu fill data: sdu：%d, set e_li_p->b2=%02X set e_li_p->b3=%02X fill_num_sdu=%d num_fill_sdu=%d\n",
+		 	    sdu_mngt_p->sdu_creation_sn,
 				e_li_p->b2,
 				e_li_p->b3,
 				fill_num_sdu,
@@ -1121,15 +1140,20 @@ test_e_li_length:%d,the real data pdu length %d,E_LI length:%d\n" ,\
 	LOG_WARN(RLC_TX, "-------------- TX sdu data process finished !--------------------\n"); 
   }
 
+   logic_ch_status = 1; 
+
+   return logic_ch_status;
  // RLC_UM_MUTEX_UNLOCK(&rlc_pP->lock_input_sdus); //!退出函数之前，解锁
+
 }
 
 
 
-void rlc_um_get_pdus (const protocol_ctxt_t *const ctxt_pP, void *argP,
+int32_t  rlc_um_get_pdus (const protocol_ctxt_t *const ctxt_pP, void *argP,
 							logic_channel_pdu_component  *lc_pdu_component_ptr,
 							mac_pdu_size_para  *ue_mac_pdu_size_ptr) 
 {
+  int32_t logic_ch_status = 0; 
   rlc_um_entity_t *rlc_p = (rlc_um_entity_t *) argP;
 
   switch (rlc_p->protocol_state) {
@@ -1162,8 +1186,8 @@ void rlc_um_get_pdus (const protocol_ctxt_t *const ctxt_pP, void *argP,
 	  // - enters the LOCAL_SUSPEND state.
 
 	  // SEND DATA TO MAC
-		rlc_um_segment_10 (ctxt_pP, rlc_p,lc_pdu_component_ptr,  ue_mac_pdu_size_ptr);
-	 
+		logic_ch_status = rlc_um_segment_10 (ctxt_pP, rlc_p,lc_pdu_component_ptr,  ue_mac_pdu_size_ptr);
+	    
 
 	  break;
 
@@ -1191,11 +1215,10 @@ void rlc_um_get_pdus (const protocol_ctxt_t *const ctxt_pP, void *argP,
 	  LOG_ERROR(RLC_TX, PROTOCOL_RLC_UM_CTXT_FMT" MAC_DATA_REQ UNKNOWN PROTOCOL STATE %02X hex\n",
 			PROTOCOL_RLC_UM_CTXT_ARGS(ctxt_pP,rlc_p),
 			rlc_p->protocol_state);
-  }
+	}
+
+	return logic_ch_status;
 }
 
 
-
  
- 
-/**************************function******************************/

@@ -93,6 +93,7 @@ void rlc_rx_process(void *message, MessagesIds      msg_type)
             {
             	LOG_ERROR(RLC_RX, "RLC_RX: ue_index:%d, rlc_rx_sdu_addr:%lld \n", 
             		 			ue_index,(uint8_t *)(ue_mac_data_ptr + ue_index)); 
+            		 			
 				rlc_mac_data_rx_process((mac_rlc_data_info *)(ue_mac_data_ptr + ue_index),
 									 receive_frame,
 									 receive_subsfn); 

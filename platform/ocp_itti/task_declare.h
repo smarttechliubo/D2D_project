@@ -37,4 +37,8 @@ extern void ip_udp_task( );
 
 extern void *ip_msg_task(MessageDef *rec_msg);
 extern int  ip_rlc_sdu_udp_initial(void );
+
+extern void timer_int_task(MessageDef *recv_msg); 
+extern int timer_int_init( ); 
+
 #endif

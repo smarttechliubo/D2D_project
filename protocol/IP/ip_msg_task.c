@@ -30,7 +30,7 @@
 
 #define	SA	      (struct sockaddr *)
 
-char *local_ip = "192.168.57.135";
+char *local_ip = "192.168.57.136";
 char *rlc_sdu_uplayer_ip = "192.168.57.1";
 
 int   g_iprlc_send_sdu_fd = 0; 
@@ -71,7 +71,7 @@ void  ip_rlc_sdu_udp_send(int sockfd_1,uint8_t *buffer,uint32_t recv_length,uint
 	PC_addr_dst.sin_port = htons(8888);
 	
     errno = 0; 
-    LOG_DEBUG(IP_MSG, "%.100s\n",buffer);
+    
     PC_addr_dst_length = sendto(sockfd_1,buffer,recv_length,0,SA&PC_addr_dst,sizeof(PC_addr_dst));
     if (-1 == PC_addr_dst_length)
     {

@@ -84,7 +84,11 @@ void mac_Rlc_data_Rpt(uint16_t frame, uint16_t subsfn,uint16_t valid_ue_num, mac
 #endif 
 
 
-void  rlc_mac_data_ind_message(uint32_t         *ue_pdu_buffer_ptr, uint32_t *ue_tb_size_ptr,uint32_t *rnti_array, uint32_t ue_num )
+void  rlc_mac_data_ind_message(uint32_t         *ue_pdu_buffer_ptr, 
+										uint32_t *ue_tb_size_ptr,
+										uint32_t *rnti_array, 
+										uint32_t  ue_num,
+										int32_t  *ue_status)
 {
    
 	   rlc_mac_data_ind  *rlc_mac_data_send_ptr ; 
@@ -106,7 +110,7 @@ void  rlc_mac_data_ind_message(uint32_t         *ue_pdu_buffer_ptr, uint32_t *ue
 			rlc_mac_data_send_ptr->sdu_pdu_info[ue_index].data_buffer_adder_ptr = ue_pdu_buffer_ptr[ue_index];
 			rlc_mac_data_send_ptr->sdu_pdu_info[ue_index].tb_byte_size = ue_tb_size_ptr[ue_index]; 
 			rlc_mac_data_send_ptr->sdu_pdu_info[ue_index].rnti = rnti_array[ue_index]; 
-            rlc_mac_data_send_ptr->sdu_pdu_info[ue_index].valid_flag = 1; 
+            rlc_mac_data_send_ptr->sdu_pdu_info[ue_index].valid_flag = ue_status[ue_index]; 
 			
 	   }
 	   
@@ -380,6 +384,7 @@ void rlc_tx_process(void *message, MessagesIds      msg_type)
 	struct timeval    start_time; 
 	struct timeval    end_time; 
 	long   process_time = 0;
+	int32_t   ue_status[D2D_MAX_USER_NUM] = {0};
 
 	
 	//LOG_WARN(RLC_TX, "RLC_TX receive message = %d\n",msg_type);
@@ -471,20 +476,39 @@ cur process time = [%lld, %lld, %lld] \n",
             {
 				
 #ifdef  RLC_UT_DEBUG 
+			
             rlc_data_req   mac_data_req_to_rlc;
             mac_data_req_to_rlc.rnti = 101; 
             mac_data_req_to_rlc.logic_chan_num = 1; 
-            mac_data_req_to_rlc.tb_size = 400;   //!total size ,unit:byte
+          //  mac_data_req_to_rlc.tb_size = 1280; //   //!total size ,unit:byte
+
+            //!实际测试中，防止积累的SDU 过多，超出TB size 
+			if (g_rlc_ut_tx_buffer_size[0][0] > 4203)
+			{
+			  g_rlc_ut_tx_buffer_size[0][0] = 4203;
+			}
+			mac_data_req_to_rlc.tb_size = g_rlc_ut_tx_buffer_size[0][0];
             mac_data_req_to_rlc.logicchannel_id[0] =3;  //!DRB = 3
+
+            mac_data_req_to_rlc.mac_pdu_byte_size[0] = g_rlc_ut_tx_buffer_size[0][0]; //!logic channel's size ,unit:byte
+
             
-            mac_data_req_to_rlc.mac_pdu_byte_size[0] = 400; //!logic channel's size ,unit:byte
+
+            //!第一包手动设置大小，而第二包就需要按照实际大小传输，否则UT case  无法将一包数据全部传输完成
+			if (g_rlc_ut_2nd_trans > 0)  
+			{
+				mac_data_req_to_rlc.tb_size  = g_rlc_ut_tx_buffer_size[0][0]; 
+				mac_data_req_to_rlc.mac_pdu_byte_size[0] = g_rlc_ut_tx_buffer_size[0][0];
+			}
 		    //! send MAC_RLC_DATA_REQ message to RLC_TX 
 		    if (1 != g_rlc_no_data_transfer)
 		    {
 				mac_Rlc_data_Req(sfn, subsfn, 1, &mac_data_req_to_rlc); 
+				g_rlc_ut_2nd_trans++;
 				
-            	LOG_ERROR(RLC_TX, " \n\n message:%d,[sfn--subsfn]:[%d,%d] send rlc buffer status to mac,the data req message flag:%d \n",
-            		msg_type,sfn,subsfn,!g_rlc_no_data_transfer);
+            	LOG_ERROR(RLC_TX, "message:%d,[sfn--subsfn]:[%d,%d] send rlc buffer status to mac,the data req message flag:%d ,\
+tb_size = %d, logic tb_size = %d \n",
+            		msg_type,sfn,subsfn,!g_rlc_no_data_transfer, mac_data_req_to_rlc.tb_size,mac_data_req_to_rlc.mac_pdu_byte_size[0]);
 			}
 #endif 
 
@@ -504,7 +528,7 @@ cur process time = [%lld, %lld, %lld] \n",
 				rlc_data_req_ptr = (rlc_data_req * )&mac_rlc_data_req_ptr->rlc_data_request[ue_index];
 
 				
-				rlc_mac_ue_data_process(sfn,
+				ue_status[ue_index] = rlc_mac_ue_data_process(sfn,
 				 						subsfn,
 				 						rlc_data_req_ptr,
 				 						&g_rlc_protocol_ctxt,
@@ -520,7 +544,7 @@ cur process time = [%lld, %lld, %lld] \n",
 			}
 			
 #ifndef RLC_UT_DEBUG 			
-           rlc_mac_data_ind_message(ue_pdu_buffer_array,ue_pdu_size_array,ue_rnti_array,ue_num); 
+           rlc_mac_data_ind_message(ue_pdu_buffer_array,ue_pdu_size_array,ue_rnti_array,ue_num,ue_status); 
 #else 
 		    mac_rlc_data_info    mac_rlc_data_rpt_temp; 
 
@@ -528,7 +552,7 @@ cur process time = [%lld, %lld, %lld] \n",
 		    mac_rlc_data_rpt_temp.rnti = 101; 
 		    mac_rlc_data_rpt_temp.logic_chan_num = 1; 
 		    mac_rlc_data_rpt_temp.logicchannel_id[0] = 3; 
-		    mac_rlc_data_rpt_temp.mac_pdu_size[0] = g_debug_rlc_lc_pdu_component[0].final_mac_sdu_size; 
+		    mac_rlc_data_rpt_temp.mac_pdu_size[0] = g_debug_rlc_lc_pdu_component[0].final_rlc_pdu_size; 
 		    mac_rlc_data_rpt_temp.mac_pdu_buffer_ptr[0] = (uint32_t *)((uint8_t *)(&g_rlc_pdu_buffer[0 * MAX_DLSCH_PAYLOAD_BYTES]) 
 		    											+ g_rlc_debug_ue_mac_header_size);
 		    

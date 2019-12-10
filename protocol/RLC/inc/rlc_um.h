@@ -125,7 +125,7 @@ void rlc_um_stat_req     (rlc_um_entity_t *rlc_pP,
 * \param[in]  ctxt_pP                   Running context.
 * \param[in]  rlc_pP                    RLC UM protocol instance pointer.
 */
-extern void rlc_um_get_pdus (const protocol_ctxt_t *const ctxt_pP, void *argP,
+extern int32_t rlc_um_get_pdus (const protocol_ctxt_t *const ctxt_pP, void *argP,
 								logic_channel_pdu_component  *lc_pdu_component_ptr,
 								mac_pdu_size_para  *ue_mac_pdu_size_ptr) ;
 /*! \fn void rlc_um_rx (const protocol_ctxt_t* const ctxt_pP, rlc_um_entity_t * const rlc_pP, struct mac_data_ind 
@@ -162,22 +162,18 @@ rlc_um_set_nb_bytes_requested_by_mac (
   const tb_size_t               tb_sizeP
 );
 
-/*! \fn struct mac_data_req rlc_um_mac_data_request (const protocol_ctxt_t* const ctxt_pP, rlc_um_entity_t * const 
-rlc_pP,const eNB_flag_t  enb_flagP)
-* \brief    Gives PDUs to lower layer MAC.
-* \param[in]  ctxt_pP                   Running context.
-* \param[in]  rlc_pP                    RLC UM protocol instance pointer.
-* \param[in]  enb_flagP                 eNB or UE flag.
-* \return     A PDU of the previously requested number of bytes, and the updated maximum number of bytes that can be 
-served by RLC instance to MAC for next RLC transmission.
-*/
-extern void	rlc_um_mac_data_request(const protocol_ctxt_t *const ctxt_pP, 
+
+extern int32_t	rlc_um_mac_data_request(const protocol_ctxt_t *const ctxt_pP, 
                                                     const tb_size_t   tb_sizeP,
 													void *rlc_pP,
 													const eNB_flag_t  enb_flagP,
 													logic_channel_pdu_component  *lc_pdu_component_ptr,
 													mac_pdu_size_para  *ue_mac_pdu_size_ptr,
 													struct mac_data_req *data_req) ;
+
+extern int32_t  rlc_um_get_pdus (const protocol_ctxt_t *const ctxt_pP, void *argP,
+							logic_channel_pdu_component  *lc_pdu_component_ptr,
+							mac_pdu_size_para  *ue_mac_pdu_size_ptr) ;
 
 /*! \fn void     rlc_um_mac_data_indication (const protocol_ctxt_t* const ctxt_pP, rlc_um_entity_t * const rlc_pP,
 struct mac_data_ind data_indP)
@@ -200,12 +196,14 @@ sduP)
 * \param[in]  rlc_pP                    RLC UM protocol instance pointer.
 * \param[in]  sduP                      SDU. (A struct rlc_um_data_req is mapped on sduP->data.)
 */
-void
-rlc_um_mac_data_indication (const protocol_ctxt_t* const ctxt_pP, void *rlc_pP, struct mac_data_ind data_indP);
-void
-rlc_um_data_req (const protocol_ctxt_t *const ctxt_pP, void *rlc_pP, mem_block_t *sdu_pP) ;
+void rlc_um_mac_data_indication (const protocol_ctxt_t* const ctxt_pP, void *rlc_pP, struct mac_data_ind data_indP);
+void rlc_um_data_req (const protocol_ctxt_t *const ctxt_pP, void *rlc_pP, mem_block_t *sdu_pP) ;
 /** @} */
 
+extern  int32_t  rlc_um_segment_10(const protocol_ctxt_t* const ctxt_pP, 
+							    rlc_um_entity_t *rlc_pP,
+							    logic_channel_pdu_component  *lc_pdu_component_ptr,
+							    mac_pdu_size_para  *ue_mac_pdu_size_ptr);
  
  
 #endif

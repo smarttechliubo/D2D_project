@@ -208,10 +208,25 @@ int   rlc_Get_Buffer_Status(rlc_buffer_rpt *buffer_status)
 				if (0 == g_rlc_buffer_status[ue_index].data_size[logic_ch_index])
 				{
 					g_rlc_no_data_transfer = 1;
+					
 				}
 				else 
 				{
 					g_rlc_no_data_transfer = 0; 
+					g_rlc_ut_tx_buffer_size[ue_index][logic_ch_index] = g_rlc_buffer_status[ue_index].data_size[logic_ch_index] + \
+																		 g_rlc_buffer_status[ue_index].rlc_header_size[logic_ch_index];
+					 //!模拟MAC 加上mac subheader size 
+					if (g_rlc_ut_tx_buffer_size[ue_index][logic_ch_index] >= 128)
+					{
+						g_rlc_ut_tx_buffer_size[ue_index][logic_ch_index] += 3; 
+					}
+					else 
+					{
+						g_rlc_ut_tx_buffer_size[ue_index][logic_ch_index] += 2; 
+					}
+					LOG_DEBUG(RLC_TX, "RLC GET TX buffer status: ue_index:%d, logic_index:%d, data_size:%d, header_size =%d \n", 
+							ue_index,logic_ch_index,g_rlc_buffer_status[ue_index].data_size[logic_ch_index],
+							g_rlc_buffer_status[ue_index].rlc_header_size[logic_ch_index]);
 				}
 
 #endif 
@@ -265,29 +280,40 @@ void  rlc_ue_data_status_update(rnti_t rnti,
 
 	AssertFatal(g_rlc_buffer_status[ue_index].valid_flag == 1, RLC, "ue_index, %due_rnti must be valid for status update! \n",ue_index); 
 
-	
+	LOG_ERROR(RLC_TX, "ue_index].data_size[logical_chan_id]  = %d\n",g_rlc_buffer_status[ue_index].data_size[logical_chan_id]);
 	g_rlc_buffer_status[ue_index].data_size[logical_chan_id] -= send_data_size; 
 
+    
 	if (RLC_MODE_UM == rlc_mode)
 	{
 		rlc_header_size  = fill_sdu_num;
 
+         //!计算发送的header size 
 		 if (fill_sdu_num <= 1) 
 		 {
 			rlc_header_size = 0;  
 		  } else 
 		  { 
 			rlc_header_size = (((fill_sdu_num - 1) * 3) / 2) + ((fill_sdu_num - 1) % 2);
+			//!rlc header size 的更新按照剩余的sdu 个数实时计算，加上固定header 2byte 
+		
           }
-
 	}
 	else 
 	{
 		rlc_header_size = 0; 
 	}
-
-    g_rlc_buffer_status[ue_index].rlc_header_size [logical_chan_id] -= rlc_header_size;
-
+	
+      //!计算剩余的SDU 的header size 
+     if (remaind_sdu_num <= 1) 
+     {
+		g_rlc_buffer_status[ue_index].rlc_header_size [logical_chan_id] = 2;
+     }
+     else
+     {
+    	g_rlc_buffer_status[ue_index].rlc_header_size [logical_chan_id] = 2 + (((remaind_sdu_num - 1) * 3) / 2) + ((remaind_sdu_num - 1) % 2);
+     }
+     
     LOG_ERROR(RLC_TX, "%s, rnti:%d, lc:%d, update buffer status: datasize substarct %d,send_sdu_num:%d, rlc_header_size substract %d,remaind_sdu_num:%d, \
     remained_data_size:%d,remined_header_size:%d \n", 
           __func__,
@@ -319,14 +345,12 @@ void   rlc_Set_Buffer_Status(rnti_t rnti,
 	 //!calculate rlc header size for all of the SDU for UM
 	if (RLC_MODE_UM == rlc_mode)
 	{
-		rlc_header_size  = input_sdu_num;
-
 		 if (input_sdu_num <= 1) 
 		 {
-			rlc_header_size = 0;  
+			rlc_header_size = 2;  //!fixed header size
 		  } else 
 		  { 
-			rlc_header_size = (((input_sdu_num - 1) * 3) / 2) + ((input_sdu_num - 1) % 2);
+			rlc_header_size = 2 + (((input_sdu_num - 1) * 3) / 2) + ((input_sdu_num - 1) % 2);
           }
 
           LOG_WARN(RLC_TX, "rnti:%d,input_sdu_num:%d , rlc_header_size:%d,data_size:%d \n",rnti,input_sdu_num,rlc_header_size,data_size );

@@ -260,7 +260,9 @@ extern struct mac_data_req g_rlc_mac_data_req;
 #ifdef RLC_UT_DEBUG 
 extern  uint32_t   g_rlc_no_data_transfer; 
 extern  uint32_t g_rlc_debug_ue_mac_header_size;
+extern  uint32_t   g_rlc_ut_tx_buffer_size[D2D_MAX_USER_NUM][MAX_LOGICCHAN_NUM];
 extern logic_channel_pdu_component   g_debug_rlc_lc_pdu_component[MAX_LOGICCHAN_NUM];
+extern uint32_t  g_rlc_ut_2nd_trans;
 #endif 
 
 
@@ -298,6 +300,8 @@ extern void  rlc_ue_data_status_update(rnti_t rnti,
 									    
 extern void  rlc_um_mac_data_indication (const protocol_ctxt_t *const ctxt_pP, void *rlc_pP, struct mac_data_ind data_indP); 
 
-
+extern void rlc_um_init_timer_reordering(const protocol_ctxt_t* const ctxt_pP,
+												  rlc_um_entity_t * const rlc_pP,
+												  const uint32_t  ms_durationP);
 
 #endif

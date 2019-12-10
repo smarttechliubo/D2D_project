@@ -228,7 +228,7 @@ int dummy_init( )
     void* pTimer;
 	S32 ret;
 	
-	pTimer = OSP_timerCreateSim(TASK_D2D_DUMMY,0,1000,0);
+	pTimer = OSP_timerCreateSim(TASK_D2D_DUMMY,0,1,0);
 	ret = OSP_timerStart(pTimer);
 
 	return OSP_OK;
@@ -237,6 +237,8 @@ int dummy_init( )
 }
 
 uint gdummy_timer_cnt = 0;
+
+
 void dummy_test_task(MessageDef *recv_msg)
 {
 	uint32_t rrc_mode = rrc_GetModeType(); 
@@ -245,6 +247,8 @@ void dummy_test_task(MessageDef *recv_msg)
 	if(IS_TIMER_MSG(pMsg))
 	{
 		gdummy_timer_cnt++; 
+    
+		
 		LOG_DEBUG(DUMMY,"gdummy_timer_cnt = %d \n", gdummy_timer_cnt);
 		if (D2D_MODE_TYPE_SOURCE == rrc_mode)
 		{

@@ -189,7 +189,7 @@ void ip_udp_task( )
 #endif 
 		max_fd = (sockfd_1>=sockfd_2) ? sockfd_1:sockfd_2;
 #ifdef RLC_UT_DEBUG 
-		max_fd = (max_fd >= timerfd_1)?max_fd:timerfd_1; 
+		//max_fd = (max_fd >= timerfd_1)?max_fd:timerfd_1; 
 		//max_fd = (max_fd >= timerfd_2)?max_fd:timerfd_2; 
 #endif 
 
@@ -213,8 +213,10 @@ void ip_udp_task( )
  
 			oldtime[0] = curtime[0];
 #ifdef     RLC_UT_DEBUG 
+		   if ((0 < send_cnt[0]) && (send_cnt[0] %1 == 0))
+		   {
 				mac_Rlc_Bufstat_Req(g_d2d_sfn,g_d2d_subsfn);
-			
+		   }
 #endif 
 		}
 #if 1

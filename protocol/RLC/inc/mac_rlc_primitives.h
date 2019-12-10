@@ -230,7 +230,7 @@ typedef struct {
 	uint8_t     rlc_header_length; 
 
 	uint32_t    mac_reqeust_tb_size;    //! mac request tb size 
-	uint32_t    final_mac_sdu_size;  //! the final pdu size after the previous logic channel has allocated 
+	uint32_t    final_rlc_pdu_size;  //! the final pdu size after the previous logic channel has allocated 
 
 	uint8_t    occupy_by_previous_lc_flag;  //!1:occupied by the previous logic channel 
 	uint8_t    occupy_by_previous_lc_idx; 
@@ -241,7 +241,9 @@ typedef struct {
     uint32_t    remain_mac_pdu_size;    
     
 	uint32_t   rlc_data_length; 
-	uint32_t   padding_byte; 
+	uint32_t   tail_padding_byte; 
+	uint32_t   tail_padding_header_size; 
+	uint32_t   head_padding_header_size; 
 }logic_channel_pdu_component; 
 
 
@@ -253,6 +255,14 @@ typedef struct {
 	uint32_t       total_mac_sdu_size; 
 	uint32_t       total_mac_ce_size; 
 	uint32_t       padding_size; 
+  
+    uint32_t       tail_padding_header_size; 
+	 uint32_t      head_padding_header_size; 
+
+
+
+	
+	
 
 }mac_pdu_size_para; 
 

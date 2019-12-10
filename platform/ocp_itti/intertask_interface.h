@@ -25,6 +25,7 @@ typedef enum {
     TASK_D2D_MAC, 
     TASK_D2D_PHY,
     TASK_D2D_DUMMY,
+    TASK_D2D_DUMMY_INT,
     TASK_ID_MAX_VALUE = 127
 
 }task_id_t;

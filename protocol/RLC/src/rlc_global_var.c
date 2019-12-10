@@ -35,7 +35,10 @@ struct mac_data_req g_rlc_mac_data_req;
 
 #ifdef RLC_UT_DEBUG 
 
-uint32_t   g_rlc_no_data_transfer = 0; 
+uint32_t   g_rlc_no_data_transfer = 0;
+uint32_t   g_rlc_ut_tx_buffer_size[D2D_MAX_USER_NUM][MAX_LOGICCHAN_NUM] = {0}; 
+uint32_t   g_rlc_ut_2nd_trans = 0; 
+
 
 #endif 
 

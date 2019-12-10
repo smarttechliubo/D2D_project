@@ -124,7 +124,8 @@ signed int rlc_um_get_pdu_infos(const protocol_ctxt_t* const ctxt_pP,
 
 
 
-  LOG_INFO(RLC_RX,"RLC rx header info:function:%s,SN:%d, fixed_headersize:%d, LI headersize:%d, LI number:%d,sum of LI:%d, tbsize:%d,hiddensize :%d \n", 
+  LOG_INFO(RLC_RX,"RLC rx header info:function:%s,SN:%d, fixed_headersize:%d, LI headersize:%d, LI number:%d,sum of LI:%d, tbsize:%d,last \
+  data segment(without LI) :%d \n", 
                             __func__,
   							pdu_info_pP->sn,
   							2,
@@ -673,7 +674,7 @@ CONTIGUOUS WITH LAST REASSEMBLIED SN (%03d) \n",
 						  PROTOCOL_RLC_UM_CTXT_ARGS(ctxt_pP, rlc_pP),num_li);
 
 					for (i=0; i < num_li; i++) {
-					  LOG_DEBUG(RLC_RX, "%d ",li_array[i]);
+					  LOG_DEBUG(RLC_RX, "LI index = %d, LI = %d ",i,li_array[i]);
 					}
 
 					LOG_DEBUG(RLC_RX, " remaining size %d\n",size);
