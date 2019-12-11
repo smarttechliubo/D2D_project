@@ -30,7 +30,11 @@ extern uint32_t   g_d2d_sfn ;
 extern void mac_Rlc_Bufstat_Req(uint16_t frame, uint16_t subsfn);
 
 
+int  g_ut_timer_cnt = 0; 
+
 int g_ut_timerfd = 0;  
+
+extern unsigned int g_udp_send_cnt[2];
  
 int timer_int_init( )
 {
@@ -38,7 +42,7 @@ int timer_int_init( )
     void* pTimer;
 	S32 ret;
 	
-	pTimer = OSP_timerCreateSim(TASK_D2D_DUMMY_INT,1,4,0);
+	pTimer = OSP_timerCreateSim(TASK_D2D_DUMMY_INT,1,2,0);
 	ret = OSP_timerStart(pTimer);
 
 	return OSP_OK;
@@ -56,6 +60,7 @@ void timer_int_task(MessageDef *recv_msg)
 	{
 		 
 		   // LOG_DEBUG(DUMMY, "-----------------------------[sfn-subsfn] = {%d--%d}-------------\n",g_d2d_sfn,g_d2d_subsfn);
+		    
 			g_d2d_subsfn++;
 			g_d2d_subsfn = g_d2d_subsfn % 10; 
 			if ((g_d2d_subsfn % 10) == 0)
@@ -63,8 +68,11 @@ void timer_int_task(MessageDef *recv_msg)
 				g_d2d_sfn++;
 				g_d2d_sfn = g_d2d_sfn % 1024; 
 			}
-
-			mac_Rlc_Bufstat_Req(g_d2d_sfn,g_d2d_subsfn);
+			//if ((g_ut_timer_cnt % 4) < 2)//!模拟DDUU 
+			{
+				mac_Rlc_Bufstat_Req(g_d2d_sfn,g_d2d_subsfn);
+			}
+			g_ut_timer_cnt ++; 
     }
 
     itti_free_message(recv_msg);

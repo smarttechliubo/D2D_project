@@ -77,6 +77,8 @@ void mac_Rlc_data_Rpt(uint16_t frame, uint16_t subsfn,uint16_t valid_ue_num, mac
 	                       ( char *)mac_rlc_data_rpt_ptr, sizeof(mac_rlc_data_rpt));
 
 	itti_send_msg_to_task(TASK_D2D_RLC_RX,  0, message);
+	LOG_DEBUG(RLC_TX, "-------------------------\n");
+	
 	
 }
 

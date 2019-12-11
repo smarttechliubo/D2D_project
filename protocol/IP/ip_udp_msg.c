@@ -84,6 +84,8 @@ void mac_Rlc_Bufstat_Req(uint16_t frame, uint16_t subsfn)
 uint32_t   g_d2d_subsfn = 0; 
 uint32_t   g_d2d_sfn = 0; 
 
+unsigned int  g_udp_recv_cnt[2] = {0};
+unsigned int g_udp_send_cnt[2] = {0};
 
 
 void ip_udp_task( )
@@ -123,8 +125,7 @@ void ip_udp_task( )
 	
 #endif  
 
- 	unsigned int  recv_cnt[2] = {0};
-    unsigned int  send_cnt[2] = {0};
+
     
 
 	FD_ZERO(&rset);
@@ -213,7 +214,7 @@ void ip_udp_task( )
  
 			oldtime[0] = curtime[0];
 #ifdef     RLC_UT_DEBUG 
-		   if ((0 < send_cnt[0]) && (send_cnt[0] %1 == 0))
+		   if ((0 < g_udp_send_cnt[0]) && (g_udp_send_cnt[0] %1 == 0))
 		   {
 				mac_Rlc_Bufstat_Req(g_d2d_sfn,g_d2d_subsfn);
 		   }
@@ -244,21 +245,21 @@ void ip_udp_task( )
 			if (0 == errno)
 	 		{
 		       // LOG_DEBUG(IP,"receive data from ip:%s, port: %d, length:%d ! \n",pc_addr_ip,ntohs(PC_addr_src.sin_port),recv_length);
-				LOG_INFO(IP_UDP,"channel:0 -- receive data no.: %d \n",recv_cnt[0]++);
-				LOG_ERROR(IP_UDP,"channel:0 --data_length = %d, send data no.: %d \n",recv_length,send_cnt[0]);
+				LOG_INFO(IP_UDP,"channel:0 -- receive data no.: %d \n",g_udp_recv_cnt[0]++);
+				LOG_ERROR(IP_UDP,"channel:0 --data_length = %d, send data no.: %d \n",recv_length,g_udp_send_cnt[0]);
 #ifdef RLC_UT_DEBUG
 				//! 组包消息，向RLC 发送消息
 				Ip_Rlc_Data_Send(RB_TYPE_DRB,
 								3,
 								0X65,
-								send_cnt[0],
+								g_udp_send_cnt[0],
 								msg_buffer,
 								recv_length); 
 				
 #else 
 				//sendto(sockfd_2,msg_buffer,recv_length,0,SA&PC_addr_dst,sizeof(PC_addr_dst));
 #endif 
-				send_cnt[0]++;
+				g_udp_send_cnt[0]++;
 	 			
 
 				if (0 != errno)
@@ -285,9 +286,9 @@ void ip_udp_task( )
  			if (0 == errno)
 			{
 				LOG_DEBUG(IP_UDP,"receive data from ip:%s, port: %d, length:%d ! \n",pc_addr_ip,ntohs(PC_addr_dst.sin_port),recv_length_2);
-				LOG_DEBUG(IP_UDP,"channel:1 -- receive data no.: %d \n",recv_cnt[1]++);
+				LOG_DEBUG(IP_UDP,"channel:1 -- receive data no.: %d \n",g_udp_recv_cnt[1]++);
 				sendto(sockfd_1,msg_buffer_2,recv_length_2,0,SA&PC_addr_src,sizeof(PC_addr_src));
-				LOG_DEBUG(IP_UDP,"channel:1 -- send data no.: %d \n",send_cnt[1]++);
+				LOG_DEBUG(IP_UDP,"channel:1 -- send data no.: %d \n",g_udp_send_cnt[1]++);
 				if (0 != errno)
 				{
 					LOG_ERROR(IP_UDP,"channel 1: send errno = %d\n",errno);

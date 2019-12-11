@@ -59,6 +59,8 @@ tbs_size_t mac_rlc_serialize_tb (char* buffer_pP,
   tbs_size_t   tb_size;
   uint32_t     rlc_sdu_index = 0; 
 
+
+
   tbs_size = 0;
   //! 循环tb 个数
   while (transport_blocksP.nb_elements > 0) {
@@ -71,6 +73,7 @@ tbs_size_t mac_rlc_serialize_tb (char* buffer_pP,
       //! 这里注意，这里搬移的数据是包含了RLC header的数据
       memcpy(&buffer_pP[tbs_size], &((struct mac_tb_req *) (tb_p->data))->data_ptr[0], tb_size);
       LOG_DEBUG(RLC_TX, "copy RLC data: rlc_sdu_index:%d, data_size:%d to MAC PDU \n",rlc_sdu_index,tb_size);
+
       tbs_size = tbs_size + tb_size;
       free_mem_block(tb_p, __func__);
       rlc_sdu_index++;
