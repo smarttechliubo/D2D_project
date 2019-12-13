@@ -234,11 +234,45 @@ void dst_user_setup_cfm(const mac_rrc_connection_cfm *cfm)
 	{
 		cause = 1;
 		ue->setup_timer = 0;
+		ue->status = ERRC_UE_SETUP_COMPLETE;
 	}
 
 	dst_user_setup_complete(ueId, rnti, flag, cause);
 
 }
+
+void dst_user_start(rrc_ue_info* ue)
+{
+	msgDef* msg = NULL;
+	rrc_rlc_data_ind *ind;
+	msgSize msg_size = sizeof(rrc_rlc_data_ind);
+	uint16_t data_size = sizeof(ccch_info);
+	ccch_info* ccch = (ccch_info *)mem_alloc(data_size);
+
+	msg = new_message(RRC_RLC_DATA_IND, TASK_D2D_RRC, TASK_D2D_RLC, msg_size);
+
+	if (msg != NULL)
+	{
+		ind = (rrc_rlc_data_ind*)message_ptr(msg);
+		ind->rb_type = RB_TYPE_SRB0;
+		ind->data_size = data_size;
+		ind->data_addr_ptr = (uint32_t*)ccch;
+		ccch->flag = 4;
+		ccch->ueId = ue->ueId;
+		ccch->rnti = ue->rnti;
+
+		if (message_send(TASK_D2D_RLC, msg, sizeof(msgDef)))
+		{
+			LOG_INFO(RRC, "LGC: rrc_rlc_data_ind send");
+		}
+	}
+	else
+	{
+		LOG_ERROR(RRC, "[TEST]: dst_user_start new rrc message fail!");
+	}
+}
+
+
 
 void handle_ccch_rpt_dst(mac_rrc_ccch_rpt *rpt)
 {
@@ -368,16 +402,21 @@ void rrcDstUserStatusHandler()
 	{
 		ue = &g_rrc_dst.ue[i];
 
-		if (ue->status != ERRC_UE_SETUP)
-			continue;
-
-		ue->setup_timer++;
-
-		if (ue->setup_timer >= 10)
+		if (ue->status == ERRC_UE_SETUP)
 		{
-			cause = 0;
-			dst_user_setup_complete(ueId, ue->rnti, flag, cause);
-			remove_dst_user(ue);
+			ue->setup_timer++;
+
+			if (ue->setup_timer >= 10)
+			{
+				cause = 0;
+				dst_user_setup_complete(ueId, ue->rnti, flag, cause);
+				remove_dst_user(ue);
+			}
+		}
+		else if (ue->status == ERRC_UE_SETUP_COMPLETE)
+		{
+			ue->status = ERRC_UE_CONNECT;
+			dst_user_start(ue);
 		}
 	}
 }

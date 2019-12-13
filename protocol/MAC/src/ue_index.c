@@ -12,16 +12,17 @@
 
 #include "ue_index.h"
 #include "mac_defs.h"
+#include "log.h"
 
 static uint16_t ringBuffer[MAX_UE] = {0,};
 static uint16_t free_start = 0;
 static uint16_t free_end = MAX_UE;
-static uint16_t ue_num;
+static uint16_t ue_num = 0;
 
 static uint16_t ringBuffer1[MAX_UE] = {0,};
 static uint16_t free_start1 = 0;
 static uint16_t free_end1 = MAX_UE;
-static uint16_t ue_num1;
+static uint16_t ue_num1 = 0;
 
 void init_index()
 {
@@ -48,6 +49,7 @@ uint16_t new_index(uint32_t mode)
 	{
 		if (ue_num >= MAX_UE)
 		{
+			LOG_ERROR(MAC, "ue_num:%u",ue_num);
 			return INVALID_U16;
 		}
 
@@ -60,8 +62,9 @@ uint16_t new_index(uint32_t mode)
 		}
 
 		ue_num++;
-		if (abs(free_start-free_end) != ue_num)
+		if (abs(free_start-free_end) != (MAX_UE - ue_num))
 		{
+			LOG_ERROR(MAC, "ue_num:%u,free_start:%u,free_end:%u",ue_num,free_start,free_end);
 			return INVALID_U16;
 		}
 	}
@@ -83,7 +86,7 @@ uint16_t new_index(uint32_t mode)
 
 		ue_num1++;
 
-		if (abs(free_start1-free_end1) != ue_num1)
+		if (abs(free_start1-free_end1) != (MAX_UE - ue_num1))
 		{
 			return INVALID_U16;
 		}

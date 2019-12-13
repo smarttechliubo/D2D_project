@@ -177,7 +177,8 @@ void phyTxMsgHandler(msgDef* msg)
 		{				
 			PHY_PuschSendReq* req = (PHY_PuschSendReq*)message_ptr(msg);
 
-			LOG_INFO(PHY, "MAC_PHY_PUSCH_SEND received. frame:%u, subframe:%u", req->frame, req->subframe);
+			LOG_INFO(PHY, "MAC_PHY_PUSCH_SEND received. frame:%u, subframe:%u, num:%u, rnti:%u", 
+				req->frame, req->subframe, req->num, req->pusch[0].rnti);
 
 			g_phyTx.flag_pusch = true;
 			memcpy(&g_phyTx.pusch, req, sizeof(PHY_PuschSendReq));
@@ -228,7 +229,7 @@ void handle_phy_tx(const      frame_t frame, const sub_frame_t subframe)
 
 		if (msg != NULL)
 		{
-			memcpy(MSG_HEAD_TO_COMM(msg), &g_phyTx.pbch, msg_size);
+			memcpy(message_ptr(msg), &g_phyTx.pbch, msg_size);
 
 			if (message_send(TASK_D2D_PHY_RX, msg, sizeof(msgDef)))
 			{
@@ -263,7 +264,7 @@ void handle_phy_tx(const      frame_t frame, const sub_frame_t subframe)
 
 		if (msg != NULL)
 		{
-			memcpy(MSG_HEAD_TO_COMM(msg), &g_phyTx.pdcch, msg_size);
+			memcpy(message_ptr(msg), &g_phyTx.pdcch, msg_size);
 
 			if (message_send(TASK_D2D_PHY_RX, msg, sizeof(msgDef)))
 			{
@@ -298,12 +299,13 @@ void handle_phy_tx(const      frame_t frame, const sub_frame_t subframe)
 
 		if (msg != NULL)
 		{
-			memcpy(MSG_HEAD_TO_COMM(msg), &g_phyTx.pusch, msg_size);
+			memcpy(message_ptr(msg), &g_phyTx.pusch, msg_size);
 
 			if (message_send(TASK_D2D_PHY_RX, msg, sizeof(msgDef)))
 			{
-				LOG_INFO(PHY, "LGC: MAC_PHY_PUSCH_SEND send, pdcch frame:%u, subframe:%u, current frame:%u, subframe:%u",
-					g_phyTx.pusch.frame,g_phyTx.pusch.subframe,g_phyTx.frame,g_phyTx.subframe);
+				LOG_INFO(PHY, "LGC: MAC_PHY_PUSCH_SEND send, pdcch frame:%u, subframe:%u, current frame:%u, subframe:%u, num:%u, rnti:%u",
+					g_phyTx.pusch.frame,g_phyTx.pusch.subframe,g_phyTx.frame,g_phyTx.subframe, 
+					g_phyTx.pusch.num, g_phyTx.pusch.pusch[0].rnti);
 			}
 		}
 

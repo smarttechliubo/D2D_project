@@ -16,7 +16,9 @@
 void mac_user_setup(const rrc_mac_connnection_setup *req);
 void mac_user_release(const rrc_mac_release_req *req);
 uint16_t find_ue(const rnti_t rnti);
-bool update_crc_result(const sub_frame_t subframe, const rnti_t rnti, const uint16_t crc);
+void add_temp_ue(const sub_frame_t subframe, const rnti_t rnti, const uint16_t crc);
+bool update_temp_ue_crc_result(const sub_frame_t subframe, const rnti_t rnti, const uint16_t crc);
+bool update_crc_result(const sub_frame_t subframe, const uint16_t ueIndex, const uint16_t crc);
 bool update_ue_cqi(const rnti_t rnti, const uint16_t cqi);
 void update_harq_info(const sub_frame_t subframe, const rnti_t rnti, const uint16_t ack);
 void update_ue_status(const rnti_t rnti, const uint16_t status);

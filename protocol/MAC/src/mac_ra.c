@@ -1,7 +1,9 @@
 /**********************************************************
 * @file ra.c
 * 
-* @brief  define mac ue ra procedure
+* @brief  define mac ue ra procedure, for now it is used for 
+*         destination UE attach to source, and will be removed
+*         when msg2 received.
 * @author   guicheng.liu
 * @date     2019/08/29
 * COPYRIGHT NOTICE: (c) 2019  smartlogictech. 
@@ -18,16 +20,16 @@
 #include "mac_vars.h"
 #include "mac_osp_interface.h"
 
-ra_t g_ra;
+ra_t g_dst_ra;
 uint16_t g_raId = 0;
 
 void init_ra(const uint16_t cellId)
 {
-	g_ra.cellId = cellId;
-	g_ra.max_ra_tx = 4;
-	g_ra.ra_num = 0;
-	g_ra.ra_list = NULL;
-	g_ra.tail = NULL;
+	g_dst_ra.cellId = cellId;
+	g_dst_ra.max_ra_tx = 4;
+	g_dst_ra.ra_num = 0;
+	g_dst_ra.ra_list = NULL;
+	//g_dst_ra.tail = NULL;
 
 	init_index();
 }
@@ -74,27 +76,84 @@ ra_list* new_ra(const uint16_t cellId)
 
 void ra_push_back(ra_list* ra)
 {
-	if (g_ra.ra_list == NULL)
-	{
-		g_ra.ra_list = ra;
-		g_ra.ra_list->next = NULL;
-		g_ra.tail = g_ra.ra_list;
-	}
-	else
-	{
-		g_ra.tail->next = ra;
-		g_ra.tail = ra;
-	}
-}
-
-void remove_ra(const uint16_t    raId)
-{
-	ra_list * node = NULL;
-	ra_list * pre = NULL;
-	ra_list * cur = g_ra.ra_list;
+	ra_list * cur = g_dst_ra.ra_list;
 
 	if (cur == NULL)
 	{
+		g_dst_ra.ra_list = ra;
+		g_dst_ra.ra_list->next = NULL;
+	}
+	else
+	{
+		while(cur->next != NULL)
+		{
+			cur = cur->next;
+		}
+
+		cur->next = ra;
+		ra->next = NULL;
+	}
+/*
+	if (g_dst_ra.ra_list == NULL)
+	{
+		g_dst_ra.ra_list = ra;
+		g_dst_ra.ra_list->next = NULL;
+		g_dst_ra.tail = g_dst_ra.ra_list;
+	}
+	else
+	{
+		g_dst_ra.tail->next = ra;
+		g_dst_ra.tail = ra;
+	}
+*/
+}
+
+void remove_ra(const rnti_t rnti)
+{
+	ra_list* pre = NULL;
+	ra_list* cur = g_dst_ra.ra_list;
+
+	if (cur == NULL)
+	{
+		LOG_ERROR(MAC, "ra ue does not exist rnti:%u", rnti);
+		return;
+	}
+	else
+	{
+		while(cur)
+		{
+			if (cur->ra_rnti == rnti)
+			{
+				if (pre != NULL)
+				{
+					pre->next = cur->next;
+					mem_free((char*)cur);
+				}
+				else//head
+				{
+					mem_free((char*)cur);
+					g_dst_ra.ra_list = NULL;
+				}
+
+				LOG_INFO(MAC, "remove_ra  ra_rnti:%u", rnti);
+				cur = NULL;
+
+				break;
+			}
+			pre = cur;
+			cur = cur->next;
+		}
+	}
+}
+/*
+void remove_ra(const uint16_t     raId)
+{
+	ra_list* pre = NULL;
+	ra_list* cur = g_dst_ra.ra_list;
+
+	if (cur == NULL)
+	{
+		LOG_ERROR(MAC, "ra ue does not exist raId:%u", raId);
 		return;
 	}
 	else
@@ -103,16 +162,20 @@ void remove_ra(const uint16_t    raId)
 		{
 			if (cur->raId == raId)
 			{
-				node = cur;
-
-				if (cur->next == NULL)
-					g_ra.tail = pre;
 				if (pre != NULL)
+				{
 					pre->next = cur->next;
-				else
-					cur = cur->next;
-				
-				mem_free((char*)node);
+					mem_free((char*)cur);
+				}
+				else//head
+				{
+					mem_free((char*)cur);
+					g_dst_ra.ra_list = NULL;
+				}
+
+				LOG_INFO(MAC, "remove_ra raId:%u, ra_rnti:%u", raId);
+				cur = NULL;
+
 				break;
 			}
 			pre = cur;
@@ -126,7 +189,7 @@ void remove_ra(const uint16_t    raId)
 			release_index(ra->ueIndex);
 		node = ra;
 		ra = ra->next;
-		g_ra.tail = ra->next;
+		g_dst_ra.tail = ra->next;
 		free(node);
 	}
 	else 
@@ -146,7 +209,7 @@ void remove_ra(const uint16_t    raId)
 				free(ra->next);
 				ra->next = node;
 				if (node == NULL)
-					g_ra.tail = ra;
+					g_dst_ra.tail = ra;
 				break;
 			}
 			ra = ra->next;
@@ -154,15 +217,15 @@ void remove_ra(const uint16_t    raId)
 	}
 #endif
 }
-
-bool add_ra(const uint16_t cellId, mode_e mode)
+*/
+ra_list* add_ra(const uint16_t cellId, mode_e mode)
 {
 	ra_list* ra = NULL;
 	
-	if (g_ra.ra_num >= MAX_RA_NUM)
+	if (g_dst_ra.ra_num >= MAX_RA_NUM)
 	{
-		LOG_ERROR(MAC, "Too much ra ue! add new fail ra_num:%u, ra:%u", g_ra.ra_num, ra != NULL);
-		return false;
+		LOG_ERROR(MAC, "Too much ra ue! add new fail ra_num:%u, ra:%u", g_dst_ra.ra_num, ra != NULL);
+		return NULL;
 	}
 	
 	ra = new_ra(cellId);
@@ -170,25 +233,26 @@ bool add_ra(const uint16_t cellId, mode_e mode)
 	if (ra != NULL)
 	{
 		ra_push_back(ra);
-		g_ra.ra_num++;
+		g_dst_ra.ra_num++;
 	}
 	else
 	{
-		LOG_ERROR(MAC, "add new ra fail! ra_num:%u, ra:%u", g_ra.ra_num, ra != NULL);
-		return false;
+		LOG_ERROR(MAC, "add new ra fail! ra_num:%u, ra:%u", g_dst_ra.ra_num, ra != NULL);
+		return NULL;
 	}
 
 	ra->state = (mode == EMAC_SRC) ? RA_MSG1_RECEIVED : RA_ADDED;
 	ra->ra_timer = 0;
+	ra->rbs_req = 0;
 
 	LOG_INFO(MAC, "add new ra ue, raId:%u, ra_rnti:%u",ra->raId, ra->ra_rnti);
 
-	return true;
+	return ra;
 }
 
 ra_list* find_ra(const rnti_t rnti)
 {
-	ra_list * ra = g_ra.ra_list;
+	ra_list * ra = g_dst_ra.ra_list;
 
 	while(ra != NULL)
 	{
@@ -198,6 +262,13 @@ ra_list* find_ra(const rnti_t rnti)
 		ra = ra->next;
 	}
 	return ra;
+}
+
+bool find_ra_ue(const rnti_t rnti)
+{
+	ra_list * ra = find_ra(rnti);
+
+	return ra != NULL;
 }
 
 bool update_ra_state(const rnti_t rnti)
@@ -252,15 +323,15 @@ void update_ra_buffer(rlc_buffer_rpt buffer)
 	rnti_t rnti = buffer.rnti;
 	uint8_t logic_chan_num = buffer.logic_chan_num;
 
-	if (buffer.rnti == RA_RNTI)// dest
+	if (rnti == RA_RNTI)// dest
 	{
-		if (!add_ra(g_sch.cellId, EMAC_DEST))
+		if ((ra = add_ra(g_sch_mac->cellId, EMAC_DEST)) == NULL)
 		{
 			LOG_ERROR(MAC, "add new ra ue fail! cellId:%u", g_sch.cellId);
 		}	
 	}
 
-	ra = find_ra(rnti);
+	//ra = find_ra(rnti);
 
 	if (ra != NULL && (ra->state == RA_ADDED ||  ra->state == RA_MSG1_RECEIVED ||  ra->state == RA_MSG2_RECEIVED))
 	{	
@@ -268,11 +339,52 @@ void update_ra_buffer(rlc_buffer_rpt buffer)
 		{
 			ra->dataSize += buffer.buffer_byte_size[i] + buffer.rlc_header_byte_size[i];
 		}
+
+		ra->lc_id = buffer.logicchannel_id[0];
+
+		if (logic_chan_num > 1)
+		{
+				LOG_WARN(MAC, "TOO many logical channel, logic_chan_num:%u, rnti:%u", logic_chan_num, rnti);
+		}
 	}
 	else
 	{
-		LOG_ERROR(MAC, "ra does not exist!");
+		LOG_ERROR(MAC, "ra does not exist!, rnti:%u", rnti);
 	}
+}
+
+uint16_t mac_ra_data_request(rlc_data_req         rlc_data_request[D2D_MAX_USER_NUM], uint32_t num)
+{
+	ra_list *ra = g_dst_ra.ra_list;
+
+	if (num > D2D_MAX_USER_NUM)
+	{
+		LOG_ERROR(MAC, "mac_ra_data_request Unexpect uenum:%u", num);
+		return 0;
+	}
+
+	while (ra != NULL)
+	{
+		if (ra->state > RA_IDLE)
+		{
+			if (ra->dataSize > 0)
+			{
+				rlc_data_request[num].rnti = ra->ra_rnti;
+				rlc_data_request[num].logic_chan_num = 1;
+
+				rlc_data_request[num].logicchannel_id[0] = ra->lc_id;
+				rlc_data_request[num].mac_pdu_byte_size[0] = ra->dataSize + (ra->dataSize >= 128 ? 3 : 2);
+				rlc_data_request[num].tb_size = ra->tbs_req;
+				num++;
+			}
+
+			ra->dataSize = 0;
+		}
+
+		ra = ra->next;
+	}
+
+	return num;
 }
 
 void ra_msg(const frame_t frame, const sub_frame_t subframe, ra_list *ra)
@@ -291,6 +403,10 @@ void ra_msg(const frame_t frame, const sub_frame_t subframe, ra_list *ra)
 	uint32_t first_rb = get_first_rb(bandwith, mac);
 	uint8_t harqId = get_harqId(subframe);
 
+	uint32_t header_size = msg_len >= 128 ? 3 : 2;
+
+	msg_len = msg_len + header_size;
+
 	if (first_rb > MAX_RBS)
 	{
 		LOG_ERROR(MAC, "No availabe resource for msg1!");
@@ -307,6 +423,7 @@ void ra_msg(const frame_t frame, const sub_frame_t subframe, ra_list *ra)
 			tbs = get_tbs(mcs, rbs_req);
 			break;
 		}
+
 		tbs = get_tbs(mcs, rbs_req);
 	}
 
@@ -321,7 +438,7 @@ void ra_msg(const frame_t frame, const sub_frame_t subframe, ra_list *ra)
 	tx_info->sch[sch_num].rv = 0;
 	tx_info->sch[sch_num].harqId = harqId;
 	tx_info->sch[sch_num].ack = INVALID_U8;
-	tx_info->sch[sch_num].pdu_len = msg_len;
+	tx_info->sch[sch_num].pdu_len = tbs;
 	tx_info->sch[sch_num].data = NULL;
 	tx_info->sch_num++;
 
@@ -330,9 +447,10 @@ void ra_msg(const frame_t frame, const sub_frame_t subframe, ra_list *ra)
 		mac->rb_available[i] = 0;
 	}
 
-	ra->dataSize = 0;
+	ra->rbs_req = rbs_req;
+	ra->tbs_req = tbs;
 
-	LOG_INFO(MAC, "RA msg resource alloc, raId:%u, state:%u",ra->raId, ra->state);
+	LOG_INFO(MAC, "RA msg resource alloc, raId:%u, ra_rnti:%u, state:%u",ra->raId, ra->ra_rnti, ra->state);
 }
 
 bool check_ra_timer(ra_list *ra)
@@ -340,7 +458,7 @@ bool check_ra_timer(ra_list *ra)
 	if (ra->ra_timer >= MAX_RA_TIMER)
 	{
 		LOG_ERROR(MAC, "Ra timer expired! RA fail, raId:&=%u, state:%u", ra->raId, ra->state);
-		remove_ra(ra->raId);
+		remove_ra(ra->ra_rnti);
 		return false;
 	}
 
@@ -354,7 +472,7 @@ void schedule_ra(const frame_t frame, const sub_frame_t subframe)
 	if (g_sch_mac->mode != EMAC_DEST)
 		return;
 
-	ra_list *ra = g_ra.ra_list;
+	ra_list *ra = g_dst_ra.ra_list;
 
 	while (ra != NULL)
 	{
@@ -362,14 +480,14 @@ void schedule_ra(const frame_t frame, const sub_frame_t subframe)
 		{
 			if (!check_ra_timer(ra))
 			{
-			
+				//continue;
 			}
-
-			if (ra->dataSize > 0)
+			else if (ra->dataSize > 0)
 			{
 				ra_msg(frame, subframe, ra);
 			}
 		}
+
 		ra = ra->next;
 	}
 }

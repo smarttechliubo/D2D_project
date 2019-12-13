@@ -12,7 +12,6 @@
 
 #include "messageDefine.h"
 
-void msg_handler(msgDef* msg);
-
+void handle_phy_msg(msgDef* msg);
 
 #endif /* _SMARTLOGICTECH_PROTOCOL_MAC_INC_MAC_RX_H_ */

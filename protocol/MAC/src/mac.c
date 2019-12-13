@@ -47,6 +47,7 @@ mac_info_s* init_mac_info()
 	mac->rb_available[i++] = 0;
 
 	mac->alloc_pattern = EPATTERN_GREEDY;
+	mac->min_rbs_per_ue = 1;
 
 	for (; i < MAX_RBS; i++)
 	{
@@ -127,6 +128,35 @@ void mac_pre_handler(msgDef *msg)
 	}
 
 }
+
+void msg_handler(msgDef* msg)
+{
+	//msgDef* msg = NULL;
+	//uint32_t msg_len = 0;
+	task_id taskId = 0;
+
+	taskId = get_SrcId(msg);
+
+	switch (taskId)
+	{
+		case TASK_D2D_RLC:
+		{
+			handle_buffer_status_ind(msg);
+			break;
+		}
+		case TASK_D2D_PHY_RX:
+		{
+			handle_phy_msg(msg);
+			break;
+		}
+		default:
+		{
+			LOG_ERROR(MAC, "msg_handler, unknown task msg msg_id:%u", taskId);
+			break;
+		}
+	}
+}
+
 /*
 uint32_t system_run_time = 0;
 

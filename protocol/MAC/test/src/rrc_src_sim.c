@@ -189,6 +189,39 @@ void src_user_setup_cfm(const mac_rrc_connection_cfm *cfm)
 	src_user_setup(ueId, ue->rnti, flag, cause);
 }
 
+void src_user_start(rrc_ue_info* ue)
+{
+	msgDef* msg = NULL;
+	rrc_rlc_data_ind *ind;
+	msgSize msg_size = sizeof(rrc_rlc_data_ind);
+	uint16_t data_size = sizeof(ccch_info);
+	ccch_info* ccch = (ccch_info *)mem_alloc(data_size);
+
+	msg = new_message(RRC_RLC_DATA_IND, TASK_D2D_RRC, TASK_D2D_RLC, msg_size);
+
+	if (msg != NULL)
+	{
+		ind = (rrc_rlc_data_ind*)message_ptr(msg);
+		ind->rb_type = RB_TYPE_SRB0;
+		ind->data_size = data_size;
+		ind->data_addr_ptr = (uint32_t*)ccch;
+		ccch->flag = 3;
+		ccch->ueId = ue->ueId;
+		ccch->rnti = ue->rnti;
+
+		if (message_send(TASK_D2D_RLC, msg, sizeof(msgDef)))
+		{
+			LOG_INFO(RRC, "LGC: rrc_rlc_data_ind send");
+		}
+
+		ue->status = ERRC_UE_CONNECT;
+	}
+	else
+	{
+		LOG_ERROR(RRC, "[TEST]: dst_user_start new rrc message fail!");
+	}
+}
+
 void src_user_setup_complete(const uint16_t ueId, const rnti_t           rnti,const uint16_t cause)
 {
 	rrc_ue_info* ue  = find_src_user(ueId);
@@ -203,6 +236,8 @@ void src_user_setup_complete(const uint16_t ueId, const rnti_t           rnti,co
 	{
 		ue->setup_timer = 0;
 		ue->status = ERRC_UE_SETUP_COMPLETE;
+
+		src_user_start(ue);
 	}
 	else
 	{
@@ -382,6 +417,9 @@ void rrcSrsMsgHandler(msgDef* msg, const msgId msg_id)
 		{
 			mac_rrc_ccch_rpt *rpt = (mac_rrc_ccch_rpt *)message_ptr(msg);
 			ccch_info* ccch = (ccch_info*)rpt->data_ptr;
+
+			LOG_INFO(RRC, "[TEST] MAC_RRC_CCCH_RPT, flag:%u, ueId:%u, rnti:%u", 
+				ccch->flag, ccch->ueId, ccch->rnti);
 
 			if (ccch->flag == 0 || ccch->flag == 2)
 			{

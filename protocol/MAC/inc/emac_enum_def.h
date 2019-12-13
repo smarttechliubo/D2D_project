@@ -16,7 +16,7 @@ typedef enum
 	ECRC_ACK,
 	ECRC_NACK,
 	ECRC_DTX
-}crc_result_e;
+}crc_e;
 
 typedef enum
 {

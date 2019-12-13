@@ -36,6 +36,69 @@ void set_ue_status(const uint16_t ueIndex, const uint16_t status)
 	g_context.mac->ue[ueIndex].out_of_sync = status;
 }
 */
+
+void remove_temp_ue(const rnti_t rnti)
+{
+	ueInfo* ue;
+
+	for(uint32_t i = 0; i < MAX_UE; i++)
+	{
+		ue = &g_sch_mac->ue[i];
+
+		if(ue->active == true &&
+			ue->rnti == rnti &&
+			ue->temp == true)
+		{
+			ue->active = false;
+			ue->temp = false;
+			break;
+		}
+	}
+}
+
+void add_temp_ue(const sub_frame_t subframe, const rnti_t rnti, const uint16_t crc)
+{
+// temp ue is uesd for recording retx of ra ue at source end
+	mac_info_s *mac = g_sch_mac;
+	ueInfo *ue = NULL;
+	uint16_t ueIndex = INVALID_U16;
+	crc_e c = ECRC_NULL;
+	uint8_t harqId = get_harqId(subframe);
+
+	c = (crc == 0) ? ECRC_NACK : ECRC_ACK;
+
+	ueIndex = new_index(mac->mode);
+
+	if(mac->count_ue >= MAX_UE || ueIndex >= MAX_UE)
+	{
+		LOG_ERROR(MAC, "mac user setup fail!");
+	}
+	else
+	{
+		//ue = new_ue(cellId, ueIndex);
+		ue = &mac->ue[ueIndex];
+
+		if (ue->active == false)
+		{
+			ue->active = true;
+			ue->temp = true;
+			ue->rnti = rnti;
+			ue->ueIndex = ueIndex;
+			ue->sch_info.crc[harqId] = c;
+
+			mac->count_ue++;
+
+			LOG_INFO(MAC, "add_temp_ue, ue rnti:%u", ue->rnti);
+		}
+		else
+		{
+			LOG_ERROR(MAC, "mac_user_setup ue already exist, ueIndex:%u",ueIndex);
+			release_index(ueIndex, mac->mode);
+		}
+	}
+
+}
+
 rnti_t new_rnti(const uint16_t cellId, const uint16_t ueIndex)
 {
 	return (cellId + 1) * 1000 + ueIndex;
@@ -44,6 +107,7 @@ rnti_t new_rnti(const uint16_t cellId, const uint16_t ueIndex)
 ueInfo* createPtr()
 {
 	ueInfo* node = (ueInfo*)mem_alloc(sizeof(ueInfo));
+
 	if (node == NULL)
 	{
 		LOG_ERROR(MAC, "memory alloc for new ue fail!");
@@ -102,7 +166,7 @@ uint16_t find_ue(const rnti_t rnti)
 
 	if (ueIndex == INVALID_U16)
 	{
-		LOG_ERROR(MAC, "ue rnti:%u does not exist!", rnti);
+		LOG_WARN(MAC, "ue rnti:%u does not exist!", rnti);
 	}
 
 	return ueIndex;
@@ -174,7 +238,7 @@ void mac_user_setup(const rrc_mac_connnection_setup *req)
 
 	if(mac->count_ue >= MAX_UE || ueIndex >= MAX_UE)
 	{
-		LOG_ERROR(MAC, "mac user setup fail!");
+		LOG_ERROR(MAC, "mac user setup fail! ueIndex:%u",ueIndex );
 	}
 	else
 	{
@@ -184,25 +248,32 @@ void mac_user_setup(const rrc_mac_connnection_setup *req)
 		if (ue->active == false)
 		{
 			ue->active = true;
+			ue->temp   = false;
 			ue->ueId = req->ue_index;
 			ue->rnti = new_rnti(cellId, ueIndex);
 			ue->ueIndex = ueIndex;
 
 			ue->maxHARQ_Tx = req->maxHARQ_Tx;
 			ue->max_out_sync = req->max_out_sync;
-			ue->lc_num = req->logical_channel_num;
+			ue->lc_num = 1;// CCCH is default channel
+
+			ue->lc_config[0].lc_id = 0;
+			ue->lc_config[0].priority = 16;
 
 			for(uint32_t i = 0; i < req->logical_channel_num; i++)
 			{
-				ue->lc_config[i].lc_id = req->logical_channel_config[i].logical_channel_id;
-				ue->lc_config[i].priority = req->logical_channel_config[i].priority;
+				ue->lc_config[ue->lc_num+i].lc_id = req->logical_channel_config[i].logical_channel_id;
+				ue->lc_config[ue->lc_num+i].priority = req->logical_channel_config[i].priority;
 			}
+
+			ue->lc_num += req->logical_channel_num;
 
 			rnti = ue->rnti;
 			result = true;
 			mac->count_ue++;
 
-			//ue_push_back(ue);
+			LOG_INFO(MAC, "mac user setup, ue rnti:%u, crc:%u,%u",
+				ue->rnti, ue->sch_info.crc[0], ue->sch_info.crc[1]);
 		}
 		else
 		{
@@ -316,16 +387,36 @@ void get_csi_paras(const uint16_t ueIndex, uint16_t* cqi_periodic)
 	//ueInfo* ue = &g_context.mac->ue[ueIndex];
 }
 
-bool update_crc_result(const sub_frame_t subframe, const rnti_t rnti, const uint16_t crc)
+bool update_temp_ue_crc_result(const sub_frame_t subframe, const rnti_t rnti, const uint16_t crc)
 {
-	uint16_t ueIndex = find_ue(rnti);
+	if (rnti != RA_RNTI)
+	{
+		LOG_ERROR(MAC, "temp_ue, rnti:%u", rnti);
+		return false;
+	}
+
+	if (crc == 0)
+	{
+		add_temp_ue(subframe, rnti, crc);
+	}
+	else if (crc == 1)
+	{
+		remove_temp_ue(rnti);
+	}
+
+	return true;
+}
+
+
+bool update_crc_result(const sub_frame_t subframe, const uint16_t ueIndex, const uint16_t crc)
+{
 	ueInfo* ue = NULL;
-	crc_result_e c = ECRC_NULL;
+	crc_e c = ECRC_NULL;
 	uint8_t harqId = get_harqId(subframe);
 
 	if (ueIndex == INVALID_U16)
 	{
-		LOG_ERROR(MAC, "update cqi fail, no such ue rnti:%u", rnti);
+		LOG_ERROR(MAC, "update crc fail, no such ue");
 		return false;
 	}
 

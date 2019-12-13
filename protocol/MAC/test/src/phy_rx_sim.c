@@ -103,6 +103,9 @@ uint32_t init_phy_rx_sim()
 		g_phyRx.pusch.pusch[i].data = (uint8_t *)mem_alloc(1024);
 	}
 
+	g_phyRx.flag_pbch = false;
+	g_phyRx.flag_pdcch = false;
+	g_phyRx.flag_pusch = false;
 	return 0;
 }
 
@@ -162,6 +165,8 @@ void phyRxMsgHandler(msgDef *msg)
 				g_phyRx.flag_pdcch = true;
 				memcpy(&g_phyRx.pdcch, req, sizeof(PHY_PdcchSendReq));
 		
+				LOG_INFO(PHY, "MAC_PHY_PDCCH_SEND received, frame:%u,subframe:%u, current frame:%u,subframe:%u",
+					req->frame, req->subframe, g_phyRx.frame,g_phyRx.subframe);
 				break;
 			}
 			case MAC_PHY_PUSCH_SEND:
@@ -170,16 +175,19 @@ void phyRxMsgHandler(msgDef *msg)
 
 				g_phyRx.flag_pusch = true;
 
-				g_phyRx.pusch.frame = req->frame;
-				g_phyRx.pusch.subframe = req->subframe;
-				g_phyRx.pusch.num = req->num;
+				//g_phyRx.pusch.frame = req->frame;
+				//g_phyRx.pusch.subframe = req->subframe;
+				//g_phyRx.pusch.num = req->num;
 
-				for (uint32_t i = 0; i < g_phyRx.pusch.num ; i++)
-				{
-					memcpy(g_phyRx.pusch.pusch[i].data, req->pusch[i].data, req->pusch[i].pdu_len);
-				}
+				memcpy(&g_phyRx.pusch, req, sizeof(PHY_PuschSendReq));
+
+				//for (uint32_t i = 0; i < g_phyRx.pusch.num ; i++)
+				//{
+				//	memcpy(g_phyRx.pusch.pusch[i].data, req->pusch[i].data, req->pusch[i].pdu_len);
+				//}
 				//memcpy(&g_phyRx.pusch, req, sizeof(PHY_PuschSendReq));
-		
+				LOG_INFO(PHY, "MAC_PHY_PUSCH_SEND received, frame:%u,subframe:%u, current frame:%u,subframe:%u",
+					req->frame, req->subframe, g_phyRx.frame,g_phyRx.subframe);
 				break;
 			}
 			default:
@@ -199,8 +207,8 @@ void handle_pusch(const      frame_t frame, const sub_frame_t subframe)
 	frame_t pusch_frame = g_phyRx.pusch.frame;
 	sub_frame_t pusch_subframe = g_phyRx.pusch.subframe;
 
-	pusch_frame = (pusch_frame + (pusch_frame + 1) / MAX_SUBSFN) % MAX_SFN;
-	pusch_frame = (pusch_frame + 1) % MAX_SUBSFN;
+	pusch_frame = (pusch_frame + (pusch_subframe + 1) / MAX_SUBSFN) % MAX_SFN;
+	pusch_subframe = (pusch_subframe + 1) % MAX_SUBSFN;
 
 	msgDef* msg = NULL;
 	msgSize msg_size = 0;
@@ -228,10 +236,16 @@ void handle_pusch(const      frame_t frame, const sub_frame_t subframe)
 	if (g_phyRx.flag_pusch && g_phyRx.flag_pdcch &&
 		(pusch_frame == frame && pusch_subframe == subframe))
 	{
+		LOG_INFO(PHY, "handle_pusch, frame:%u,subframe:%u, current frame:%u,subframe:%u, dci:%u, sch:%u",
+			pusch_frame, pusch_subframe, g_phyRx.frame,g_phyRx.subframe, pdcch.num_dci, pusch.num);
+
 		for (uint32_t i = 0; i < pdcch.num_dci; i++)
 		{
 			//dci = (dci_s)pdcch.dci[i].data[0];
-			data_ind = (pdcch.dci[i].data[i] & 0X03) >> 3;
+			data_ind = (pdcch.dci[i].data[2] & 0X18) >> 3;
+
+			LOG_INFO(PHY, "handle_pusch, rnti:%u,data_ind:%u,dci:%x,%x,%x", 
+				pusch.pusch[i].rnti,data_ind,pdcch.dci[i].data[0],pdcch.dci[i].data[1],pdcch.dci[i].data[2]);
 
 			if (data_ind == 1 || data_ind == 3)//ACK/NACK
 			{
@@ -258,7 +272,8 @@ void handle_pusch(const      frame_t frame, const sub_frame_t subframe)
 				cqi.num++;
 			}
 		}
-
+		LOG_INFO(PHY, "handle_pusch, ackInd:%u,num_ue:%u,cqi.num:%u", 
+			ackInd.num, puschInd.num_ue, cqi.num);
 		if (ackInd.num > 0)
 		{
 			msg_size = sizeof(PHY_ACKInd);
@@ -310,19 +325,20 @@ void handle_pusch(const      frame_t frame, const sub_frame_t subframe)
 			}
 		}
 
-		g_phyRx.flag_pbch = false;
+		if (pdcch.num_dci != pusch.num)
+		{
+			LOG_ERROR(PHY, "phy msg missing, num_dci:%u, pusch.num:%u", pdcch.num_dci, pusch.num);
+		}
+
+		if ((g_phyRx.flag_pusch && !g_phyRx.flag_pdcch) || (!g_phyRx.flag_pusch && g_phyRx.flag_pdcch))
+		{
+			LOG_ERROR(PHY, "phy msg missing, flag_pusch:%u, flag_pdcch:%u", g_phyRx.flag_pusch, g_phyRx.flag_pdcch);
+		}
+
+		g_phyRx.flag_pusch = false;
 		g_phyRx.flag_pdcch = false;
 	}
 
-	if (pdcch.num_dci != pusch.num)
-	{
-		LOG_ERROR(PHY, "phy msg missing, num_dci:%u, pusch.num:%u", pdcch.num_dci, pusch.num);
-	}
-
-	if ((g_phyRx.flag_pusch && !g_phyRx.flag_pdcch) || (!g_phyRx.flag_pusch && g_phyRx.flag_pdcch))
-	{
-		LOG_ERROR(PHY, "phy msg missing, flag_pusch:%u, flag_pdcch:%u", g_phyRx.flag_pusch, g_phyRx.flag_pdcch);
-	}
 
 }
 

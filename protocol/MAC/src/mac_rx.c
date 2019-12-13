@@ -118,6 +118,11 @@ uint8_t *parse_mac_header(uint8_t *mac_header,
 	uint8_t *mac_header_ptr = mac_header;
 	uint16_t length, ce_len = 0;
 
+	LOG_INFO(MAC, "parse_mac_header, mac_header:%x,%x,%x,%x,%x,%x,%x,%x,%x,%x",
+		mac_header_ptr[0],mac_header_ptr[1],mac_header_ptr[2],
+		mac_header_ptr[3],mac_header_ptr[4],mac_header_ptr[5],
+		mac_header_ptr[6],mac_header_ptr[7],mac_header_ptr[8],mac_header_ptr[9]);
+
 	while (not_done)
 	{
 		if (((mac_header_fixed *) mac_header_ptr)->E == 0)
@@ -376,6 +381,7 @@ void handlePuschReceivedInd(PHY_PuschReceivedInd *req)
 	//uint16_t cellId = 0;//g_sch.cellId;//TODO:
 	frame_t frame = req->frame;
 	sub_frame_t subframe = req->subframe;
+	uint16_t ueIndex = 0;
 	rnti_t rnti = 0;
 	uint16_t crc = 0;
 	uint16_t num_ue = req->num_ue;
@@ -416,9 +422,40 @@ void handlePuschReceivedInd(PHY_PuschReceivedInd *req)
 		payload = result->dataptr;
 		tb_length = result->dataSize;
 
-		update_crc_result(subframe, rnti, crc);
+		if (rnti == RA_RNTI )
+		{
+			if(crc == 0)
+			{
+				LOG_WARN(MAC, "ue rnti:%u attach fail!", rnti);
+				//update_temp_ue_crc_result(subframe, rnti, crc);
 
-		//handlePuschSdu(frame, subframe, result, rpt);
+				continue; // no retx for msg1
+			}
+		}
+		else
+		{
+			if ((ueIndex = find_ue(rnti)) == INVALID_U16)
+			{
+				// rrc user setup(msg2) received at destination
+				if (crc == 1)
+				{
+					remove_ra(RA_RNTI);
+				}
+				else
+				{
+					add_temp_ue(subframe, rnti, crc);
+				}
+			}
+			else
+			{
+				update_crc_result(subframe, ueIndex, crc);
+			}
+		}
+
+		if (crc == 0)//crc = NACK
+		{
+			continue;
+		}
 	
 		payload = parse_mac_header(payload, &num_ce, &num_sdu, rx_ceIds, rx_lcIds, rx_lengths, tb_length);
 	
@@ -476,102 +513,6 @@ void handlePbchReceivedInd(const PHY_PBCHReceivedInd* ind)
 	mac_rrc_bcch_received(ind->frame, ind->subframe);
 }
 
-void update_buffer_status(rlc_buffer_rpt buffer)
-{
-	rnti_t rnti = buffer.rnti;
-	uint8_t logic_chan_num = buffer.logic_chan_num;
-	//uint8_t logicchannel_id;
-	//uint32_t buffer_byte_size;
-	ueInfo* ue;
-	txBuffer *ue_buffer;
-	uint16_t ueIndex = INVALID_U16;
-
-	if ((ueIndex = find_ue(rnti)) == INVALID_U16 || ueIndex >= MAX_UE)
-	{
-		LOG_ERROR(MAC, "ue rnti:%u does not exist!", rnti);
-		return;
-	}
-
-	ue = &g_sch_mac->ue[ueIndex];
-
-	if (ue->active == false ||
-		ue->out_of_sync)
-	{
-		LOG_WARN(MAC, "ue ueIndex:%u, rnti:%u is inactive?active:%u(1:active, 0:inactive)", ueIndex, rnti, ue->active);
-		return;
-	}
-
-	ue_buffer = &ue->buffer;
-	ue_buffer->chan_num = 0;
-	ue_buffer->buffer_total = 0;
-
-	ue_buffer->chan_num = logic_chan_num;
-
-	for (uint32_t i = 0; i < logic_chan_num; i++)
-	{
-		ue_buffer->lc_rbs_alloc[i] = 0;
-		ue_buffer->chan_id[i] = buffer.logicchannel_id[i];
-		ue_buffer->buffer_size[i] = buffer.buffer_byte_size[i] + buffer.rlc_header_byte_size[i];
-		ue_buffer->buffer_total += buffer.buffer_byte_size[i];
-	}
-
-	//if(ue_buffer->buffer_total > 0)
-	//{
-	//	add_to_scheduling_list(ueIndex);
-	//}
-}
-
-void handle_buffer_status(const rlc_mac_buf_status_rpt *rpt)
-{
-	uint32_t ue_num = rpt->valid_ue_num; 
-	rlc_buffer_rpt buffer;
-	//uint16_t cellId = g_sch.cellId;
-	//uint8_t logic_chan_num = 0;
-
-	for (uint32_t i = 0; i < ue_num; i++)
-	{
-		buffer = rpt->rlc_buffer_rpt[i];
-		//logic_chan_num = buffer.logic_chan_num;
-
-		if (buffer.rnti == RA_RNTI && buffer.logicchannel_id[i] == CCCH_)// TODO: no data should be transmit before ue get connection setup.
-		{
-			update_ra_buffer(buffer);
-			break;
-		}
-
-		if (buffer.valid_flag)
-		{
-			update_buffer_status(buffer);
-		}
-	}
-}
-
-void handle_buffer_status_ind(msgDef* msg)
-{
-	//MAC_TEST
-	msgId msgid = get_msgId(msg);
-
-	//while (1)
-	{
-		switch (msgid)
-		{
-			case RLC_MAC_BUF_STATUS_RPT:
-			{
-				rlc_mac_buf_status_rpt *rpt = (rlc_mac_buf_status_rpt *)message_ptr(msg);
-
-				LOG_INFO(MAC, "RLC_MAC_BUF_STATUS_RPT");
-				handle_buffer_status(rpt);
-				break;
-			}
-			default:
-			{
-				LOG_ERROR(MAC, "handle_buffer_status_ind, Unknown RLC msg! msgId:%u", get_msgId(msg));
-				break;
-			}
-		}
-	}
-}
-
 void handle_phy_msg(msgDef* msg)
 {
 	msgId msgid = get_msgId(msg);
@@ -621,42 +562,5 @@ void handle_phy_msg(msgDef* msg)
 	}
 }
 
-void msg_handler(msgDef* msg)
-{
-	//msgDef* msg = NULL;
-	//uint32_t msg_len = 0;
-	task_id taskId = 0;
-
-	//while(1)
-	{
-	//	msg_len = message_receive(TASK_D2D_MAC_SCH, msg);
-
-		//if (msg_len == 0)
-		//{
-		//	return;
-	//	}
-
-		taskId = get_SrcId(msg);
-
-		switch (taskId)
-		{
-			case TASK_D2D_RLC:
-			{
-				handle_buffer_status_ind(msg);
-				break;
-			}
-			case TASK_D2D_PHY_RX:
-			{
-				handle_phy_msg(msg);
-				break;
-			}
-			default:
-			{
-				LOG_ERROR(MAC, "msg_handler, unknown task msg msg_id:%u", taskId);
-				break;
-			}
-		}
-	}
-}
 
 

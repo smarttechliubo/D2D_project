@@ -38,6 +38,9 @@ typedef struct node
 	uint16_t ra_timer;
 	ra_state state;
 	uint32_t dataSize;
+	uint32_t lc_id;
+	uint32_t rbs_req;
+	uint32_t tbs_req;
 	struct node *next;
 }ra_list;
 
@@ -48,13 +51,15 @@ typedef struct
 	uint16_t ra_num;
 	uint16_t padding;
 	ra_list  *ra_list;
-	ra_list  *tail;
+	//ra_list  *tail;
 }ra_t;
 
 void init_ra(const uint16_t cellId);
-bool add_ra(const uint16_t cellId, mode_e mode);
+ra_list* add_ra(const uint16_t cellId, mode_e mode);
+void remove_ra(const rnti_t rnti);
 void schedule_ra(const frame_t frame, const sub_frame_t subframe);
 bool update_ra_state(const rnti_t rnti);
 void update_ra_buffer(rlc_buffer_rpt buffer);
+uint16_t mac_ra_data_request(rlc_data_req         rlc_data_request[D2D_MAX_USER_NUM], uint32_t num);
 
 #endif /* _SMARTLOGICTECH_PROTOCOL_MAC_INC_RA_H_ */

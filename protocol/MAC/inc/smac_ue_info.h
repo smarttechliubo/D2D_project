@@ -21,7 +21,7 @@ typedef struct
 	bool reTx;
 	uint8_t harqId;
 	uint8_t reTx_num;
-	uint16_t padding;
+	uint16_t tbs;
 
     uint32_t rb_start;
 	uint32_t rb_num;
@@ -33,7 +33,7 @@ typedef struct
 
 typedef struct
 {
-	crc_result_e crc[MAX_HARQ_NUM];
+	crc_e    crc[MAX_HARQ_NUM];
 	uint16_t cqi;
 	uint16_t mcs;
 	uint16_t coefficient;
@@ -42,6 +42,7 @@ typedef struct
 	uint32_t rb_start;
 	uint32_t rb_num;
 
+	uint32_t pre_tbs;
 	uint32_t pre_rbs_alloc;
 }schedule_info;
 
@@ -58,14 +59,16 @@ typedef struct
 	uint16_t buffer_total;
 	uint8_t  chan_id[MAX_LOGICCHAN_NUM];
 	uint32_t buffer_size[MAX_LOGICCHAN_NUM];
-	uint32_t lc_num;
+
+	uint32_t lc_num;//sorted logical channel
 	uint16_t lc_priority_index[MAX_LOGICCHAN_NUM];
-	uint32_t lc_rbs_alloc[MAX_LOGICCHAN_NUM];
+	uint32_t lc_tbs_req[MAX_LOGICCHAN_NUM];
 }txBuffer;
 
 typedef struct
 {
 	bool      active;
+	bool      temp;
 	uint16_t  ueId;
 	uint16_t  ueIndex;
 	rnti_t    rnti;

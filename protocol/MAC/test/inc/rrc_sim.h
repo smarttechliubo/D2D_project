@@ -36,7 +36,7 @@ typedef enum
 
 typedef struct
 {
-	uint16_t flag; // 0:setup req, 1:setup, 2:setup complete, 
+	uint16_t flag; // 0:setup req, 1:setup, 2:setup complete, 3: src user done, 4: dst user done
 	uint16_t cause;//0:faiul, 1:success
 	uint16_t ueId;
 	rnti_t   rnti;
