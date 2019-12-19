@@ -69,6 +69,7 @@ void timer_int_task(MessageDef *recv_msg)
 				g_d2d_sfn = g_d2d_sfn % 1024; 
 			}
 			//if ((g_ut_timer_cnt % 4) < 2)//!模拟DDUU 
+			if ((g_udp_send_cnt[0] % 1) == 0)
 			{
 				mac_Rlc_Bufstat_Req(g_d2d_sfn,g_d2d_subsfn);
 			}

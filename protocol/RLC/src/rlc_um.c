@@ -706,10 +706,18 @@ mac subheader size:%d, UE TB's padding info:[tail_padding header:%d, padding byt
 		{		
 
 			data_pdu_size = nb_bytes_to_transmit - lc_pdu_component_ptr->mac_subheader_length;
-			lc_pdu_component_ptr->final_rlc_pdu_size = data_pdu_size; 
-			lc_pdu_component_ptr->tail_padding_byte = 0; 
-			lc_pdu_component_ptr->tail_padding_header_size = 0;
 
+			/*数据被截短传输，可能数据量从大于128变为小于128，则mac subheader 需要重新计算**/
+			//！不是最后一个逻辑信道才会出现此问题,mac subheader  从3变到2,数据长度还是之前的长度，然后加Padding
+			if (data_pdu_size < 128) 
+			{
+				lc_pdu_component_ptr->mac_subheader_length = 2;		
+
+			}
+			lc_pdu_component_ptr->final_rlc_pdu_size = data_pdu_size; 
+			lc_pdu_component_ptr->tail_padding_header_size = 0; 
+			lc_pdu_component_ptr->tail_padding_byte = 0;
+	
 			  //!如果是最后一个lc, 则根据总的tb size 确定padding size (存在tb_size > sum(lc's tb size)); 
 			//!如果是最后一个lc, 则根据总的tb size 确定padding size .
 			if (1 == lc_pdu_component_ptr->is_last_sub_header_flag)

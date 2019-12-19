@@ -489,10 +489,10 @@ cur process time = [%lld, %lld, %lld] \n",
 			{
 			  g_rlc_ut_tx_buffer_size[0][0] = 4203;
 			}
-			mac_data_req_to_rlc.tb_size = g_rlc_ut_tx_buffer_size[0][0];
+			mac_data_req_to_rlc.tb_size = g_rlc_ut_tx_buffer_size[0][0] ;
             mac_data_req_to_rlc.logicchannel_id[0] =3;  //!DRB = 3
 
-            mac_data_req_to_rlc.mac_pdu_byte_size[0] = g_rlc_ut_tx_buffer_size[0][0]; //!logic channel's size ,unit:byte
+            mac_data_req_to_rlc.mac_pdu_byte_size[0] = g_rlc_ut_tx_buffer_size[0][0] ; //!logic channel's size ,unit:byte
 
             
 

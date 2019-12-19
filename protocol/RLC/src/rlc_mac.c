@@ -316,7 +316,7 @@ ue remained size:%d after logic chan mapping \n",
 				mac_subheader_without_l = e << 5 | (logic_ch_id); 
 				memcpy((void *)ue_mac_subheader_ptr,(void *)&mac_subheader_without_l,1); 
 
-				LOG_DEBUG(RLC_TX, "1 byte mac subheader   content: 0x%.2x \n", mac_subheader_without_l);
+				LOG_ERROR(RLC_TX, "1 byte mac subheader   content: 0x%.2x \n", mac_subheader_without_l);
 
 				ue_mac_subheader_ptr += 1; 
 				mac_subheader_length += 1; 
@@ -329,7 +329,7 @@ ue remained size:%d after logic chan mapping \n",
 				mac_subheader_2byte[1] = (f << 7) | (lc_pdu_component[logic_index].final_rlc_pdu_size);
 				memcpy((void *)ue_mac_subheader_ptr,(void *)mac_subheader_2byte,2); 
 
-				LOG_DEBUG(RLC_TX, "2 byte mac subheader {0x%.2x%.2x} \n", mac_subheader_2byte[0],mac_subheader_2byte[1]);
+				LOG_ERROR(RLC_TX, "2 byte mac subheader {0x%.2x%.2x} \n", mac_subheader_2byte[0],mac_subheader_2byte[1]);
 				ue_mac_subheader_ptr += 2; 
 				mac_subheader_length += 2; 
 				break; 
@@ -342,7 +342,7 @@ ue remained size:%d after logic chan mapping \n",
 
 				memcpy((void *)ue_mac_subheader_ptr,(void *)mac_subheader_3byte,3); 
 			
-				LOG_DEBUG(RLC_TX, "3 byte mac subheader   content: %d,{0x%.2x%.2x%.2x} \n",lc_pdu_component[logic_index].final_rlc_pdu_size, mac_subheader_3byte[0],
+				LOG_ERROR(RLC_TX, "3 byte mac subheader   content: %d,{0x%.2x%.2x%.2x} \n",lc_pdu_component[logic_index].final_rlc_pdu_size, mac_subheader_3byte[0],
 									mac_subheader_3byte[1],mac_subheader_3byte[2]);
 				ue_mac_subheader_ptr += 3; 
 				mac_subheader_length += 3; 
@@ -377,7 +377,7 @@ ue remained size:%d after logic chan mapping \n",
 		ue_mac_subheader_ptr += 1; 
 		mac_subheader_length += 1; 
 		
-        LOG_DEBUG(RLC_TX, "1 byte Paddind  subheader(pad > 2): content: 0x%x \n", mac_subheader_without_l);
+        LOG_ERROR(RLC_TX, "1 byte Paddind  subheader(pad > 2): content: 0x%x \n", mac_subheader_without_l);
         
 		LOG_ERROR(RLC_TX, "frame-subsfn:[%d, %d]:UE TBS remained size:%d, pading sub header length:%d byte,padding size =%d \n",
 		         frameP,

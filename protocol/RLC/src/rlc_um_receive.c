@@ -322,9 +322,6 @@ int rlc_um_read_length_indicators(unsigned char**data_ppP,
 	//msg("[RLC_UM] e_liP->b1 = %02X\n", e_liP->b1);
 	//msg("[RLC_UM] e_liP->b2 = %02X\n", e_liP->b2);
 
-	LOG_DEBUG(RLC_RX,"1 E+LI HEADER = addr = 0x%x, data = 0x%x\n", &e_liP[0],e_liP[0]);
-	LOG_DEBUG(RLC_RX,"2 E+LI HEADER = addr = 0x%x, data = 0x%x\n", &e_liP[1],e_liP[1]);
-	LOG_DEBUG(RLC_RX,"3 E+LI HEADER = addr = 0x%x, data = 0x%x\n", &e_liP[2],e_liP[2]);
 
 	//!1bit的E,11bit的LI 
 	e1 = ((unsigned int)e_liP->b1 & 0x00000080) >> 7;
@@ -342,7 +339,7 @@ int rlc_um_read_length_indicators(unsigned char**data_ppP,
 	  *data_size_pP = *data_size_pP - li2 - 1; //!这里再减去1byte,这样当有2个E+LI时，减去的就是3个BYTE 
 	  *num_li_pP = *num_li_pP +1;
 
-      LOG_DEBUG(RLC_RX, "e2 = %d, li2 = %d, remained data size = %d\n", e1,li1,*data_size_pP);
+      LOG_DEBUG(RLC_RX, "e2 = %d, li2 = %d, remained data size = %d\n", e2,li2,*data_size_pP);
 	  if ((*data_size_pP < 0)) 
 	  {
 		  LOG_ERROR(RLC_RX, "Invalid data_size=%d! (pdu_size=%d loop=%d e1=%d e2=%d li2=%d e_liP=%02x.%02x.%02x.%02x.%02x.%02x.%02x.%02x.%02x)\n",
@@ -1186,7 +1183,7 @@ void   rlc_um_receive_process_dar (const protocol_ctxt_t* const ctxt_pP,
 					in_window);
 
 
-    AssertFatal(in_window != -2, RLC, "SN is lower than vr_uh - windowssize, the SDU maybe retransmited SDU,drop it\n"); 
+//    AssertFatal(in_window != -2, RLC, "SN is lower than vr_uh - windowssize, the SDU maybe retransmited SDU,drop it\n"); 
     
     // rlc_um_in_window() returns -2 if lower_bound  > sn
 	// rlc_um_in_window() returns -1 if higher_bound < sn

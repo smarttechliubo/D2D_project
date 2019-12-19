@@ -126,6 +126,8 @@ typedef struct
 
 typedef struct
 {
+	uint16_t mode;//value: 0..1, 0：Source，1：Destination
+	rnti_t rnti;// 0: source, 1:destination
 	uint16_t ue_index;// value: 0..16
 	uint16_t maxHARQ_Tx;// value: 0..8, default: 4
 	uint16_t max_out_sync;// value: 0..8, default: 4

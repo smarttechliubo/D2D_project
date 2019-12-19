@@ -25,7 +25,7 @@
  
 int  rrc_module_Initial()
 {
-	DebugOutSetLevel(ERR_DEBUG_LEVEL);
+	DebugOutSetLevel(DBG_DEBUG_LEVEL);
 	memset((void *)&g_rrc_init_para,0,sizeof(g_rrc_init_para));
 	rrc_SetStatus(RRC_STATUS_NULL);
 	
