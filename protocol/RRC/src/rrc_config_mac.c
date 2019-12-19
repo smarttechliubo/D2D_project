@@ -103,15 +103,19 @@ void rrc_Mac_BcchPara_Config(uint16_t mib_or_sib1,void *bcch_info)
  * @param: logicch_num :      [valid logic channel number ]
  * @param: *LogicChannelConfigPtr :[pointer to the logic channel info ]
  */
-void rrc_Mac_ConnectSetup_Config(uint16_t ue_index, uint16_t max_harq_tx,uint16_t max_out_sync,
-                                            uint16_t logicch_num, logical_channel_config_s *LogicChannelConfigPtr )
+void rrc_Mac_ConnectSetup_Config(uint16_t mode, rnti_t ue_rnti , 
+										  uint16_t ue_index, uint16_t max_harq_tx,
+										  uint16_t max_out_sync,uint16_t logicch_num, 
+										  logical_channel_config_s *LogicChannelConfigPtr )
 {
 
 
     MessageDef  *message; 
     uint16_t lch_index = 0; 
 	rrc_mac_connnection_setup  *mac_connect_req = calloc(1,sizeof(rrc_mac_connnection_setup)); 
-
+	
+    mac_connect_req->mode = mode; 
+    mac_connect_req->rnti = ue_rnti;
 	mac_connect_req->ue_index = ue_index; 
 	mac_connect_req->maxHARQ_Tx = max_harq_tx; 
 	

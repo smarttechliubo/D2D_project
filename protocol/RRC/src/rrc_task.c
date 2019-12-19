@@ -643,8 +643,10 @@ int  rrc_Receive_Signal_Msg(uint16_t mode_type, void *message, MessagesIds  msg_
                     logic_channel_config[0].logical_channel_id = 1; 
                     logic_channel_config[1].chan_type = LogicChannelConfig__channel_type_dtch; 
                     logic_channel_config[1].priority = 2;  
-                    //!config MAC  DTCH
-                    rrc_Mac_ConnectSetup_Config(ue_request_index,
+                    //!config MAC  DTCH for source , rnti value invalid .
+                    rrc_Mac_ConnectSetup_Config(D2D_MODE_TYPE_SOURCE,
+                    						     0xffff,
+                    							ue_request_index,
                                                  4,
                                                  4,
                                                  1,
@@ -686,8 +688,10 @@ int  rrc_Receive_Signal_Msg(uint16_t mode_type, void *message, MessagesIds  msg_
 
 
                 
-				 //! RRC CONFIG MAC 
-                rrc_Mac_ConnectSetup_Config(0,           //!fix to 0 at destination mode 
+				 //! RRC CONFIG MAC for destination ,config rnti for mac
+                rrc_Mac_ConnectSetup_Config(D2D_MODE_TYPE_DESTINATION,
+                							g_rrc_mac_report_rnti,
+                							0,           //!fix to 0 at destination mode 
                                             max_harq_tx,  
                                             max_out_sync,  
                                             logic_ch_num,  

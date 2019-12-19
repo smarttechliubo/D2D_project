@@ -30,7 +30,7 @@
 
 #define	SA	      (struct sockaddr *)
 
-char *local_ip = "192.168.57.139";
+char *local_ip = "192.168.57.141";
 char *rlc_sdu_uplayer_ip = "192.168.57.1";
 
 int   g_iprlc_send_sdu_fd = 0; 

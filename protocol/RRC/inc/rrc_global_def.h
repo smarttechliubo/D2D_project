@@ -31,8 +31,8 @@
 #define RRC_SOURCE 
 
 
-#define  D2D_MODE_TYPE_SOURCE     1
-#define  D2D_MODE_TYPE_DESTINATION  0
+#define  D2D_MODE_TYPE_SOURCE     0
+#define  D2D_MODE_TYPE_DESTINATION  1
 
 
 #define  RRC_MESSAGE_EN_DECODE_OK    0
