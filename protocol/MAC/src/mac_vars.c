@@ -84,7 +84,7 @@ uint32_t get_tbs(const uint8_t mcs, const uint8_t num_rb)
 	}
 	else
 	{
-	    LOG_ERROR(MAC, "incorrect parameters mcs:%u, rb:%u", mcs, num_rb);
+	    LOG_ERROR(MAC, "get_tbs, incorrect parameters mcs:%u, num_rb:%u", mcs, num_rb);
 	}
 
 	return tbs;

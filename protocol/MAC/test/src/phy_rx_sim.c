@@ -145,7 +145,7 @@ void phyRxMsgHandler(msgDef *msg)
 				g_phyRx.flag_pbch = true;
 				memcpy(&g_phyRx.pbch, req, sizeof(PHY_PBCHSendReq));
 
-				LOG_INFO(PHY, "MAC_PHY_PBCH_TX_REQ received, frame:%u,subframe:%u, current frame:%u,subframe:%u",
+				LOG_DEBUG(PHY, "MAC_PHY_PBCH_TX_REQ received, frame:%u,subframe:%u, current frame:%u,subframe:%u",
 					req->frame, req->subframe, g_phyRx.frame,g_phyRx.subframe);
 
 				//set_sysSfn(req->frame, req->subframe);
@@ -159,13 +159,13 @@ void phyRxMsgHandler(msgDef *msg)
 				break;
 			}
 			case MAC_PHY_PDCCH_SEND:
-			{				
+			{
 				PHY_PdcchSendReq* req = (PHY_PdcchSendReq*)MQ_MSG_CONTENT_PTR(msg);
 
 				g_phyRx.flag_pdcch = true;
 				memcpy(&g_phyRx.pdcch, req, sizeof(PHY_PdcchSendReq));
 		
-				LOG_INFO(PHY, "MAC_PHY_PDCCH_SEND received, frame:%u,subframe:%u, current frame:%u,subframe:%u",
+				LOG_DEBUG(PHY, "MAC_PHY_PDCCH_SEND received, frame:%u,subframe:%u, current frame:%u,subframe:%u",
 					req->frame, req->subframe, g_phyRx.frame,g_phyRx.subframe);
 				break;
 			}
@@ -186,7 +186,7 @@ void phyRxMsgHandler(msgDef *msg)
 				//	memcpy(g_phyRx.pusch.pusch[i].data, req->pusch[i].data, req->pusch[i].pdu_len);
 				//}
 				//memcpy(&g_phyRx.pusch, req, sizeof(PHY_PuschSendReq));
-				LOG_INFO(PHY, "MAC_PHY_PUSCH_SEND received, frame:%u,subframe:%u, current frame:%u,subframe:%u",
+				LOG_DEBUG(PHY, "MAC_PHY_PUSCH_SEND received, frame:%u,subframe:%u, current frame:%u,subframe:%u",
 					req->frame, req->subframe, g_phyRx.frame,g_phyRx.subframe);
 				break;
 			}
@@ -207,9 +207,6 @@ void handle_pusch(const      frame_t frame, const sub_frame_t subframe)
 	frame_t pusch_frame = g_phyRx.pusch.frame;
 	sub_frame_t pusch_subframe = g_phyRx.pusch.subframe;
 
-	pusch_frame = (pusch_frame + (pusch_subframe + 1) / MAX_SUBSFN) % MAX_SFN;
-	pusch_subframe = (pusch_subframe + 1) % MAX_SUBSFN;
-
 	msgDef* msg = NULL;
 	msgSize msg_size = 0;
 	PHY_PdcchSendReq pdcch = g_phyRx.pdcch;
@@ -219,19 +216,22 @@ void handle_pusch(const      frame_t frame, const sub_frame_t subframe)
 	uint8_t data_ind = 0;
 
 	PHY_ACKInd ackInd;
-	ackInd.frame = frame;
-	ackInd.subframe = subframe;
+	ackInd.frame = pusch_frame;
+	ackInd.subframe = pusch_subframe;
 	ackInd.num = 0;
 
 	PHY_PuschReceivedInd puschInd;
-	puschInd.frame = frame;
-	puschInd.subframe = subframe;
+	puschInd.frame = pusch_frame;
+	puschInd.subframe = pusch_subframe;
 	puschInd.num_ue = 0;
 
 	PHY_CQIInd cqi;
-	cqi.frame = frame;
-	cqi.subframe = subframe;
+	cqi.frame = pusch_frame;
+	cqi.subframe = pusch_subframe;
 	cqi.num = 0;
+
+	pusch_frame = (pusch_frame + (pusch_subframe + 1) / MAX_SUBSFN) % MAX_SFN;
+	pusch_subframe = (pusch_subframe + 1) % MAX_SUBSFN;
 
 	if (g_phyRx.flag_pusch && g_phyRx.flag_pdcch &&
 		(pusch_frame == frame && pusch_subframe == subframe))
@@ -244,13 +244,13 @@ void handle_pusch(const      frame_t frame, const sub_frame_t subframe)
 			//dci = (dci_s)pdcch.dci[i].data[0];
 			data_ind = (pdcch.dci[i].data[2] & 0X18) >> 3;
 
-			LOG_INFO(PHY, "handle_pusch, rnti:%u,data_ind:%u,dci:%x,%x,%x", 
+			LOG_DEBUG(PHY, "handle_pusch, rnti:%u,data_ind:%u,dci:%x,%x,%x", 
 				pusch.pusch[i].rnti,data_ind,pdcch.dci[i].data[0],pdcch.dci[i].data[1],pdcch.dci[i].data[2]);
 
 			if (data_ind == 1 || data_ind == 3)//ACK/NACK
 			{
 				ackInd.ack[ackInd.num].rnti = pdcch.dci[i].rnti;
-				ackInd.ack[ackInd.num].ack = 1;
+				ackInd.ack[ackInd.num].ack = pusch.pusch[i].ack;
 				ackInd.num++;
 			}
 
@@ -272,13 +272,13 @@ void handle_pusch(const      frame_t frame, const sub_frame_t subframe)
 				cqi.num++;
 			}
 		}
-		LOG_INFO(PHY, "handle_pusch, ackInd:%u,num_ue:%u,cqi.num:%u", 
+		LOG_DEBUG(PHY, "handle_pusch, ackInd:%u,num_ue:%u,cqi.num:%u", 
 			ackInd.num, puschInd.num_ue, cqi.num);
 		if (ackInd.num > 0)
 		{
 			msg_size = sizeof(PHY_ACKInd);
 
-			msg = new_message(PHY_MAC_PBCH_PDU_RPT, TASK_D2D_PHY_RX, TASK_D2D_MAC_SCH, msg_size);
+			msg = new_message(PHY_MAC_ACK_RPT, TASK_D2D_PHY_RX, TASK_D2D_MAC_SCH, msg_size);
 
 			if (msg != NULL)
 			{
@@ -286,7 +286,7 @@ void handle_pusch(const      frame_t frame, const sub_frame_t subframe)
 			
 				if (message_send(TASK_D2D_MAC_SCH, msg, sizeof(msgDef)))
 				{
-					LOG_INFO(PHY, "LGC: PHY_MAC_PBCH_PDU_RPT send");
+					LOG_DEBUG(PHY, "LGC: PHY_MAC_PBCH_PDU_RPT send");
 				}
 			}
 		}
@@ -303,7 +303,7 @@ void handle_pusch(const      frame_t frame, const sub_frame_t subframe)
 			
 				if (message_send(TASK_D2D_MAC_SCH, msg, sizeof(msgDef)))
 				{
-					LOG_INFO(PHY, "LGC: PHY_MAC_DECOD_DATA_RPT send");
+					LOG_DEBUG(PHY, "LGC: PHY_MAC_DECOD_DATA_RPT send");
 				}
 			}
 		}
@@ -320,7 +320,7 @@ void handle_pusch(const      frame_t frame, const sub_frame_t subframe)
 
 				if (message_send(TASK_D2D_MAC_SCH, msg, sizeof(msgDef)))
 				{
-					LOG_INFO(PHY, "LGC: PHY_MAC_CQI_IND send");
+					LOG_DEBUG(PHY, "LGC: PHY_MAC_CQI_IND send");
 				}
 			}
 		}
@@ -394,14 +394,16 @@ void phy_rx_sim_thread(msgDef *msg)
 	bool isTimer = is_timer(msg);
 
 	if (isTimer)
+	{
 		syncTimePhyRx();
+		LOG_INFO(PHY, "PHY RX frame:%u, subframe:%u, isTimer:%u", g_phyRx.frame, g_phyRx.subframe, isTimer);
+	}
 
 	frame = g_phyRx.frame;
 	subframe = g_phyRx.subframe;
 	
 	//frame = (frame + (subframe + 1) / MAX_SUBSFN) % MAX_SFN;
 	//subframe = (subframe + 1) % MAX_SUBSFN;
-	LOG_INFO(PHY, "phy_rx_sim_thread frame:%u, subframe:%u, isTimer:%u", frame, subframe, isTimer);
 
 	if (!isTimer)
 	{

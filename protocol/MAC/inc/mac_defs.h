@@ -27,7 +27,7 @@ typedef uint32_t message_size_t;
 
 #define MIB_PDU_SIZE 3
 #define SIB_PDU_SIZE 64 //TODO
-#define MAX_MCS 16
+#define MAX_MCS 30
 #define MAX_RBS 40
 #define MAX_UE  D2D_MAX_USER_NUM
 #define MAX_RA_NUM 2

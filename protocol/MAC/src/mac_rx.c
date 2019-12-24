@@ -96,10 +96,6 @@ void fill_rlc_data_ind(const uint16_t rx_length,
 
 void mac_rlc_data_ind(msgDef* msg)
 {
-	if (message_send(TASK_D2D_RLC, msg, sizeof(msgDef)))
-	{
-		LOG_INFO(MAC, "LGC: mac_rlc_data_ind send");
-	}
 }
 
 uint8_t *parse_mac_header(uint8_t *mac_header,
@@ -381,7 +377,7 @@ void handlePuschReceivedInd(PHY_PuschReceivedInd *req)
 	//uint16_t cellId = 0;//g_sch.cellId;//TODO:
 	frame_t frame = req->frame;
 	sub_frame_t subframe = req->subframe;
-	uint16_t ueIndex = 0;
+	//uint16_t ueIndex = 0;
 	rnti_t rnti = 0;
 	uint16_t crc = 0;
 	uint16_t num_ue = req->num_ue;
@@ -414,6 +410,8 @@ void handlePuschReceivedInd(PHY_PuschReceivedInd *req)
 		return;
 	}
 
+	rpt->ue_num = 0;
+
 	for (uint32_t i = 0; i < num_ue; i++)
 	{
 		result = &req->result[i];
@@ -422,7 +420,7 @@ void handlePuschReceivedInd(PHY_PuschReceivedInd *req)
 		payload = result->dataptr;
 		tb_length = result->dataSize;
 
-		if (rnti == RA_RNTI )
+		if (rnti == RA_RNTI)
 		{
 			if(crc == 0)
 			{
@@ -434,22 +432,7 @@ void handlePuschReceivedInd(PHY_PuschReceivedInd *req)
 		}
 		else
 		{
-			if ((ueIndex = find_ue(rnti)) == INVALID_U16)
-			{
-				// rrc user setup(msg2) received at destination
-				if (crc == 1)
-				{
-					remove_ra(RA_RNTI);
-				}
-				else
-				{
-					add_temp_ue(subframe, rnti, crc);
-				}
-			}
-			else
-			{
-				update_crc_result(subframe, ueIndex, crc);
-			}
+			update_crc_result(subframe, rnti, crc);
 		}
 
 		if (crc == 0)//crc = NACK
@@ -467,6 +450,8 @@ void handlePuschReceivedInd(PHY_PuschReceivedInd *req)
 		}
 	
 		data_ind = &rpt->sdu_data_rpt[rpt->ue_num];
+
+		data_ind->logic_chan_num = 0;
 
 		for (uint32_t i = 0; i < num_sdu; i++)
 		{
@@ -503,7 +488,18 @@ void handlePuschReceivedInd(PHY_PuschReceivedInd *req)
 
 	}
 
-	mac_rlc_data_ind(msg);
+	if (rpt->ue_num > 0)
+	{
+		if (message_send(TASK_D2D_RLC, msg, sizeof(msgDef)))
+		{
+			LOG_INFO(MAC, "LGC: MAC_RLC_DATA_RPT send, ue_num:%u", rpt->ue_num);
+		}
+		//mac_rlc_data_ind(msg);
+	}
+	else
+	{
+		message_free(msg);
+	}
 }
 
 void handlePbchReceivedInd(const PHY_PBCHReceivedInd* ind)

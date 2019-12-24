@@ -17,10 +17,11 @@
 #include "log.h"
 #include "ue_index.h"
 #include "mac_osp_interface.h"
+#include "mac_ra.h"
 
 #include "messageDefine.h"//MAC_TEST
 #include "msg_handler.h"
-/*
+
 bool get_ue_status(const uint16_t ueIndex)
 {
 	if (ueIndex >= MAX_UE)
@@ -35,7 +36,7 @@ void set_ue_status(const uint16_t ueIndex, const uint16_t status)
 		return;
 	g_context.mac->ue[ueIndex].out_of_sync = status;
 }
-*/
+
 
 void remove_temp_ue(const rnti_t rnti)
 {
@@ -56,49 +57,6 @@ void remove_temp_ue(const rnti_t rnti)
 	}
 }
 
-void add_temp_ue(const sub_frame_t subframe, const rnti_t rnti, const uint16_t crc)
-{
-// temp ue is uesd for recording retx of ra ue at source end
-	mac_info_s *mac = g_sch_mac;
-	ueInfo *ue = NULL;
-	uint16_t ueIndex = INVALID_U16;
-	crc_e c = ECRC_NULL;
-	uint8_t harqId = get_harqId(subframe);
-
-	c = (crc == 0) ? ECRC_NACK : ECRC_ACK;
-
-	ueIndex = new_index(mac->mode);
-
-	if(mac->count_ue >= MAX_UE || ueIndex >= MAX_UE)
-	{
-		LOG_ERROR(MAC, "mac user setup fail!");
-	}
-	else
-	{
-		//ue = new_ue(cellId, ueIndex);
-		ue = &mac->ue[ueIndex];
-
-		if (ue->active == false)
-		{
-			ue->active = true;
-			ue->temp = true;
-			ue->rnti = rnti;
-			ue->ueIndex = ueIndex;
-			ue->sch_info.crc[harqId] = c;
-
-			mac->count_ue++;
-
-			LOG_INFO(MAC, "add_temp_ue, ue rnti:%u", ue->rnti);
-		}
-		else
-		{
-			LOG_ERROR(MAC, "mac_user_setup ue already exist, ueIndex:%u",ueIndex);
-			release_index(ueIndex, mac->mode);
-		}
-	}
-
-}
-
 rnti_t new_rnti(const uint16_t cellId, const uint16_t ueIndex)
 {
 	return (cellId + 1) * 1000 + ueIndex;
@@ -117,12 +75,15 @@ ueInfo* createPtr()
 	return node;
 }
 
-bool remove_ue(ueInfo* ue, const uint32_t mode)
+bool remove_ue(const uint16_t  ueIndex, const uint32_t mode)
 {
+	ueInfo* ue = ((mode == 0) ? &g_context.mac->ue[ueIndex] : &g_context.macd->ue[ueIndex]);
+
 	release_index(ue->ueIndex, mode);
+
 	ue->active = false;
 	ue->ueIndex = INVALID_U16;
-	//mem_free((char*)ue);
+	ue->temp = false;
 
 	return true;
 }
@@ -148,19 +109,30 @@ ueInfo* new_ue(const uint16_t cellId, const uint16_t ueIndex)
 	return ue;
 }
 
+bool is_temp_ue(uint16_t ueIndex)
+{
+	if (ueIndex >= MAX_UE)
+	{
+		LOG_ERROR(MAC, "is_temp_ue");
+		return false;
+	}
+
+	return g_sch_mac->ue[ueIndex].temp;
+}
+
 uint16_t find_ue(const rnti_t rnti)
 {
-	ueInfo ue;
+	ueInfo* ue;
 	uint16_t ueIndex = INVALID_U16;
 
 	for(uint32_t i = 0; i < MAX_UE; i++)
 	{
-		ue = g_sch_mac->ue[i];
+		ue = &g_sch_mac->ue[i];
 
-		if(ue.active == true &&
-			ue.rnti == rnti)
+		if(ue->active == true &&
+			ue->rnti == rnti)
 		{
-			return ue.ueIndex;
+			return ue->ueIndex;
 		}
 	}
 
@@ -196,6 +168,63 @@ uint16_t find_ue_by_ueId(const uint16_t ue_index)
 	return ueIndex;
 }
 
+ueInfo* add_new_ue(const rnti_t rnti, const uint16_t ueId, const uint16_t mode)
+{
+	mac_info_s *mac = (mode == 0) ? g_context.mac : g_context.macd;
+	ueInfo *ue = NULL;
+	uint16_t ueIndex = INVALID_U16;
+	uint16_t cellId = mac->cellId;
+
+	if ((ueIndex = find_ue(rnti)) == INVALID_U16)
+	{
+		ueIndex = new_index(mode);
+	}
+
+	if(mac->count_ue >= MAX_UE || ueIndex >= MAX_UE)
+	{
+		LOG_ERROR(MAC, "mac user setup fail! ueIndex:%u",ueIndex );
+	}
+	else
+	{
+		ue = &mac->ue[ueIndex];
+
+		if (ue->active == false || ue->temp == true)
+		{
+			ue->active = true;
+			ue->temp   = false;
+			ue->ueId = ueId;
+			ue->rnti = ((mode == 0) ? new_rnti(cellId, ueIndex) : rnti);
+			ue->ueIndex = ueIndex;
+
+			mac->count_ue++;
+
+			LOG_INFO(MAC, "add_new_ue, mac mode:%u, ue rnti:%u, ueId:%u",mode, ue->rnti, ueId);
+		}
+		else
+		{
+			LOG_ERROR(MAC, "add_new_ue ue already exist, ueIndex:%u",ueIndex);
+			release_index(ueIndex, mode);
+
+			return NULL;
+		}
+	}
+
+	return ue;
+}
+
+void add_temp_ue(const rnti_t rnti)
+{
+	ueInfo *ue = NULL;
+	uint16_t mode = 1;
+
+	ue = add_new_ue(rnti, INVALID_U16, mode);
+
+	if (ue != NULL)
+	{
+		ue->temp = true;
+	}
+}
+
 void mac_user_setup_cfm(const rrc_mac_connnection_setup *req, const bool result, const rnti_t rnti)
 {
 	msgDef* msg = NULL;
@@ -227,59 +256,37 @@ void mac_user_setup_cfm(const rrc_mac_connnection_setup *req, const bool result,
 
 void mac_user_setup(const rrc_mac_connnection_setup *req)
 {
-	mac_info_s *mac = (req->mode == 0) ? g_context.mac : g_context.macd;
 	ueInfo *ue = NULL;
-	uint16_t ueIndex = INVALID_U16;
 	rnti_t rnti = INVALID_U16;
-	uint16_t cellId = mac->cellId;
 	bool result = false;
 
-	ueIndex = new_index(req->mode);
+	ue = add_new_ue(req->rnti, req->ue_index, req->mode);
 
-	if(mac->count_ue >= MAX_UE || ueIndex >= MAX_UE)
+	if (ue != NULL)
 	{
-		LOG_ERROR(MAC, "mac user setup fail! ueIndex:%u",ueIndex );
+		ue->maxHARQ_Tx = req->maxHARQ_Tx;
+		ue->max_out_sync = req->max_out_sync;
+		ue->lc_num = 1;// CCCH is default channel
+		
+		ue->lc_config[0].lc_id = 0;
+		ue->lc_config[0].priority = 16;
+		
+		for(uint32_t i = 0; i < req->logical_channel_num; i++)
+		{
+			ue->lc_config[ue->lc_num+i].lc_id = req->logical_channel_config[i].logical_channel_id;
+			ue->lc_config[ue->lc_num+i].priority = req->logical_channel_config[i].priority;
+		}
+		
+		ue->lc_num += req->logical_channel_num;
+
+		ue->sch_info.mcs = 2;//TODO: default MCS
+
+		rnti = ue->rnti;
+		result = true;
 	}
 	else
 	{
-		//ue = new_ue(cellId, ueIndex);
-		ue = &mac->ue[ueIndex];
-
-		if (ue->active == false)
-		{
-			ue->active = true;
-			ue->temp   = false;
-			ue->ueId = req->ue_index;
-			ue->rnti = new_rnti(cellId, ueIndex);
-			ue->ueIndex = ueIndex;
-
-			ue->maxHARQ_Tx = req->maxHARQ_Tx;
-			ue->max_out_sync = req->max_out_sync;
-			ue->lc_num = 1;// CCCH is default channel
-
-			ue->lc_config[0].lc_id = 0;
-			ue->lc_config[0].priority = 16;
-
-			for(uint32_t i = 0; i < req->logical_channel_num; i++)
-			{
-				ue->lc_config[ue->lc_num+i].lc_id = req->logical_channel_config[i].logical_channel_id;
-				ue->lc_config[ue->lc_num+i].priority = req->logical_channel_config[i].priority;
-			}
-
-			ue->lc_num += req->logical_channel_num;
-
-			rnti = ue->rnti;
-			result = true;
-			mac->count_ue++;
-
-			LOG_INFO(MAC, "mac user setup, ue rnti:%u, crc:%u,%u",
-				ue->rnti, ue->sch_info.crc[0], ue->sch_info.crc[1]);
-		}
-		else
-		{
-			LOG_ERROR(MAC, "mac_user_setup ue already exist, ueIndex:%u",ueIndex);
-			release_index(ueIndex, req->mode);
-		}
+		result = false;
 	}
 
 	mac_user_setup_cfm(req, result, rnti);
@@ -350,7 +357,7 @@ void mac_user_release(const rrc_mac_release_req *req)//TODO: mac reset ue releas
 	else
 	{
 		//ueIndex = find_ue_by_ueId(req->ue_index);
-		ret = remove_ue(ue, mode);
+		ret = remove_ue(ue->ueIndex, mode);
 	}
 
 	mac_release_cfm(req, ret);
@@ -397,7 +404,7 @@ bool update_temp_ue_crc_result(const sub_frame_t subframe, const rnti_t rnti, co
 
 	if (crc == 0)
 	{
-		add_temp_ue(subframe, rnti, crc);
+		add_temp_ue(rnti);
 	}
 	else if (crc == 1)
 	{
@@ -408,22 +415,47 @@ bool update_temp_ue_crc_result(const sub_frame_t subframe, const rnti_t rnti, co
 }
 
 
-bool update_crc_result(const sub_frame_t subframe, const uint16_t ueIndex, const uint16_t crc)
+bool update_crc_result(const sub_frame_t subframe, const rnti_t rnti, const uint16_t crc)
 {
 	ueInfo* ue = NULL;
 	crc_e c = ECRC_NULL;
 	uint8_t harqId = get_harqId(subframe);
+	uint16_t ueIndex = INVALID_U16;
 
-	if (ueIndex == INVALID_U16)
+	if ((ueIndex = find_ue(rnti)) < MAX_UE)
+	{
+		ue = &g_sch_mac->ue[ueIndex];
+	}
+	else if ((ueIndex = find_ue(RA_RNTI)) < MAX_UE)
+	{
+		// rrc user setup(msg2) received at destination
+		if (crc == 1)
+		{
+			remove_ra(RA_RNTI);
+		}
+
+		ue = &g_sch_mac->ue[ueIndex];
+
+		ue->rnti = rnti;
+	}
+	else
 	{
 		LOG_ERROR(MAC, "update crc fail, no such ue");
 		return false;
 	}
 
-	c = (crc == 0) ? ECRC_NACK : ECRC_ACK;
+	if (crc == 0)
+	{
+		c = ECRC_NACK;
+	}
+	else if (crc == 1)
+	{
+		c = ECRC_ACK;
+	}
 
-	ue = &g_sch_mac->ue[ueIndex];
 	ue->sch_info.crc[harqId] = c;
+
+	LOG_INFO(MAC, "update_crc_result, rnti:%u, crc:%u, harqId:%u", rnti, crc, harqId);
 
 	return true;
 }
@@ -446,6 +478,8 @@ bool update_ue_cqi(const rnti_t rnti, const uint16_t cqi)
 
 	ue->sch_info.cqi = cqi;
 	ue->sch_info.mcs = cqi_to_mcs(cqi);
+
+	ue->sch_info.mcs = 15;// TODO: PHY should do mcs selecting
 
 	return true;
 }

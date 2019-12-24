@@ -22,6 +22,7 @@
 
 rrc_info g_rrc_dst;
 uint16_t g_ueId = 0;
+uint16_t g_waiting_active_time = 0;
 
 
 void init_rrc_dst_sim()
@@ -60,6 +61,8 @@ void remove_dst_user(rrc_ue_info* ue)
 	ue->rnti = INVALID_U16;
 	ue->status = ERRC_UE_INVALID;
 	ue->setup_timer = 0;
+
+	g_rrc_dst.num_ue--;
 }
 
 bool dst_add_new_user(const uint16_t ueId, const rnti_t rnti)
@@ -77,6 +80,8 @@ bool dst_add_new_user(const uint16_t ueId, const rnti_t rnti)
 			ue->mode = g_rrc_dst.mode;
 			ue->setup_timer = 0;
 			ue->status = ERRC_UE_SETUP;
+
+			g_rrc_dst.num_ue++;
 
 			return true;
 		}
@@ -108,7 +113,7 @@ void dst_user_setup_complete(const uint16_t ueId, const rnti_t rnti, const uint1
 
 		if (message_send(TASK_D2D_RLC, msg, sizeof(msgDef)))
 		{
-			LOG_INFO(RRC, "LGC: rrc_rlc_data_ind send");
+			LOG_INFO(RRC, "LGC: dst_user_setup_complete rrc_rlc_data_ind send");
 		}
 	}
 	else
@@ -149,6 +154,7 @@ void dst_user_setup(const uint16_t       ueId, const rnti_t rnti, const uint16_t
 	{
 		setup = (rrc_mac_connnection_setup*)message_ptr(msg);
 		setup->mode = 1;
+		setup->rnti = rnti;
 		setup->ue_index = ue->ueId;
 		setup->maxHARQ_Tx = 4;
 		setup->max_out_sync = 4;
@@ -284,7 +290,7 @@ void handle_ccch_rpt_dst(mac_rrc_ccch_rpt *rpt)
 	uint16_t ueId = ccch->ueId;
 	rnti_t rnti = ccch->rnti;
 
-	LOG_INFO(RRC, "ccch msg received. frame:%u, subframe:%u, flag:%u", frame, subframe, flag);
+	LOG_INFO(RRC, "ccch msg received. frame:%u, subframe:%u, flag:%u, rnti:%u", frame, subframe, flag, rnti);
 
 	if (flag == 0)// 0:setup req
 	{
@@ -415,8 +421,16 @@ void rrcDstUserStatusHandler()
 		}
 		else if (ue->status == ERRC_UE_SETUP_COMPLETE)
 		{
-			ue->status = ERRC_UE_CONNECT;
-			dst_user_start(ue);
+			g_waiting_active_time++;
+
+			LOG_INFO(RRC, "dst g_waiting_active_time:%u", g_waiting_active_time);
+
+			if (g_waiting_active_time > 10)//should not be actived before waiting a while
+			{
+				g_waiting_active_time = 0;
+				ue->status = ERRC_UE_CONNECT;
+				dst_user_start(ue);
+			}
 		}
 	}
 }
@@ -434,12 +448,12 @@ void rrcDstMsgHandler(msgDef* msg, const msgId msg_id)
 
 				if (cfm->error_code == 1)
 				{
-					LOG_INFO(RRC, "[TEST] mac_rrc_initial_cfm, status:%u, error_:%u",cfm->status, cfm->error_code);
+					LOG_INFO(RRC, "[TEST] mac_rrc_initial_cfm, status:%u, err:%u",cfm->status, cfm->error_code);
 					g_rrc_dst.status = ERRC_INITAIL_CFM;
 				}
 				else
 				{
-					LOG_ERROR(RRC, "[TEST] mac_rrc_initial_cfm, FAIL status:%u, error_:%u",
+					LOG_ERROR(RRC, "[TEST] mac_rrc_initial_cfm, FAIL status:%u, err:%u",
 						cfm->status, cfm->error_code);
 				}
 			}
@@ -494,6 +508,7 @@ void rrcDstMsgHandler(msgDef* msg, const msgId msg_id)
 		{
 			mac_rrc_ccch_rpt *rpt = (mac_rrc_ccch_rpt *)message_ptr(msg);
 			ccch_info* ccch = (ccch_info*)rpt->data_ptr;
+
 			if (ccch->flag == 1)
 			{
 				LOG_INFO(RRC, "[TEST] mac_rrc_ccch_rpt");
@@ -507,7 +522,7 @@ void rrcDstMsgHandler(msgDef* msg, const msgId msg_id)
 			{
 				mac_rrc_connection_cfm *cfm = (mac_rrc_connection_cfm *)message_ptr(msg);
 
-				LOG_INFO(RRC, "[TEST] mac_rrc_connection_cfm, status:%u,ue_index:%u,rnti:%u,error:%u",
+				LOG_INFO(RRC, "[TEST] mac_rrc_connection_cfm, status:%u,ue_index:%u,rnti:%u,err:%u",
 					cfm->status,cfm->ue_index,cfm->rnti,cfm->error_code);
 
 				dst_user_setup_cfm(cfm);

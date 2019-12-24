@@ -12,8 +12,36 @@
 
 /*MAC subheader short with 7bit Length field */
 typedef struct {
+    uint8_t LCID:5;
     uint8_t E:1;
     uint8_t R:2;
+    uint8_t L:7;
+    uint8_t F:1;
+} mac_header_short;
+
+/*MAC subheader long  with 15bit Length field */
+typedef struct {
+    uint8_t LCID:5;
+    uint8_t E:1;
+    uint8_t R:2;
+	uint8_t L_MSB:7;
+    uint8_t F:1;
+    uint8_t L_LSB:8;
+    uint8_t padding;
+}mac_header_long;
+
+/*MAC subheader short without length field */
+typedef struct {
+    uint8_t LCID:5;
+    uint8_t E:1;
+    uint8_t R:2;
+} mac_header_fixed;
+
+#if 0
+/*MAC subheader short with 7bit Length field */
+typedef struct {
+    uint8_t R:2;
+    uint8_t E:1;
     uint8_t LCID:5;
     uint8_t F:1;
     uint8_t L:7;
@@ -32,10 +60,11 @@ typedef struct {
 
 /*MAC subheader short without length field */
 typedef struct {
-    uint8_t LCID:5;
-    uint8_t E:1;
     uint8_t R:2;
+    uint8_t E:1;
+    uint8_t LCID:5;
 } __attribute__ ((__packed__)) mac_header_fixed;
+#endif
 
 typedef struct
 {

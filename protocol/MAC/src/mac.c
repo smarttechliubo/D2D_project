@@ -269,7 +269,7 @@ void run_period(msgDef* msg)
 	{
 		syncTime();
 	}
-	LOG_INFO(MAC, "run_period current time frame：%u，subframe:%u, isTimer:%u", g_context.frame, g_context.subframe, isTimer);
+	LOG_INFO(MAC, "run_period current time, isTimer:%u, frame：%u，subframe:%u",  isTimer, g_context.frame, g_context.subframe);
 
 	if (!isTimer)
 	{

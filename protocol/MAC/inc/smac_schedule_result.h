@@ -14,7 +14,7 @@
 
 typedef struct
 {
-	bool  scheduled;
+	bool  cancel;
 	uint16_t ueIndex;
 	rnti_t rnti;
 
@@ -35,7 +35,7 @@ typedef struct
 
 typedef struct
 {
-	bool scheduled;
+	bool cancel;
 	uint32_t type;//0:SI, 1:UE
 	uint16_t ueIndex;
 	rnti_t rnti;

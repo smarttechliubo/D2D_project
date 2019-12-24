@@ -255,7 +255,7 @@ void handle_ccch_rpt_src(mac_rrc_ccch_rpt *rpt)
 	uint16_t ueId = ccch->ueId;
 	rnti_t rnti = ccch->rnti;
 
-	LOG_INFO(RRC, "ccch msg received. frame:%u, subframe:%u, flag:%u", frame, subframe, flag);
+	LOG_INFO(RRC, "ccch msg received. frame:%u, subframe:%u, flag:%u, rnti:%u", frame, subframe, flag, rnti);
 
 	if (flag == 0)// 0:setup req
 	{
@@ -385,7 +385,7 @@ void rrcSrsMsgHandler(msgDef* msg, const msgId msg_id)
 			{
 				mac_rrc_initial_cfm *cfm = (mac_rrc_initial_cfm *)message_ptr(msg);
 
-				LOG_INFO(RRC, "[TEST] mac_rrc_initial_cfm, status:%u, error_:%u",
+				LOG_INFO(RRC, "[TEST] mac_rrc_initial_cfm, status:%u, err:%u",
 					cfm->status, cfm->error_code);
 
 				g_rrc_src.status = ERRC_INITAIL_CFM;
@@ -398,7 +398,7 @@ void rrcSrsMsgHandler(msgDef* msg, const msgId msg_id)
 			{
 				mac_rrc_bcch_para_config_cfm *cfm = (mac_rrc_bcch_para_config_cfm *)message_ptr(msg);
 
-				LOG_INFO(RRC, "[TEST] mac_rrc_bcch_para_config_cfm, status:%u,flag:%u,error:%u", 
+				LOG_INFO(RRC, "[TEST] mac_rrc_bcch_para_config_cfm, status:%u,flag:%u,err:%u", 
 					cfm->status,cfm->flag,cfm->error_code);
 
 				g_rrc_src.status = ERRC_BCCH_CFM;
@@ -418,9 +418,6 @@ void rrcSrsMsgHandler(msgDef* msg, const msgId msg_id)
 			mac_rrc_ccch_rpt *rpt = (mac_rrc_ccch_rpt *)message_ptr(msg);
 			ccch_info* ccch = (ccch_info*)rpt->data_ptr;
 
-			LOG_INFO(RRC, "[TEST] MAC_RRC_CCCH_RPT, flag:%u, ueId:%u, rnti:%u", 
-				ccch->flag, ccch->ueId, ccch->rnti);
-
 			if (ccch->flag == 0 || ccch->flag == 2)
 			{
 				LOG_INFO(RRC, "[TEST] mac_rrc_ccch_rpt");
@@ -435,7 +432,7 @@ void rrcSrsMsgHandler(msgDef* msg, const msgId msg_id)
 			{
 				mac_rrc_connection_cfm *cfm = (mac_rrc_connection_cfm *)message_ptr(msg);
 
-				LOG_INFO(RRC, "[TEST] mac_rrc_connection_cfm, status:%u,ue_index:%u,rnti:%u,error:%u",
+				LOG_INFO(RRC, "[TEST] mac_rrc_connection_cfm, status:%u,ue_index:%u,rnti:%u,err:%u",
 					cfm->status,cfm->ue_index,cfm->rnti,cfm->error_code);
 
 				src_user_setup_cfm(cfm);

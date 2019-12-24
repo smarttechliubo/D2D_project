@@ -22,7 +22,7 @@ typedef struct
 	uint16_t mode;
 	bool      hasCCCH;
 	uint16_t  ccch_data_size;
-	uint32_t  ccch_data[128]; 
+	uint8_t  ccch_data[128]; 
 
 	uint32_t lc_num;//logical channel num
 	uint32_t data_size[MAX_LOGICCHAN_NUM];

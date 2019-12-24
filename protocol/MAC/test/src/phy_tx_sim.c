@@ -155,7 +155,7 @@ void phyTxMsgHandler(msgDef* msg)
 		{
 			PHY_PBCHSendReq* req = (PHY_PBCHSendReq*)message_ptr(msg);
 
-			LOG_INFO(PHY, "MAC_PHY_PBCH_TX_REQ received. frame:%u, subframe:%u", req->frame, req->subframe);
+			LOG_DEBUG(PHY, "MAC_PHY_PBCH_TX_REQ received. frame:%u, subframe:%u", req->frame, req->subframe);
 
 			g_phyTx.flag_pbch = true;
 			memcpy(&g_phyTx.pbch, req, sizeof(PHY_PBCHSendReq));
@@ -166,7 +166,7 @@ void phyTxMsgHandler(msgDef* msg)
 		{				
 			PHY_PdcchSendReq* req = (PHY_PdcchSendReq*)message_ptr(msg);
 
-			LOG_INFO(PHY, "MAC_PHY_PDCCH_SEND received. frame:%u, subframe:%u", req->frame, req->subframe);
+			LOG_DEBUG(PHY, "MAC_PHY_PDCCH_SEND received. frame:%u, subframe:%u", req->frame, req->subframe);
 
 			g_phyTx.flag_pdcch = true;
 			memcpy(&g_phyTx.pdcch, req, sizeof(PHY_PdcchSendReq));
@@ -177,7 +177,7 @@ void phyTxMsgHandler(msgDef* msg)
 		{				
 			PHY_PuschSendReq* req = (PHY_PuschSendReq*)message_ptr(msg);
 
-			LOG_INFO(PHY, "MAC_PHY_PUSCH_SEND received. frame:%u, subframe:%u, num:%u, rnti:%u", 
+			LOG_DEBUG(PHY, "MAC_PHY_PUSCH_SEND received. frame:%u, subframe:%u, num:%u, rnti:%u", 
 				req->frame, req->subframe, req->num, req->pusch[0].rnti);
 
 			g_phyTx.flag_pusch = true;
@@ -220,7 +220,7 @@ void handle_phy_tx(const      frame_t frame, const sub_frame_t subframe)
 
 			if (msgSend(taskId, (char*)msg, sizeof(msgHeader) + msg_size))
 			{
-				LOG_INFO(PHY, "LGC: MAC_PHY_PBCH_TX_REQ send, pbch frame:%u, subframe:%u, current frame:%u, subframe:%u",
+				LOG_DEBUG(PHY, "LGC: MAC_PHY_PBCH_TX_REQ send, pbch frame:%u, subframe:%u, current frame:%u, subframe:%u",
 					g_phyTx.pbch.frame,g_phyTx.pbch.subframe,g_phyTx.frame,g_phyTx.subframe);
 			}
 		}
@@ -233,7 +233,7 @@ void handle_phy_tx(const      frame_t frame, const sub_frame_t subframe)
 
 			if (message_send(TASK_D2D_PHY_RX, msg, sizeof(msgDef)))
 			{
-				LOG_INFO(PHY, "LGC: MAC_PHY_PBCH_TX_REQ send, pbch frame:%u, subframe:%u, current frame:%u, subframe:%u",
+				LOG_DEBUG(PHY, "LGC: MAC_PHY_PBCH_TX_REQ send, pbch frame:%u, subframe:%u, current frame:%u, subframe:%u",
 					g_phyTx.pbch.frame,g_phyTx.pbch.subframe,g_phyTx.frame,g_phyTx.subframe);
 			}
 		}
@@ -256,7 +256,7 @@ void handle_phy_tx(const      frame_t frame, const sub_frame_t subframe)
 
 			if (msgSend(taskId, (char*)msg, sizeof(msgHeader) + msg_size))
 			{
-				LOG_INFO(PHY, "LGC: MAC_PHY_PDCCH_SEND send");
+				LOG_DEBUG(PHY, "LGC: MAC_PHY_PDCCH_SEND send");
 			}
 		}
 #else
@@ -268,7 +268,7 @@ void handle_phy_tx(const      frame_t frame, const sub_frame_t subframe)
 
 			if (message_send(TASK_D2D_PHY_RX, msg, sizeof(msgDef)))
 			{
-				LOG_INFO(PHY, "LGC: MAC_PHY_PDCCH_SEND send, pdcch frame:%u, subframe:%u, current frame:%u, subframe:%u",
+				LOG_DEBUG(PHY, "LGC: MAC_PHY_PDCCH_SEND send, pdcch frame:%u, subframe:%u, current frame:%u, subframe:%u",
 					g_phyTx.pdcch.frame,g_phyTx.pdcch.subframe,g_phyTx.frame,g_phyTx.subframe);
 			}
 		}
@@ -291,7 +291,7 @@ void handle_phy_tx(const      frame_t frame, const sub_frame_t subframe)
 
 			if (msgSend(taskId, (char*)msg, sizeof(msgHeader) + msg_size))
 			{
-				LOG_INFO(PHY, "LGC: MAC_PHY_PUSCH_SEND send");
+				LOG_DEBUG(PHY, "LGC: MAC_PHY_PUSCH_SEND send");
 			}
 		}
 #else
@@ -303,7 +303,7 @@ void handle_phy_tx(const      frame_t frame, const sub_frame_t subframe)
 
 			if (message_send(TASK_D2D_PHY_RX, msg, sizeof(msgDef)))
 			{
-				LOG_INFO(PHY, "LGC: MAC_PHY_PUSCH_SEND send, pdcch frame:%u, subframe:%u, current frame:%u, subframe:%u, num:%u, rnti:%u",
+				LOG_DEBUG(PHY, "LGC: MAC_PHY_PUSCH_SEND send, pdcch frame:%u, subframe:%u, current frame:%u, subframe:%u, num:%u, rnti:%u",
 					g_phyTx.pusch.frame,g_phyTx.pusch.subframe,g_phyTx.frame,g_phyTx.subframe, 
 					g_phyTx.pusch.num, g_phyTx.pusch.pusch[0].rnti);
 			}
@@ -321,12 +321,14 @@ void phy_tx_sim_thread(msgDef* msg)
 	bool isTimer = is_timer(msg);
 
 	if (isTimer)
+	{
 		syncTimePhyTx();
+		LOG_INFO(PHY, "PHY TX frame:%u, subframe:%u, isTimer:%u", g_phyTx.frame,g_phyTx.subframe, isTimer);
+	}
 
 	frame = g_phyTx.frame;
 	subframe = g_phyTx.subframe;
 
-	LOG_INFO(PHY, "phy_tx_sim_thread frame:%u, subframe:%u, isTimer:%u", g_phyTx.frame,g_phyTx.subframe, isTimer);
 	//frame = (frame + (subframe + TIMING_ADVANCE) / MAX_SUBSFN) % MAX_SFN;
 	//subframe = (subframe + TIMING_ADVANCE) % MAX_SUBSFN;
 	if (!isTimer)

@@ -39,6 +39,7 @@ uint32_t generate_mac_header(uint32_t num_sdus,
 		mac_header_ptr->R = 0;
 		mac_header_ptr->E = 0;
 		mac_header_ptr->LCID = SHORT_PADDING;
+
 		pre_sub_header = 1;
 		pre_sub_header_size = 1;
 	}
@@ -67,6 +68,8 @@ uint32_t generate_mac_header(uint32_t num_sdus,
 	
 		if (sdu_sizes[i] < 128) 
 		{
+			uint8_t *ptr = (uint8_t*) mac_header_ptr;
+			
 			((mac_header_short *) mac_header_ptr)->R = 0;
 			((mac_header_short *) mac_header_ptr)->E = 0;
 			((mac_header_short *) mac_header_ptr)->LCID = sdu_lcids[i];
@@ -77,6 +80,10 @@ uint32_t generate_mac_header(uint32_t num_sdus,
 				((mac_header_short *) mac_header_ptr)->F = 0;
 				((mac_header_short *) mac_header_ptr)->L = (unsigned char) sdu_sizes[i];
 
+				LOG_INFO(RLC, "generate_mac_header, R:%u,E:%u,LCID:%u,header:%x,%x,%x,%x", 
+					mac_header_ptr->R,mac_header_ptr->E,mac_header_ptr->LCID,
+					ptr[0], ptr[1], ptr[2], ptr[3]);
+					
 				pre_sub_header_size = 2;
 			}
 			else
@@ -268,7 +275,7 @@ void handle_mac_rlc_buf_status_req(const mac_rlc_buf_status_req *req)
 			rpt->rlc_buffer_rpt[valid_ue_num].valid_flag = 1;
 			rpt->rlc_buffer_rpt[valid_ue_num].logic_chan_num = 0;
 			rpt->rlc_buffer_rpt[valid_ue_num].rnti = ue->rnti;
-
+/*
 			if (ue->hasCCCH)
 			{
 				rpt->rlc_buffer_rpt[valid_ue_num].rlc_mode_for_logicchan[logic_chan_num] = RLC_MODE_TM;
@@ -276,16 +283,16 @@ void handle_mac_rlc_buf_status_req(const mac_rlc_buf_status_req *req)
 				rpt->rlc_buffer_rpt[valid_ue_num].buffer_byte_size[logic_chan_num] = ue->ccch_data_size;
 				logic_chan_num++;
 
-				memcpy(ue->data_ptr, &ue->ccch_data[0], ue->ccch_data_size);
+				//memcpy(ue->data_ptr, &ue->ccch_data[0], ue->ccch_data_size);
 
 				ue->hasCCCH = false;
 			}
-
-			for (uint32_t i = 1; i < ue->lc_num; i++)
+*/
+			for (uint32_t i = 0; i < ue->lc_num; i++)
 			{
 				if (ue->data_size[i] > 0)
 				{
-					rpt->rlc_buffer_rpt[valid_ue_num].rlc_mode_for_logicchan[logic_chan_num] = RLC_MODE_UM;
+					rpt->rlc_buffer_rpt[valid_ue_num].rlc_mode_for_logicchan[logic_chan_num] = (i == 0) ?  RLC_MODE_TM : RLC_MODE_UM;
 					rpt->rlc_buffer_rpt[valid_ue_num].logicchannel_id[logic_chan_num] = i;
 					rpt->rlc_buffer_rpt[valid_ue_num].buffer_byte_size[logic_chan_num] = ue->data_size[i];
 					logic_chan_num++;
@@ -306,8 +313,9 @@ void handle_mac_rlc_buf_status_req(const mac_rlc_buf_status_req *req)
 		{
 			if(message_send(TASK_D2D_MAC_SCH, msg, sizeof(msgDef)))
 			{
-				LOG_INFO(RLC, "LGC: RLC_MAC_BUF_STATUS_RPT, send msg!, rnti:%u, lcId:%u, buffSize:%u,rlcHeader:%u", 
-				rpt->rlc_buffer_rpt[0].rnti, rpt->rlc_buffer_rpt[0].logicchannel_id[0],
+				LOG_INFO(RLC, "LGC: RLC_MAC_BUF_STATUS_RPT, send msg!, lcNum:%u,rnti:%u, lcId:%u,%u, buffSize:%u,rlcHeader:%u", 
+				rpt->rlc_buffer_rpt[0].logic_chan_num,rpt->rlc_buffer_rpt[0].rnti, rpt->rlc_buffer_rpt[0].logicchannel_id[0],
+				rpt->rlc_buffer_rpt[0].logicchannel_id[1],
 				rpt->rlc_buffer_rpt[0].buffer_byte_size[0], rpt->rlc_buffer_rpt[0].rlc_header_byte_size[0]);
 			}
 		}
@@ -390,17 +398,19 @@ void fill_mac_sdus(rlc_mac_data_ind* ind, mac_rlc_data_req* req)
 
 		if (num_sdus > 0)
 		{
-			LOG_INFO(RLC, "lcNUM:%u, tb_size:%u, total_sdu_size:%u, header_size:%u",
-				dataReq->logic_chan_num, tb_size , total_sdu_size , header_size);
-
 			padding = tb_size - total_sdu_size - (header_size - (header_last == 2 ? 1 : 2));
 
 			//memset((uint8_t*)ue->data_ptr, 0X12,  dataReqSize);
 
 			offset = generate_mac_header(num_sdus, sdu_lcids, sdu_sizes, ptr, padding);
 
+			LOG_INFO(RLC, "offset:%u, padding:%u, lcNUM:%u, num_sdus:%u,sdu_lcids[0]:%u,sdu_sizes[0]:%u,tb_size:%u, total_sdu_size:%u, header_size:%u",
+				offset, padding, dataReq->logic_chan_num, num_sdus, sdu_lcids[0],sdu_sizes[0],tb_size , total_sdu_size , header_size);
+
+
 			for (uint32_t j = 0; j < num_sdus; j++)
 			{
+			/*
 				if (sdu_lcids[j] == CCCH_)
 				{
 					ccch_info* ccch = (ccch_info*)&ue->ccch_data[0];
@@ -413,15 +423,26 @@ void fill_mac_sdus(rlc_mac_data_ind* ind, mac_rlc_data_req* req)
 					ue->ccch_data_size = 0;
 				}
 				else
+			*/
+				uint8_t lc_id = sdu_lcids[j];
+
+				if (ue->data_size[lc_id] > 0)
 				{
-					memcpy(ptr + offset, ue->data[j], ue->data_size[j]);
+					memcpy(ptr + offset, ue->data[lc_id], ue->data_size[lc_id]);
 				
-					offset = offset + ue->data_size[j];
+					offset = offset + ue->data_size[lc_id];
+
+					if (lc_id == CCCH_)
+						ue->data_size[lc_id] = 0;
+				}
+				else
+				{
+					LOG_ERROR(RLC, "data of lc_id:%u is empty");
 				}
 			}
 
 
-			LOG_DEBUG(RLC, "MAC mac_header, offset:%u, padding:%u, data:%x,%x,%x,%x,%x,%x,%x,%x,%x,%x",offset, padding,
+			LOG_DEBUG(RLC, "RLC mac_header, data:%x,%x,%x,%x,%x,%x,%x,%x,%x,%x",
 				ptr[0],ptr[1],ptr[2],ptr[3],ptr[4],ptr[5],ptr[6],ptr[7],ptr[8],ptr[9]);
 		}
 
@@ -497,13 +518,24 @@ void handle_rrc_data_ind(rrc_rlc_data_ind *ind)
 	if (ccch->flag == 4)
 	{
 		ue->data[1] = "I am destination UE!";
-		ue->data_size[1] = sizeof(ue->data);
+		//ue->data[2] = "I am destination UE!";
+		//ue->data[3] = "I am destination UE!";
+
+		uint16_t l = strlen(ue->data[1]);
+
+		ue->data_size[1] = l;
+		//ue->data_size[2] = l;
+		//ue->data_size[3] = l;
+
+		LOG_INFO(RLC, "RLC CCCH received, flag:4, ue->data_size[1]:%u",ue->data_size[1]);
 	}
 
 	if (ccch->flag == 3)
 	{
 		ue->data[1] = "I am source UE!";
-		ue->data_size[1] = sizeof(ue->data);
+		ue->data_size[1] = strlen(ue->data[1]);
+
+		LOG_INFO(RLC, "RLC CCCH received, flag:3, ue->data_size[1]:%u",ue->data_size[1]);
 	}
 
 	if (ccch->flag == 0 || ccch->flag == 1 || ccch->flag == 2)
@@ -513,6 +545,8 @@ void handle_rrc_data_ind(rrc_rlc_data_ind *ind)
 		ue->data_size[0] = ind->data_size;
 
 		memcpy(&ue->ccch_data[0], ind->data_addr_ptr, ue->ccch_data_size);
+
+		ue->data[0] = (char*)&ue->ccch_data[0];
 
 		LOG_INFO(RLC, "RLC CCCH received, flag:%u, cause:%u, ueId:%u, rnti:%u", 
 			ccch->flag, ccch->cause, ccch->ueId, ccch->rnti);
@@ -537,7 +571,7 @@ void handle_mac_rlc_data_rpt(mac_rlc_data_rpt* req)
 	{
 		data_ind = &req->sdu_data_rpt[i];
 
-		if (data_ind->valid_flag)
+		if (!data_ind->valid_flag)
 			continue;
 
 		rnti = data_ind->rnti;
@@ -549,11 +583,11 @@ void handle_mac_rlc_data_rpt(mac_rlc_data_rpt* req)
 			mac_pdu_size = data_ind->mac_pdu_size[j];
 			mac_pdu_buffer_ptr = (char  *)data_ind->mac_pdu_buffer_ptr[j];
 
-			LOG_DEBUG(RLC, "Received MAC data report, rnti:%u, lcId:%u, pduSize:%u, pdu:%s", 
+			LOG_INFO(RLC, "Received MAC data report, rnti:%u, lcId:%u, pduSize:%u, pdu:%s", 
 				rnti, logicchannel_id, mac_pdu_size, mac_pdu_buffer_ptr);
 		}
 
-		mem_free((char*)data_ind->mac_pdu_buffer_ptr[0]);
+		//mem_free((char*)data_ind->mac_pdu_buffer_ptr[0]);
 	}
 }
 
@@ -563,66 +597,57 @@ void rlcMsgHandler(msgDef* msg)
 	//uint32_t msg_len = 0;
 	msgId msg_id = 0;
 
-	//while (1)
-	{ 
-		//msg_len = message_receive(TASK_D2D_RLC, msg);
 
-		//if (msg_len == 0)
-		//{
-		//	continue;
-		//}
+	if (is_timer(msg))
+		return;
+	
+	msg_id = get_msgId(msg);
 
-		if (is_timer(msg))
-			return;
-		
-		msg_id = get_msgId(msg);
-
-		switch (msg_id)
+	switch (msg_id)
+	{
+		case RRC_RLC_DATA_IND:
 		{
-			case RRC_RLC_DATA_IND:
-			{
-				rrc_rlc_data_ind *ind = (rrc_rlc_data_ind *)message_ptr(msg);
+			rrc_rlc_data_ind *ind = (rrc_rlc_data_ind *)message_ptr(msg);
 
-				LOG_INFO(RLC, "RRC_RLC_DATA_IND");
-				
-				handle_rrc_data_ind(ind);
-				break;
-			}
-			case MAC_RLC_BUF_STATUS_REQ:
-			{
-				mac_rlc_buf_status_req *req = (mac_rlc_buf_status_req *)message_ptr(msg);
-
-				LOG_INFO(RLC, "MAC_RLC_BUF_STATUS_REQ, sfn:%u, sunsfn:%u", req->sfn, req->sub_sfn);
-
-				handle_mac_rlc_buf_status_req(req);
-				break;
-			}
-			case MAC_RLC_DATA_REQ:
-			{
-				mac_rlc_data_req *req = (mac_rlc_data_req *)message_ptr(msg);
-
-				LOG_INFO(RLC, "MAC_RLC_DATA_REQ");
-
-				handle_mac_rlc_data_req(req);
-				break;
-			}
-			case MAC_RLC_DATA_RPT:
-			{
-				mac_rlc_data_rpt *req = (mac_rlc_data_rpt *)message_ptr(msg);
-
-				LOG_INFO(RLC, "MAC_RLC_DATA_RPT");
-
-				handle_mac_rlc_data_rpt(req);
-
-				break;
-			}
-			default:
-			{
-				LOG_ERROR(RLC, "UNknown RLC msg, msgId:%u", msg_id);
-				break;
-			}
+			LOG_INFO(RLC, "RRC_RLC_DATA_IND");
+			
+			handle_rrc_data_ind(ind);
+			break;
 		}
+		case MAC_RLC_BUF_STATUS_REQ:
+		{
+			mac_rlc_buf_status_req *req = (mac_rlc_buf_status_req *)message_ptr(msg);
 
+			LOG_INFO(RLC, "MAC_RLC_BUF_STATUS_REQ, sfn:%u, sunsfn:%u", req->sfn, req->sub_sfn);
+
+			handle_mac_rlc_buf_status_req(req);
+			break;
+		}
+		case MAC_RLC_DATA_REQ:
+		{
+			mac_rlc_data_req *req = (mac_rlc_data_req *)message_ptr(msg);
+
+			LOG_INFO(RLC, "MAC_RLC_DATA_REQ");
+
+			handle_mac_rlc_data_req(req);
+			break;
+		}
+		case MAC_RLC_DATA_RPT:
+		{
+			mac_rlc_data_rpt *req = (mac_rlc_data_rpt *)message_ptr(msg);
+
+			LOG_INFO(RLC, "MAC_RLC_DATA_RPT, ue num:%u, rnti:%u,lc num:%u", 
+				req->ue_num, req->sdu_data_rpt[0].rnti,req->sdu_data_rpt[0].logic_chan_num);
+
+			handle_mac_rlc_data_rpt(req);
+
+			break;
+		}
+		default:
+		{
+			LOG_ERROR(RLC, "UNknown RLC msg, msgId:%u", msg_id);
+			break;
+		}
 	}
 }
 

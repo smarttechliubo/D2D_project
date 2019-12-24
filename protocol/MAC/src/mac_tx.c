@@ -70,8 +70,8 @@ void update_buffer_status(rlc_buffer_rpt buffer)
 		ue_buffer->buffer_size[i] = buffer.buffer_byte_size[i] + buffer.rlc_header_byte_size[i];
 		ue_buffer->buffer_total += ue_buffer->buffer_size[i] + (ue_buffer->buffer_size[i] < 128 ? 2 : 3);
 
-		LOG_INFO(MAC, "update_buffer_status, total:%u, lcSize:%u",
-			ue_buffer->buffer_total,ue_buffer->buffer_size[i]);
+		LOG_INFO(MAC, "update_buffer_status, lcNum:%u, total:%u, lcId:%u, lcSize:%u",
+			logic_chan_num,ue_buffer->buffer_total,ue_buffer->chan_id[i],ue_buffer->buffer_size[i]);
 	}
 
 }
@@ -91,6 +91,7 @@ void handle_buffer_status(const rlc_mac_buf_status_rpt *rpt)
 		if (buffer.rnti == RA_RNTI && buffer.logicchannel_id[i] == CCCH_)// TODO: no data should be transmit before ue get connection setup.
 		{
 			update_ra_buffer(buffer);
+			add_temp_ue(RA_RNTI);
 			break;
 		}
 
@@ -186,7 +187,7 @@ bool update_scheduled_ue(const rnti_t rnti, const uint32_t data_size, uint8_t* d
 		{
 			if (cancel)
 			{
-				sch->scheduled = false;
+				sch->cancel = true;
 			}
 			else
 			{
@@ -197,8 +198,8 @@ bool update_scheduled_ue(const rnti_t rnti, const uint32_t data_size, uint8_t* d
 				}
 
 				sch->data = dataptr;
-				sch->scheduled = true;
 			}
+
 			num++;
 		}
 
@@ -206,14 +207,16 @@ bool update_scheduled_ue(const rnti_t rnti, const uint32_t data_size, uint8_t* d
 		{
 			if (cancel)
 			{
-				dci->scheduled = false;
+				dci->cancel = true;
 			}
-			else
-			{
-				dci->scheduled = true;
-			}
+
 			num++;
 		}
+	}
+
+	if (num < 2)
+	{
+		LOG_ERROR(MAC, "ue rnti:%u, has no dci or sch", rnti);
 	}
 
 	return true;
@@ -431,14 +434,14 @@ void pre_assign_rbs(const frame_t frame, const sub_frame_t subframe)
 {
 	bool scheduled = false;
 	uint16_t mcs = 0;
-	uint16_t cqi = 0;
+	//uint16_t cqi = 0;
 	mac_info_s *mac = g_sch_mac;
 	uint8_t harqId = get_harqId(subframe);
 	ueInfo* ue = NULL;
 	uint32_t rbg_size = get_rbg_size(mac->bandwith);
 	uint32_t rb_max = get_rb_num(mac->bandwith);
 	uint32_t rbs_req = 0;
-	uint32_t tbs = get_tbs(mcs, rbg_size);
+	uint32_t tbs = 0;
 
 	for (uint32_t i = 0; i < MAX_UE; i++)
 	{
@@ -452,10 +455,12 @@ void pre_assign_rbs(const frame_t frame, const sub_frame_t subframe)
 		ue->sch_info.pre_rbs_alloc = 0;
 
 		rbs_req = 0;
-		cqi = ue->sch_info.cqi;
-		mcs = cqi_to_mcs(cqi);
+		//cqi = ue->sch_info.cqi;
+		//mcs = cqi_to_mcs(cqi);
 		mcs = ue->sch_info.mcs;
 		rbs_req = (mcs == 0) ? (uint32_t)mac->min_rbs_per_ue : rbg_size;
+
+		tbs = get_tbs(mcs, rbg_size);
 
 		if (ue->buffer.buffer_total > 0)
 		{
@@ -496,8 +501,8 @@ void pre_assign_rbs(const frame_t frame, const sub_frame_t subframe)
 
 		if (scheduled)
 		{
-			LOG_INFO(MAC, "pre assign rbs, ue rnti:%u, buffer_total:%u, crc:%u, reTx:%u", 
-				ue->rnti, ue->buffer.buffer_total, ue->sch_info.crc[harqId],ue->harq[harqId].reTx);
+			LOG_INFO(MAC, "pre_assign_rbs, ue rnti:%u, pre_tbs:%u, buffer_total:%u, crc:%u, reTx:%u", 
+				ue->rnti, ue->sch_info.pre_tbs,ue->buffer.buffer_total, ue->sch_info.crc[harqId],ue->harq[harqId].reTx);
 			add_to_scheduling_list0(i);
 		}
 	}
@@ -860,7 +865,7 @@ void handle_ue_result(ueInfo* ue, const sub_frame_t subframe)
 
 		for (j = 0; j < ue->lc_num; j++)
 		{
-			if (buffer->chan_id[i] == ue->lc_config[i].lc_id)
+			if (buffer->chan_id[i] == ue->lc_config[j].lc_id)
 			{
 				lc_config[i] = ue->lc_config[j];
 				break;
@@ -869,7 +874,7 @@ void handle_ue_result(ueInfo* ue, const sub_frame_t subframe)
 
 		if (j == ue->lc_num)
 		{
-			LOG_ERROR(MAC, "No logical channel find");
+			LOG_ERROR(MAC, "No logical channel find, lc_num:%u, j:%u",ue->lc_num,j);
 		}
 
 		lc_index[i] = i;
@@ -902,7 +907,7 @@ bool fill_dci_result(
 
 	if (cce_offset >= 0)
 	{
-		dci[dci_num].scheduled = false;
+		dci[dci_num].cancel = false;
 		dci[dci_num].rnti = rnti;
 		dci[dci_num].ueIndex = ueIndex;
 
@@ -932,9 +937,11 @@ void fill_sch_result(ueInfo* ue,
 	const uint8_t mcs, 
 	const uint8_t rv,
 	const uint8_t data_ind,
+	const uint8_t harqId,
+	const uint8_t ack,
 	const uint16_t pdu_len)
 {
-	sch[sch_num].scheduled = false;
+	sch[sch_num].cancel = false;
 	sch[sch_num].ueIndex = ue->ueIndex;
 	sch[sch_num].rnti = ue->rnti;
 	sch[sch_num].rb_start = rb_start;
@@ -943,8 +950,8 @@ void fill_sch_result(ueInfo* ue,
 	sch[sch_num].data_ind = data_ind; //TODO:
 	sch[sch_num].modulation = 1;//TODO: not define yet
 	sch[sch_num].rv = rv;
-	//sch[sch_num].harqId = 
-	//sch[sch_num].ack = 
+	sch[sch_num].harqId = harqId;
+	sch[sch_num].ack = ack;
 
 	sch[sch_num].pdu_len = pdu_len;
 }
@@ -952,7 +959,7 @@ void fill_sch_result(ueInfo* ue,
 uint8_t get_data_ind(ueInfo* ue, const uint8_t harqId)
 {
 	// 1:ACK/NACK; 2:DATA;  3:DATA + ACK/NACK
-	if ((ue->buffer.buffer_total > 0 || ue->harq[harqId].reTx)&& ue->sch_info.crc[harqId] > ECRC_NULL)
+	if ((ue->buffer.buffer_total > 0 || ue->harq[harqId].reTx) && ue->sch_info.crc[harqId] > ECRC_NULL)
 	{
 		return 3;
 	}
@@ -984,6 +991,7 @@ bool fill_schedule_result(ueInfo* ue, const sub_frame_t subframe)
 	uint8_t rv = 0;
 	uint8_t data_ind = get_data_ind(ue, harqId);// 1:ACK/NACK; 2:DATA;  3:DATA + ACK/NACK
 	uint16_t pdu_len = 0;
+	uint8_t ack = ue->sch_info.crc[harqId];
 
 	if (ue->harq[harqId].reTx)
 	{
@@ -1002,13 +1010,11 @@ bool fill_schedule_result(ueInfo* ue, const sub_frame_t subframe)
 		rv = 0;
 	}
 
-	LOG_INFO(MAC, "fill_schedule_result, mode:%u, rnti:%u", g_sch_mac->mode,ue->rnti);
-
 	ret = fill_dci_result(ue->ueIndex, ue->rnti, dci, dci_num, rb_num, rb_start, mcs, data_ind);
 
 	if (ret)
 	{
-		fill_sch_result(ue, sch, sch_num, rb_num, rb_start, mcs, rv, data_ind, pdu_len);
+		fill_sch_result(ue, sch, sch_num, rb_num, rb_start, mcs, rv, data_ind, harqId, ack, pdu_len);
 
 		dci_num++;
 		sch_num++;
@@ -1020,6 +1026,9 @@ bool fill_schedule_result(ueInfo* ue, const sub_frame_t subframe)
 
 	tx->dci_num = dci_num;
 	tx->sch_num = sch_num;
+
+	LOG_INFO(MAC, "fill_schedule_result, ret:%u, mode:%u, rnti:%u, dci_num:%u, sch_num:%u", 
+		ret, g_sch_mac->mode,ue->rnti, dci_num, sch_num);
 
 	return true;
 }
@@ -1158,8 +1167,8 @@ void mac_rlc_data_request(const frame_t frame, const sub_frame_t subframe)
 	{
 		if (message_send(TASK_D2D_RLC, msg, sizeof(msgDef)))
 		{
-			LOG_INFO(MAC, "LGC: MAC_RLC_DATA_REQ, MAC->RLC send msg!, num:%u, rnti:%u, tbs:%u,lcNum:%u,lcId:%u,lcSize:%u",
-				req->ue_num, req->rlc_data_request[0].rnti, 
+			LOG_INFO(MAC, "LGC: MAC_RLC_DATA_REQ, MAC->RLC send msg!, num:%u, lcNum:%u, rnti:%u, tbs:%u,lcNum:%u,lcId:%u,lcSize:%u",
+				req->ue_num, req->rlc_data_request[0].logic_chan_num, req->rlc_data_request[0].rnti, 
 				req->rlc_data_request[0].tb_size,
 				req->rlc_data_request[0].logic_chan_num,
 				req->rlc_data_request[0].logicchannel_id[0],
@@ -1217,7 +1226,7 @@ void send_pdcch_req(const frame_t frame, const sub_frame_t subframe)
 
 		for (uint32_t i = 0; i < dci_num; i++)
 		{
-			if (dci[i].scheduled == false)
+			if (dci[i].cancel == true)
 			{
 				continue;
 			}
@@ -1295,7 +1304,7 @@ void send_pusch_req(const frame_t frame, const sub_frame_t subframe)
 
 		for (uint32_t i = 0; i < sch_num; i++)
 		{			
-			if (sch[i].scheduled == false)
+			if (sch[i].cancel == true)
 			{
 				continue;
 			}
@@ -1315,8 +1324,11 @@ void send_pusch_req(const frame_t frame, const sub_frame_t subframe)
 
 		if (message_send(TASK_D2D_PHY_TX, msg, sizeof(msgDef)))
 		{
-			LOG_INFO(MAC, "LGC: MAC_PHY_PUSCH_SEND send. schnum:%u, common:%u, frame:%u, subframe:%u, num_pusch:%u, rnti:%u", 
-				sch_num, common_sch_num, req->frame, req->subframe, req->num, req->pusch[0].rnti);
+			LOG_INFO(MAC, "LGC: MAC_PHY_PUSCH_SEND send. schnum:%u, common:%u, frame:%u, subframe:%u, num_pusch:%u", 
+				sch_num, common_sch_num, req->frame, req->subframe, req->num);
+			LOG_INFO(MAC, "LGC: MAC_PHY_PUSCH_SEND send. rnti:%u, mcs:%u, data_ind:%u, rv:%u, harqId:%u, ack:%u, pduLen:%u", 
+				req->pusch[0].rnti, req->pusch[0].mcs,req->pusch[0].data_ind,req->pusch[0].rv,
+				req->pusch[0].harqId,req->pusch[0].ack,req->pusch[0].pdu_len);
 		}
 	}
 	else
@@ -1345,8 +1357,7 @@ void update_ue_result(const frame_t frame, const sub_frame_t subframe)
 
 		if (ue->temp == true)
 		{
-			ue->active = false;
-			ue->temp = false;
+			remove_ue(ueIndex, EMAC_DEST);
 		}
 
 		ue->buffer.lc_num = 0;
@@ -1362,7 +1373,7 @@ void update_ue_result(const frame_t frame, const sub_frame_t subframe)
 	}
 }
 
-void scheduler_data_reset(const frame_t frame, const sub_frame_t subframe)
+void scheduler_reset(const frame_t frame, const sub_frame_t subframe)
 {
 	tx_req_info* tx = &g_sch.tx_info;
 	tx_req_info* common = &g_sch.common;
@@ -1371,6 +1382,8 @@ void scheduler_data_reset(const frame_t frame, const sub_frame_t subframe)
 	tx->dci_num = 0;
 	common->sch_num = 0;
 	tx->sch_num = 0;
+
+	memset(&g_sch_mac->rb_available[0], 1, MAX_RBS);
 }
 
 void mac_scheduler()
@@ -1395,6 +1408,6 @@ void mac_scheduler()
 
 	update_ue_result(frame, subframe);
 
-	scheduler_data_reset(frame, subframe);
+	scheduler_reset(frame, subframe);
 }
 

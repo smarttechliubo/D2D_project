@@ -88,7 +88,7 @@ void rrcMsgHandler(msgDef* msg)
 }
 
 void rrc_sim_thread(msgDef* msg)
-{	
+{
 
 	if (!is_timer(msg))
 	{

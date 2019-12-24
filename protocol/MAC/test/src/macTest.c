@@ -40,6 +40,8 @@ uint32_t init_mac_sim()
 
 	init_mac();
 
+	//DebugOutSetLevel(RUN_DEBUG_LEVEL);
+
 	return 0;
 }
 
