@@ -168,14 +168,14 @@ uint16_t find_ue_by_ueId(const uint16_t ue_index)
 	return ueIndex;
 }
 
-ueInfo* add_new_ue(const rnti_t rnti, const uint16_t ueId, const uint16_t mode)
+ueInfo* add_new_ue(rnti_t rnti, const uint16_t ueId, const uint16_t mode)
 {
 	mac_info_s *mac = (mode == 0) ? g_context.mac : g_context.macd;
 	ueInfo *ue = NULL;
-	uint16_t ueIndex = INVALID_U16;
 	uint16_t cellId = mac->cellId;
+	uint16_t ueIndex = (mode == 0) ? find_ue(rnti) : find_ue(RA_RNTI);
 
-	if ((ueIndex = find_ue(rnti)) == INVALID_U16)
+	if (ueIndex == INVALID_U16)
 	{
 		ueIndex = new_index(mode);
 	}
@@ -393,7 +393,7 @@ void get_csi_paras(const uint16_t ueIndex, uint16_t* cqi_periodic)
 {
 	//ueInfo* ue = &g_context.mac->ue[ueIndex];
 }
-
+/*
 bool update_temp_ue_crc_result(const sub_frame_t subframe, const rnti_t rnti, const uint16_t crc)
 {
 	if (rnti != RA_RNTI)
@@ -413,7 +413,7 @@ bool update_temp_ue_crc_result(const sub_frame_t subframe, const rnti_t rnti, co
 
 	return true;
 }
-
+*/
 
 bool update_crc_result(const sub_frame_t subframe, const rnti_t rnti, const uint16_t crc)
 {

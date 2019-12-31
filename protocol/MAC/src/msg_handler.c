@@ -119,7 +119,7 @@ msgDef * message_receive_timeout(const task_id taskId, uint32_t timeout)
 
 	if (msg == NULL)
 	{
-		//LOG_ERROR(MAC, "message_receive_try, taskId:%u", taskId);
+		LOG_INFO(MAC, "message_receive_try, timer out no msg received taskId:%u", taskId);
 	}
 	else
 	{	

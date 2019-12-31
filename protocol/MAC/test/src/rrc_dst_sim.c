@@ -13,24 +13,27 @@
 #include "rrc_sim.h"
 #include "mytask.h"
 #include "messageDefine.h"
-#include "interface_rrc_mac.h"
 #include "interface_rrc_rlc.h"
 #include "d2d_message_type.h"
 #include "log.h"
 #include "msg_handler.h"
 #include "mac_osp_interface.h"
+#include "mac_testconfig.h"
 
 rrc_info g_rrc_dst;
 uint16_t g_ueId = 0;
 uint16_t g_waiting_active_time = 0;
+extern mac_testConfig g_TEST_CONFIG;
+extern mac_testUeConfig g_TEST_UE_CONFIG;
 
 
 void init_rrc_dst_sim()
 {
-	g_rrc_dst.cellId = 0;
 	g_rrc_dst.mode = 1;//source
 	g_rrc_dst.status = ERRC_NONE;
 	g_rrc_dst.num_ue = 0;
+	g_rrc_dst.init = g_TEST_CONFIG.init;
+	g_rrc_dst.bcch = g_TEST_CONFIG.bcch;
 
 	for (uint32_t i = 0; i < D2D_MAX_USER_NUM; i++)
 	{
@@ -90,13 +93,13 @@ bool dst_add_new_user(const uint16_t ueId, const rnti_t rnti)
 	return false;
 }
 
-void dst_user_setup_complete(const uint16_t ueId, const rnti_t rnti, const uint16_t flag, const uint16_t cause)
+void dst_user_setup_complete(const uint16_t ueId, const rnti_t rnti, const uint16_t cause)
 {
 	msgDef* msg = NULL;
 	rrc_rlc_data_ind *ind;
 	msgSize msg_size = sizeof(rrc_rlc_data_ind);
-	uint16_t data_size = sizeof(ccch_info);
-	ccch_info* ccch = (ccch_info *)mem_alloc(data_size);
+	uint16_t data_size = sizeof(rrc_setup_complete);
+	rrc_setup_complete* ccch = (rrc_setup_complete *)mem_alloc(data_size);
 
 	msg = new_message(RRC_RLC_DATA_IND, TASK_D2D_RRC, TASK_D2D_RLC, msg_size);
 
@@ -106,7 +109,9 @@ void dst_user_setup_complete(const uint16_t ueId, const rnti_t rnti, const uint1
 		ind->rb_type = RB_TYPE_SRB0;
 		ind->data_size = data_size;
 		ind->data_addr_ptr = (uint32_t*)ccch;
-		ccch->flag = flag;
+
+		ccch->mode = 1;
+		ccch->flag = 2;
 		ccch->cause = cause;
 		ccch->ueId = ueId;
 		ccch->rnti = rnti;
@@ -123,19 +128,21 @@ void dst_user_setup_complete(const uint16_t ueId, const rnti_t rnti, const uint1
 
 }
 
-void dst_user_setup(const uint16_t       ueId, const rnti_t rnti, const uint16_t cause)
+void dst_user_setup(rrc_setup* ccch)
 {
+	uint16_t cause = ccch->ccch.cause;
+	uint16_t ueId = ccch->ccch.ueId;
+	rnti_t rnti = ccch->ccch.rnti;
+
 	msgDef* msg = NULL;
 	rrc_mac_connnection_setup *setup;
 	msgSize msg_size = sizeof(rrc_mac_connnection_setup);
-
-	uint16_t flag = 2; // 0:setup req, 1:setup, 2:setup complete, 
 
 	rrc_ue_info* ue = find_dst_user(ueId);
 
 	if (ue == NULL)
 	{
-		dst_user_setup_complete(ueId, rnti, flag, 0);
+		dst_user_setup_complete(ueId, rnti, 0);
 		LOG_WARN(RRC, "dst ue:%u does not exist", ueId);
 		return;
 	}
@@ -147,21 +154,24 @@ void dst_user_setup(const uint16_t       ueId, const rnti_t rnti, const uint16_t
 
 	ue->setup_timer = 0;
 	ue->rnti = rnti;
+	ue->setup = ccch->setup;
 
 	msg = new_message(RRC_MAC_CONNECT_SETUP_CFG_REQ, TASK_D2D_RRC, TASK_D2D_MAC, msg_size);
 
 	if (msg != NULL)
 	{
 		setup = (rrc_mac_connnection_setup*)message_ptr(msg);
+		*setup = ccch->setup;
+
 		setup->mode = 1;
 		setup->rnti = rnti;
-		setup->ue_index = ue->ueId;
-		setup->maxHARQ_Tx = 4;
-		setup->max_out_sync = 4;
-		setup->logical_channel_num = 1;
-		setup->logical_channel_config[0].chan_type = DTCH;
-		setup->logical_channel_config[0].priority = 15;
-		setup->logical_channel_config[0].logical_channel_id = 1;
+		//setup->ue_index = ue->ueId;
+		//setup->maxHARQ_Tx = 4;
+		//setup->max_out_sync = 4;
+		//setup->logical_channel_num = 1;
+		//setup->logical_channel_config[0].chan_type = DTCH;
+		//setup->logical_channel_config[0].priority = 15;
+		//setup->logical_channel_config[0].logical_channel_id = 1;
 
 		if (message_send(TASK_D2D_MAC, msg, sizeof(msgDef)))
 		{
@@ -173,13 +183,13 @@ void dst_user_setup(const uint16_t       ueId, const rnti_t rnti, const uint16_t
 	
 }
 
-void dst_user_setup_req(const uint16_t ueId, const uint16_t flag)
+void dst_user_setup_req(const uint16_t ueId)
 {
 	msgDef* msg = NULL;
 	rrc_rlc_data_ind *ind;
 	msgSize msg_size = sizeof(rrc_rlc_data_ind);
-	uint16_t data_size = sizeof(ccch_info);
-	ccch_info* ccch = (ccch_info *)mem_alloc(data_size);
+	uint16_t data_size = sizeof(rrc_setup_req);
+	rrc_setup_req* ccch = (rrc_setup_req *)mem_alloc(data_size);
 
 	if (!dst_add_new_user(ueId, INVALID_U16))
 	{
@@ -196,7 +206,9 @@ void dst_user_setup_req(const uint16_t ueId, const uint16_t flag)
 			ind->rb_type = RB_TYPE_SRB0;
 			ind->data_size = data_size;
 			ind->data_addr_ptr = (uint32_t*)ccch;
-			ccch->flag = flag;
+
+			ccch->mode = 1;
+			ccch->flag = 0;
 			ccch->ueId = ueId;
 			ccch->rnti = RA_RNTI;
 
@@ -218,7 +230,6 @@ void dst_user_setup_cfm(const mac_rrc_connection_cfm *cfm)
 	rnti_t rnti = cfm->rnti;
 	uint16_t  status = cfm->status;
 	rrc_ue_info* ue = NULL;
-	uint16_t flag = 2; // 0:setup req, 1:setup, 2:setup complete, 
 	uint16_t cause = 0;
 
 	ue  = find_dst_user(ueId);
@@ -243,7 +254,7 @@ void dst_user_setup_cfm(const mac_rrc_connection_cfm *cfm)
 		ue->status = ERRC_UE_SETUP_COMPLETE;
 	}
 
-	dst_user_setup_complete(ueId, rnti, flag, cause);
+	dst_user_setup_complete(ueId, rnti, cause);
 
 }
 
@@ -252,8 +263,8 @@ void dst_user_start(rrc_ue_info* ue)
 	msgDef* msg = NULL;
 	rrc_rlc_data_ind *ind;
 	msgSize msg_size = sizeof(rrc_rlc_data_ind);
-	uint16_t data_size = sizeof(ccch_info);
-	ccch_info* ccch = (ccch_info *)mem_alloc(data_size);
+	uint16_t data_size = sizeof(rrc_setup);
+	rrc_setup* setup = (rrc_setup *)mem_alloc(data_size);
 
 	msg = new_message(RRC_RLC_DATA_IND, TASK_D2D_RRC, TASK_D2D_RLC, msg_size);
 
@@ -262,10 +273,14 @@ void dst_user_start(rrc_ue_info* ue)
 		ind = (rrc_rlc_data_ind*)message_ptr(msg);
 		ind->rb_type = RB_TYPE_SRB0;
 		ind->data_size = data_size;
-		ind->data_addr_ptr = (uint32_t*)ccch;
-		ccch->flag = 4;
-		ccch->ueId = ue->ueId;
-		ccch->rnti = ue->rnti;
+		ind->data_addr_ptr = (uint32_t*)setup;
+
+		setup->ccch.mode = 1;
+		setup->ccch.flag = 4;
+		setup->ccch.ueId = ue->ueId;
+		setup->ccch.rnti = ue->rnti;
+
+		setup->setup = ue->setup;
 
 		if (message_send(TASK_D2D_RLC, msg, sizeof(msgDef)))
 		{
@@ -286,11 +301,9 @@ void handle_ccch_rpt_dst(mac_rrc_ccch_rpt *rpt)
 	sub_frame_t subframe = rpt->subsfn;
 	ccch_info* ccch = (ccch_info*)rpt->data_ptr;
 	uint32_t flag = ccch->flag; // 0:setup req, 1:setup, 2:setup complete
-	uint16_t cause = ccch->cause;
-	uint16_t ueId = ccch->ueId;
 	rnti_t rnti = ccch->rnti;
 
-	LOG_INFO(RRC, "ccch msg received. frame:%u, subframe:%u, flag:%u, rnti:%u", frame, subframe, flag, rnti);
+	LOG_INFO(RRC, "dst ccch msg received. frame:%u, subframe:%u, flag:%u, rnti:%u", frame, subframe, flag, rnti);
 
 	if (flag == 0)// 0:setup req
 	{
@@ -298,10 +311,11 @@ void handle_ccch_rpt_dst(mac_rrc_ccch_rpt *rpt)
 	}
 	else if (flag == 1)// 1:setup
 	{
-		dst_user_setup(ueId, rnti, cause);
+		dst_user_setup((rrc_setup*)ccch);
 	}
 	else if (flag == 2)// 2:setup complete
 	{
+		LOG_ERROR(RRC, "src_ueser, unexpect state");
 	}
 	else
 	{
@@ -323,11 +337,14 @@ void rrcDstStatusHandler()
 		if (msg != NULL)
 		{
 			req = (rrc_mac_initial_req*)message_ptr(msg);
-			req->cellId = 0;
-			req->bandwith = 1;
-			req->pdcch_config.rb_num = 2;
-			req->pdcch_config.rb_start_index = 2;
-			req->subframe_config = 0;
+
+			memcpy(req, &g_rrc_dst.init, sizeof(rrc_mac_initial_req));
+
+			//req->cellId = 0;
+			//req->bandwith = 1;
+			//req->pdcch_config.rb_num = 2;
+			//req->pdcch_config.rb_start_index = 2;
+			//req->subframe_config = 0;
 			req->mode = 1;
 
 			if (message_send(TASK_D2D_MAC, msg, sizeof(msgDef)))
@@ -343,39 +360,6 @@ void rrcDstStatusHandler()
 			LOG_ERROR(RRC, "[TEST]: new rrc message fail!");
 		}
 	}
-/*
-	if (g_rrc_dst.status == ERRC_INITAIL_CFM)
-	{
-		rrc_mac_bcch_para_config_req *req;
-		msgSize msg_size = sizeof(rrc_mac_bcch_para_config_req);
-
-		msg = new_message(RRC_MAC_BCCH_PARA_CFG_REQ, TASK_D2D_RRC, TASK_D2D_MAC, msg_size);
-
-		if (msg != NULL)
-		{
-			uint8_t *sib_pdu = (uint8_t *)mem_alloc(8);
-
-			req = (rrc_mac_bcch_para_config_req*)message_ptr(msg);
-			req->flag = 3;
-			req->mib.systemFrameNumber = 0;
-			req->mib.pdcch_config.rb_num = 2;
-			req->mib.pdcch_config.rb_start_index = 2;
-			req->sib.size = 8;
-			req->sib.sib_pdu = sib_pdu;
-
-			memset(req->sib.sib_pdu, 0xFE, req->sib.size);
-			
-			if (message_send(TASK_D2D_MAC, msg, sizeof(msgDef)))
-			{
-				LOG_INFO(RRC, "rrc_mac_bcch_para_config_req send");
-			}
-		}
-		else
-		{
-			LOG_ERROR(RRC, "[TEST]: new rrc message fail!");
-		}
-	}
-*/
 }
 
 
@@ -384,18 +368,23 @@ void rrcDstUserStatusHandler()
 	uint16_t ueId = 0;
 	uint16_t num_ue = 0;
 	rrc_ue_info* ue = NULL;
-	uint16_t flag = 2; // 0:setup req, 1:setup, 2:setup complete, 
 	uint16_t cause = 0;
 
 	if (g_rrc_dst.status == ERRC_INITAIL_CFM)
 	{
 		g_rrc_dst.status = ERRC_DONE;
+	}
 
-		if (g_rrc_dst.num_ue == 0)
+	if (g_rrc_dst.status == ERRC_DONE)
+	{
+		if (g_TEST_UE_CONFIG.ue_num > 0)
 		{
-			ueId = g_ueId++;
+			if (g_rrc_dst.num_ue == 0)
+			{
+				ueId = g_ueId++;
 
-			dst_user_setup_req(ueId, 0);
+				dst_user_setup_req(ueId);
+			}
 		}
 	}
 
@@ -415,7 +404,7 @@ void rrcDstUserStatusHandler()
 			if (ue->setup_timer >= 10)
 			{
 				cause = 0;
-				dst_user_setup_complete(ueId, ue->rnti, flag, cause);
+				dst_user_setup_complete(ueId, ue->rnti, cause);
 				remove_dst_user(ue);
 			}
 		}
@@ -425,7 +414,7 @@ void rrcDstUserStatusHandler()
 
 			LOG_INFO(RRC, "dst g_waiting_active_time:%u", g_waiting_active_time);
 
-			if (g_waiting_active_time > 10)//should not be actived before waiting a while
+			if (g_waiting_active_time > 4)//should not be actived before waiting a while
 			{
 				g_waiting_active_time = 0;
 				ue->status = ERRC_UE_CONNECT;

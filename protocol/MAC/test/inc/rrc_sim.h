@@ -13,6 +13,7 @@
 #include "typedef.h"
 #include "mac_defs.h"
 #include "msg_handler.h"
+#include "interface_rrc_mac.h"
 
 typedef enum
 {
@@ -36,6 +37,7 @@ typedef enum
 
 typedef struct
 {
+	uint32_t mode;
 	uint16_t flag; // 0:setup req, 1:setup, 2:setup complete, 3: src user done, 4: dst user done
 	uint16_t cause;//0:faiul, 1:success
 	uint16_t ueId;
@@ -44,11 +46,22 @@ typedef struct
 
 typedef struct
 {
+	ccch_info ccch;
+	rrc_mac_connnection_setup setup;
+}rrc_setup;
+
+typedef ccch_info rrc_setup_req;
+typedef ccch_info rrc_setup_complete;
+
+typedef struct
+{
 	uint16_t ueId;
 	uint16_t rnti;
 	uint16_t mode; //0:source, 1:destination
 	uint16_t setup_timer; // setup waiting timer
 	rrc_ue_status_e status;
+
+	rrc_mac_connnection_setup setup;
 }rrc_ue_info;
 
 typedef struct
@@ -57,8 +70,10 @@ typedef struct
 	sub_frame_t  subframe;
 	rrc_status_e status;
 	uint16_t     mode;//0:source, 1:destination
-	uint16_t     cellId;
-	uint16_t     bandwith;
+
+	rrc_mac_initial_req init;
+
+	rrc_mac_bcch_para_config_req bcch;
 
 	uint16_t     num_ue;
 	rrc_ue_info ue[D2D_MAX_USER_NUM];

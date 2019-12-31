@@ -296,6 +296,7 @@ void handle_rlc_data_ind()
 		{
 			rlc_mac_data_ind *ind = (rlc_mac_data_ind *)message_ptr(msg);
 
+			LOG_INFO(MAC, "RLC_MAC_DATA_IND ");
 			handle_rlc_data_result(ind);
 			break;
 		}
@@ -501,6 +502,7 @@ void pre_assign_rbs(const frame_t frame, const sub_frame_t subframe)
 
 		if (scheduled)
 		{
+			scheduled = false;
 			LOG_INFO(MAC, "pre_assign_rbs, ue rnti:%u, pre_tbs:%u, buffer_total:%u, crc:%u, reTx:%u", 
 				ue->rnti, ue->sch_info.pre_tbs,ue->buffer.buffer_total, ue->sch_info.crc[harqId],ue->harq[harqId].reTx);
 			add_to_scheduling_list0(i);

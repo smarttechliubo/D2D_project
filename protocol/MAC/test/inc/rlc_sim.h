@@ -13,6 +13,7 @@
 #include "typedef.h"
 #include "d2d_system_global.h"
 #include "interface_rrc_rlc.h"
+#include "messageDefine.h"
 
 typedef struct
 {
@@ -40,6 +41,16 @@ typedef struct
 	uint16_t    num_ue;
 	rlc_ue_info ue[D2D_MAX_USER_NUM];
 }rlc_info;
+
+void init_rlc_src_sim();
+void init_rlc_dst_sim();
+void rlcSrcMsgHandler(msgDef* msg);
+void rlcDstMsgHandler(msgDef* msg);
+uint32_t generate_mac_header(uint32_t num_sdus,
+	uint32_t sdu_lcids[MAX_LOGICCHAN_NUM],
+	uint32_t sdu_sizes[MAX_LOGICCHAN_NUM],
+	uint8_t *dataptr,
+	uint32_t padding);
 
 #endif /* _SMARTLOGICTECH_PROTOCOL_MAC_TEST_RLC_SIM_H_ */
 

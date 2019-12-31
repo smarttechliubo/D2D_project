@@ -13,21 +13,24 @@
 #include "rrc_sim.h"
 #include "mytask.h"
 #include "messageDefine.h"
-#include "interface_rrc_mac.h"
 #include "interface_rrc_rlc.h"
 #include "d2d_message_type.h"
 #include "log.h"
 #include "msg_handler.h"
 #include "mac_osp_interface.h"
+#include "mac_testconfig.h"
 
 rrc_info g_rrc_src;
+extern mac_testConfig g_TEST_CONFIG;
+extern mac_testUeConfig g_TEST_UE_CONFIG;
 
 void init_rrc_src_sim()
 {
-	g_rrc_src.cellId = 0;
 	g_rrc_src.mode = 0;//source
 	g_rrc_src.status = ERRC_NONE;
 	g_rrc_src.num_ue = 0;
+	g_rrc_src.init = g_TEST_CONFIG.init;
+	g_rrc_src.bcch = g_TEST_CONFIG.bcch;
 
 	for (uint32_t i = 0; i < D2D_MAX_USER_NUM; i++)
 	{
@@ -60,7 +63,7 @@ void remove_src_user(rrc_ue_info* ue)
 	ue->setup_timer = 0;
 }
 
-bool src_add_new_user(const uint16_t ueId, const rnti_t rnti)
+rrc_ue_info* src_add_new_user(const uint16_t ueId, const rnti_t rnti)
 {
 	rrc_ue_info* ue = NULL;
 
@@ -76,20 +79,22 @@ bool src_add_new_user(const uint16_t ueId, const rnti_t rnti)
 			ue->setup_timer = 0;
 			ue->status = ERRC_UE_SETUP;
 
-			return true;
+			ue->setup = g_TEST_UE_CONFIG.ue[0];
+
+			return ue;
 		}
 	}
 
-	return false;
+	return NULL;
 }
 
-void src_user_setup(const uint16_t ueId, const rnti_t rnti, const uint16_t flag, const uint16_t cause)
+void src_user_setup(rrc_ue_info* ue, const uint16_t ueId, const rnti_t rnti, const uint16_t flag, const uint16_t cause)
 {
 	msgDef* msg = NULL;
 	rrc_rlc_data_ind *ind;
 	msgSize msg_size = sizeof(rrc_rlc_data_ind);
-	uint16_t data_size = sizeof(ccch_info);
-	ccch_info* ccch = (ccch_info *)mem_alloc(data_size);
+	uint16_t data_size = sizeof(rrc_setup);
+	rrc_setup* ccch = (rrc_setup *)mem_alloc(data_size);
 
 	msg = new_message(RRC_RLC_DATA_IND, TASK_D2D_RRC, TASK_D2D_RLC, msg_size);
 
@@ -99,10 +104,15 @@ void src_user_setup(const uint16_t ueId, const rnti_t rnti, const uint16_t flag,
 		ind->rb_type = RB_TYPE_SRB0;
 		ind->data_size = data_size;
 		ind->data_addr_ptr = (uint32_t*)ccch;
-		ccch->flag = flag;
-		ccch->cause = cause;
-		ccch->ueId = ueId;
-		ccch->rnti = rnti;
+
+		ccch->ccch.mode = 0;
+		ccch->ccch.flag = flag;
+		ccch->ccch.cause = cause;
+		ccch->ccch.ueId = ueId;
+		ccch->ccch.rnti = rnti;
+
+		if (ue != NULL)
+			ccch->setup = ue->setup;
 
 		if (message_send(TASK_D2D_RLC, msg, sizeof(msgDef)))
 		{
@@ -119,16 +129,18 @@ void src_user_setup_req(uint16_t ueId)
 {
 	msgDef* msg = NULL;
 	rrc_mac_connnection_setup* setup;
-	msgSize msg_size = sizeof(rrc_mac_initial_req);
+	msgSize msg_size = sizeof(rrc_mac_connnection_setup);
 
 	uint16_t flag = 1; // 0:setup req, 1:setup, 2:setup complete, 
 	uint16_t cause = 0;
 
-	if (!src_add_new_user(ueId, INVALID_U16))
-	{
-		src_user_setup(ueId, INVALID_U16, flag, cause);
+	rrc_ue_info* ue = src_add_new_user(ueId, INVALID_U16);
 
-		LOG_ERROR(MAC, "src user setup fail");
+	if (ue == NULL)
+	{
+		src_user_setup(NULL, ueId, INVALID_U16, flag, cause);
+
+		LOG_ERROR(RRC, "src user setup fail");
 		return;
 	}
 
@@ -137,14 +149,19 @@ void src_user_setup_req(uint16_t ueId)
 	if (msg != NULL)
 	{
 		setup = (rrc_mac_connnection_setup*)message_ptr(msg);
-		setup->mode = 0;
-		setup->ue_index = ueId;
-		setup->maxHARQ_Tx = 4;
-		setup->max_out_sync = 4;
-		setup->logical_channel_num = 1;
-		setup->logical_channel_config[0].chan_type = DTCH;
-		setup->logical_channel_config[0].priority = 15;
-		setup->logical_channel_config[0].logical_channel_id = 1;
+
+		memcpy(setup, &ue->setup, sizeof(rrc_mac_connnection_setup));
+
+		LOG_INFO(RRC, "src_user_setup_req mode:%u, rnti:%u, macHarq:%u", setup->mode, setup->rnti,setup->maxHARQ_Tx);
+
+		//setup->mode = 0;
+		//setup->ue_index = ueId;
+		//setup->maxHARQ_Tx = 4;
+		//setup->max_out_sync = 4;
+		//setup->logical_channel_num = 1;
+		//setup->logical_channel_config[0].chan_type = DTCH;
+		//setup->logical_channel_config[0].priority = 15;
+		//setup->logical_channel_config[0].logical_channel_id = 1;
 
 		if (message_send(TASK_D2D_MAC, msg, sizeof(msgDef)))
 		{
@@ -186,7 +203,7 @@ void src_user_setup_cfm(const mac_rrc_connection_cfm *cfm)
 		ue->setup_timer = 0;
 	}
 
-	src_user_setup(ueId, ue->rnti, flag, cause);
+	src_user_setup(ue, ueId, cfm->rnti, flag, cause);
 }
 
 void src_user_start(rrc_ue_info* ue)
@@ -194,8 +211,8 @@ void src_user_start(rrc_ue_info* ue)
 	msgDef* msg = NULL;
 	rrc_rlc_data_ind *ind;
 	msgSize msg_size = sizeof(rrc_rlc_data_ind);
-	uint16_t data_size = sizeof(ccch_info);
-	ccch_info* ccch = (ccch_info *)mem_alloc(data_size);
+	uint16_t data_size = sizeof(rrc_setup);
+	rrc_setup* setup = (rrc_setup *)mem_alloc(data_size);
 
 	msg = new_message(RRC_RLC_DATA_IND, TASK_D2D_RRC, TASK_D2D_RLC, msg_size);
 
@@ -204,10 +221,13 @@ void src_user_start(rrc_ue_info* ue)
 		ind = (rrc_rlc_data_ind*)message_ptr(msg);
 		ind->rb_type = RB_TYPE_SRB0;
 		ind->data_size = data_size;
-		ind->data_addr_ptr = (uint32_t*)ccch;
-		ccch->flag = 3;
-		ccch->ueId = ue->ueId;
-		ccch->rnti = ue->rnti;
+		ind->data_addr_ptr = (uint32_t*)setup;
+
+		setup->ccch.mode = 0;
+		setup->ccch.flag = 3;
+		setup->ccch.ueId = ue->ueId;
+		setup->ccch.rnti = ue->rnti;
+		setup->setup = ue->setup;
 
 		if (message_send(TASK_D2D_RLC, msg, sizeof(msgDef)))
 		{
@@ -289,12 +309,15 @@ void rrcSrcStatusHandler()
 		if (msg != NULL)
 		{
 			req = (rrc_mac_initial_req*)message_ptr(msg);
-			req->cellId = 0;
-			req->bandwith = 1;
-			req->pdcch_config.rb_num = 2;
-			req->pdcch_config.rb_start_index = 2;
-			req->subframe_config = 0;
-			req->mode = 0;
+
+			memcpy(req, &g_rrc_src.init, sizeof(rrc_mac_initial_req));
+
+			//req->cellId =                      g_TEST_CONFIG.cellId;
+			//req->bandwith =                    g_TEST_CONFIG.bandwith;
+			//req->pdcch_config.rb_num =         g_TEST_CONFIG.rb_num;
+			//req->pdcch_config.rb_start_index = g_TEST_CONFIG.rb_start_index;
+			//req->subframe_config =             g_TEST_CONFIG.subframe_config;
+			req->mode =   0;//                     g_TEST_CONFIG.mode;
 
 			if (message_send(TASK_D2D_MAC, msg, sizeof(msgDef)))
 			{
@@ -319,17 +342,20 @@ void rrcSrcStatusHandler()
 
 		if (msg != NULL)
 		{
-			uint8_t *sib_pdu = (uint8_t *)mem_alloc(8);
+			//uint8_t *sib_pdu = (uint8_t *)mem_alloc(8);
 
 			req = (rrc_mac_bcch_para_config_req*)message_ptr(msg);
-			req->flag = 1;
-			req->mib.systemFrameNumber = 0;
-			req->mib.pdcch_config.rb_num = 2;
-			req->mib.pdcch_config.rb_start_index = 2;
-			req->sib.size = 8;
-			req->sib.sib_pdu = sib_pdu;
 
-			memset(req->sib.sib_pdu, 0xFE, req->sib.size);
+			memcpy(req, &g_rrc_src.bcch, sizeof(rrc_mac_bcch_para_config_req));
+
+			//req->flag =                            g_TEST_CONFIG.flag;
+			//req->mib.systemFrameNumber =           g_TEST_CONFIG.systemFrameNumber;
+			//req->mib.pdcch_config.rb_num =         g_TEST_CONFIG.rb_num;
+			//req->mib.pdcch_config.rb_start_index = g_TEST_CONFIG.rb_start_index;
+			//req->sib.size =                        g_TEST_CONFIG.size;
+			//req->sib.sib_pdu = sib_pdu;
+
+			//memset(req->sib.sib_pdu, 0xFE, req->sib.size);
 			
 			if (message_send(TASK_D2D_MAC, msg, sizeof(msgDef)))
 			{
@@ -343,6 +369,7 @@ void rrcSrcStatusHandler()
 		}
 	}
 }
+
 void rrcSrcUserStatusHandler()
 {
 	uint16_t num_ue = g_rrc_src.num_ue;
@@ -366,7 +393,7 @@ void rrcSrcUserStatusHandler()
 		if (ue->setup_timer >= 10)
 		{
 			cause = 0;
-			src_user_setup(ueId, INVALID_U16, flag, cause);
+			src_user_setup(ue, ueId, INVALID_U16, flag, cause);
 			remove_src_user(ue);
 		}
 	}

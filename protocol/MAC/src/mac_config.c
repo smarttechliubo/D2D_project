@@ -189,8 +189,8 @@ void handle_rrc_msg(msgDef *msg)
 		{
 			rrc_mac_connnection_setup *req = (rrc_mac_connnection_setup *)message_ptr(msg);
 
-			LOG_INFO(MAC, "RRC_MAC_CONNECT_SETUP_CFG_REQ, ue_index:%u, maxHARQ_Tx:%u", 
-				req->ue_index,req->maxHARQ_Tx);
+			LOG_INFO(MAC, "RRC_MAC_CONNECT_SETUP_CFG_REQ, mode:%u, ue_index:%u, maxHARQ_Tx:%u", 
+				req->mode, req->ue_index,req->maxHARQ_Tx);
 
 			mac_user_setup(req);
 			break;
