@@ -35,6 +35,8 @@ typedef enum
 }subframeconfig_e; 
 
 
- 
+
+extern uint32_t   Get_Subsfn( ); 
+extern uint32_t   Get_Frame( );
 
 #endif

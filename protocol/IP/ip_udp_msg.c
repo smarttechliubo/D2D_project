@@ -241,20 +241,23 @@ void ip_udp_task( )
 			
 			inet_ntop(AF_INET,&PC_addr_src.sin_addr.s_addr, pc_addr_ip,sizeof(pc_addr_ip));
 			//LOG_DEBUG(IP,"message buffer = %s\n",msg_buffer);
+			 LOG_INFO(IP_UDP,"channel:0 -- receive data no.: %d \n",g_udp_recv_cnt[0]++);
+			 LOG_ERROR(IP_UDP,"channel:0 --data_length = %d, send data no.: %d \n",recv_length,g_udp_send_cnt[0]);
 
 			if (0 == errno)
 	 		{
 		       // LOG_DEBUG(IP,"receive data from ip:%s, port: %d, length:%d ! \n",pc_addr_ip,ntohs(PC_addr_src.sin_port),recv_length);
-				LOG_INFO(IP_UDP,"channel:0 -- receive data no.: %d \n",g_udp_recv_cnt[0]++);
-				LOG_ERROR(IP_UDP,"channel:0 --data_length = %d, send data no.: %d \n",recv_length,g_udp_send_cnt[0]);
+				
 #ifdef RLC_UT_DEBUG
-				//! 组包消息，向RLC 发送消息
+
+     		//! 组包消息，向RLC 发送消息
 				Ip_Rlc_Data_Send(RB_TYPE_DRB,
 								3,
 								0X65,
 								g_udp_send_cnt[0],
 								msg_buffer,
 								recv_length); 
+			
 				
 #else 
 				//sendto(sockfd_2,msg_buffer,recv_length,0,SA&PC_addr_dst,sizeof(PC_addr_dst));

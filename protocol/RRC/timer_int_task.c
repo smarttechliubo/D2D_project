@@ -69,7 +69,7 @@ void timer_int_task(MessageDef *recv_msg)
 				g_d2d_sfn = g_d2d_sfn % 1024; 
 			}
 			//if ((g_ut_timer_cnt % 4) < 2)//!模拟DDUU 
-			if ((g_udp_send_cnt[0] % 1) == 0)
+			if (((g_udp_send_cnt[0] % 1) == 0) && (g_udp_send_cnt[0] < 2048))
 			{
 				mac_Rlc_Bufstat_Req(g_d2d_sfn,g_d2d_subsfn);
 			}
@@ -78,5 +78,19 @@ void timer_int_task(MessageDef *recv_msg)
 
     itti_free_message(recv_msg);
 }
+
+
+uint32_t   Get_Subsfn( )
+{
+	return g_d2d_subsfn;
+
+}
+
+uint32_t   Get_Frame( )
+{
+	return g_d2d_sfn;
+
+}
+
  
 /**************************function******************************/

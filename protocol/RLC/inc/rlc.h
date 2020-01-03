@@ -70,7 +70,7 @@
   (Ctxt_Pp)->subframe  = sUBfRAME; \
   (Ctxt_Pp)->eNB_index  = eNB_iNDEX; \
 
-#define PROTOCOL_CTXT_TIME_MILLI_SECONDS(CtXt_h) ((CtXt_h)->frame*10+(CtXt_h)->subframe)
+#define PROTOCOL_CTXT_TIME_MILLI_SECONDS(CtXt_h) (Get_Frame() *10+ Get_Subsfn())
 
 
 typedef enum rlc_confirm_e {

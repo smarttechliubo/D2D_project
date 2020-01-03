@@ -106,7 +106,7 @@ void rrc_Mac_BcchPara_Config(uint16_t mib_or_sib1,void *bcch_info)
 void rrc_Mac_ConnectSetup_Config(uint16_t mode, rnti_t ue_rnti , 
 										  uint16_t ue_index, uint16_t max_harq_tx,
 										  uint16_t max_out_sync,uint16_t logicch_num, 
-										  logical_channel_config_s *LogicChannelConfigPtr )
+										  logical_channel_config_s *LogicChannelConfigPtr)
 {
 
 

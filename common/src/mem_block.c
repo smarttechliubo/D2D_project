@@ -181,7 +181,7 @@ void   *pool_buffer_clean (void *arg)
   return 0;
 }
 //-----------------------------------------------------------------------------
-void  free_mem_block (mem_block_t * leP, const char* caller)
+void  free_mem_block (mem_block_t * leP, const char* caller,uint32_t line)
 {
   //-----------------------------------------------------------------------------
 #ifndef USING_OSP_LIB
@@ -224,17 +224,17 @@ void  free_mem_block (mem_block_t * leP, const char* caller)
 
 #else 
 	if (!(leP)) {
-	  AssertFatal(0, DRIVER," FREE NULL MEM_BLOCK,ERROR, caller: %s\n",caller);
+	  AssertFatal(0, DRIVER," FREE NULL MEM_BLOCK,ERROR, caller: %s,line:%d\n",caller,line);
 	}
 
 	OSP_Free_Mem((char *)leP);
-	LOG_DEBUG(DRIVER,"FREE MEM_BLOCK, caller:%s",caller); 
+	LOG_DEBUG(DRIVER,"FREE MEM_BLOCK, caller:%s,line:%d\n",caller,line); 
 
 #endif 
 }
 
 //-----------------------------------------------------------------------------
-mem_block_t   *get_free_mem_block(uint32_t sizeP, const char* caller)
+mem_block_t   *get_free_mem_block(uint32_t sizeP, const char* caller, uint32_t line)
 {
 #ifndef USING_OSP_LIB
   //-----------------------------------------------------------------------------
@@ -311,10 +311,10 @@ mem_block_t   *get_free_mem_block(uint32_t sizeP, const char* caller)
 	char *alloc_buffer = NULL; 
 	uint16_t  offset = sizeof(mem_block_t);
 	alloc_buffer = OSP_Alloc_Mem(sizeP  + offset); 
-	LOG_DEBUG(DRIVER,"OSP_Alloc_Mem = %d,alloc_addr = %x, offset = %d,caller:%s \n",sizeP  + offset,alloc_buffer,offset,caller);
+	LOG_DEBUG(DRIVER,"OSP_Alloc_Mem = %d,alloc_addr = %x, offset = %d,caller:%s,line:%d \n",sizeP  + offset,alloc_buffer,offset,caller,line);
 	if (alloc_buffer == NULL)
 	{
-		AssertFatal(0, DRIVER, "get_free_mem_block failed,caller: %s \n", caller);
+		AssertFatal(0, DRIVER, "get_free_mem_block failed,caller: %s,line:%d \n", caller,line);
     }
     else
     {

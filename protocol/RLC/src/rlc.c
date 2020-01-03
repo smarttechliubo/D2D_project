@@ -275,7 +275,7 @@ void  rlc_ue_data_status_update(rnti_t rnti,
 
 	AssertFatal(g_rlc_buffer_status[ue_index].valid_flag == 1, RLC, "ue_index, %due_rnti must be valid for status update! \n",ue_index); 
 
-	LOG_ERROR(RLC_TX, "ue_index].data_size[logical_chan_id]  = %d\n",g_rlc_buffer_status[ue_index].data_size[logical_chan_id]);
+	LOG_ERROR(RLC_TX, "ue_index.data_size[logical_chan_id]  = %d\n",g_rlc_buffer_status[ue_index].data_size[logical_chan_id]);
 	g_rlc_buffer_status[ue_index].data_size[logical_chan_id] -= send_data_size; 
 
     
@@ -402,6 +402,10 @@ void   rlc_Set_Buffer_Status(rnti_t rnti,
 	//pthread_mutex_unlock(&g_rlc_buffer_mutex); 
 
 }
+
+
+
+
 
 
 /**************************function******************************/

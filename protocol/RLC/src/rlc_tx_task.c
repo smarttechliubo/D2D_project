@@ -77,7 +77,7 @@ void mac_Rlc_data_Rpt(uint16_t frame, uint16_t subsfn,uint16_t valid_ue_num, mac
 	                       ( char *)mac_rlc_data_rpt_ptr, sizeof(mac_rlc_data_rpt));
 
 	itti_send_msg_to_task(TASK_D2D_RLC_RX,  0, message);
-	LOG_DEBUG(RLC_TX, "-------------------------\n");
+	
 	
 	
 }
@@ -177,7 +177,7 @@ rlc_op_status_t rlc_get_tx_data(const protocol_ctxt_t *const ctxt_pP,
 #ifdef AM_ENABLE 
 	case RLC_MODE_AM:
 	  //!申请新的内存
-	  new_sdu_p = get_free_mem_block (sdu_sizeP + sizeof (struct rlc_am_data_req_alloc), __func__);
+	  new_sdu_p = get_free_mem_block (sdu_sizeP + sizeof (struct rlc_am_data_req_alloc), __func__,__LINE__);
 
 	  if (new_sdu_p != NULL) {
 		// PROCESS OF COMPRESSION HERE:
@@ -218,7 +218,7 @@ rlc_op_status_t rlc_get_tx_data(const protocol_ctxt_t *const ctxt_pP,
 #endif
     
 	  //！这里申请出来的data 的首地址指向的是包含了rlc_um_data_req_alloc这个结构体的
-	  new_sdu_p = get_free_mem_block (sdu_sizeP + sizeof (struct rlc_um_tx_sdu_management), __func__);
+	  new_sdu_p = get_free_mem_block (sdu_sizeP + sizeof (struct rlc_um_tx_sdu_management), __func__,__LINE__);
       
 
 
@@ -263,7 +263,7 @@ rlc_op_status_t rlc_get_tx_data(const protocol_ctxt_t *const ctxt_pP,
 	case RLC_MODE_TM:
      
 	  //！申请Mem时，增加了size: sizeof (struct rlc_tm_data_req_alloc)
-	  new_sdu_p = get_free_mem_block (sdu_sizeP + sizeof (struct rlc_tm_data_req_alloc), __func__);
+	  new_sdu_p = get_free_mem_block (sdu_sizeP + sizeof (struct rlc_tm_data_req_alloc), __func__,__LINE__);
 
 	  if (new_sdu_p != NULL) {
 		// PROCESS OF COMPRESSION HERE:

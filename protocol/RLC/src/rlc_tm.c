@@ -52,7 +52,7 @@ void rlc_tm_init (
   // SPARE : not 3GPP
   rlcP->size_input_sdus_buffer = 16; //!TM 最大16个buffer
   if ((rlcP->input_sdus_alloc == NULL) && (rlcP->size_input_sdus_buffer > 0)) {
-    rlcP->input_sdus_alloc = get_free_mem_block (rlcP->size_input_sdus_buffer * sizeof (void *), __func__);
+    rlcP->input_sdus_alloc = get_free_mem_block (rlcP->size_input_sdus_buffer * sizeof (void *), __func__,__LINE__);
     if(rlcP->input_sdus_alloc == NULL) return;
 	
     rlcP->allocation = TRUE; 
@@ -112,17 +112,17 @@ void rlc_tm_cleanup (rlc_tm_entity_t * const rlcP)
   //！一共16个buffer 
     for (index = 0; index < rlcP->size_input_sdus_buffer; index++) {
       if (rlcP->input_sdus[index]) {
-        free_mem_block (rlcP->input_sdus[index], __func__);
+        free_mem_block (rlcP->input_sdus[index], __func__,__LINE__);
       }
     }
 
-    free_mem_block (rlcP->input_sdus_alloc, __func__);
+    free_mem_block (rlcP->input_sdus_alloc, __func__,__LINE__);
     rlcP->input_sdus_alloc = NULL;
   }
 
   // RX SIDE
   if ((rlcP->output_sdu_in_construction)) {
-    free_mem_block (rlcP->output_sdu_in_construction, __func__);
+    free_mem_block (rlcP->output_sdu_in_construction, __func__,__LINE__);
     rlcP->output_sdu_in_construction = NULL;
   }
 
@@ -178,7 +178,7 @@ void  rlc_tm_no_segment (const protocol_ctxt_t* const  ctxt_pP,
 
 		//！每次处理一个SDU 都要申请一个PDU memory, size =pdu_sise + 0x3 + sizeof (struct rlc_tm_tx_data_pdu_struct)		
 		if (!(pdu_p = get_free_mem_block (((rlc_pP->rlc_pdu_size + 7) >> 3) + \
-						sizeof (struct rlc_tm_tx_data_pdu_struct) + GUARD_CRC_LIH_SIZE, __func__))) {
+						sizeof (struct rlc_tm_tx_data_pdu_struct) + GUARD_CRC_LIH_SIZE, __func__,__LINE__))) {
 			LOG_DEBUG(RLC, PROTOCOL_RLC_TM_CTXT_FMT"[SEGMENT] ERROR COULD NOT GET NEW PDU, EXIT\n",
 				  PROTOCOL_RLC_TM_CTXT_ARGS(ctxt_pP, rlc_pP));
 			return;
@@ -202,7 +202,7 @@ void  rlc_tm_no_segment (const protocol_ctxt_t* const  ctxt_pP,
 
 		rlc_pP->buffer_occupancy -= (rlc_pP->rlc_pdu_size);	//!<RLC 层维护的buffer大小需要减去已经给MAC的大小
 		
-		free_mem_block (rlc_pP->input_sdus[rlc_pP->current_sdu_index], __func__);
+		free_mem_block (rlc_pP->input_sdus[rlc_pP->current_sdu_index], __func__,__LINE__);
 		rlc_pP->input_sdus[rlc_pP->current_sdu_index] = NULL;
 
 		rlc_pP->current_sdu_index = (rlc_pP->current_sdu_index + 1) % rlc_pP->size_input_sdus_buffer;
@@ -270,7 +270,7 @@ void  rlc_tm_data_req (
 						((struct rlc_tm_tx_sdu_management *)(sdu_pP->data))->sdu_size);
 						
 	} else {
-	free_mem_block (sdu_pP, __func__); //!否则找不到合适的Input buffer,则将其从Memblock中删除掉
+	free_mem_block (sdu_pP, __func__,__LINE__); //!否则找不到合适的Input buffer,则将其从Memblock中删除掉
 	}
 }
 
@@ -321,7 +321,7 @@ void  rlc_tm_send_sdu(const protocol_ctxt_t* const  ctxt_pP,
 
 	 //！ output_sdu_in_construction 是在上报SDU之前，重组SDU时需要使用的Buffer
 	if (rlc_pP->output_sdu_in_construction == NULL) {
-	  rlc_pP->output_sdu_in_construction = get_free_mem_block (length_in_bytes, __func__);
+	  rlc_pP->output_sdu_in_construction = get_free_mem_block (length_in_bytes, __func__,__LINE__);
 	}
 
 	if ((rlc_pP->output_sdu_in_construction)) {
@@ -362,7 +362,7 @@ void   rlc_tm_rx(const protocol_ctxt_t* const  ctxt_pP,
 		((struct rlc_tm_rx_pdu_management *) (tb_p->data))->first_byte = first_byte_p;
 	    //!由于目前的需求里，TM模式下，直接从MAC 到RRC，所以TM 模式基本没有用。
 		rlc_tm_send_sdu(ctxt_pP, rlc_p, first_byte_p, data_indP.tb_size);
-		free_mem_block (tb_p, __func__); 
+		free_mem_block (tb_p, __func__,__LINE__); 
 	}
 }
 

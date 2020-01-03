@@ -120,7 +120,7 @@ data_addr = %x\n", receive_frame,receive_subsfn,sn, rlc_report_data_ptr->data_si
             /*!write data to socket **/
             ip_rlc_sdu_udp_send(g_iprlc_send_sdu_fd,sdu_real_data_addr,tbsize,sn);
              /*!free buffer */
-			free_mem_block(sdu_buffer_addr,__func__);
+			free_mem_block(sdu_buffer_addr,__func__,__LINE__);
 
 			
 			break; 

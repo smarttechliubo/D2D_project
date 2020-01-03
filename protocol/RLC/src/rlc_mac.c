@@ -75,7 +75,7 @@ tbs_size_t mac_rlc_serialize_tb (char* buffer_pP,
       LOG_DEBUG(RLC_TX, "copy RLC data: rlc_sdu_index:%d, data_size:%d to MAC PDU \n",rlc_sdu_index,tb_size);
 
       tbs_size = tbs_size + tb_size;
-      free_mem_block(tb_p, __func__);
+      free_mem_block(tb_p, __func__,__LINE__);
       rlc_sdu_index++;
     }
   }
@@ -102,7 +102,7 @@ struct mac_data_ind mac_rlc_deserialize_tb (char	   *buffer_pP,
     //!按照逻辑信道的TB 块进行搬移，如果逻辑信道有2个TB块，则会有2个节点添加到list中去。
 	while (num_tbP > 0) {
 		//！get 一块大为mem_block_t + sizeof (mac_rlc_max_rx_header_size_t) + tb_sizeP 大小的memory 
-		tb_p = get_free_mem_block(sizeof (mac_rlc_max_rx_header_size_t) + tb_sizeP, __func__);
+		tb_p = get_free_mem_block(sizeof (mac_rlc_max_rx_header_size_t) + tb_sizeP, __func__,__LINE__);
 
 		if (tb_p != NULL) {
 			mac_tb_ind_ptr = (struct mac_tb_ind *)(tb_p->data); 

@@ -15,6 +15,17 @@
 #include <rlc.h>
 #include <pthread.h>
 
+#ifdef  RLC_RX_UT
+
+	uint16_t  g_rlc_rx_ut_case= 0;
+	uint16_t  g_rlc_rx_ut_start_sn = 600; 
+	uint16_t  g_rlc_rx_ut_sn = 0; //!test SN 
+	uint16_t  g_rlc_rx_ut_sn_duplicate = 0; 
+	uint16_t  g_rlc_rx_ut_uh = 0; 
+	uint16_t  g_rlc_rx_ut_ur = 0; 
+	
+#endif 
+
 
 void rlc_um_cleanup ( rlc_um_entity_t * const rlc_pP)
 {
@@ -28,14 +39,14 @@ void rlc_um_cleanup ( rlc_um_entity_t * const rlc_pP)
   list_free (&rlc_pP->pdus_from_mac_layer);
 
   if ((rlc_pP->output_sdu_in_construction)) {
-    free_mem_block (rlc_pP->output_sdu_in_construction, __func__);
+    free_mem_block (rlc_pP->output_sdu_in_construction, __func__,__LINE__);
     rlc_pP->output_sdu_in_construction = NULL;
   }
 
   if (rlc_pP->dar_buffer) {
     for (index = 0; index < 1024; index++) {
       if (rlc_pP->dar_buffer[index]) {
-        free_mem_block (rlc_pP->dar_buffer[index], __func__);
+        free_mem_block (rlc_pP->dar_buffer[index], __func__,__LINE__);
       }
     }
 
@@ -777,7 +788,7 @@ mac subheader size:%d, UE TB's padding info:[tail_padding header:%d, padding byt
       
 	   
 	  //！申请一块内存，大小为data_pdu_size + sizeof(struct mac_tb_req);
-	  if (!(pdu_mem_p = get_free_mem_block (data_pdu_size + sizeof(struct mac_tb_req), __func__))) {
+	  if (!(pdu_mem_p = get_free_mem_block (data_pdu_size + sizeof(struct mac_tb_req), __func__,__LINE__))) {
 			LOG_ERROR(RLC_TX, PROTOCOL_RLC_UM_CTXT_FMT" ERROR COULD NOT GET NEW PDU, EXIT\n",
 			  			PROTOCOL_RLC_UM_CTXT_ARGS(ctxt_pP,rlc_pP));
 			RLC_UM_MUTEX_UNLOCK(&rlc_pP->lock_input_sdus); //出错，return之前解锁
@@ -982,7 +993,7 @@ test_e_li_length:%d,the real data pdu length %d,E_LI length:%d\n", num_fill_sdu,
 
 		//！处理完一个sdu后，free head,以便于处理下一个header
 		sdu_in_buffer = list_remove_head(&rlc_pP->input_sdus);
-		free_mem_block (sdu_in_buffer, __func__);
+		free_mem_block (sdu_in_buffer, __func__,__LINE__);
 		sdu_in_buffer = list_get_head(&rlc_pP->input_sdus);
 		sdu_mngt_p	  = NULL;
 
@@ -1049,7 +1060,7 @@ test_e_li_length:%d,the real data pdu length %d,E_LI length:%d\n", num_fill_sdu,
 		// free SDU
 		rlc_pP->buffer_occupancy -= sdu_mngt_p->sdu_remaining_size;
 		sdu_in_buffer = list_remove_head(&rlc_pP->input_sdus);
-		free_mem_block (sdu_in_buffer, __func__);
+		free_mem_block (sdu_in_buffer, __func__,__LINE__);
 		sdu_in_buffer = list_get_head(&rlc_pP->input_sdus);  //!get the next sdu 
 		sdu_mngt_p	  = NULL;
 
@@ -1070,7 +1081,7 @@ test_e_li_length:%d,the real data pdu length %d,E_LI length:%d\n", num_fill_sdu,
         			 sdu_mngt_p->sdu_creation_sn,
         			 pdu_remaining_size );
 		sdu_in_buffer = list_remove_head(&rlc_pP->input_sdus);
-		free_mem_block (sdu_in_buffer, __func__);
+		free_mem_block (sdu_in_buffer, __func__,__LINE__);
 		sdu_in_buffer = list_get_head(&rlc_pP->input_sdus); //!指向下一个head 
 		sdu_mngt_p	  = NULL;
 
@@ -1102,10 +1113,73 @@ test_e_li_length:%d,the real data pdu length %d,E_LI length:%d\n", num_fill_sdu,
 		e_in_fixheader = 1; 
 	  pdu_p->b1 = pdu_p->b1 | 0x04;  //! E 占bit[2] 
 	}
-	
+
+
+
+    
 	//!SN 保留高2bit 在b1中， 
 	pdu_p->b1 = pdu_p->b1 | ((rlc_pP->vt_us >> 8) & 0x03);
 	pdu_p->b2 = rlc_pP->vt_us & 0xFF;  //！SN保留低8bit在b2中 
+
+#ifdef RLC_RX_UT
+	if ((rlc_pP->vt_us == (g_rlc_rx_ut_start_sn + g_rlc_rx_ut_case * 10))  && (g_rlc_rx_ut_case <= 6))
+	{
+		switch(g_rlc_rx_ut_case)
+		{
+			case 0: //! SN < UH -windows 
+			{
+				g_rlc_rx_ut_sn = (rlc_pP->vr_uh - 520) % 1024; 
+				break; 
+			}
+			case 1:  //! UH - windows <= SN < UR
+			{
+				g_rlc_rx_ut_sn = (rlc_pP->vr_ur - 2) % 1024; 
+				break;
+			}
+			case 2:  //! SN =  UR
+			{
+				g_rlc_rx_ut_sn = rlc_pP->vr_ur; 
+				break;
+			}
+			case 3: //! SN > UH
+			{
+				g_rlc_rx_ut_sn = (rlc_pP->vr_uh  + 60) % 1024; 
+				break; 
+		
+			}
+			case 4://! UR< SN < UH
+			{
+				g_rlc_rx_ut_sn = (rlc_pP->vr_ur + 512) % 1024;
+				g_rlc_rx_ut_sn_duplicate = g_rlc_rx_ut_sn;
+				break; 
+			}
+			case 5: 
+			{
+				g_rlc_rx_ut_sn = g_rlc_rx_ut_sn_duplicate; 
+				break; 
+			}
+			case 6:
+			{
+				g_rlc_rx_ut_sn = rlc_pP->vr_ur + 514;
+				break; 
+			}
+			default:break; 
+
+		}
+		LOG_DEBUG(RLC_TX, "g_rlc_rx_ut_case：%d, rlc_pP->vt_us:%d, g_rlc_rx_ut_sn:%d, g_rlc_rx_ut_uh:%d, g_rlc_rx_ut_ur:%d \n",\ 
+			g_rlc_rx_ut_case, rlc_pP->vt_us,g_rlc_rx_ut_sn, rlc_pP->vr_uh,rlc_pP->vr_ur );
+		 
+		//!改变SN号，用于RLC RX 测试
+		pdu_p->b1 = pdu_p->b1 & 0xfc; //!clear lower  2 bit 
+		pdu_p->b1 = pdu_p->b1 | ((g_rlc_rx_ut_sn >> 8) & 0x03);
+		pdu_p->b2 = g_rlc_rx_ut_sn & 0xFF;  //！SN保留低8bit在b2中 
+		g_rlc_rx_ut_case++;
+
+	}
+
+	
+#endif 
+
 	
 
 	LOG_ERROR(RLC_TX, "RLC PDU fixed header info: b1 =0x%x, b2 = 0x%x, fi = 0x%x, e_in_fixheader = %d, SN =%d \n",
