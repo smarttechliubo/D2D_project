@@ -424,7 +424,7 @@ int  rrc_Receive_Signal_Msg(uint16_t mode_type, void *message, MessagesIds  msg_
 			 	temp_rb = rrc_Rlc_Rbinfo_Generate(RB_TYPE_SRB0,0,
 					                       LogicChannelConfig__channel_type_ccch,0,
 					                       RLC_MODE_TM ,SN_FieldLength_size10,
-					                       T_Reordering_ms200); 
+					                       T_Reordering_ms20); 
 
 
                 srb_add =  rrc_Rlc_Srb_Config(RB_TYPE_SRB0,1,&temp_rb); 
@@ -472,7 +472,7 @@ int  rrc_Receive_Signal_Msg(uint16_t mode_type, void *message, MessagesIds  msg_
 				temp_rb = rrc_Rlc_Rbinfo_Generate(RB_TYPE_SRB0, 0,
 					                       LogicChannelConfig__channel_type_ccch,0,
 					                       RLC_MODE_TM ,SN_FieldLength_size10,
-					                       T_Reordering_ms200); 
+					                       T_Reordering_ms20); 
 
 
                 srb_add =  rrc_Rlc_Srb_Config(RB_TYPE_SRB0,1,&temp_rb); 
@@ -528,7 +528,7 @@ int  rrc_Receive_Signal_Msg(uint16_t mode_type, void *message, MessagesIds  msg_
                 temp_rb = rrc_Rlc_Rbinfo_Generate(RB_TYPE_SRB1, 1,
 					                       LogicChannelConfig__channel_type_ccch,0,
 					                       RLC_MODE_TM ,SN_FieldLength_size10,
-					                       T_Reordering_ms200); 
+					                       T_Reordering_ms20); 
 
 
                 srb_add =  rrc_Rlc_Srb_Config(RB_TYPE_SRB1,1,&temp_rb); 
@@ -540,7 +540,7 @@ int  rrc_Receive_Signal_Msg(uint16_t mode_type, void *message, MessagesIds  msg_
 				temp_rb = rrc_Rlc_Rbinfo_Generate(RB_TYPE_DRB,3,
 										 LogicChannelConfig__channel_type_dtch,1,
 										 RLC_MODE_UM,SN_FieldLength_size10,
-										  T_Reordering_ms200); 
+										  T_Reordering_ms20); 
 	            
 	            drb_add = rrc_Rlc_Drb_Config(RB_TYPE_DRB,1,&temp_rb);
 

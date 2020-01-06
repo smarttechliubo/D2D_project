@@ -505,12 +505,14 @@ cur process time = [%lld, %lld, %lld] \n",
 		    //! send MAC_RLC_DATA_REQ message to RLC_TX 
 		    if (1 != g_rlc_no_data_transfer)
 		    {
+		    	
 				mac_Rlc_data_Req(sfn, subsfn, 1, &mac_data_req_to_rlc); 
 				g_rlc_ut_2nd_trans++;
 				
             	LOG_ERROR(RLC_TX, "message:%d,[sfn--subsfn]:[%d,%d] send rlc buffer status to mac,the data req message flag:%d ,\
 tb_size = %d, logic tb_size = %d \n",
             		msg_type,sfn,subsfn,!g_rlc_no_data_transfer, mac_data_req_to_rlc.tb_size,mac_data_req_to_rlc.mac_pdu_byte_size[0]);
+				
 			}
 #endif 
 
