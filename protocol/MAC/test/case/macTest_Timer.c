@@ -23,47 +23,75 @@
 
 mac_testConfig g_TEST_CONFIG =
 {
-	0,                 //uint16_t cellId; //value: 0..503, default: 0
-	1,                 //uint16_t bandwith; // value: 0..4,  0: 1.5M, 1: 3M, 2: 6M, 3: 12M, 4:20M, default: 1
-	0,                 //uint16_t subframe_config;// value: 0..1, 0: DDUUDDUU, 1: not define
-	0,                 //uint16_t mode; //value: 0..1, 0：Source，1：Destination
+	//mac init
+	{
+		0,                 //uint16_t cellId; //value: 0..503, default: 0
+		1,                 //uint16_t bandwith; // value: 0..4,  0: 1.5M, 1: 3M, 2: 6M, 3: 12M, 4:20M, default: 1
+		0,                 //uint16_t subframe_config;// value: 0..1, 0: DDUUDDUU, 1: not define
+		0,                 //uint16_t mode; //value: 0..1, 0：Source，1：Destination
+		{
+			//pdcch config
+			2,                 //uint16_t rb_num;// value: 1..2, default: 2
+			2                 //uint16_t rb_start_index; // value: 2..3, default: 2
+		}
+	},
 
-	//pdcch config
-	2,                 //uint16_t rb_num;// value: 1..2, default: 2
-	2,                 //uint16_t rb_start_index; // value: 2..3, default: 2
-
+	
 	//MIB&SIB
-	1,                 //bool flag;// value: 0..2, 0: invalid, 1: mib, 2: sib
-	//mib
-	0,                 //frame_t systemFrameNumber;// value: 0
-	2,                 //uint16_t rb_num_;// value: 1..2, default: 2
-	2,                 //uint16_t rb_start_index_; // value: 2..3, default: 2
-	//sib
-	0,                 //uint16_t size;
-	0,                 //uint8_t *sib_pdu; //tdd-Config
+	{
+		1,                 //bool flag;// value: 0..2, 0: invalid, 1: mib, 2: sib
+		{
+			//mib
+			0,                 //frame_t systemFrameNumber;// value: 0
+			{
+				2,                 //uint16_t rb_num_;// value: 1..2, default: 2
+				2                  //uint16_t rb_start_index_; // value: 2..3, default: 2
+			}
+		},
+		{
+			//sib
+			0,				   //uint16_t size;
+			0				   //uint8_t *sib_pdu; //tdd-Config
+		}
+	}
+};
 
-	0,                 //uint32_t ue_num;
+mac_testUeConfig g_TEST_UE_CONFIG =
+{
+	1,				   //uint32_t ue_num;
 
 	//struct ue_config
 	{
 		{//ue1
-			0,             //uint16_t mode;//value: 0..1, 0：Source，1：Destination
+			0,			   //uint16_t mode;//value: 0..1, 0：Source，1：Destination
 			INVALID_U16,   //rnti_t rnti;// 0: source, 1:destination
-			INVALID_U16,   //uint16_t ue_index;// value: 0..16
-			4,             //uint16_t maxHARQ_Tx;// value: 0..8, default: 4
-			4,             //uint16_t max_out_sync;// value: 0..8, default: 4
+			0,   //uint16_t ue_index;// value: 0..16
+			4,			   //uint16_t maxHARQ_Tx;// value: 0..8, default: 4
+			4,			   //uint16_t max_out_sync;// value: 0..8, default: 4
 
-			1,             //uint16_t logical_channel_num;
+			1,			   //uint16_t logical_channel_num;
 
 			//logical_channel_config_s logical_channel_config[MAX_LOGICCHAN_NUM];
 			{
 				{
-					1,      //channel_type_e chan_type; 0:CCCH, 1: DTCH
-					15,        //uint16_t priority;// value:0..16
-					1          //uint16_t logical_channel_id;// value:0..16
+					1,		//channel_type_e chan_type; 0:CCCH, 1: DTCH
+					15, 	   //uint16_t priority;// value:0..16
+					1		   //uint16_t logical_channel_id;// value:0..16
 				},
 				{
-
+					1,		//channel_type_e chan_type; 0:CCCH, 1: DTCH
+					14, 	   //uint16_t priority;// value:0..16
+					2		   //uint16_t logical_channel_id;// value:0..16
+				},
+				{
+					1,		//channel_type_e chan_type; 0:CCCH, 1: DTCH
+					13, 	   //uint16_t priority;// value:0..16
+					3		   //uint16_t logical_channel_id;// value:0..16
+				},
+				{
+					1,		//channel_type_e chan_type; 0:CCCH, 1: DTCH
+					12, 	   //uint16_t priority;// value:0..16
+					4		   //uint16_t logical_channel_id;// value:0..16
 				}
 			}
 		},
@@ -71,6 +99,13 @@ mac_testConfig g_TEST_CONFIG =
 
 		}
 	}
+};
+mac_testPolicy g_TEST_POLICY = 
+{
+	false,
+	false,
+	true,
+	true
 };
 
 /*OSP_TASKMSG_REG obj name must be "TaskRegTbl" */

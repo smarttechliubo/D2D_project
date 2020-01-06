@@ -457,8 +457,10 @@ bool check_ra_timer(ra_list *ra)
 {
 	if (ra->ra_timer >= MAX_RA_TIMER)
 	{
-		LOG_ERROR(MAC, "Ra timer expired! RA fail, raId:&=%u, state:%u", ra->raId, ra->state);
+		LOG_WARN(MAC, "Ra timer expired! RA fail, raId:%u, state:%u", ra->raId, ra->state);
+
 		remove_ra(ra->ra_rnti);
+
 		return false;
 	}
 

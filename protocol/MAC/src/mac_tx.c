@@ -993,7 +993,16 @@ bool fill_schedule_result(ueInfo* ue, const sub_frame_t subframe)
 	uint8_t rv = 0;
 	uint8_t data_ind = get_data_ind(ue, harqId);// 1:ACK/NACK; 2:DATA;  3:DATA + ACK/NACK
 	uint16_t pdu_len = 0;
-	uint8_t ack = ue->sch_info.crc[harqId];
+	uint8_t ack = 3; 
+
+	if (ue->sch_info.crc[harqId] == ECRC_ACK)
+	{
+		ack = 1;
+	}
+	else if (ue->sch_info.crc[harqId] == ECRC_NACK)
+	{
+		ack = 0;
+	}
 
 	if (ue->harq[harqId].reTx)
 	{

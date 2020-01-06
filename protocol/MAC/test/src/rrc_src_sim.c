@@ -23,6 +23,7 @@
 rrc_info g_rrc_src;
 extern mac_testConfig g_TEST_CONFIG;
 extern mac_testUeConfig g_TEST_UE_CONFIG;
+extern mac_testPolicy g_TEST_POLICY;
 
 void init_rrc_src_sim()
 {
@@ -257,7 +258,10 @@ void src_user_setup_complete(const uint16_t ueId, const rnti_t           rnti,co
 		ue->setup_timer = 0;
 		ue->status = ERRC_UE_SETUP_COMPLETE;
 
-		src_user_start(ue);
+		if (g_TEST_POLICY.DL_TX == true)
+		{
+			src_user_start(ue);
+		}
 	}
 	else
 	{

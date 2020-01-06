@@ -101,6 +101,15 @@ mac_testUeConfig g_TEST_UE_CONFIG =
 	}
 };
 
+mac_testPolicy g_TEST_POLICY = 
+{
+	true,
+	true,
+	true,
+	true
+};
+
+
 /*OSP_TASKMSG_REG obj name must be "TaskRegTbl" */
 OSP_TASKMSG_REG TaskRegTbl[]=
 {

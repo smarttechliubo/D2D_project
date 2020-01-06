@@ -23,8 +23,12 @@
 rrc_info g_rrc_dst;
 uint16_t g_ueId = 0;
 uint16_t g_waiting_active_time = 0;
+uint16_t try_number = 0;
+
+
 extern mac_testConfig g_TEST_CONFIG;
 extern mac_testUeConfig g_TEST_UE_CONFIG;
+extern mac_testPolicy g_TEST_POLICY;
 
 
 void init_rrc_dst_sim()
@@ -82,7 +86,7 @@ bool dst_add_new_user(const uint16_t ueId, const rnti_t rnti)
 			ue->rnti = rnti;
 			ue->mode = g_rrc_dst.mode;
 			ue->setup_timer = 0;
-			ue->status = ERRC_UE_SETUP;
+			ue->status = ERRC_UE_SETUP_REQ;
 
 			g_rrc_dst.num_ue++;
 
@@ -155,6 +159,7 @@ void dst_user_setup(rrc_setup* ccch)
 	ue->setup_timer = 0;
 	ue->rnti = rnti;
 	ue->setup = ccch->setup;
+	ue->status = ERRC_UE_SETUP;
 
 	msg = new_message(RRC_MAC_CONNECT_SETUP_CFG_REQ, TASK_D2D_RRC, TASK_D2D_MAC, msg_size);
 
@@ -368,7 +373,7 @@ void rrcDstUserStatusHandler()
 	uint16_t ueId = 0;
 	uint16_t num_ue = 0;
 	rrc_ue_info* ue = NULL;
-	uint16_t cause = 0;
+	//uint16_t cause = 0;
 
 	if (g_rrc_dst.status == ERRC_INITAIL_CFM)
 	{
@@ -379,11 +384,13 @@ void rrcDstUserStatusHandler()
 	{
 		if (g_TEST_UE_CONFIG.ue_num > 0)
 		{
-			if (g_rrc_dst.num_ue == 0)
+			if (g_rrc_dst.num_ue == 0 && try_number < 1)
 			{
 				ueId = g_ueId++;
 
 				dst_user_setup_req(ueId);
+
+				try_number++;
 			}
 		}
 	}
@@ -397,14 +404,14 @@ void rrcDstUserStatusHandler()
 	{
 		ue = &g_rrc_dst.ue[i];
 
-		if (ue->status == ERRC_UE_SETUP)
+		if (ue->status == ERRC_UE_SETUP_REQ)
 		{
 			ue->setup_timer++;
 
 			if (ue->setup_timer >= 10)
 			{
-				cause = 0;
-				dst_user_setup_complete(ueId, ue->rnti, cause);
+				//cause = 0;
+				//dst_user_setup_complete(ueId, ue->rnti, cause);
 				remove_dst_user(ue);
 			}
 		}
@@ -412,13 +419,15 @@ void rrcDstUserStatusHandler()
 		{
 			g_waiting_active_time++;
 
-			LOG_INFO(RRC, "dst g_waiting_active_time:%u", g_waiting_active_time);
-
 			if (g_waiting_active_time > 4)//should not be actived before waiting a while
 			{
 				g_waiting_active_time = 0;
 				ue->status = ERRC_UE_CONNECT;
-				dst_user_start(ue);
+
+				if (g_TEST_POLICY.UL_TX == true)
+				{
+					dst_user_start(ue);
+				}
 			}
 		}
 	}

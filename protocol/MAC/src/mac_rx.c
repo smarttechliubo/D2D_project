@@ -372,15 +372,15 @@ void handle_linkStatusReport(const PHY_LinkStatusReportInd* ind)
 	}
 }
 
-void handlePuschReceivedInd(PHY_PuschReceivedInd *req)
+void handlePuschReceivedInd(PHY_PuschReceivedInd *pusch)
 {
 	//uint16_t cellId = 0;//g_sch.cellId;//TODO:
-	frame_t frame = req->frame;
-	sub_frame_t subframe = req->subframe;
+	frame_t frame = pusch->frame;
+	sub_frame_t subframe = pusch->subframe;
 	//uint16_t ueIndex = 0;
 	rnti_t rnti = 0;
 	uint16_t crc = 0;
-	uint16_t num_ue = req->num_ue;
+	uint16_t num_ue = pusch->num_ue;
 	pusch_result* result = NULL;
 	uint8_t * payload = NULL;
 	//mac_header_info header;
@@ -414,7 +414,7 @@ void handlePuschReceivedInd(PHY_PuschReceivedInd *req)
 
 	for (uint32_t i = 0; i < num_ue; i++)
 	{
-		result = &req->result[i];
+		result = &pusch->result[i];
 		rnti = result->rnti;
 		crc = result->crc;
 		payload = result->dataptr;
@@ -466,14 +466,14 @@ void handlePuschReceivedInd(PHY_PuschReceivedInd *req)
 				else
 				{
 					//DTCH
-					fill_rlc_data_ind(rx_lengths[i], rx_lcIds[i], payload, data_ind);
+					fill_rlc_data_ind(rx_lengths[i], rx_lcIds[i], payload + offset, data_ind);
 					offset = offset + rx_lengths[i];
 					hasData = true;
 				}
 			}
 			else
 			{
-				LOG_WARN(MAC, "not support now lc Id:%u", rx_lcIds[i]);
+				LOG_ERROR(MAC, "not support now lc Id:%u", rx_lcIds[i]);
 			}
 	
 		}

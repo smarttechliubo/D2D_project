@@ -21,6 +21,9 @@
 #include "mac_defs.h"
 #include "msg_queue.h"
 #include "mac_osp_interface.h"
+#include "mac_testconfig.h"
+
+extern mac_testPolicy g_TEST_POLICY;
 
 phy_rx_info g_phyRx;
 bool g_timing_sync_phyRx = false;
@@ -28,6 +31,13 @@ bool g_timing_sync_phyRx = false;
 extern void set_sysSfn(frame_t frame, sub_frame_t subframe);
 extern int get_sysSfn();
 extern uint16_t g_testing_mode;//0:source, 1:destination
+extern uint8_t *parse_mac_header(uint8_t *mac_header,
+                                  uint8_t *num_ce,
+                                  uint8_t *num_sdu,
+                                  uint8_t *rx_ces,
+                                  uint8_t *rx_lcids,
+                                  uint16_t *rx_lengths,
+                                  uint16_t tb_length);
 
 void syncTimePhyRx()//TODO: sync
 {
@@ -202,6 +212,84 @@ void phyRxMsgHandler(msgDef *msg)
 #endif
 }
 
+void handle_pusch_data(uint8_t data_ind, PHY_PuschReceivedInd* puschInd, pusch_info * pusch)
+{
+	//uint16_t ueIndex = 0;
+	rnti_t rnti = 0;
+	uint8_t * payload = NULL;
+	uint16_t tb_length = 0;
+	uint8_t num_ce = 0;
+	uint8_t num_sdu = 0;
+	uint8_t rx_ceIds[MAX_NUM_CE];
+	uint8_t rx_lcIds[MAX_LOGICCHAN_NUM];
+	uint16_t rx_lengths[MAX_LOGICCHAN_NUM];
+
+	bool hasCCCH = false;
+	bool hasData = false;
+
+	{
+		rnti = pusch->rnti;
+		payload = pusch->data;
+		tb_length = pusch->pdu_len;
+
+		if (rnti == RA_RNTI)
+		{
+
+		}
+
+
+		payload = parse_mac_header(payload, &num_ce, &num_sdu, rx_ceIds, rx_lcIds, rx_lengths, tb_length);
+	
+		if (payload == NULL)
+		{
+			LOG_ERROR(PHY, "parse mac header error!");
+			return;
+		}
+
+		for (uint32_t i = 0; i < num_sdu; i++)
+		{
+			if (rx_lcIds[i] < MAX_LCID)
+			{
+				if (rx_lcIds[i] == CCCH_)
+				{
+					hasCCCH = true;
+				}
+				else
+				{
+					hasData = true;
+				}
+			}	
+		}
+
+	}
+
+	pusch_result* result;
+
+	if (data_ind == 2 || data_ind == 3)//DATA
+	{
+		result = &puschInd->result[puschInd->num_ue];
+
+		if (hasCCCH && g_TEST_POLICY.RA_OK == false)
+		{
+			result->crc = 0;
+		}
+		else if (hasData && g_TEST_POLICY.TX_OK == false)
+		{
+			result->crc = 0;
+		}
+		else
+		{
+			result->crc = 1;
+		}
+
+		result->rnti = pusch->rnti;
+		result->dataSize = pusch->pdu_len;
+		result->dataptr = pusch->data;
+		puschInd->num_ue++;
+	}
+
+}
+
 void handle_pusch(const      frame_t frame, const sub_frame_t subframe)
 {
 	frame_t pusch_frame = g_phyRx.pusch.frame;
@@ -212,7 +300,7 @@ void handle_pusch(const      frame_t frame, const sub_frame_t subframe)
 	PHY_PdcchSendReq pdcch = g_phyRx.pdcch;
 	PHY_PuschSendReq pusch = g_phyRx.pusch;
 	//dci_s dci;
-	pusch_result* result;
+	//pusch_result* result;
 	uint8_t data_ind = 0;
 
 	PHY_ACKInd ackInd;
@@ -254,26 +342,16 @@ void handle_pusch(const      frame_t frame, const sub_frame_t subframe)
 				ackInd.num++;
 			}
 
-			if (data_ind == 2 || data_ind == 3)//DATA
-			{
-				result = &puschInd.result[puschInd.num_ue];
-				
-				result->rnti = pusch.pusch[i].rnti;
-				result->crc = 1;
-				result->dataSize = pusch.pusch[i].pdu_len;
-				result->dataptr = pusch.pusch[i].data;
-				puschInd.num_ue++;
-			}
+			handle_pusch_data(data_ind, &puschInd, &pusch.pusch[i]);
 
-			if (frame%4 == 0)
+			if (frame%4 == 0)//cqi
 			{
 				cqi.cqiInfo[cqi.num].rnti = pusch.pusch[i].rnti;
 				cqi.cqiInfo[cqi.num].cqi = 15;
 				cqi.num++;
 			}
 		}
-		LOG_DEBUG(PHY, "handle_pusch, ackInd:%u,num_ue:%u,cqi.num:%u", 
-			ackInd.num, puschInd.num_ue, cqi.num);
+
 		if (ackInd.num > 0)
 		{
 			msg_size = sizeof(PHY_ACKInd);
@@ -286,7 +364,7 @@ void handle_pusch(const      frame_t frame, const sub_frame_t subframe)
 			
 				if (message_send(TASK_D2D_MAC_SCH, msg, sizeof(msgDef)))
 				{
-					LOG_DEBUG(PHY, "LGC: PHY_MAC_PBCH_PDU_RPT send");
+					LOG_DEBUG(PHY, "LGC: PHY_MAC_ACK_RPT send");
 				}
 			}
 		}

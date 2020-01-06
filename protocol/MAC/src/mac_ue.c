@@ -498,6 +498,9 @@ void update_harq_info(const sub_frame_t subframe, const rnti_t rnti, const uint1
 
 	ue = &g_sch_mac->ue[ueIndex];
 
+	LOG_INFO(MAC, "update_harq_info, subframe:%u, rnti:%u, ack:%u, harqId:%u, reTx_num:%u, maxHARQ_Tx:%u",
+		subframe, rnti, ack, harqId, ue->harq[harqId].reTx_num,ue->maxHARQ_Tx);
+
 	if (ack == 0)//nack
 	{
 		if (ue->harq[harqId].reTx_num >= ue->maxHARQ_Tx)

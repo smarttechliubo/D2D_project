@@ -29,6 +29,7 @@ typedef enum
 typedef enum
 {
 	ERRC_UE_INVALID,
+	ERRC_UE_SETUP_REQ,
 	ERRC_UE_SETUP,
 	ERRC_UE_SETUP_COMPLETE,
 	ERRC_UE_IDLE,

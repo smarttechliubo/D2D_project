@@ -1,0 +1,16 @@
+
+MAC 测试说明：
+
+1. mac 部分共两部分，
+	a. mac 代码部分，在MAC/inc 和 MAC/src
+	b. mac 测试代码和测试用例，在MAC/test, 及MAC/test/case
+
+2. MAC/test 下的makefile 文件为测试用
+
+3. run: shell script, 功能包括 编译 + case run
+测试方法： ./run.sh caseName
+例如       ./run.sh macTest
+
+4. 测试用例的log保存在MAC/test/log目录下
+
+5. 自动check log, 目前还没有实现

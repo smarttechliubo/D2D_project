@@ -11,6 +11,8 @@
 #ifndef _SMARTLOGICTECH_TESTCONFIG_H
 #define _SMARTLOGICTECH_TESTCONFIG_H
 
+#include "interface_rrc_mac.h"
+
 typedef struct
 {
 	rrc_mac_initial_req init;
@@ -24,6 +26,15 @@ typedef struct
 
 	rrc_mac_connnection_setup ue[2];
 }mac_testUeConfig;
+
+typedef struct
+{
+	bool DL_TX;
+	bool UL_TX;
+	bool RA_OK;
+	bool TX_OK;
+}mac_testPolicy;
+
 
 extern uint32_t init_rrc_sim();
 extern uint32_t init_rlc_sim();
