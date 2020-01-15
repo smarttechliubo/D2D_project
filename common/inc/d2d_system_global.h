@@ -36,6 +36,15 @@ typedef enum
 
 
 
+typedef struct
+{
+	uint16_t rb_num;// value: 1..2, default: 2
+	uint16_t rb_start_index; // value: 2..3, default: 2
+}pdcch_config_s;
+
+
+
+
 extern uint32_t   Get_Subsfn( ); 
 extern uint32_t   Get_Frame( );
 

@@ -98,6 +98,8 @@ typedef struct rrc_init_var_s
 
 /**************************************extern var *******************************/
 extern  rrc_init_var  g_rrc_init_para;
+extern  rrc_init_var  g_dst_rrc_init_para;
+
 extern rrc_status_e  g_rrc_status;
 extern ue_info_dict  *g_rrc_ue_info_dict;
 extern uint8_t   g_rrc_messge_encode[ENCODE_MAX_SIZE];

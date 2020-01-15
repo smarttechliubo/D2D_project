@@ -28,7 +28,7 @@ typedef struct{
 
 typedef struct{
 	uint16_t cellId;//value=0..503
-	uint16_t bandwith;//0: 1.5m,1: 3m, 2: 6m, 3: 12m, 4: 20m
+	uint16_t bandwidth;//0: 1.5m,1: 3m, 2: 6m, 3: 12m, 4: 20m
 	
 	uint16_t subframe_config;//0:DDUUDDUU  1: NOT define
 	uint16_t source_type; //!1: d2d_type = source; 0:d2d_type = destination 
@@ -75,5 +75,19 @@ typedef struct{
 	uint16_t ul_freq; //UL freq
 
 }rrc_phy_cs_req; //RRC_PHY_CS_REQ
+
+
+
+typedef struct 
+{
+	uint16_t   SFN;    
+	uint16_t   subsfn; 
+
+    uint16_t    cellId;//value=0..503
+	uint16_t    bandwidth;//0: 1.5m,1: 3m, 2: 6m, 3: 12m, 4: 20m
+
+	pdcch_config_s pdcch_config;
+}phy_rrc_bcch_mib_rpt; 
+
 
 #endif /* _SMARTLOGICTECH_INTERFACE_INTERFACE_RRC_PHY_H_ */

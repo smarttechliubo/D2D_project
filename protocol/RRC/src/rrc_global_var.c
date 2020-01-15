@@ -18,6 +18,7 @@
  
 /**************************global var*****************************/
 rrc_init_var  g_rrc_init_para; 
+rrc_init_var  g_dst_rrc_init_para; 
 rrc_status_e  g_rrc_status; 
 
 ue_info_dict  *g_rrc_ue_info_dict; 

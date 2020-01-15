@@ -27,15 +27,10 @@ int  rrc_module_Initial()
 {
 	DebugOutSetLevel(ERR_DEBUG_LEVEL);
 	memset((void *)&g_rrc_init_para,0,sizeof(g_rrc_init_para));
+	memset((void *)&g_dst_rrc_init_para,0,sizeof(g_dst_rrc_init_para)); 
 	rrc_SetStatus(RRC_STATUS_NULL);
-	
-#ifdef RRC_SOURCE	
-	rrc_SetModeType(D2D_MODE_TYPE_SOURCE);    //! source
-#else 
-    rrc_SetModeType(D2D_MODE_TYPE_DESTINATION);    //!destination
-#endif 
 
-    g_rrc_init_para.cell_id = 0; 
+	g_rrc_init_para.cell_id = 0; 
 
 	g_rrc_init_para.subframe_config = SUBFRAME_CONFIG_DDUUDDUU; 
 	g_rrc_init_para.band_width = BANDWIDTH_3M; 
@@ -50,32 +45,40 @@ int  rrc_module_Initial()
 	g_rrc_init_para.mib_info.pdcch_rb_start = 2; 
 	g_rrc_init_para.mib_info.pdcch_rb_num = 2; 
 
-	g_rrc_ue_info_dict = dict_init(); 
-
-
-	if (D2D_MODE_TYPE_SOURCE == rrc_GetModeType())
-		{
-			if (rrc_GetCurrentStatus() < RRC_STATUS_INITIAL)
-			{
-				//!cell setup, initial PHY, MAC, RLC.
-				rrc_Phy_InitialConfig(g_rrc_init_para); 
-				rrc_Mac_InitialConfig(rrc_GetModeType(), g_rrc_init_para);
-				rrc_Rlc_InitialConfig(D2D_MODE_TYPE_SOURCE); 
-				rrc_SetStatus(RRC_STATUS_INITIAL);
-			}
-		}
-		if ( D2D_MODE_TYPE_DESTINATION == rrc_GetModeType())
-		{
-			if (rrc_GetCurrentStatus() < RRC_STATUS_CELL_SEARCH)
-			{
-				rrc_SetStatus(RRC_STATUS_INITIAL);
-				//！config PHY to cell search 
-				rrc_Phy_CellSearch(g_rrc_init_para.ul_freq,g_rrc_init_para.dl_freq); 
-				//!TODO  start timer 
+    
+	memcpy((void *)&g_dst_rrc_init_para, (void *)&g_rrc_init_para, sizeof(g_rrc_init_para));
+	g_dst_rrc_init_para.source_type = D2D_MODE_TYPE_DESTINATION; 
 	
-				rrc_SetStatus(RRC_STATUS_CELL_SEARCH);
-			}
-		}
+	g_rrc_ue_info_dict = dict_init(); 
+	
+#ifdef RRC_SOURCE	
+	rrc_SetModeType(D2D_MODE_TYPE_SOURCE);    //! source
+	
+
+	if (rrc_GetCurrentStatus() < RRC_STATUS_INITIAL)
+	{
+		//!cell setup, initial PHY, MAC, RLC.
+		rrc_Phy_InitialConfig(g_rrc_init_para); 
+		rrc_Mac_InitialConfig(rrc_GetModeType(), g_rrc_init_para);
+		rrc_Rlc_InitialConfig(g_rrc_init_para.source_type); 
+		rrc_SetStatus(RRC_STATUS_INITIAL);
+	}
+#else 
+    rrc_SetModeType(D2D_MODE_TYPE_DESTINATION);    //!destination
+  
+    if (rrc_GetCurrentStatus() < RRC_STATUS_CELL_SEARCH)
+	{
+		rrc_SetStatus(RRC_STATUS_INITIAL);
+		//！config PHY to cell search 
+		rrc_Phy_CellSearch(g_rrc_init_para.ul_freq,g_rrc_init_para.dl_freq); 
+		//!TODO  start timer 
+
+		rrc_SetStatus(RRC_STATUS_CELL_SEARCH);
+	}
+#endif 
+
+  
+
 
     return 0;
 

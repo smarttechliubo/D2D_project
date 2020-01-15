@@ -224,6 +224,10 @@ int  rrc_Receive_Signal_Msg(uint16_t mode_type, void *message, MessagesIds  msg_
     rlc_rrc_buffer_rpt  *rlc_buffer_rpt_ptr ; 
     mac_rrc_connection_cfm *mac_rrc_connection_cfm_ptr; 
     mac_rrc_outsync_rpt    *outsync_rpt_ptr; 
+    phy_rrc_connection_setup_cfm *phy_rrc_connection_setup_cfm_ptr; 
+
+    phy_rrc_bcch_mib_rpt *phy_mib_rpt_ptr ; 
+    
 
     logical_channel_config_s     logic_channel_config[MAX_LOGICCHAN_NUM] = {0}; 
     uint32_t                     logic_ch_num = 0; 
@@ -271,6 +275,8 @@ int  rrc_Receive_Signal_Msg(uint16_t mode_type, void *message, MessagesIds  msg_
 
 			if (g_rrc_init_para.phy_initial_cfm & g_rrc_init_para.mac_initial_cfm & g_rrc_init_para.rlc_initial_cfm)
 			{
+
+				rrc_SetStatus(RRC_STATUS_INITIAL_CFM);
 				//!TODO using timer interrupt to judge this condition and send this message for future.
 				if (D2D_MODE_TYPE_SOURCE  == rrc_GetModeType() && (RRC_STATUS_INITIAL_CFM == rrc_GetCurrentStatus()))
 				{
@@ -280,7 +286,7 @@ int  rrc_Receive_Signal_Msg(uint16_t mode_type, void *message, MessagesIds  msg_
 					//!notify MAC to schedule MIB 
 					rrc_Mac_BcchPara_Config(1, &bcch_mib_info);
 				}
-				rrc_SetStatus(RRC_STATUS_INITIAL_CFM);
+				
 			}
 			break; 
 		}
@@ -302,6 +308,7 @@ int  rrc_Receive_Signal_Msg(uint16_t mode_type, void *message, MessagesIds  msg_
 
 			if (g_rrc_init_para.phy_initial_cfm & g_rrc_init_para.mac_initial_cfm & g_rrc_init_para.rlc_initial_cfm)
 			{
+				rrc_SetStatus(RRC_STATUS_INITIAL_CFM);
 				//!TODO using timer interrupt to judge this condition and send this message for future.
 				if (D2D_MODE_TYPE_SOURCE  == rrc_GetModeType() && (RRC_STATUS_INITIAL_CFM == rrc_GetCurrentStatus()))
 				{
@@ -311,7 +318,7 @@ int  rrc_Receive_Signal_Msg(uint16_t mode_type, void *message, MessagesIds  msg_
 					//!notify MAC to schedule MIB 
 					rrc_Mac_BcchPara_Config(1, &bcch_mib_info);
 				}
-				rrc_SetStatus(RRC_STATUS_INITIAL_CFM);
+				
 			}
 
 			
@@ -335,6 +342,7 @@ int  rrc_Receive_Signal_Msg(uint16_t mode_type, void *message, MessagesIds  msg_
 
 			if (g_rrc_init_para.phy_initial_cfm & g_rrc_init_para.mac_initial_cfm & g_rrc_init_para.rlc_initial_cfm)
 			{
+				rrc_SetStatus(RRC_STATUS_INITIAL_CFM);
 					//!TODO using timer interrupt to judge this condition and send this message for future.
 				if (D2D_MODE_TYPE_SOURCE  == rrc_GetModeType() && (RRC_STATUS_INITIAL_CFM == rrc_GetCurrentStatus()))
 				{
@@ -344,10 +352,11 @@ int  rrc_Receive_Signal_Msg(uint16_t mode_type, void *message, MessagesIds  msg_
 					//!notify MAC to schedule MIB 
 					rrc_Mac_BcchPara_Config(1, &bcch_mib_info);
 				}
-				rrc_SetStatus(RRC_STATUS_INITIAL_CFM);
+				
 			}
 			break; 
 		}
+#if 0
 		case MAC_RRC_BCCH_MIB_RPT: //!mib report 
 		{
 			AssertFatal(mode_type ==  D2D_MODE_TYPE_DESTINATION, 
@@ -375,6 +384,55 @@ int  rrc_Receive_Signal_Msg(uint16_t mode_type, void *message, MessagesIds  msg_
 		    
 			
 			break; 
+		}
+#endif 
+		case PHY_RRC_MIB_RPT:
+		{
+
+
+			AssertFatal(mode_type ==  D2D_MODE_TYPE_DESTINATION, 
+			           RRC, 
+			           "only DESTINATION can receive MAC_RRC_BCCH_MIB_RPT message\n"); 
+		
+			phy_mib_rpt_ptr = (phy_rrc_bcch_mib_rpt *)message; 
+			g_dst_rrc_init_para.band_width = phy_mib_rpt_ptr->bandwidth; 
+			g_dst_rrc_init_para.cell_id = phy_mib_rpt_ptr->cellId; 
+			
+		    g_dst_rrc_init_para.source_type = D2D_MODE_TYPE_DESTINATION; 
+		    g_dst_rrc_init_para.subframe_config = 0; 
+		    g_dst_rrc_init_para.mib_info.pdcch_rb_num = phy_mib_rpt_ptr->pdcch_config.rb_num; 
+		    g_dst_rrc_init_para.mib_info.pdcch_rb_start = phy_mib_rpt_ptr->pdcch_config.rb_start_index; 
+		    g_dst_rrc_init_para.mib_info.mib_sfn = phy_mib_rpt_ptr->SFN; 
+		    
+
+            //!send initial message to dstination's PHY && MAC && RLC 
+		    rrc_Phy_InitialConfig(g_dst_rrc_init_para);  
+		    rrc_Mac_InitialConfig(rrc_GetModeType(), g_dst_rrc_init_para);
+		    rrc_Rlc_InitialConfig(g_dst_rrc_init_para.source_type); 
+		    
+
+            //! the parameter of here is as same as the SIB1 IE 
+            pusch_config.hop_mode = 0;  
+            pusch_config.pusch_hop_offset = 0; 
+
+            
+            ref_signal_pusch_config.grp_hop_enabled = 0;
+            ref_signal_pusch_config.seq_hop_enabled = 0;
+            ref_signal_pusch_config.grp_assign_pusch = 0;
+			ref_signal_pusch_config.cyc_shift = 0;
+
+			rrc_Phy_BcchPara_Config(pusch_config , ref_signal_pusch_config);
+
+            rrc_SetStatus(RRC_STATUS_INITIAL);
+
+             //!there is no cfg para to mac in destination MODE 
+
+
+
+
+
+			break; 
+
 		}
 	    //!this version don't have MAC_RRC_BCCH_SIB1_RPT message report
 		case MAC_RRC_BCCH_SIB1_RPT: //!SIB1 info 
@@ -462,7 +520,7 @@ int  rrc_Receive_Signal_Msg(uint16_t mode_type, void *message, MessagesIds  msg_
 		    	bcch_sib_info.sib_pdu = encode_buffer; 
 		    	bcch_sib_info.size = encode_buffer_size; 
 				//!notify MAC to schedule SIB1
-				rrc_Mac_BcchPara_Config(2, &bcch_mib_info); 
+				rrc_Mac_BcchPara_Config(2, &bcch_sib_info); 
 				LOG_DEBUG(RRC, "RRC source notify MAC to schedule SIB1 \n");
 			}
 			else if (2 == mac_bcch_cfm_ptr->flag)
@@ -641,8 +699,8 @@ int  rrc_Receive_Signal_Msg(uint16_t mode_type, void *message, MessagesIds  msg_
                     ue_request_index = dict_GetNewUeIndex(g_rrc_ue_info_dict); //!Get new ue_index
 
                     logic_channel_config[0].logical_channel_id = 1; 
-                    logic_channel_config[1].chan_type = LogicChannelConfig__channel_type_dtch; 
-                    logic_channel_config[1].priority = 2;  
+                    logic_channel_config[0].chan_type = LogicChannelConfig__channel_type_dtch; 
+                    logic_channel_config[0].priority = 2;  
                     //!config MAC  DTCH for source , rnti value invalid .
                     rrc_Mac_ConnectSetup_Config(D2D_MODE_TYPE_SOURCE,
                     						     0xffff,
@@ -749,6 +807,15 @@ int  rrc_Receive_Signal_Msg(uint16_t mode_type, void *message, MessagesIds  msg_
 
 			break ;
         }
+        case PHY_RRC_CONNECT_SETUP_CFG_CFM:
+        {
+        	phy_rrc_connection_setup_cfm_ptr = (phy_rrc_connection_setup_cfm *)message;
+        	AssertFatal(phy_rrc_connection_setup_cfm_ptr->status != 0,RRC,"PHY_RRC_CONNECT_SETUP_CFG_CFM with status = %d, eror = %d\n",
+        		phy_rrc_connection_setup_cfm_ptr->status, phy_rrc_connection_setup_cfm_ptr->error_code); 
+			
+			break; 
+        }
+        
         
         default :break; 	     	
 	}

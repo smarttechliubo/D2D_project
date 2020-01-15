@@ -32,7 +32,7 @@ void  rrc_Phy_InitialConfig(rrc_init_var init_var)
 	rrc_phy_initial_req   *phy_init_req = calloc(1,sizeof(rrc_phy_initial_req)); 
 	
     phy_init_req->source_type =  init_var.source_type; 
-	phy_init_req->bandwith = (uint16_t )init_var.band_width; 
+	phy_init_req->bandwidth = (uint16_t )init_var.band_width; 
 	phy_init_req->cellId = init_var.cell_id; 
 	
     phy_init_req->subframe_config = (uint16_t)init_var.subframe_config; 
