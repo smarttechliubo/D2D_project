@@ -350,6 +350,11 @@ void handle_pusch(const      frame_t frame, const sub_frame_t subframe)
 				cqi.cqiInfo[cqi.num].cqi = 15;
 				cqi.num++;
 			}
+
+			if (g_TEST_POLICY.IN_SYNC)
+			{
+
+			}
 		}
 
 		if (ackInd.num > 0)

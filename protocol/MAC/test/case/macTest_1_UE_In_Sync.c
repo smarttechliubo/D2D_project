@@ -1,5 +1,5 @@
 /**********************************************************
-* @file macTest_1_UE_Access.c
+* @file macTest_1_UE_In_Sync.c
 * 
 * @brief  case: timer test, mac timer register and start test
 * @author   guicheng.liu

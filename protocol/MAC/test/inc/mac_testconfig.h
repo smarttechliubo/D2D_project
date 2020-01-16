@@ -33,6 +33,13 @@ typedef struct
 	bool UL_TX;
 	bool RA_OK;
 	bool TX_OK;
+	bool IN_SYNC;
+	bool OUT_SYNC;
+	bool pad1;
+	bool pad2;
+	bool pad3;
+	bool pad4;
+	bool pad5;
 }mac_testPolicy;
 
 

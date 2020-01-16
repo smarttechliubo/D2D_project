@@ -51,7 +51,7 @@ void select_cs0(const frame_t frame, const sub_frame_t subframe, mac_info_s *mac
 	
 }
 
-void handle_ue_status(const frame_t frame, const sub_frame_t subframe, mac_info_s *mac)
+void pre_ue_select(const frame_t frame, const sub_frame_t subframe, mac_info_s *mac)
 {
 	select_cs0(frame, subframe, mac);
 }
@@ -70,7 +70,7 @@ void pre_schedule(const frame_t frame, const sub_frame_t subframe, mac_info_s *m
 		schedule_common(frame, subframe, mac);
 	}
 
-	handle_ue_status(frame, subframe, mac);
+	pre_ue_select(frame, subframe, mac);
 	//schedule_ra(frame, subframe, mac);
 }
 

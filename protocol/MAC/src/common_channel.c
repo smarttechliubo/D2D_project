@@ -22,16 +22,19 @@
 bool send_pbch_msg(const frame_t frame, const sub_frame_t subframe, const common_channel_s *common_channel)
 {
 	msgDef* msg = NULL;
-	PHY_PBCHSendReq *cfm;
+	PHY_PBCHSendReq *req;
 	msgSize msg_size = sizeof(PHY_PBCHSendReq);
 
 	msg = new_message(MAC_PHY_PBCH_TX_REQ, TASK_D2D_MAC, TASK_D2D_PHY_TX, msg_size);
 
 	if (msg != NULL)
 	{
-		cfm = (PHY_PBCHSendReq*)message_ptr(msg);
-		cfm->frame = frame;
-		cfm->subframe = subframe;
+		req= (PHY_PBCHSendReq*)message_ptr(msg);
+		req->frame = frame;
+		req->subframe = subframe;
+		req->mib[0] = common_channel->mib_pdu[0];
+		req->mib[1] = common_channel->mib_pdu[1];
+		req->mib[2] = common_channel->mib_pdu[2];
 
 		if (message_send(TASK_D2D_PHY_TX, msg, sizeof(msgDef)))
 		{

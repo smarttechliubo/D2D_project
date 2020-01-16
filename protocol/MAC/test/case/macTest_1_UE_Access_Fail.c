@@ -1,5 +1,5 @@
 /**********************************************************
-* @file macTest_Single_UE_DL_DATA.c
+* @file macTest_1_UE_Access_Fail.c
 * 
 * @brief  case: ue send dl data
 * @author   guicheng.liu

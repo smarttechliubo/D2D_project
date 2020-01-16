@@ -58,7 +58,7 @@ mac_testConfig g_TEST_CONFIG =
 
 mac_testUeConfig g_TEST_UE_CONFIG =
 {
-	1,				   //uint32_t ue_num;
+	0,				   //uint32_t ue_num;
 
 	//struct ue_config
 	{

@@ -1,5 +1,5 @@
 /**********************************************************
-* @file macTest_1_UE_Access.c
+* @file macTest_System_Info_Send_And_Receive.c
 * 
 * @brief  case: timer test, mac timer register and start test
 * @author   guicheng.liu
@@ -36,9 +36,10 @@ mac_testConfig g_TEST_CONFIG =
 		}
 	},
 
+	
 	//MIB&SIB
 	{
-		1,                 //bool flag;// value: 0..2, 0: invalid, 1: mib, 2: sib
+		3,                 //bool flag;// value: 0..2, 0: invalid, 1: mib, 2: sib
 		{
 			//mib
 			0,                 //frame_t systemFrameNumber;// value: 0
@@ -57,7 +58,7 @@ mac_testConfig g_TEST_CONFIG =
 
 mac_testUeConfig g_TEST_UE_CONFIG =
 {
-	1,				   //uint32_t ue_num;
+	0,				   //uint32_t ue_num;
 
 	//struct ue_config
 	{

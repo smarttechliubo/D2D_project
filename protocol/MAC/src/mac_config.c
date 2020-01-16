@@ -22,7 +22,27 @@
 
 extern context_s g_context;
 
-// MAC_TEST
+bool mac_paras_check(const rrc_mac_initial_req *req)
+{
+	if (req->cellId > 503 || req->bandwith > 4 || req->subframe_config > 1 || req->mode > 1)
+	{
+		LOG_ERROR(MAC, "mac init paras check fail.cellId:%u, bandwith:%u, subframeconfig:%u, mode:%u", 
+			req->cellId, req->bandwith, req->subframe_config, req->mode);
+
+		return false;
+	}
+
+	if (req->pdcch_config.rb_num > 2 || req->pdcch_config.rb_num <= 0 || req->pdcch_config.rb_start_index > 3)
+	{
+		LOG_ERROR(MAC, "mac init paras pdcch check fail. rb_num:%u, rb_start_index:%u", 
+			req->pdcch_config.rb_num, req->pdcch_config.rb_start_index);
+
+		return false;
+	}
+
+	return true;
+}
+
 bool mac_config_cfm(bool success)
 {
 	msgDef* msg = NULL;
@@ -55,7 +75,7 @@ bool mac_config_cfm(bool success)
 
 void mac_config(const rrc_mac_initial_req *req)
 {
-	bool success = false;
+	bool success = mac_paras_check(req);
 	mac_info_s *mac = (req->mode == 0) ? g_context.mac : g_context.macd;
 
 	if(mac != NULL && mac->status == ESTATUS_NONE)

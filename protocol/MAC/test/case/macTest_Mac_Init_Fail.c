@@ -1,7 +1,7 @@
 /**********************************************************
-* @file macTest_1_UE_Access.c
+* @file macTest_Mac_Init_Fail.c
 * 
-* @brief  case: timer test, mac timer register and start test
+* @brief  
 * @author   guicheng.liu
 * @date     2019/11/19
 * COPYRIGHT NOTICE: (c) 2019  smartlogictech. 
@@ -32,10 +32,11 @@ mac_testConfig g_TEST_CONFIG =
 		{
 			//pdcch config
 			2,                 //uint16_t rb_num;// value: 1..2, default: 2
-			2                 //uint16_t rb_start_index; // value: 2..3, default: 2
+			5                 //uint16_t rb_start_index; // value: 2..3, default: 2
 		}
 	},
 
+	
 	//MIB&SIB
 	{
 		1,                 //bool flag;// value: 0..2, 0: invalid, 1: mib, 2: sib
@@ -57,7 +58,7 @@ mac_testConfig g_TEST_CONFIG =
 
 mac_testUeConfig g_TEST_UE_CONFIG =
 {
-	1,				   //uint32_t ue_num;
+	0,				   //uint32_t ue_num;
 
 	//struct ue_config
 	{
@@ -68,7 +69,7 @@ mac_testUeConfig g_TEST_UE_CONFIG =
 			4,			   //uint16_t maxHARQ_Tx;// value: 0..8, default: 4
 			4,			   //uint16_t max_out_sync;// value: 0..8, default: 4
 
-			0,			   //uint16_t logical_channel_num;
+			1,			   //uint16_t logical_channel_num;
 
 			//logical_channel_config_s logical_channel_config[MAX_LOGICCHAN_NUM];
 			{
@@ -104,9 +105,10 @@ mac_testPolicy g_TEST_POLICY =
 {
 	false,
 	false,
-	true,
-	true
+	false,
+	false
 };
+
 
 /*OSP_TASKMSG_REG obj name must be "TaskRegTbl" */
 OSP_TASKMSG_REG TaskRegTbl[]=

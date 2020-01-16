@@ -1,5 +1,5 @@
 /**********************************************************
-* @file macTest_1_UE_Access.c
+* @file macTest_UE_One_Logic_Channel_Setup.c
 * 
 * @brief  case: timer test, mac timer register and start test
 * @author   guicheng.liu
@@ -68,7 +68,7 @@ mac_testUeConfig g_TEST_UE_CONFIG =
 			4,			   //uint16_t maxHARQ_Tx;// value: 0..8, default: 4
 			4,			   //uint16_t max_out_sync;// value: 0..8, default: 4
 
-			0,			   //uint16_t logical_channel_num;
+			1,			   //uint16_t logical_channel_num;
 
 			//logical_channel_config_s logical_channel_config[MAX_LOGICCHAN_NUM];
 			{
