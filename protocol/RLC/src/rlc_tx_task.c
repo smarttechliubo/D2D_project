@@ -45,7 +45,7 @@ void mac_Rlc_data_Req(uint16_t frame, uint16_t subsfn,uint16_t valid_ue_num, rlc
 
     memcpy((void *)mac_rlc_data_req_ptr->rlc_data_request,(void *)rlc_data_request_ptr,valid_ue_num * sizeof(rlc_data_req))	; 
  	
-    message = itti_alloc_new_message(TASK_D2D_MAC, MAC_RLC_DATA_REQ,
+    message = itti_alloc_new_message(TASK_D2D_MAC_SCH, MAC_RLC_DATA_REQ,
 	                       ( char *)mac_rlc_data_req_ptr, sizeof(mac_rlc_data_req));
 
 	itti_send_msg_to_task(TASK_D2D_RLC_TX,  0, message);
@@ -73,7 +73,7 @@ void mac_Rlc_data_Rpt(uint16_t frame, uint16_t subsfn,uint16_t valid_ue_num, mac
 
     memcpy((void *)mac_rlc_data_rpt_ptr->sdu_data_rpt,(void *)rlc_data_rpt,valid_ue_num * sizeof(mac_rlc_data_info))	; 
  	
-    message = itti_alloc_new_message(TASK_D2D_MAC, MAC_RLC_DATA_RPT,
+    message = itti_alloc_new_message(TASK_D2D_MAC_SCH, MAC_RLC_DATA_RPT,
 	                       ( char *)mac_rlc_data_rpt_ptr, sizeof(mac_rlc_data_rpt));
 
 	itti_send_msg_to_task(TASK_D2D_RLC_RX,  0, message);
@@ -121,7 +121,7 @@ void  rlc_mac_data_ind_message(uint32_t         *ue_pdu_buffer_ptr,
 	   message = itti_alloc_new_message(TASK_D2D_RLC_TX, RLC_MAC_DATA_IND,
 							  ( char *)rlc_mac_data_send_ptr, sizeof(rlc_mac_data_ind ));
 	
-	   itti_send_msg_to_task(TASK_D2D_MAC,0, message);
+	   itti_send_msg_to_task(TASK_D2D_MAC_SCH,0, message);
 
 
 
@@ -471,7 +471,7 @@ cur process time = [%lld, %lld, %lld] \n",
           	ue_num =  rlc_Get_Buffer_Status(rlc_buf_sta); 
 #ifndef  RLC_UT_DEBUG             
             rlc_Mac_BufferSta_Rpt(sfn,subsfn,ue_num,rlc_buf_sta);
-            LOG_INFO(RLC_TX, "message:%d,[sfn--subsfn]:[%d,%d] send rlc buffer status to mac \n",
+            LOG_INFO(RLC_TX, "message:%d,[sfn--subsfn]:[%d,%d] send %d ue_num rlc buffer status to mac \n",
             		msg_type,sfn,subsfn);
 #endif 
             if (ue_num != 0)

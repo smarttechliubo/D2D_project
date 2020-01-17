@@ -282,12 +282,18 @@ void  rlc_rrc_config_process(void *message, MessagesIds         msg_type)
 		case RRC_RLC_INITIAL_REQ: 
 		{
 			intial_req = (rrc_rlc_initial_req * )message; 
-			AssertFatal(D2D_MODE_TYPE_SOURCE == intial_req->mode , RLC,
-									"only SOURCE can receive RLC INITIAL message\n"); 
-				
+			
+
+		    if (D2D_MODE_TYPE_SOURCE ==  intial_req->mode)
+		    {
             //! constitue  protocol_ctxt_t; 
-            g_rlc_protocol_ctxt.enb_flag = 1; 
-            g_rlc_protocol_ctxt.eNB_index = 0; 
+	            g_rlc_protocol_ctxt.enb_flag = 1; 
+	            g_rlc_protocol_ctxt.eNB_index = 0; 
+	        }
+	        else 
+	        {
+				g_rlc_protocol_ctxt.enb_flag = 0; 
+	        }
             g_rlc_protocol_ctxt.module_id = 0; 
             g_rlc_protocol_ctxt.rnti = 0xffff;  //!initial value ; 
             g_rlc_protocol_ctxt.configured = FALSE; 

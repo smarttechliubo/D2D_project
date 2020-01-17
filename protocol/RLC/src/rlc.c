@@ -230,6 +230,7 @@ int   rlc_Get_Buffer_Status(rlc_buffer_rpt *buffer_status)
 				}
 
 #endif 
+								
 			}
 			
 			memcpy((void *)buffer_status[ue_num].logicchannel_id,

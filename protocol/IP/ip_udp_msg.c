@@ -196,6 +196,8 @@ void ip_udp_task( )
 
 	    max_fd = max_fd +1;
 		select(max_fd, &rset,NULL,NULL,NULL);
+		
+#ifdef     RLC_UT_DEBUG 
 		if (FD_ISSET(timerfd_1,&rset))
 		{
 			read(timerfd_1,&timer_expire_count[0],sizeof(timer_expire_count[0]));
@@ -213,12 +215,12 @@ void ip_udp_task( )
 		//			 ((curtime[0].tv_sec*1000000 + curtime[0].tv_usec) - (oldtime[0].tv_sec*1000000 + oldtime[0].tv_usec)) );
  
 			oldtime[0] = curtime[0];
-#ifdef     RLC_UT_DEBUG 
+
 		   if ((0 < g_udp_send_cnt[0]) && (g_udp_send_cnt[0] %1 == 0))
 		   {
 				mac_Rlc_Bufstat_Req(g_d2d_sfn,g_d2d_subsfn);
 		   }
-#endif 
+
 		}
 #if 1
 		if (FD_ISSET(timerfd_2,&rset))
@@ -233,6 +235,8 @@ void ip_udp_task( )
 			//old_cycle = current_cycle;
 		}
 #endif 		
+#endif 
+
 		if (FD_ISSET(sockfd_1,&rset))
 		{
             
@@ -247,8 +251,6 @@ void ip_udp_task( )
 			if (0 == errno)
 	 		{
 		       // LOG_DEBUG(IP,"receive data from ip:%s, port: %d, length:%d ! \n",pc_addr_ip,ntohs(PC_addr_src.sin_port),recv_length);
-				
-#ifdef RLC_UT_DEBUG
 
      		//! 组包消息，向RLC 发送消息
 				Ip_Rlc_Data_Send(RB_TYPE_DRB,
@@ -259,9 +261,7 @@ void ip_udp_task( )
 								recv_length); 
 			
 				
-#else 
-				//sendto(sockfd_2,msg_buffer,recv_length,0,SA&PC_addr_dst,sizeof(PC_addr_dst));
-#endif 
+#
 				g_udp_send_cnt[0]++;
 	 			
 

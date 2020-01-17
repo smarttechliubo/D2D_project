@@ -43,7 +43,7 @@ void rlc_Mac_BufferSta_Rpt(uint16_t   sfn, uint16_t  subsfn, uint32_t valid_ue_n
 	message = itti_alloc_new_message(TASK_D2D_RLC_TX, RLC_MAC_BUF_STATUS_RPT,
 	                       ( char *)rlc_rpt, sizeof(rlc_mac_buf_status_rpt ));
     
-	itti_send_msg_to_task(TASK_D2D_MAC,0, message);
+	itti_send_msg_to_task(TASK_D2D_MAC_SCH,0, message);
 
 }
 
