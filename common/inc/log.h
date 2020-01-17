@@ -78,10 +78,10 @@ void log_info(const char* filename, int line, comp_name_t comp, LogLevel level, 
 #define LOG_INFO(comp, format, ...)  log_info(__FILE__, __LINE__, comp, INFO, format, ## __VA_ARGS__)
 #define LOG_DEBUG(comp, format, ...) log_info(__FILE__, __LINE__, comp, DEBUG, format, ## __VA_ARGS__)
 #else
-#define LOG_ERROR(comp, format, ...) DebugOutWithTime(ERROR,  comp  ": [%s:%d] "format"\n", __FILE__, __LINE__,  ## __VA_ARGS__)
-#define LOG_WARN(comp, format, ...)  DebugOutWithTime(WARN,  comp  ": [%s:%d] "format"\n", __FILE__, __LINE__,  ## __VA_ARGS__)
-#define LOG_INFO(comp, format, ...)  DebugOutWithTime(INFO,  comp  ": [%s:%d] "format"\n", __FILE__, __LINE__,  ## __VA_ARGS__)
-#define LOG_DEBUG(comp, format, ...) DebugOutWithTime(DEBUG,  comp  ": [%s:%d] "format"\n", __FILE__, __LINE__,  ## __VA_ARGS__)
+#define LOG_ERROR(comp, format, ...) DebugOutWithTime(ERROR,  "[ERROR]" comp  ": [%s:%d] "format"\n", __FILE__, __LINE__,  ## __VA_ARGS__)
+#define LOG_WARN(comp, format, ...)  DebugOutWithTime(WARN,  "[WARN]" comp  ": [%s:%d] "format"\n", __FILE__, __LINE__,  ## __VA_ARGS__)
+#define LOG_INFO(comp, format, ...)  DebugOutWithTime(INFO,  "[INFO]" comp  ": [%s:%d] "format"\n", __FILE__, __LINE__,  ## __VA_ARGS__)
+#define LOG_DEBUG(comp, format, ...) DebugOutWithTime(DEBUG,  "[DEBUG]" comp  ": [%s:%d] "format"\n", __FILE__, __LINE__,  ## __VA_ARGS__)
 #endif
 
 #define _Assert_Exit_  {                       \

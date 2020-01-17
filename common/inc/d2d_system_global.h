@@ -18,6 +18,20 @@
  
 #define  MAX_LOGICCHAN_NUM    4
 
+#define MAX_SFN 1024
+#define MAX_SUBSFN 4
+
+#define MAX_TX_UE 4
+#define MAX_RX_UE 4
+#define MAX_DCI_NUM 2
+#define MAX_DCI_LEN 4
+
+#define SI_RNTI 0XFFFF
+#define RA_RNTI 0XFFFE
+#define C_RNTI  0XFFEE
+
+#define MAX(a,b)  (((a)>(b)) ? (a) : (b))
+#define MIN(a,b)  (((a)<(b)) ? (a) : (b))
 
 typedef enum
 {
