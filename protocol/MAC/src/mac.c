@@ -139,7 +139,7 @@ void msg_handler(msgDef* msg)
 
 	switch (taskId)
 	{
-		case TASK_D2D_RLC:
+		case TASK_D2D_RLC_TX:
 		{
 			handle_buffer_status_ind(msg);
 			break;

@@ -44,7 +44,7 @@ void rrc_Mac_InitialConfig(uint16_t mode_type,rrc_init_var init_var)
 	message = itti_alloc_new_message(TASK_D2D_RRC, RRC_MAC_INITIAL_REQ,
 	                       ( char *)mac_init_req, sizeof(rrc_mac_initial_req));
 
-	itti_send_msg_to_task(TASK_D2D_MAC,  0, message);
+	itti_send_msg_to_task(TASK_D2D_DUMMY,  0, message);
 }
 
 
@@ -88,7 +88,7 @@ void rrc_Mac_BcchPara_Config(uint16_t mib_or_sib1,void *bcch_info)
 	message = itti_alloc_new_message(TASK_D2D_RRC,RRC_MAC_BCCH_PARA_CFG_REQ,
 	                       ( char *)bcch_para_config_req, sizeof(rrc_mac_bcch_para_config_req));
 
-	itti_send_msg_to_task(TASK_D2D_MAC,  0, message);
+	itti_send_msg_to_task(TASK_D2D_DUMMY,  0, message);
 	
 	
 }
@@ -133,7 +133,7 @@ void rrc_Mac_ConnectSetup_Config(uint16_t mode, rnti_t ue_rnti ,
 	message = itti_alloc_new_message(TASK_D2D_RRC, RRC_MAC_CONNECT_SETUP_CFG_REQ,
 	                       ( char *)mac_connect_req, sizeof(rrc_mac_connnection_setup));
 
-	itti_send_msg_to_task(TASK_D2D_MAC,  0, message);
+	itti_send_msg_to_task(TASK_D2D_DUMMY,  0, message);
 }
 
  /*!   
@@ -161,7 +161,7 @@ void rrc_Mac_Release_Config(uint16_t cell_id,uint16_t ue_idx, uint16_t release_c
 	message = itti_alloc_new_message(TASK_D2D_RRC, RRC_MAC_RELEASE_REQ,
 	                       ( char *)mac_release_req, sizeof(rrc_mac_release_req));
 
-	itti_send_msg_to_task(TASK_D2D_MAC,  0, message);
+	itti_send_msg_to_task(TASK_D2D_DUMMY,  0, message);
 	
 }
 

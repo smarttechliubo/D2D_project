@@ -255,7 +255,7 @@ void ip_udp_task( )
      		//! 组包消息，向RLC 发送消息
 				Ip_Rlc_Data_Send(RB_TYPE_DRB,
 								3,
-								0X65,
+								0XFF00,
 								g_udp_send_cnt[0],
 								msg_buffer,
 								recv_length); 

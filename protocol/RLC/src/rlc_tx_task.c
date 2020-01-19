@@ -86,7 +86,7 @@ void mac_Rlc_data_Rpt(uint16_t frame, uint16_t subsfn,uint16_t valid_ue_num, mac
 #endif 
 
 
-void  rlc_mac_data_ind_message(uint32_t         *ue_pdu_buffer_ptr, 
+void  rlc_mac_data_ind_message(U64         *ue_pdu_buffer_ptr, 
 										uint32_t *ue_tb_size_ptr,
 										uint32_t *rnti_array, 
 										uint32_t  ue_num,
@@ -113,6 +113,8 @@ void  rlc_mac_data_ind_message(uint32_t         *ue_pdu_buffer_ptr,
 			rlc_mac_data_send_ptr->sdu_pdu_info[ue_index].tb_byte_size = ue_tb_size_ptr[ue_index]; 
 			rlc_mac_data_send_ptr->sdu_pdu_info[ue_index].rnti = rnti_array[ue_index]; 
             rlc_mac_data_send_ptr->sdu_pdu_info[ue_index].valid_flag = ue_status[ue_index]; 
+
+           
 			
 	   }
 	   
@@ -379,7 +381,7 @@ void rlc_tx_process(void *message, MessagesIds      msg_type)
 	uint32_t     srb_flag = 0; 
 
 	tb_size_t    tb_size; 
-	uint32_t   ue_pdu_buffer_array[D2D_MAX_USER_NUM]; 
+	U64   ue_pdu_buffer_array[D2D_MAX_USER_NUM]; 
 	uint32_t   ue_pdu_size_array[D2D_MAX_USER_NUM]; 
 	uint32_t   ue_rnti_array[D2D_MAX_USER_NUM]; 
 
@@ -389,7 +391,7 @@ void rlc_tx_process(void *message, MessagesIds      msg_type)
 	int32_t   ue_status[D2D_MAX_USER_NUM] = {0};
 
 	
-	//LOG_WARN(RLC_TX, "RLC_TX receive message = %d\n",msg_type);
+	//LOG_ERROR(RLC_TX, "RLC_TX receive message = %d\n",msg_type);
 	switch (msg_type)
 	{
 		case RRC_RLC_BUF_STATUS_REQ: 
@@ -540,7 +542,7 @@ tb_size = %d, logic tb_size = %d \n",
 				 						&g_rlc_pdu_buffer[ue_index * MAX_DLSCH_PAYLOAD_BYTES],
 				 						&g_rlc_mac_subheader[ue_index *((MAX_LOGICCHAN_NUM  + 1)* 3)]); 
 
-				ue_pdu_buffer_array[ue_index] = (uint32_t )&g_rlc_pdu_buffer[ue_index * MAX_DLSCH_PAYLOAD_BYTES]; 
+				ue_pdu_buffer_array[ue_index] = (U64)&g_rlc_pdu_buffer[ue_index * MAX_DLSCH_PAYLOAD_BYTES]; 
 				ue_pdu_size_array[ue_index] = (uint32_t )rlc_data_req_ptr->tb_size; 
 				ue_rnti_array[ue_index] =  	rlc_data_req_ptr->rnti; 
 				

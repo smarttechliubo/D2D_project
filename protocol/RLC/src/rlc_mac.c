@@ -72,7 +72,7 @@ tbs_size_t mac_rlc_serialize_tb (char* buffer_pP,
       //！每次将一个节点所指向的地址的数据向buffer中copy,并增加tbs_size ,直到所有的节点处理完
       //! 这里注意，这里搬移的数据是包含了RLC header的数据
       memcpy(&buffer_pP[tbs_size], &((struct mac_tb_req *) (tb_p->data))->data_ptr[0], tb_size);
-      LOG_DEBUG(RLC_TX, "copy RLC data: rlc_sdu_index:%d, data_size:%d to MAC PDU \n",rlc_sdu_index,tb_size);
+      LOG_ERROR(RLC_TX, "copy RLC data: rlc_sdu_index:%d, data_size:%d to MAC PDU \n",rlc_sdu_index,tb_size);
 
       tbs_size = tbs_size + tb_size;
       free_mem_block(tb_p, __func__,__LINE__);
@@ -216,7 +216,7 @@ int32_t   rlc_mac_ue_data_process(frame_t frameP,
 		lc_pdu_component[logic_index].remain_mac_pdu_size = lc_pdu_component[logic_index].mac_reqeust_tb_size; //!initial 
 		lc_pdu_component[logic_index].logic_ch_index = logic_index; 
 		lc_pdu_component[logic_index].valid_flag = 1; 
-		LOG_DEBUG(RLC_TX, "%s: initial para: rnti:%d; logic_index info: lc_num:%d, lc_idx:%d, is_last_subheader:%d, mac_tb_size:%d \n",
+		LOG_ERROR(RLC_TX, "%s: initial para: rnti:%d; logic_index info: lc_num:%d, lc_idx:%d, is_last_subheader:%d, mac_tb_size:%d \n",
 			__func__, ue_rnti,logic_num,logic_index,lc_pdu_component[logic_index].is_last_sub_header_flag, 
 			lc_pdu_component[logic_index].mac_reqeust_tb_size );
     }

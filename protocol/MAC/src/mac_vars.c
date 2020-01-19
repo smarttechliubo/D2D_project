@@ -21,7 +21,7 @@ mac_info_s *g_sch_mac = NULL;
 
 uint32_t g_prbmap[5] = {54, 108, 216, 432, 720}; //0: 1.5M, 1: 3M, 2: 6M, 3: 12M, 4:20M
 
-uint32_t g_rbg_size[5] = {1, 1, 1, 1, 1}; //0: 1.5M, 1: 3M, 2: 6M, 3: 12M, 4:20M
+uint32_t g_rbg_size[5] = {MAX_RBS, MAX_RBS, MAX_RBS, MAX_RBS, MAX_RBS}; //0: 1.5M, 1: 3M, 2: 6M, 3: 12M, 4:20M
 
 uint32_t cqi_2_mcs[16]= {0, 0, 1, 2, 4, 6, 8, 11, 13, 16, 18, 20, 23, 25, 27, 28};
 

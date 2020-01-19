@@ -441,7 +441,7 @@ void  rlc_rrc_config_process(void *message, MessagesIds         msg_type)
 									logic_ch_id,
 									temp_rlc_info); 
 
-				LOG_INFO(RLC,"RRC_RLC_CONNECT_SETUP_CFG_REQ :DRB add and modify, rb_indx = %d,rb_id = %d, lc_id = %d,\
+				LOG_ERROR(RLC,"RRC_RLC_CONNECT_SETUP_CFG_REQ :DRB add and modify, rb_indx = %d,rb_id = %d, lc_id = %d,\
 							rlc_mode = %s\n",  \
 			     			rb_index,rb_id,logic_ch_id,g_rlc_mode_str[temp_rlc_info.rlc_mode]); 					
 			}

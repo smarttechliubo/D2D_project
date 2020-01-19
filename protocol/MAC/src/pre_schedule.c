@@ -27,7 +27,7 @@ void handle_buffer_status_req(const frame_t frame, const sub_frame_t subframe)
 	mac_rlc_buf_status_req *req;
 	msgSize msg_size = sizeof(mac_rlc_buf_status_req);
 
-	msg = new_message(MAC_RLC_BUF_STATUS_REQ, TASK_D2D_MAC, TASK_D2D_RLC, msg_size);
+	msg = new_message(MAC_RLC_BUF_STATUS_REQ, TASK_D2D_MAC, TASK_D2D_RLC_TX, msg_size);
 
 	if (msg != NULL)
 	{	
@@ -35,7 +35,7 @@ void handle_buffer_status_req(const frame_t frame, const sub_frame_t subframe)
 		req->sfn = frame;
 		req->sub_sfn = subframe;
 	
-		if (message_send(TASK_D2D_RLC, msg, sizeof(msgDef)))
+		if (message_send(TASK_D2D_RLC_TX, msg, sizeof(msgDef)))
 		{
 			LOG_INFO(MAC, "LGC: mac_rlc_buf_status_req send, frame:%u, subframe:%u", frame, subframe);
 		}

@@ -110,7 +110,7 @@ uint8_t *parse_mac_header(uint8_t *mac_header,
 	uint8_t *mac_header_ptr = mac_header;
 	uint16_t length, ce_len = 0;
 
-	LOG_INFO(MAC, "parse_mac_header, mac_header:%x,%x,%x,%x,%x,%x,%x,%x,%x,%x",
+	LOG_INFO(MAC, "parse_mac_header, mac_header:%x,%x,%x,%x,%x,%x,%x,%x,%x,%x\n",
 		mac_header_ptr[0],mac_header_ptr[1],mac_header_ptr[2],
 		mac_header_ptr[3],mac_header_ptr[4],mac_header_ptr[5],
 		mac_header_ptr[6],mac_header_ptr[7],mac_header_ptr[8],mac_header_ptr[9]);
@@ -394,7 +394,7 @@ void handlePuschReceivedInd(PHY_PuschReceivedInd *pusch)
 	msgSize msg_size = sizeof(mac_rlc_data_rpt);
 	mac_rlc_data_rpt *rpt = NULL;
 
-	msg = new_message(MAC_RLC_DATA_RPT, TASK_D2D_MAC_SCH, TASK_D2D_RLC, msg_size);
+	msg = new_message(MAC_RLC_DATA_RPT, TASK_D2D_MAC_SCH, TASK_D2D_RLC_RX, msg_size);
 
 	if (msg != NULL)
 	{
@@ -487,7 +487,7 @@ void handlePuschReceivedInd(PHY_PuschReceivedInd *pusch)
 
 	if (rpt->ue_num > 0)
 	{
-		if (message_send(TASK_D2D_RLC, msg, sizeof(msgDef)))
+		if (message_send(TASK_D2D_RLC_RX, msg, sizeof(msgDef)))
 		{
 			LOG_INFO(MAC, "LGC: MAC_RLC_DATA_RPT send, ue_num:%u", rpt->ue_num);
 		}

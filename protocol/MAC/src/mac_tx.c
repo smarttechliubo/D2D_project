@@ -61,17 +61,22 @@ void update_buffer_status(rlc_buffer_rpt buffer)
 	ue_buffer->chan_num = 0;
 	ue_buffer->buffer_total = 0;
 
-	ue_buffer->chan_num = logic_chan_num;
+	//ue_buffer->chan_num = logic_chan_num;
 
 	for (uint32_t i = 0; i < logic_chan_num; i++)
 	{
-		ue_buffer->lc_tbs_req[i] = 0;
-		ue_buffer->chan_id[i] = buffer.logicchannel_id[i];
-		ue_buffer->buffer_size[i] = buffer.buffer_byte_size[i] + buffer.rlc_header_byte_size[i];
-		ue_buffer->buffer_total += ue_buffer->buffer_size[i] + (ue_buffer->buffer_size[i] < 128 ? 2 : 3);
+		if (buffer.buffer_byte_size[i] + buffer.rlc_header_byte_size[i] > 0)
+		{
+			ue_buffer->lc_tbs_req[ue_buffer->chan_num] = 0;
+			ue_buffer->chan_id[ue_buffer->chan_num] = buffer.logicchannel_id[i];
+			ue_buffer->buffer_size[ue_buffer->chan_num] = buffer.buffer_byte_size[i] + buffer.rlc_header_byte_size[i];
+			ue_buffer->buffer_total += ue_buffer->buffer_size[i] + (ue_buffer->buffer_size[i] < 128 ? 2 : 3);
 
-		LOG_INFO(MAC, "update_buffer_status, lcNum:%u, total:%u, lcId:%u, lcSize:%u",
-			logic_chan_num,ue_buffer->buffer_total,ue_buffer->chan_id[i],ue_buffer->buffer_size[i]);
+			ue_buffer->chan_num++;
+
+			LOG_ERROR(MAC, "update_buffer_status, lcNum:%u, total:%u, lcId:%u, lcSize:%u",
+				logic_chan_num,ue_buffer->buffer_total,ue_buffer->chan_id[i],ue_buffer->buffer_size[i]);
+		}
 	}
 
 }
@@ -263,6 +268,7 @@ void handle_rlc_data_result(const rlc_mac_data_ind* ind)
 		rnti = ind->sdu_pdu_info[i].rnti;
 		data_size = ind->sdu_pdu_info[i].tb_byte_size;
 		dataptr = (uint8_t*)ind->sdu_pdu_info[i].data_buffer_adder_ptr;
+		
 
 		ret = update_scheduled_ue(rnti, data_size, dataptr, cancel);
 
@@ -465,6 +471,8 @@ void pre_assign_rbs(const frame_t frame, const sub_frame_t subframe)
 
 		if (ue->buffer.buffer_total > 0)
 		{
+			LOG_ERROR(MAC, "pre_assign_rbs buffer.buffer_total:%u, rbg_size:%u, tbs:%u, mcs:%u",
+			ue->buffer.buffer_total, rbg_size, tbs, mcs);
 
 			while (tbs < ue->buffer.buffer_total)
 			{
@@ -503,7 +511,7 @@ void pre_assign_rbs(const frame_t frame, const sub_frame_t subframe)
 		if (scheduled)
 		{
 			scheduled = false;
-			LOG_INFO(MAC, "pre_assign_rbs, ue rnti:%u, pre_tbs:%u, buffer_total:%u, crc:%u, reTx:%u", 
+			LOG_ERROR(MAC, "pre_assign_rbs, ue rnti:%u, pre_tbs:%u, buffer_total:%u, crc:%u, reTx:%u", 
 				ue->rnti, ue->sch_info.pre_tbs,ue->buffer.buffer_total, ue->sch_info.crc[harqId],ue->harq[harqId].reTx);
 			add_to_scheduling_list0(i);
 		}
@@ -1133,7 +1141,7 @@ void mac_rlc_data_request(const frame_t frame, const sub_frame_t subframe)
 
 	rlc_data_req* data = NULL;
 
-	msg = new_message(MAC_RLC_DATA_REQ, TASK_D2D_MAC_SCH, TASK_D2D_RLC, msg_size);
+	msg = new_message(MAC_RLC_DATA_REQ, TASK_D2D_MAC_SCH, TASK_D2D_RLC_TX, msg_size);
 
 	if (msg == NULL)
 	{
@@ -1176,7 +1184,7 @@ void mac_rlc_data_request(const frame_t frame, const sub_frame_t subframe)
 
 	if (req->ue_num > 0)
 	{
-		if (message_send(TASK_D2D_RLC, msg, sizeof(msgDef)))
+		if (message_send(TASK_D2D_RLC_TX, msg, sizeof(msgDef)))
 		{
 			LOG_INFO(MAC, "LGC: MAC_RLC_DATA_REQ, MAC->RLC send msg!, num:%u, lcNum:%u, rnti:%u, tbs:%u,lcNum:%u,lcId:%u,lcSize:%u",
 				req->ue_num, req->rlc_data_request[0].logic_chan_num, req->rlc_data_request[0].rnti, 

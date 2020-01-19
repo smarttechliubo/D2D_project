@@ -1172,17 +1172,13 @@ void   rlc_um_receive_process_dar (const protocol_ctxt_t* const ctxt_pP,
 	  free_mem_block(pdu_mem_pP, __func__,__LINE__);
 	}
 
-	if (sn == 2)
-	{
-		return; 
-	}
 
 //	RLC_UM_MUTEX_LOCK(&rlc_pP->lock_dar_buffer, ctxt_pP, rlc_pP); //!加线程锁
 	 //！vr_ur 表示的是还没有收到PDU 的最小SN号
 	 //! 这里调用rlc_um_in_window 是用来判断： PDU 是否在[uh-window_size,ur] 这个范围内,
 	in_window = rlc_um_in_window(ctxt_pP, rlc_pP, rlc_pP->vr_uh - rlc_pP->rx_um_window_size, sn, rlc_pP->vr_ur);
 
-	LOG_DEBUG(RLC_RX, "judge 1: SN:%d, in window[uh - winsize:ur][%d--%d], result = %d \n", 
+	LOG_ERROR(RLC_RX, "judge 1: SN:%d, in window[uh - winsize:ur][%d--%d], result = %d \n", 
 					sn,
 					rlc_pP->vr_uh - rlc_pP->rx_um_window_size,
 					rlc_pP->vr_ur,
@@ -1200,14 +1196,14 @@ void   rlc_um_receive_process_dar (const protocol_ctxt_t* const ctxt_pP,
 	if ((in_window == 1) || (in_window == 0) || (-2 == in_window)) { 
 	  if ( in_window != -2)
 	  {
-	  		LOG_DEBUG(RLC_RX, PROTOCOL_RLC_UM_CTXT_FMT" RX PDU  (VR(UH) – UM_Window_Size) <= SN %d < VR(UR) -> GARBAGE\n",
+	  		LOG_ERROR(RLC_RX, PROTOCOL_RLC_UM_CTXT_FMT" RX PDU  (VR(UH) – UM_Window_Size) <= SN %d < VR(UR) -> GARBAGE\n",
 			PROTOCOL_RLC_UM_CTXT_ARGS(ctxt_pP, rlc_pP),
 			sn);
 			state_index = 1;
 	  }
 	  else 
 	  {
-			LOG_DEBUG(RLC_RX, PROTOCOL_RLC_UM_CTXT_FMT" RX PDU (VR(UH) – UM_Window_Size) > SN %d \n",
+			LOG_ERROR(RLC_RX, PROTOCOL_RLC_UM_CTXT_FMT" RX PDU (VR(UH) – UM_Window_Size) > SN %d \n",
 			PROTOCOL_RLC_UM_CTXT_ARGS(ctxt_pP, rlc_pP),
 			sn);
 			state_index = 0; 
@@ -1222,7 +1218,7 @@ void   rlc_um_receive_process_dar (const protocol_ctxt_t* const ctxt_pP,
 	  RLC_UM_MUTEX_UNLOCK(&rlc_pP->lock_dar_buffer);
 	  
 
-	  LOG_INFO(RLC_RX, "func:%s, received SN:%d, vr_vh:%d, vr_ur:%d, ur_ux:%d, handle_status:%s",
+	  LOG_ERROR(RLC_RX, "func:%s, received SN:%d, vr_vh:%d, vr_ur:%d, ur_ux:%d, handle_status:%s",
     			__func__, 
     		     sn, 
     		     rlc_pP->vr_uh, 
@@ -1236,12 +1232,12 @@ void   rlc_um_receive_process_dar (const protocol_ctxt_t* const ctxt_pP,
      //!从接收Buffer中获取到data ,说明之前已经收到过SN 的数据了
 	if ((rlc_um_get_pdu_from_dar_buffer(ctxt_pP, rlc_pP, sn))) {
 
-	  	LOG_DEBUG(RLC_RX, "judge 2: SN:%d, is a duplicate PDU or not:%d \n", 
+	  	LOG_ERROR(RLC_RX, "judge 2: SN:%d, is a duplicate PDU or not:%d \n", 
 						sn,
 						1);
 	   //!如果能从dar buffer 中获取到，并且PDU在[UR, UH ]这段窗内，说明之前已经收到过了，这次收到的是重复的PDU
 	     in_window = rlc_um_in_window(ctxt_pP, rlc_pP, rlc_pP->vr_ur, sn, rlc_pP->vr_uh);
-	  	 LOG_DEBUG(RLC_RX, "judge 3: SN:%d in window[ur--uh][%d--%d], result = %d", 
+	  	 LOG_INFO(RLC_RX, "judge 3: SN:%d in window[ur--uh][%d--%d], result = %d", 
 						sn,
 						rlc_pP->vr_ur,
 						rlc_pP->vr_uh,
@@ -1311,25 +1307,25 @@ void   rlc_um_receive_process_dar (const protocol_ctxt_t* const ctxt_pP,
 	 //!当初始化开始后，当sn =0,vh = 0，返回-1，然后更新vr_uh + 1,
 	 //! 一直到sn = 512时，uh = 512,此时rlc_um_in_reordering_window 才能返回0 
 	 //! 下面这段代码用于更新uh
-	LOG_DEBUG(RLC_RX, "judge 4: whether SN in recording window or not \n"); 
+	LOG_INFO(RLC_RX, "judge 4: whether SN in recording window or not \n"); 
 	if (rlc_um_in_reordering_window(ctxt_pP, rlc_pP, sn) < 0) {
 
 		//！这里也需要判断SN 在接收窗的上边界才能更新UH，但这里只需要判断不在窗内? 
 		//！更新UH
 		rlc_pP->vr_uh = (sn + 1) % rlc_pP->rx_sn_modulo;
         
-        LOG_DEBUG(RLC_RX, "judge 4.1: SN:%d in not recording window,update UH = sn + 1: UH = %d  \n",
+        LOG_INFO(RLC_RX, "judge 4.1: SN:%d in not recording window,update UH = sn + 1: UH = %d  \n",
 						sn,
 						rlc_pP->vr_uh);
 
-		LOG_DEBUG(RLC_RX, "judge 4.2: whether vr_ur:%d in  recording window or not after UH updated   \n",
+		LOG_INFO(RLC_RX, "judge 4.2: whether vr_ur:%d in  recording window or not after UH updated   \n",
 						rlc_pP->vr_ur);
 						
 		//!<如果ur 在recording 窗外，则表示需要处理窗外的PDU了,处理vr_ur以下的SDU 。
 		if (rlc_um_in_reordering_window(ctxt_pP, rlc_pP, rlc_pP->vr_ur) < 0) {
 		  //如果UR 也被移出到窗外了，那么更新UR = UH - WINDOWSIZE 
 		  //这里相当于是下边界
-		  LOG_DEBUG(RLC_RX, "judge 4.3: vr_ur:%d is not in  recording window after uh update,updated uh = %d \n",rlc_pP->vr_ur,rlc_pP->vr_uh); 
+		  LOG_ERROR(RLC_RX, "judge 4.3: vr_ur:%d is not in  recording window after uh update,updated uh = %d \n",rlc_pP->vr_ur,rlc_pP->vr_uh); 
 		   in_window = rlc_pP->vr_uh - rlc_pP->rx_um_window_size;
 
 		if (in_window < 0) {
@@ -1369,13 +1365,13 @@ void   rlc_um_receive_process_dar (const protocol_ctxt_t* const ctxt_pP,
 		rlc_pP->vr_ur = (rlc_pP->vr_ur+1) % rlc_pP->rx_sn_modulo;
 	  } while (rlc_um_get_pdu_from_dar_buffer(ctxt_pP, rlc_pP, rlc_pP->vr_ur));  //! &&(rlc_pP->vr_ur != rlc_pP->vr_uh)
 
-	  LOG_DEBUG(RLC_RX, "judge 5: sn == UR, update the UR = %d , and SN have stored in buffer,,and then handle the  PDU which'S SN < UR \n", rlc_pP->vr_ur); 
+	  LOG_INFO(RLC_RX, "judge 5: sn == UR, update the UR = %d , and SN have stored in buffer,,and then handle the  PDU which'S SN < UR \n", rlc_pP->vr_ur); 
 
 	   //!将SN < 更新后的ur 的PDU,进行去header处理，从SN 往上处理，处理到更新后的UR结束。
 	  rlc_um_try_reassembly(ctxt_pP, rlc_pP, sn, rlc_pP->vr_ur);
 
 	  state_index = 3; 
-	  LOG_ERROR(RLC_RX, "func:%s, received SN:%d, vr_vh:%d, vr_ur:%d, ur_ux:%d, handle_status:%s",
+	  LOG_INFO(RLC_RX, "func:%s, received SN:%d, vr_vh:%d, vr_ur:%d, ur_ux:%d, handle_status:%s",
     			__func__, 
     		     sn, 
     		     rlc_pP->vr_uh, 
@@ -1398,7 +1394,7 @@ void   rlc_um_receive_process_dar (const protocol_ctxt_t* const ctxt_pP,
 		in_window = rlc_um_in_reordering_window(ctxt_pP, rlc_pP, rlc_pP->vr_ux);
         
 		if (in_window < 0) {
-		  LOG_DEBUG(RLC_RX,
+		  LOG_INFO(RLC_RX,
 				PROTOCOL_RLC_UM_CTXT_FMT"judge 6.1:t_recording is running , STOP and RESET t-Reordering because VR(UX) falls outside of the reordering window and \
 VR(UX):%d != VR(UH):%d \\n",
 				PROTOCOL_RLC_UM_CTXT_ARGS(ctxt_pP, rlc_pP),
@@ -1418,7 +1414,7 @@ VR(UX):%d != VR(UH):%d \\n",
 	   //! 1:	 ux = ur ,表示已经收到了，也不用再运行了
 	  if ((in_window == -2) ) {
 
-		LOG_DEBUG(RLC_RX,
+		LOG_INFO(RLC_RX,
 			  PROTOCOL_RLC_UM_CTXT_FMT"judge 6.2.1:t_recording is running , STOP and RESET t-Reordering because VR(UX): %d < VR(UR):%d \n",
 			  PROTOCOL_RLC_UM_CTXT_ARGS(ctxt_pP, rlc_pP),
 			  rlc_pP->vr_ux,
@@ -1427,7 +1423,7 @@ VR(UX):%d != VR(UH):%d \\n",
 	  }
 	  else if (in_window == 1)
 	  {
-			LOG_DEBUG(RLC_RX,
+			LOG_INFO(RLC_RX,
 			  PROTOCOL_RLC_UM_CTXT_FMT"judge 6.2.2:t_recording is running , STOP and RESET t-Reordering because VR(UX) =%d is equal to VR(UR)=%d\n",
 			  PROTOCOL_RLC_UM_CTXT_ARGS(ctxt_pP, rlc_pP),
 			  rlc_pP->vr_ux,
@@ -1454,14 +1450,14 @@ VR(UX):%d != VR(UH):%d \\n",
 		//!启动timer 
 		rlc_um_start_timer_reordering(ctxt_pP, rlc_pP);
 		rlc_pP->vr_ux = rlc_pP->vr_uh;	//！更新ux = uh
-		LOG_DEBUG(RLC_RX, PROTOCOL_RLC_UM_CTXT_FMT"judge 7.1:t_recording is not running ,START t-Reordering because of VR(UR) < VR(UH),and set VR(UX) to VR(UH) =%d\n",
+		LOG_INFO(RLC_RX, PROTOCOL_RLC_UM_CTXT_FMT"judge 7.1:t_recording is not running ,START t-Reordering because of VR(UR) < VR(UH),and set VR(UX) to VR(UH) =%d\n",
 			  PROTOCOL_RLC_UM_CTXT_ARGS(ctxt_pP, rlc_pP),
 			  rlc_pP->vr_ux);
 		
 	  }
 	}
 
-	LOG_INFO(RLC_RX,  "---------------Current VR(Ur) = %3d, VR(Ux) = %3d,VR(Uh) = %3d----------------- \n",
+	LOG_ERROR(RLC_RX,  "---------------Current VR(Ur) = %3d, VR(Ux) = %3d,VR(Uh) = %3d----------------- \n",
 					rlc_pP->vr_ur, 
 					rlc_pP->vr_ux,
 					rlc_pP->vr_uh); 
@@ -1478,9 +1474,8 @@ void   rlc_um_receive (const protocol_ctxt_t* const ctxt_pP,
 	mem_block_t 	      *tb_p  = NULL;
 	uint8_t 			  *first_byte_p 	= NULL;
 	uint16_t			   tb_size_in_bytes = 0;
-
 	while ((tb_p = list_remove_head (&data_indP.data))) { //！按照链表从head开始依次处理
-
+      
 	  first_byte_p = ((struct mac_tb_ind *) (tb_p->data))->data_ptr;  //！数据首地址 
 	  tb_size_in_bytes = ((struct mac_tb_ind *) (tb_p->data))->size;  //！tb size,unit:byte
 
@@ -1488,6 +1483,7 @@ void   rlc_um_receive (const protocol_ctxt_t* const ctxt_pP,
 	  rlc_pP->stat_rx_data_pdu	 += 1; //!接收到的PDU ++
 
 	  if (tb_size_in_bytes > 0) {
+	 
 		  rlc_um_receive_process_dar (ctxt_pP, rlc_pP, tb_p, (rlc_um_pdu_sn_10_t*)first_byte_p, tb_size_in_bytes);
 
 	  }

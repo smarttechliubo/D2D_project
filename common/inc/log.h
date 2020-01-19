@@ -86,7 +86,8 @@ void log_info(const char* filename, int line, comp_name_t comp, LogLevel level, 
 
 #define _Assert_Exit_  {                       \
 	fflush(stdout);                            \
-	exit(1);                                     \
+	sleep(1);                                   \
+	while(1)   {};                               \
 	}
 
 

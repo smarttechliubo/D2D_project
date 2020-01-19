@@ -596,7 +596,7 @@ int  rrc_Receive_Signal_Msg(uint16_t mode_type, void *message, MessagesIds  msg_
                //!accordding to RNTI,send RLC DRB message to RLC 
 		 	   //！RRC source generate DRB to RLC    
 				temp_rb = rrc_Rlc_Rbinfo_Generate(RB_TYPE_DRB,3,
-										 LogicChannelConfig__channel_type_dtch,1,
+										 LogicChannelConfig__channel_type_dtch,3,
 										 RLC_MODE_UM,SN_FieldLength_size10,
 										  T_Reordering_ms20); 
 	            
