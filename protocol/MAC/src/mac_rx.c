@@ -416,6 +416,7 @@ void handlePuschReceivedInd(PHY_PuschReceivedInd *pusch)
 		payload = result->dataptr;
 		tb_length = result->dataSize;
 
+#if 0
 		if (rnti == RA_RNTI)
 		{
 			if(crc == 0)
@@ -435,7 +436,7 @@ void handlePuschReceivedInd(PHY_PuschReceivedInd *pusch)
 		{
 			continue;
 		}
-	
+#endif
 		payload = parse_mac_header(payload, &num_ce, &num_sdu, rx_ceIds, rx_lcIds, rx_lengths, tb_length);
 	
 		if (payload == NULL)

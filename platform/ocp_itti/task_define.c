@@ -27,6 +27,10 @@ OSP_TASKMSG_REG TaskRegTbl[]=
 #ifdef RLC_UT_DEBUG 
 	{TASK_D2D_DUMMY_INT,        "task_timer_int",	RT_MSG_PRI(80), 	(OSP_FUNCPTR)timer_int_init,	(OSP_FUNCPTR)timer_int_task,0},
 #endif 
+	{TASK_D2D_PHY_TX,		"task_phy_tx",		RT_MSG_PRI(82), (OSP_FUNCPTR)init_phy_tx_sim,	(OSP_FUNCPTR)phy_tx_sim_thread,1},
+	{TASK_D2D_PHY_RX,		"task_phy_rx",		RT_MSG_PRI(81), (OSP_FUNCPTR)init_phy_rx_sim,	(OSP_FUNCPTR)phy_rx_sim_thread,1},
+	{TASK_D2D_MAC,			"task_mac", 		RT_MSG_PRI(79), (OSP_FUNCPTR)init_mac_period,		(OSP_FUNCPTR)run_period,1},
+	{TASK_D2D_MAC_SCH,		"task_mac_schedule",RT_MSG_PRI(80), (OSP_FUNCPTR)init_mac_scheduler,	(OSP_FUNCPTR)run_scheduler,1}
 
 };
 /*OSP_TASKMSG_REG num name must be "TegTaskNum" */

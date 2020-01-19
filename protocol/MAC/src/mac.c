@@ -124,7 +124,7 @@ void mac_pre_handler(msgDef *msg)
 	}
 	else
 	{
-		pre_schedule(frame, subframe, g_context.macd);
+		//pre_schedule(frame, subframe, g_context.macd);
 	}
 
 }
@@ -256,6 +256,55 @@ int32_t init_mac_period()
 
 	init_mac();
 
+	g_sch_mac = g_context.mac;
+
+	msgDef* msg = NULL;
+
+	rrc_mac_initial_req *req;
+	msgSize msg_size = sizeof(rrc_mac_initial_req);
+
+	msg = new_message(RRC_MAC_INITIAL_REQ, TASK_D2D_RRC, TASK_D2D_MAC, msg_size);
+
+	if (msg != NULL)
+	{
+		req = (rrc_mac_initial_req*)message_ptr(msg);
+		req->cellId = 					 0;
+		req->bandwith =					 1;
+		req->pdcch_config.rb_num =		 2;
+		req->pdcch_config.rb_start_index = 2;
+		req->subframe_config =			 0;
+		req->mode =   0;
+
+		if (message_send(TASK_D2D_MAC, msg, sizeof(msgDef)))
+		{
+			LOG_INFO(RRC, "LGC: rrc_mac_initial_req send");
+		}
+	}
+
+	rrc_mac_connnection_setup* setup;
+	msg_size = sizeof(rrc_mac_connnection_setup);
+
+	msg = new_message(RRC_MAC_CONNECT_SETUP_CFG_REQ, TASK_D2D_RRC, TASK_D2D_MAC, msg_size);
+
+	if (msg != NULL)
+	{
+		setup = (rrc_mac_connnection_setup*)message_ptr(msg);
+
+		setup->mode = 0;
+		setup->ue_index = 1;
+		setup->maxHARQ_Tx = 4;
+		setup->max_out_sync = 4;
+		setup->logical_channel_num = 1;
+		setup->logical_channel_config[0].chan_type = DTCH;
+		setup->logical_channel_config[0].priority = 15;
+		setup->logical_channel_config[0].logical_channel_id = 3;
+
+		if (message_send(TASK_D2D_MAC, msg, sizeof(msgDef)))
+		{
+			LOG_INFO(RRC, "LGC: RRC_MAC_CONNECT_SETUP_CFG_REQ send");
+		}
+	}
+
 	return 0;
 }
 
@@ -269,7 +318,9 @@ void run_period(msgDef* msg)
 	{
 		syncTime();
 	}
-	LOG_INFO(MAC, "run_period current time, isTimer:%u, frame：%u，subframe:%u",  isTimer, g_context.frame, g_context.subframe);
+
+	LOG_INFO(MAC, "run_period current time, isTimer:%u, frame：%u，subframe:%u",  
+		isTimer, g_context.frame, g_context.subframe);
 
 	if (!isTimer)
 	{
