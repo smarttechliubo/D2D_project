@@ -200,7 +200,7 @@ int   rlc_Get_Buffer_Status(rlc_buffer_rpt *buffer_status)
 		{
 			buffer_status[ue_num].valid_flag = 1; 
 			buffer_status[ue_num].logic_chan_num = g_rlc_buffer_status[ue_index].latest_logic_ch_num; 
-
+            buffer_status[ue_num].rnti   =  g_rlc_buffer_status[ue_index].rnti;
             //!data_size include the rlc header size , then report to MAC Layer 
 			for (logic_ch_index = 0; logic_ch_index < buffer_status[ue_num].logic_chan_num; logic_ch_index++)
 			{
@@ -300,9 +300,13 @@ void  rlc_ue_data_status_update(rnti_t rnti,
 	}
 	
       //!计算剩余的SDU 的header size 
-     if (remaind_sdu_num <= 1) 
+     if (remaind_sdu_num == 1) 
      {
 		g_rlc_buffer_status[ue_index].rlc_header_size [logical_chan_id] = 2;
+     }
+     else if (0 == remaind_sdu_num)
+     {
+		g_rlc_buffer_status[ue_index].rlc_header_size [logical_chan_id] = 0;
      }
      else
      {

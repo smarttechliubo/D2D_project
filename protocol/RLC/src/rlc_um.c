@@ -64,7 +64,8 @@ void  rlc_um_init (const protocol_ctxt_t* const ctxt_pP,
   				rlc_um_entity_t * const rlc_pP,
   				 const srb_flag_t  srb_flagP,
   				const rb_id_t rb_idP,
-  				rnti_t   rnti)
+  				rnti_t   rnti,
+  				logical_chan_id_t lc_ch_id)
 {
 
   //AssertFatal(rlc_pP, "Bad RLC UM pointer (NULL)");
@@ -100,6 +101,7 @@ void  rlc_um_init (const protocol_ctxt_t* const ctxt_pP,
 
 	rlc_pP->rb_id = rb_idP;
 	rlc_pP->rnti  = rnti; 
+	rlc_pP->channel_id  = lc_ch_id; 
 
     // RX SIDE
     list_init (&rlc_pP->pdus_from_mac_layer, NULL); //！pdus_from_mac_layer链表清0
@@ -331,7 +333,7 @@ void config_req_rlc_um (
    // pthread_mutex_lock(&(rlc_union_p->rlc_union_mtex));
     rlc_p = &rlc_union_p->rlc.um;
 
-    rlc_um_init(ctxt_pP, rlc_p,srb_flagP,rb_idP,ctxt_pP->rnti); //！初始化
+    rlc_um_init(ctxt_pP, rlc_p,srb_flagP,rb_idP,ctxt_pP->rnti, chan_idP); //！初始化
 
  
     if (rlc_um_fsm_notify_event (ctxt_pP, rlc_p, RLC_UM_RECEIVE_CRLC_CONFIG_REQ_ENTER_DATA_TRANSFER_READY_STATE_EVENT)) {
