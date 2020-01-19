@@ -289,7 +289,7 @@ void mac_user_setup(const rrc_mac_connnection_setup *req)
 		result = false;
 	}
 
-	mac_user_setup_cfm(req, result, rnti);
+	//mac_user_setup_cfm(req, result, rnti);
 }
 
 void mac_release_cfm(const rrc_mac_release_req *req, bool success)
