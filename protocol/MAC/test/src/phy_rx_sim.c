@@ -43,6 +43,7 @@ void syncTimePhyRx()//TODO: sync
 	g_phyRx.subframe = time % MAX_SUBSFN;
 }
 
+
 uint32_t init_phy_rx_sim()
 {
 	void* pTimer;
@@ -55,7 +56,8 @@ uint32_t init_phy_rx_sim()
 
 	for (uint32_t i = 0; i < MAX_TX_UE; i++)
 	{
-		g_phyRx.pusch.pusch[i].data = (uint8_t *)mem_alloc(1024);
+		g_phyRx.pusch.pusch[i].data = (uint8_t *)mem_alloc(5120);
+		g_phyRx.pusch1.pusch[i].data = (uint8_t *)mem_alloc(5120);
 	}
 
 	g_phyRx.flag_pbch = false;
@@ -132,11 +134,11 @@ void phyRxMsgHandler(msgDef *msg)
 				}
 				else
 				{
-					LOG_ERROR(PHY, "MAC_PHY_PDCCH_SEND received, frame:%u,subframe:%u, current frame:%u,subframe:%u",
+					LOG_ERROR(PHY, "MAC_PHY_PDCCH_SEND00 received, frame:%u,subframe:%u, current frame:%u,subframe:%u",
 						req->frame, req->subframe, g_phyRx.frame,g_phyRx.subframe);
 				}
 
-				LOG_DEBUG(PHY, "MAC_PHY_PDCCH_SEND received, frame:%u,subframe:%u, current frame:%u,subframe:%u,flag_pdcch:%u,flag_pdcch1:%u",
+				LOG_DEBUG(PHY, "MAC_PHY_PDCCH_SEND00 received, frame:%u,subframe:%u, current frame:%u,subframe:%u,flag_pdcch:%u,flag_pdcch1:%u",
 					req->frame, req->subframe, g_phyRx.frame,g_phyRx.subframe,g_phyRx.flag_pdcch,g_phyRx.flag_pdcch1);
 				break;
 			}
@@ -148,7 +150,31 @@ void phyRxMsgHandler(msgDef *msg)
 				{
 					g_phyRx.flag_pusch = true;
 
-					memcpy(&g_phyRx.pusch, req, sizeof(PHY_PuschSendReq));
+					//memcpy(&g_phyRx.pusch, req, sizeof(PHY_PuschSendReq));
+					g_phyRx.pusch.frame = req->frame;
+					g_phyRx.pusch.subframe = req->subframe;
+					g_phyRx.pusch.num = req->num;
+
+					for (uint32_t i = 0; i < req->num; i++)
+					{
+						g_phyRx.pusch.pusch[i].rnti = req->pusch[i].rnti;
+						
+						g_phyRx.pusch.pusch[i].rb_start = req->pusch[i].rb_start;
+						g_phyRx.pusch.pusch[i].rb_num = req->pusch[i].rb_num;
+						g_phyRx.pusch.pusch[i].mcs = req->pusch[i].mcs;
+						g_phyRx.pusch.pusch[i].data_ind = req->pusch[i].data_ind;// 1:ack/nack, 2:data, 3:ack/nack + data
+						
+						g_phyRx.pusch.pusch[i].modulation = req->pusch[i].modulation;
+						g_phyRx.pusch.pusch[i].rv = req->pusch[i].rv;
+						g_phyRx.pusch.pusch[i].harqId = req->pusch[i].harqId;
+						g_phyRx.pusch.pusch[i].ack = req->pusch[i].ack;
+						
+						g_phyRx.pusch.pusch[i].pdu_len = req->pusch[i].pdu_len;
+
+						memcpy(g_phyRx.pusch.pusch[i].data, req->pusch[i].data, req->pusch[i].pdu_len);
+						
+					}
+
 					LOG_DEBUG(PHY, "MAC_PHY_PUSCH_SEND00, frame:%u,subframe:%u, pusch data:%x,%x,%x,%x,%x,%x,%x,%x,%x,%x",
 						req->frame, req->subframe, req->pusch[0].data[0],req->pusch[0].data[1],req->pusch[0].data[2],req->pusch[0].data[3],
 						req->pusch[0].data[4],req->pusch[0].data[5],req->pusch[0].data[6],req->pusch[0].data[7],req->pusch[0].data[8],req->pusch[0].data[9]);
@@ -157,7 +183,30 @@ void phyRxMsgHandler(msgDef *msg)
 				{
 					g_phyRx.flag_pusch1 = true;
 
-					memcpy(&g_phyRx.pusch1, req, sizeof(PHY_PuschSendReq));
+					//memcpy(&g_phyRx.pusch1, req, sizeof(PHY_PuschSendReq));
+					g_phyRx.pusch1.frame = req->frame;
+					g_phyRx.pusch1.subframe = req->subframe;
+					g_phyRx.pusch1.num = req->num;
+
+					for (uint32_t i = 0; i < req->num; i++)
+					{
+						g_phyRx.pusch1.pusch[i].rnti = req->pusch[i].rnti;
+						
+						g_phyRx.pusch1.pusch[i].rb_start = req->pusch[i].rb_start;
+						g_phyRx.pusch1.pusch[i].rb_num = req->pusch[i].rb_num;
+						g_phyRx.pusch1.pusch[i].mcs = req->pusch[i].mcs;
+						g_phyRx.pusch1.pusch[i].data_ind = req->pusch[i].data_ind;// 1:ack/nack, 2:data, 3:ack/nack + data
+						
+						g_phyRx.pusch1.pusch[i].modulation = req->pusch[i].modulation;
+						g_phyRx.pusch1.pusch[i].rv = req->pusch[i].rv;
+						g_phyRx.pusch1.pusch[i].harqId = req->pusch[i].harqId;
+						g_phyRx.pusch1.pusch[i].ack = req->pusch[i].ack;
+						
+						g_phyRx.pusch1.pusch[i].pdu_len = req->pusch[i].pdu_len;
+
+						memcpy(g_phyRx.pusch1.pusch[i].data, req->pusch[i].data, req->pusch[i].pdu_len);
+						
+					}
 					LOG_DEBUG(PHY, "MAC_PHY_PUSCH_SEND00, frame:%u,subframe:%u, pusch1 data:%x,%x,%x,%x,%x,%x,%x,%x,%x,%x",
 						req->frame, req->subframe, req->pusch[0].data[0],req->pusch[0].data[1],req->pusch[0].data[2],req->pusch[0].data[3],
 						req->pusch[0].data[4],req->pusch[0].data[5],req->pusch[0].data[6],req->pusch[0].data[7],req->pusch[0].data[8],req->pusch[0].data[9]);
