@@ -702,7 +702,7 @@ size [rlc_sdu:%d + mac_subheader:%d] ",nb_bytes_to_transmit,  rlc_sdu_length,tem
 				}
 			}
 
-			LOG_WARN(RLC_TX, "total SDU send without split, lc_index:%d, last lc flag:%d, MAC TB size [%d] >= (rlc sdu size)[%d], final pdu size[%d],\
+			LOG_WARN(RLC_TX, "RLC total SDU send without split, lc_index:%d, last lc flag:%d, MAC TB size [%d] >= (rlc sdu size)[%d], final pdu size[%d],\
 mac subheader size:%d, UE TB's padding info:[tail_padding header:%d, padding byte:%d, head_padding header:%d] !\n",
 				  lc_pdu_component_ptr->logic_ch_index, 
 				  lc_pdu_component_ptr->is_last_sub_header_flag,
@@ -730,6 +730,7 @@ mac subheader size:%d, UE TB's padding info:[tail_padding header:%d, padding byt
 			lc_pdu_component_ptr->final_rlc_pdu_size = data_pdu_size; 
 			lc_pdu_component_ptr->tail_padding_header_size = 0; 
 			lc_pdu_component_ptr->tail_padding_byte = 0;
+			
 	
 			  //!如果是最后一个lc, 则根据总的tb size 确定padding size (存在tb_size > sum(lc's tb size)); 
 			//!如果是最后一个lc, 则根据总的tb size 确定padding size .
@@ -748,11 +749,14 @@ mac subheader size:%d, UE TB's padding info:[tail_padding header:%d, padding byt
 					{
 						lc_pdu_component_ptr->mac_subheader_length = 3; 
 						lc_pdu_component_ptr->mac_subheader_length_type  = 3;
-
 					}
 
+					
+					data_pdu_size = nb_bytes_to_transmit - lc_pdu_component_ptr->mac_subheader_length;
+					lc_pdu_component_ptr->final_rlc_pdu_size = data_pdu_size; 
+
 					//!更新mac header 的size之后，更新padding size .
-					ue_mac_pdu_size_ptr->padding_size = remain_byte_to_allocate - rlc_sdu_length - lc_pdu_component_ptr->mac_subheader_length; 
+					ue_mac_pdu_size_ptr->padding_size = remain_byte_to_allocate - data_pdu_size - lc_pdu_component_ptr->mac_subheader_length; 
 					//!此时插入1个padding 在逻辑信道的MAC subheader之后，作为最后一个sub header 
 					ue_mac_pdu_size_ptr->tail_padding_header_size = 1;  
 					ue_mac_pdu_size_ptr->padding_size -= 1; 
@@ -764,7 +768,7 @@ mac subheader size:%d, UE TB's padding info:[tail_padding header:%d, padding byt
 				}
 			}
 			
-		LOG_WARN(RLC_TX, "the  SDU may be need to split,lc_index:%d, last lc flag:%d, MAC TB size [%d] >= (rlc sdu size)[%d], final pdu size[%d],\
+		LOG_WARN(RLC_TX, "RLC total SDU may be need to split,lc_index:%d, last lc flag:%d, MAC TB size [%d] < (rlc sdu size)[%d], final pdu size[%d],\
 mac subheader size:%d, UE TB's padding info:[tail_padding header:%d, padding byte:%d, head_padding header:%d] !\n",
 				  lc_pdu_component_ptr->logic_ch_index, 
 				  lc_pdu_component_ptr->is_last_sub_header_flag,

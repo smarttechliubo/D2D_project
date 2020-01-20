@@ -37,11 +37,16 @@ typedef struct
 	uint16_t    bandwith;
 
 	bool flag_pbch;
+	PHY_PBCHSendReq pbch;
+
 	bool flag_pdcch;
 	bool flag_pusch;
-	PHY_PBCHSendReq pbch;
+	bool flag_pdcch1;
+	bool flag_pusch1;
 	PHY_PdcchSendReq pdcch;
 	PHY_PuschSendReq pusch;
+	PHY_PdcchSendReq pdcch1;
+	PHY_PuschSendReq pusch1;
 
 }phy_rx_info;
 

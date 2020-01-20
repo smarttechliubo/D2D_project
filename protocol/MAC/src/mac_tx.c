@@ -1345,9 +1345,19 @@ void send_pusch_req(const frame_t frame, const sub_frame_t subframe)
 		{
 			LOG_INFO(MAC, "LGC: MAC_PHY_PUSCH_SEND send. schnum:%u, common:%u, frame:%u, subframe:%u, num_pusch:%u", 
 				sch_num, common_sch_num, req->frame, req->subframe, req->num);
-			LOG_INFO(MAC, "LGC: MAC_PHY_PUSCH_SEND send. rnti:%u, mcs:%u, data_ind:%u, rv:%u, harqId:%u, ack:%u, pduLen:%u", 
+			LOG_INFO(MAC, "LGC: MAC_PHY_PUSCH_SEND send. rnti:%u, mcs:%u, data_ind:%u, rv:%u, harqId:%u, ack:%u, pduLen:%u, data:%x,%x,%x,%x,%x,%x,%x,%x,%x", 
 				req->pusch[0].rnti, req->pusch[0].mcs,req->pusch[0].data_ind,req->pusch[0].rv,
-				req->pusch[0].harqId,req->pusch[0].ack,req->pusch[0].pdu_len);
+				req->pusch[0].harqId,req->pusch[0].ack,req->pusch[0].pdu_len, 
+				req->pusch[0].data[0],
+				req->pusch[0].data[1],
+				req->pusch[0].data[2],
+				req->pusch[0].data[3],
+				req->pusch[0].data[4],
+				req->pusch[0].data[5],
+				req->pusch[0].data[6],
+				req->pusch[0].data[7],
+				req->pusch[0].data[8],
+				req->pusch[0].data[9]);
 		}
 	}
 	else
