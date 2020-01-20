@@ -135,8 +135,9 @@ void phyRxMsgHandler(msgDef *msg)
 					LOG_ERROR(PHY, "MAC_PHY_PDCCH_SEND received, frame:%u,subframe:%u, current frame:%u,subframe:%u",
 						req->frame, req->subframe, g_phyRx.frame,g_phyRx.subframe);
 				}
-				LOG_DEBUG(PHY, "MAC_PHY_PDCCH_SEND received, frame:%u,subframe:%u, current frame:%u,subframe:%u",
-					req->frame, req->subframe, g_phyRx.frame,g_phyRx.subframe);
+
+				LOG_DEBUG(PHY, "MAC_PHY_PDCCH_SEND received, frame:%u,subframe:%u, current frame:%u,subframe:%u,flag_pdcch:%u,flag_pdcch1:%u",
+					req->frame, req->subframe, g_phyRx.frame,g_phyRx.subframe,g_phyRx.flag_pdcch,g_phyRx.flag_pdcch1);
 				break;
 			}
 			case MAC_PHY_PUSCH_SEND:
@@ -148,12 +149,18 @@ void phyRxMsgHandler(msgDef *msg)
 					g_phyRx.flag_pusch = true;
 
 					memcpy(&g_phyRx.pusch, req, sizeof(PHY_PuschSendReq));
+					LOG_DEBUG(PHY, "MAC_PHY_PUSCH_SEND00, frame:%u,subframe:%u, pusch data:%x,%x,%x,%x,%x,%x,%x,%x,%x,%x",
+						req->frame, req->subframe, req->pusch[0].data[0],req->pusch[0].data[1],req->pusch[0].data[2],req->pusch[0].data[3],
+						req->pusch[0].data[4],req->pusch[0].data[5],req->pusch[0].data[6],req->pusch[0].data[7],req->pusch[0].data[8],req->pusch[0].data[9]);
 				}
 				else if (g_phyRx.flag_pusch1 == false)
 				{
 					g_phyRx.flag_pusch1 = true;
 
 					memcpy(&g_phyRx.pusch1, req, sizeof(PHY_PuschSendReq));
+					LOG_DEBUG(PHY, "MAC_PHY_PUSCH_SEND00, frame:%u,subframe:%u, pusch1 data:%x,%x,%x,%x,%x,%x,%x,%x,%x,%x",
+						req->frame, req->subframe, req->pusch[0].data[0],req->pusch[0].data[1],req->pusch[0].data[2],req->pusch[0].data[3],
+						req->pusch[0].data[4],req->pusch[0].data[5],req->pusch[0].data[6],req->pusch[0].data[7],req->pusch[0].data[8],req->pusch[0].data[9]);
 				}
 				else
 				{
@@ -165,8 +172,8 @@ void phyRxMsgHandler(msgDef *msg)
 				//	memcpy(g_phyRx.pusch.pusch[i].data, req->pusch[i].data, req->pusch[i].pdu_len);
 				//}
 				//memcpy(&g_phyRx.pusch, req, sizeof(PHY_PuschSendReq));
-				LOG_DEBUG(PHY, "MAC_PHY_PUSCH_SEND received, frame:%u,subframe:%u, current frame:%u,subframe:%u",
-					req->frame, req->subframe, g_phyRx.frame,g_phyRx.subframe);
+				LOG_DEBUG(PHY, "MAC_PHY_PUSCH_SEND received, frame:%u,subframe:%u, current frame:%u,subframe:%u,flag_pusch:%u,flag_pusch1:%u",
+					req->frame, req->subframe, g_phyRx.frame,g_phyRx.subframe, g_phyRx.flag_pusch,g_phyRx.flag_pusch1);
 				break;
 			}
 			default:
@@ -414,10 +421,10 @@ void handle_pusch1(const      frame_t frame, const sub_frame_t subframe)
 	pusch_frame = (pusch_frame + (pusch_subframe + 2) / MAX_SUBSFN) % MAX_SFN;
 	pusch_subframe = (pusch_subframe + 2) % MAX_SUBSFN;
 
-	if (g_phyRx.flag_pusch && g_phyRx.flag_pdcch &&
+	if (g_phyRx.flag_pusch1 && g_phyRx.flag_pdcch1 &&
 		(pusch_frame == frame && pusch_subframe == subframe))
 	{
-		LOG_INFO(PHY, "handle_pusch, frame:%u,subframe:%u, current frame:%u,subframe:%u, dci:%u, sch:%u",
+		LOG_INFO(PHY, "handle_pusch1, frame:%u,subframe:%u, current frame:%u,subframe:%u, dci:%u, sch:%u",
 			pusch_frame, pusch_subframe, g_phyRx.frame,g_phyRx.subframe, pdcch.num_dci, pusch.num);
 
 		for (uint32_t i = 0; i < pdcch.num_dci; i++)
@@ -425,7 +432,7 @@ void handle_pusch1(const      frame_t frame, const sub_frame_t subframe)
 			//dci = (dci_s)pdcch.dci[i].data[0];
 			data_ind = (pdcch.dci[i].data[2] & 0X18) >> 3;
 
-			LOG_DEBUG(PHY, "handle_pusch, rnti:%u,data_ind:%u,dci:%x,%x,%x", 
+			LOG_DEBUG(PHY, "handle_pusch1, rnti:%u,data_ind:%u,dci:%x,%x,%x", 
 				pusch.pusch[i].rnti,data_ind,pdcch.dci[i].data[0],pdcch.dci[i].data[1],pdcch.dci[i].data[2]);
 
 			if (data_ind == 1 || data_ind == 3)//ACK/NACK
@@ -504,9 +511,9 @@ void handle_pusch1(const      frame_t frame, const sub_frame_t subframe)
 			LOG_ERROR(PHY, "phy msg missing, num_dci:%u, pusch.num:%u", pdcch.num_dci, pusch.num);
 		}
 
-		if ((g_phyRx.flag_pusch && !g_phyRx.flag_pdcch) || (!g_phyRx.flag_pusch && g_phyRx.flag_pdcch))
+		if ((g_phyRx.flag_pusch1 && !g_phyRx.flag_pdcch1) || (!g_phyRx.flag_pusch1 && g_phyRx.flag_pdcch1))
 		{
-			LOG_ERROR(PHY, "phy msg missing, flag_pusch:%u, flag_pdcch:%u", g_phyRx.flag_pusch, g_phyRx.flag_pdcch);
+			LOG_ERROR(PHY, "phy msg missing, flag_pusch:%u, flag_pdcch:%u", g_phyRx.flag_pusch1, g_phyRx.flag_pdcch1);
 		}
 
 		g_phyRx.flag_pusch1 = false;
@@ -559,6 +566,7 @@ void handle_phy_rx(const      frame_t frame, const sub_frame_t subframe)
 	handle_pbch(frame, subframe);
 
 	handle_pusch(frame, subframe);	
+	handle_pusch1(frame, subframe);
 }
 
 void phy_rx_sim_thread(msgDef *msg)
