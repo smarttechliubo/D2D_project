@@ -17,6 +17,25 @@
 #include <interface_mac_rlc.h>
 #include <rlc.h>
 
+#ifndef  RLC_UT_DEBUG
+extern int32_t get_sysSfn();
+
+uint32_t   Get_Subsfn( )
+{
+	int time = get_sysSfn();
+	return (time % 4);
+
+}
+
+uint32_t   Get_Frame( )
+{
+	int time = get_sysSfn();
+	return (time >> 2);
+
+}
+
+#endif
+
 rlc_union_t 	*rlc_Get_HashNode(const protocol_ctxt_t* const ctxt_pP,
 									   boolean_t  srb_flagP,
 									   rb_id_t rb_idP)

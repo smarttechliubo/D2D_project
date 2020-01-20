@@ -35,7 +35,8 @@ int  g_ut_timer_cnt = 0;
 int g_ut_timerfd = 0;  
 
 extern unsigned int g_udp_send_cnt[2];
- 
+
+#ifdef RLC_UT_DEBUG  
 int timer_int_init( )
 {
 
@@ -91,6 +92,6 @@ uint32_t   Get_Frame( )
 	return g_d2d_sfn;
 
 }
-
+#endif 
  
 /**************************function******************************/

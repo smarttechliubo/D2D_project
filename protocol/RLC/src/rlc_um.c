@@ -303,6 +303,7 @@ void rlc_um_configure(
 	rlc_pP->last_reassemblied_sn  = rlc_pP->rx_sn_modulo - 1;
 	rlc_pP->last_reassemblied_missing_sn  = rlc_pP->rx_sn_modulo - 1;
 	rlc_pP->reassembly_missing_sn_detected = 0;  //！用在接收多个PDU 才能组包一个SDU时，检测是否丢包
+	rlc_pP->reassembly_missing_sn_packet = 0;
 	//! timers initial 
 	rlc_um_init_timer_reordering(ctxt_pP,rlc_pP, timer_reorderingP);
 

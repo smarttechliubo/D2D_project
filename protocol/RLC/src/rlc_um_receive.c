@@ -522,12 +522,23 @@ void   rlc_um_try_reassembly(const protocol_ctxt_t* const ctxt_pP,
 			if ((rlc_pP->last_reassemblied_sn+1)%rlc_pP->rx_sn_modulo != sn) 
 			{
 
-				LOG_WARN(RLC,
+				LOG_ERROR(RLC,
 					  PROTOCOL_RLC_UM_CTXT_FMT" FINDING a HOLE in RLC UM SN: CLEARING OUTPUT SDU BECAUSE NEW SN (%03d) TO REASSEMBLY NOT \ 
 				CONTIGUOUS WITH LAST REASSEMBLIED SN (%03d) \n",
 					  PROTOCOL_RLC_UM_CTXT_ARGS(ctxt_pP, rlc_pP),
 					  sn,
 					  rlc_pP->last_reassemblied_sn);
+                 if (sn > rlc_pP->last_reassemblied_sn)
+                 {
+			     	rlc_pP->reassembly_missing_sn_packet += (sn  - rlc_pP->last_reassemblied_sn) - 1;
+			     }
+			     else 
+			     {
+					rlc_pP->reassembly_missing_sn_packet += (sn + rlc_pP->rx_sn_modulo - rlc_pP->last_reassemblied_sn)-1; 
+			     }
+
+			     LOG_ERROR(RLC_RX, "PACKET MISSED, Last reassembled  SN = %d, current received SN = %d,missing_sn_packet = %d ", 
+			     		rlc_pP->last_reassemblied_sn,sn,rlc_pP->reassembly_missing_sn_packet);
 
 				//！将 output_sdu_size_to_write 设置为0 
 				rlc_um_clear_rx_sdu(ctxt_pP, rlc_pP);
@@ -921,7 +932,7 @@ void   rlc_um_start_timer_reordering(const protocol_ctxt_t* const ctxt_pP,
 		 //！设置起始时刻从当前帧开始
 		rlc_pP->t_reordering.ms_start		 = PROTOCOL_CTXT_TIME_MILLI_SECONDS(ctxt_pP);
 
-		LOG_DEBUG(RLC_RX, PROTOCOL_RLC_UM_CTXT_FMT" [T-REORDERING] STARTED TIME =%05u,  (TIME-OUT = %05u)\n",
+		LOG_ERROR(RLC_RX, PROTOCOL_RLC_UM_CTXT_FMT" [T-REORDERING] STARTED TIME =%05u,  (TIME-OUT = %05u)\n",
 			  PROTOCOL_RLC_UM_CTXT_ARGS(ctxt_pP, rlc_pP),
 			  PROTOCOL_CTXT_TIME_MILLI_SECONDS(ctxt_pP),
 			   rlc_pP->t_reordering.ms_time_out);
@@ -980,7 +991,7 @@ void rlc_um_check_timer_dar_time_out(const protocol_ctxt_t* const ctxt_pP,
 	  //	  -set VR(UX) to VR(UH).
 	  rlc_pP->stat_timer_reordering_timed_out += 1;
 
-	   LOG_DEBUG(RLC_RX, PROTOCOL_RLC_UM_CTXT_FMT" TIMER t-Reordering expiration,ms_start = %05u,ms_time_out = %05u, current time =%05u\n",
+	   LOG_ERROR(RLC_RX, PROTOCOL_RLC_UM_CTXT_FMT" TIMER t-Reordering expiration,ms_start = %05u,ms_time_out = %05u, current time =%05u\n",
 			PROTOCOL_RLC_UM_CTXT_ARGS(ctxt_pP, rlc_pP),
 			rlc_pP->t_reordering.ms_start, 
             rlc_pP->t_reordering.ms_time_out,
@@ -997,7 +1008,7 @@ void rlc_um_check_timer_dar_time_out(const protocol_ctxt_t* const ctxt_pP,
 	  rlc_pP->vr_ur = (rlc_pP->vr_ur+1)%rlc_pP->rx_sn_modulo;
 	}
 
-	LOG_DEBUG(RLC_RX, PROTOCOL_RLC_UM_CTXT_FMT" current VR(UR) = %03d, update VR(UR) = %03d\n",
+	LOG_ERROR(RLC_RX, PROTOCOL_RLC_UM_CTXT_FMT" current VR(UR) = %03d, update VR(UR) = %03d\n",
 			PROTOCOL_RLC_UM_CTXT_ARGS(ctxt_pP, rlc_pP),
 			old_vr_ur,
 			rlc_pP->vr_ur);
@@ -1018,7 +1029,7 @@ void rlc_um_check_timer_dar_time_out(const protocol_ctxt_t* const ctxt_pP,
 			rlc_pP->vr_ux);
 
 	} else {
-	  LOG_DEBUG(RLC_RX, PROTOCOL_RLC_UM_CTXT_FMT" STOP the old  t-Reordering VR(UX) = %03d, updated VR(UH)=%d, VR(UR)= %d\n",
+	  LOG_ERROR(RLC_RX, PROTOCOL_RLC_UM_CTXT_FMT" STOP the old  t-Reordering VR(UX) = %03d, updated VR(UH)=%d, VR(UR)= %d\n",
 			PROTOCOL_RLC_UM_CTXT_ARGS(ctxt_pP, rlc_pP),
 			rlc_pP->vr_ux, 
 			rlc_pP->vr_uh, 
@@ -1307,18 +1318,18 @@ void   rlc_um_receive_process_dar (const protocol_ctxt_t* const ctxt_pP,
 	 //!当初始化开始后，当sn =0,vh = 0，返回-1，然后更新vr_uh + 1,
 	 //! 一直到sn = 512时，uh = 512,此时rlc_um_in_reordering_window 才能返回0 
 	 //! 下面这段代码用于更新uh
-	LOG_INFO(RLC_RX, "judge 4: whether SN in recording window or not \n"); 
+	LOG_ERROR(RLC_RX, "judge 4: whether SN in recording window or not \n"); 
 	if (rlc_um_in_reordering_window(ctxt_pP, rlc_pP, sn) < 0) {
 
 		//！这里也需要判断SN 在接收窗的上边界才能更新UH，但这里只需要判断不在窗内? 
 		//！更新UH
 		rlc_pP->vr_uh = (sn + 1) % rlc_pP->rx_sn_modulo;
         
-        LOG_INFO(RLC_RX, "judge 4.1: SN:%d in not recording window,update UH = sn + 1: UH = %d  \n",
+        LOG_ERROR(RLC_RX, "judge 4.1: SN:%d in not recording window,update UH = sn + 1: UH = %d  \n",
 						sn,
 						rlc_pP->vr_uh);
 
-		LOG_INFO(RLC_RX, "judge 4.2: whether vr_ur:%d in  recording window or not after UH updated   \n",
+		LOG_ERROR(RLC_RX, "judge 4.2: whether vr_ur:%d in  recording window or not after UH updated   \n",
 						rlc_pP->vr_ur);
 						
 		//!<如果ur 在recording 窗外，则表示需要处理窗外的PDU了,处理vr_ur以下的SDU 。
@@ -1334,7 +1345,7 @@ void   rlc_um_receive_process_dar (const protocol_ctxt_t* const ctxt_pP,
 		 //！处理从ur开始，依次SN 递增的处理
 		 //!当初始时，ur = 0, in_window = 513,则滑动窗是[513--1023:0]
 		 //!这里处理 ur 之下的SDU, 不包括UR           
-		  LOG_DEBUG(RLC_RX, "judge 4.4: start to handle sn < UR:%d \n",rlc_pP->vr_ur); 
+		  LOG_ERROR(RLC_RX, "judge 4.4: start to handle sn < UR:%d \n",rlc_pP->vr_ur); 
 		  rlc_um_try_reassembly(ctxt_pP, rlc_pP, in_window,rlc_pP->vr_ur);
 
 		LOG_DEBUG(RLC_RX, PROTOCOL_RLC_UM_CTXT_FMT" VR(UR) %d OUTSIDE REORDERING WINDOW AFTER UH update, SET UR TO VR(UH) – UM_Window_Size = \
@@ -1365,7 +1376,7 @@ void   rlc_um_receive_process_dar (const protocol_ctxt_t* const ctxt_pP,
 		rlc_pP->vr_ur = (rlc_pP->vr_ur+1) % rlc_pP->rx_sn_modulo;
 	  } while (rlc_um_get_pdu_from_dar_buffer(ctxt_pP, rlc_pP, rlc_pP->vr_ur));  //! &&(rlc_pP->vr_ur != rlc_pP->vr_uh)
 
-	  LOG_INFO(RLC_RX, "judge 5: sn == UR, update the UR = %d , and SN have stored in buffer,,and then handle the  PDU which'S SN < UR \n", rlc_pP->vr_ur); 
+	  LOG_ERROR(RLC_RX, "judge 5: sn == UR, update the UR = %d , and SN have stored in buffer,,and then handle the  PDU which'S SN < UR \n", rlc_pP->vr_ur); 
 
 	   //!将SN < 更新后的ur 的PDU,进行去header处理，从SN 往上处理，处理到更新后的UR结束。
 	  rlc_um_try_reassembly(ctxt_pP, rlc_pP, sn, rlc_pP->vr_ur);
@@ -1394,7 +1405,7 @@ void   rlc_um_receive_process_dar (const protocol_ctxt_t* const ctxt_pP,
 		in_window = rlc_um_in_reordering_window(ctxt_pP, rlc_pP, rlc_pP->vr_ux);
         
 		if (in_window < 0) {
-		  LOG_INFO(RLC_RX,
+		  LOG_ERROR(RLC_RX,
 				PROTOCOL_RLC_UM_CTXT_FMT"judge 6.1:t_recording is running , STOP and RESET t-Reordering because VR(UX) falls outside of the reordering window and \
 VR(UX):%d != VR(UH):%d \\n",
 				PROTOCOL_RLC_UM_CTXT_ARGS(ctxt_pP, rlc_pP),
@@ -1414,7 +1425,7 @@ VR(UX):%d != VR(UH):%d \\n",
 	   //! 1:	 ux = ur ,表示已经收到了，也不用再运行了
 	  if ((in_window == -2) ) {
 
-		LOG_INFO(RLC_RX,
+		LOG_ERROR(RLC_RX,
 			  PROTOCOL_RLC_UM_CTXT_FMT"judge 6.2.1:t_recording is running , STOP and RESET t-Reordering because VR(UX): %d < VR(UR):%d \n",
 			  PROTOCOL_RLC_UM_CTXT_ARGS(ctxt_pP, rlc_pP),
 			  rlc_pP->vr_ux,
@@ -1423,7 +1434,7 @@ VR(UX):%d != VR(UH):%d \\n",
 	  }
 	  else if (in_window == 1)
 	  {
-			LOG_INFO(RLC_RX,
+			LOG_ERROR(RLC_RX,
 			  PROTOCOL_RLC_UM_CTXT_FMT"judge 6.2.2:t_recording is running , STOP and RESET t-Reordering because VR(UX) =%d is equal to VR(UR)=%d\n",
 			  PROTOCOL_RLC_UM_CTXT_ARGS(ctxt_pP, rlc_pP),
 			  rlc_pP->vr_ux,
@@ -1450,7 +1461,7 @@ VR(UX):%d != VR(UH):%d \\n",
 		//!启动timer 
 		rlc_um_start_timer_reordering(ctxt_pP, rlc_pP);
 		rlc_pP->vr_ux = rlc_pP->vr_uh;	//！更新ux = uh
-		LOG_INFO(RLC_RX, PROTOCOL_RLC_UM_CTXT_FMT"judge 7.1:t_recording is not running ,START t-Reordering because of VR(UR) < VR(UH),and set VR(UX) to VR(UH) =%d\n",
+		LOG_ERROR(RLC_RX, PROTOCOL_RLC_UM_CTXT_FMT"judge 7.1:t_recording is not running ,START t-Reordering because of VR(UR) < VR(UH),and set VR(UX) to VR(UH) =%d\n",
 			  PROTOCOL_RLC_UM_CTXT_ARGS(ctxt_pP, rlc_pP),
 			  rlc_pP->vr_ux);
 		
