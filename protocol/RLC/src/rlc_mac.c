@@ -404,10 +404,10 @@ ue remained size:%d after logic chan mapping \n",
 	mac_pdu_buffer_ptr += mac_sdu_tb_size; 
 
     //!add padding 
-    if (ue_pdu_size_para_ptr->padding_size > 0)
+    if (ue_pdu_size_para_ptr->remain_pdu_size > 0)
     {
 		memset(mac_pdu_buffer_ptr,0,ue_pdu_size_para_ptr->remain_pdu_size);
-		LOG_ERROR(RLC_TX,"add  tail padding bytes:%d\n", ue_pdu_size_para_ptr->padding_size) ;
+		LOG_ERROR(RLC_TX,"add  tail padding bytes:%d\n", ue_pdu_size_para_ptr->remain_pdu_size) ;
     }
 
 	LOG_ERROR(RLC_TX, "----------%s finished----------- \n", __func__);
