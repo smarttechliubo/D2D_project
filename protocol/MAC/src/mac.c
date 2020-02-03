@@ -319,7 +319,7 @@ void run_period(msgDef* msg)
 		syncTime();
 	}
 
-	LOG_ERROR(MAC, "run_period current time, isTimer:%u, frame：%u，subframe:%u",  
+	LOG_INFO(MAC, "run_period current time, isTimer:%u, frame：%u，subframe:%u",  
 		isTimer, g_context.frame, g_context.subframe);
 
 	if (!isTimer)
@@ -354,7 +354,7 @@ void run_scheduler(msgDef* msg)
 	bool isTimer = is_timer(msg);
 	int32_t ret = pre_check(subframe);
 
-	LOG_ERROR(MAC, "run_scheduler， frame:%u, subframe:%u, isTimer:%u", 
+	LOG_INFO(MAC, "run_scheduler， frame:%u, subframe:%u, isTimer:%u", 
 		g_context.mac->frame, g_context.mac->subframe, isTimer);
 	
 	if (!isTimer)

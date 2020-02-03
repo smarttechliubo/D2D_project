@@ -13,7 +13,7 @@
 #include <typedef.h> 
 #include <sys/time.h>
 
- 
+#if 0 
 unsigned long rdtsc(void)
  {
 	 unsigned int low,high;
@@ -29,6 +29,7 @@ unsigned long  GetCpuCycle( )
 	gettime = rdtsc();
 	return gettime;
 }
+#endif 
 
 
 struct timeval  GetTimeUs( )
