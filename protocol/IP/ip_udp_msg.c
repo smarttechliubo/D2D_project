@@ -36,7 +36,7 @@ char *vm_addr2= "192.168.84.1";
 
 char *PC_src_ip = "192.168.84.1";
 char *PC_dst_ip = "192.168.84.1";
-char msg_buffer[MAX_BUFFER_LENGTH] = {0};
+char msg_buffer[2048] = {0};
 char msg_buffer_2[MAX_BUFFER_LENGTH] = {0};
 char pc_addr_ip[32] = {0};
 
@@ -261,7 +261,7 @@ void ip_udp_task( )
 								recv_length); 
 			
 				
-#
+
 				g_udp_send_cnt[0]++;
 	 			
 

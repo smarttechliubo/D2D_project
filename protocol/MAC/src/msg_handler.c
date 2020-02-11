@@ -125,7 +125,7 @@ msgDef * message_receive_timeout(const task_id taskId, uint32_t timeout)
 	{	
 		if(is_timer(msg))
 		{
-			LOG_ERROR(MAC, "IS_TIMER_MSG, taskId:%u", taskId);
+			//LOG_ERROR(MAC, "IS_TIMER_MSG, taskId:%u", taskId);
 		}
 	}
 

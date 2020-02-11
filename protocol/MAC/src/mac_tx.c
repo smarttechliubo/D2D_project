@@ -308,7 +308,7 @@ void handle_rlc_data_ind()
 		}
 		default:
 		{
-			LOG_ERROR(MAC, "handle_rlc_data_ind, Unknown RLC msg! msgId:%u", get_msgId(msg));
+//			LOG_ERROR(MAC, "handle_rlc_data_ind, Unknown RLC msg! msgId:%u", get_msgId(msg));
 			break;
 		}
 	}
