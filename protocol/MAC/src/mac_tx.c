@@ -285,7 +285,7 @@ void handle_rlc_data_ind()
 	msgDef* msg;
 	//uint32_t msg_len = 0;
 	msgId msg_id = 0;
-	uint32_t timeout = 1;
+	uint32_t timeout = 100;
 
 	msg = message_receive_timeout(TASK_D2D_MAC_SCH, timeout);
 
