@@ -10,6 +10,16 @@
 #include "typedef.h"
 #include "osp_ex.h"
 
+void* _RegTimer4ms()
+{
+	return OSP_RegFrameSync4ms();
+}
+
+void* _RegTimer1ms()
+{
+	return OSP_RegFrameSync1ms();
+}
+
 void* _timerCreate(uint32_t DstTaskId,  bool isRepeat, uint32_t timeout, uint32_t delay)
 {
 	return OSP_timerCreateSim(DstTaskId, isRepeat, timeout, delay);

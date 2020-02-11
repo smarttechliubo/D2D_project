@@ -70,9 +70,12 @@ typedef struct tag_Osp_Msg_Head
 #define NOMSGTASK    0xaa000000
 #define MSGTASK        0x55000000
 #define RTTASK        0x00aa0000
+#define XXTASK        0x0000aa00
+#define XXMASK        0x0000ff00
 
 #define RT_MSG_PRI(x) (x|MSGTASK|RTTASK)
 #define RT_NOMSG_PRI(x) (x|NOMSGTASK|RTTASK)
+#define XRT_MSG_PRI(x) (x|MSGTASK|RTTASK|XXTASK)
 
 typedef struct tag_OSP_TASKMSG_REG                                                                                         
 {   
@@ -112,7 +115,12 @@ int OSP_atomicGet(int* pVar);
 void OSP_atomicSet(int* pVar, int val);
 void DebugOutSetLevel(int level);
 OSP_STATUS DebugOutWithTime(int level, char *fmt,...);
-
+OSP_STATUS ospWriteDiagLog(char *pbuf, U32 len);
+OSP_STATUS OspDbgLog (char *pbuf, U32 buflen);
+char *OspGetApeTDateAddr(int Id);//Id should be 0 or  1
+char *OspGetApeRDateAddr(int Id);//Id should be 0 or  1
+void * OSP_RegFrameSync4ms(void);//task init func should call this
+void * OSP_RegFrameSync1ms(void);//task init func should call this
 
 
 

@@ -9,6 +9,8 @@
 **********************************************************/
 #include "typedef.h"
 
+void* _RegTimer4ms();
+void* _RegTimer1ms();
 void* _timerCreate(uint32_t DstTaskId,  bool isRepeat, uint32_t timeout, uint32_t delay);
 int32_t _timerStart(void* pTimer);
 

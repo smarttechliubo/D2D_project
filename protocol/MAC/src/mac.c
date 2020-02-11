@@ -249,6 +249,8 @@ int32_t init_mac_period()
 	void* pTimer;
 	int32_t ret;
 	
+	(void)_RegTimer4ms();
+
 	pTimer = _timerCreate(TASK_D2D_MAC, 1, 4,0);
 	ret = _timerStart(pTimer);
 
@@ -338,7 +340,9 @@ int32_t init_mac_scheduler()
 {
 	void* pTimer;
 	int32_t ret;
-	
+
+	(void)_RegTimer1ms();
+
 	pTimer = _timerCreate(TASK_D2D_MAC_SCH, 1, 4, 1);
 	ret = _timerStart(pTimer);
 
