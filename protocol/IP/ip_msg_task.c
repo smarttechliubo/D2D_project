@@ -114,11 +114,14 @@ void ip_msg_process(void *message, MessagesIds      msg_type)
  			sdu_buffer_addr  = rlc_report_data_ptr->data_addr_ptr; 
  			sdu_real_data_addr = (uint8_t *)(((mem_block_t *)(rlc_report_data_ptr->data_addr_ptr))->data); 
  			
-			LOG_DEBUG(IP_MSG, "frame-subsfn[%d,%d] receive rlc sdu, sn = %d, total_tb_size = %d,data_size = %d, buffer_addr = %x,\
-data_addr = %x\n", receive_frame,receive_subsfn,sn, rlc_report_data_ptr->data_size,tbsize,sdu_buffer_addr,sdu_real_data_addr); 
+			LOG_ERROR(IP_MSG, "frame-subsfn[%d,%d] receive rlc sdu, sn = %d,total_count =%d, total_tb_size = %d,data_size = %d, buffer_addr = %x,\
+data_addr = %x\n", receive_frame,receive_subsfn,sn, g_rlcip_data_cnt,rlc_report_data_ptr->data_size,tbsize,sdu_buffer_addr,sdu_real_data_addr); 
 
             /*!write data to socket **/
-            ip_rlc_sdu_udp_send(g_iprlc_send_sdu_fd,sdu_real_data_addr,tbsize,sn);
+          //  ip_rlc_sdu_udp_send(g_iprlc_send_sdu_fd,sdu_real_data_addr,tbsize,sn);
+
+           
+		    g_rlcip_data_cnt++;
              /*!free buffer */
 			free_mem_block(sdu_buffer_addr,__func__,__LINE__);
 
