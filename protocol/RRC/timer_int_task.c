@@ -39,7 +39,8 @@ extern unsigned int g_udp_send_cnt[2];
 extern unsigned int g_udp_send_cnt[2]; 
 extern char msg_buffer[2048]; 
 
-uint32_t   g_fpga_test_num = 1500; 
+uint32_t   g_fpga_test_num = 1500;
+extern uint32_t g_mac_ready ; // 0:not ready,  1:ready
 
 int timer_int_init( )
 {
@@ -90,18 +91,21 @@ void timer_int_task(MessageDef *recv_msg)
 				mac_Rlc_Bufstat_Req(g_d2d_sfn,g_d2d_subsfn);
 			}
 			#endif 
-            if (RRC_STATUS_CONNECTE_COMPLETE == rrc_GetCurrentStatus())
-            {
-				Ip_Rlc_Data_Send(RB_TYPE_DRB,
-									3,
-									0XFF00,
-									g_udp_send_cnt[0],
-									msg_buffer,
-									g_fpga_test_num); 
-				
+			if (((g_ut_timer_cnt% 4) == 0) ||((g_ut_timer_cnt % 4) == 1))
+			{
+	            if (RRC_STATUS_CONNECTE_COMPLETE == rrc_GetCurrentStatus() && (1 == g_mac_ready))
+	            {
+					Ip_Rlc_Data_Send(RB_TYPE_DRB,
+										3,
+										0XFF00,
+										g_udp_send_cnt[0],
+										msg_buffer,
+										g_fpga_test_num); 
 					
- 				LOG_ERROR(DUMMY, "sfn:subsfn[%d,%d]: Send Data %d byte to RLC tx \n ",g_d2d_sfn,g_d2d_subsfn,g_fpga_test_num);
-				g_udp_send_cnt[0]++;
+						
+	 				LOG_ERROR(DUMMY, "sfn:subsfn[%d,%d]: Send Data %d byte to RLC tx \n ",g_d2d_sfn,g_d2d_subsfn,g_fpga_test_num);
+					g_udp_send_cnt[0]++;
+				}
 			}
 			g_ut_timer_cnt ++; 
     }

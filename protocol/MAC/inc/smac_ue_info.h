@@ -55,8 +55,8 @@ typedef struct
 typedef struct
 {
 	uint8_t  chan_num;
-	uint8_t  padding;
-	uint16_t buffer_total;
+	uint8_t  padding[3];
+	uint32_t buffer_total;
 	uint8_t  chan_id[MAX_LOGICCHAN_NUM];
 	uint32_t buffer_size[MAX_LOGICCHAN_NUM];
 
