@@ -122,7 +122,7 @@ uint32_t init_phy_tx_sim()
 	void* pTimer;
 	int32_t ret;
 
-	pTimer = _timerCreate(TASK_D2D_PHY_TX, 1, 4,0);
+	pTimer = _timerCreate(TASK_D2D_PHY_TX, 1, 400,0);
 	ret = _timerStart(pTimer);
 
 	LOG_INFO(MAC,"init_phy_tx_sim pTimer is %p, ret:%u\r\n", pTimer, ret);
@@ -332,10 +332,12 @@ void phy_tx_sim_thread(msgDef* msg)
 	if (!isTimer)
 	{
 		phyTxMsgHandler(msg);
+		
+		handle_phy_tx(frame, subframe);// for FPGA
 	}
 	else
 	{
-		handle_phy_tx(frame, subframe);
+		//handle_phy_tx(frame, subframe);
 	}
 
 	message_free(msg);

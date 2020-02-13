@@ -74,7 +74,7 @@ void update_buffer_status(rlc_buffer_rpt buffer)
 
 			ue_buffer->chan_num++;
 
-			LOG_ERROR(MAC, "update_buffer_status, lcNum:%u, total:%u, lcId:%u, lcSize:%u",
+			LOG_ERROR(MAC, "RLC_MAC_BUF_STATUS_RPT, update_buffer_status, lcNum:%u, total:%u, lcId:%u, lcSize:%u",
 				logic_chan_num,ue_buffer->buffer_total,ue_buffer->chan_id[i],ue_buffer->buffer_size[i]);
 		}
 	}
@@ -302,7 +302,7 @@ void handle_rlc_data_ind()
 		{
 			rlc_mac_data_ind *ind = (rlc_mac_data_ind *)message_ptr(msg);
 
-			LOG_INFO(MAC, "RLC_MAC_DATA_IND ");
+			LOG_ERROR(MAC, "RLC_MAC_DATA_IND ");
 			handle_rlc_data_result(ind);
 			break;
 		}
@@ -471,8 +471,8 @@ void pre_assign_rbs(const frame_t frame, const sub_frame_t subframe)
 
 		if (ue->buffer.buffer_total > 0)
 		{
-			LOG_ERROR(MAC, "pre_assign_rbs buffer.buffer_total:%u, rbg_size:%u, tbs:%u, mcs:%u",
-			ue->buffer.buffer_total, rbg_size, tbs, mcs);
+			//LOG_ERROR(MAC, "pre_assign_rbs buffer.buffer_total:%u, rbg_size:%u, tbs:%u, mcs:%u",
+			//ue->buffer.buffer_total, rbg_size, tbs, mcs);
 
 			while (tbs < ue->buffer.buffer_total)
 			{

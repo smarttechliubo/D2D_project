@@ -37,7 +37,7 @@ void handle_buffer_status_req(const frame_t frame, const sub_frame_t subframe)
 	
 		if (message_send(TASK_D2D_RLC_TX, msg, sizeof(msgDef)))
 		{
-			LOG_INFO(MAC, "LGC: mac_rlc_buf_status_req send, frame:%u, subframe:%u", frame, subframe);
+			LOG_ERROR(MAC, "run_period, mac_rlc_buf_status_req send, frame:%u, subframe:%u", frame, subframe);
 		}
 	}
 	else

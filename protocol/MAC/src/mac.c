@@ -103,8 +103,8 @@ void mac_pre_handler(msgDef *msg)
 	frame = g_context.frame;
 	subframe = g_context.subframe;
 
-	frame = (frame + (subframe + TIMING_ADVANCE) / MAX_SUBSFN) % MAX_SFN;
-	subframe = (subframe + TIMING_ADVANCE) % MAX_SUBSFN;
+	//frame = (frame + (subframe + TIMING_ADVANCE) / MAX_SUBSFN) % MAX_SFN;
+	//subframe = (subframe + TIMING_ADVANCE) % MAX_SUBSFN;
 
 	g_context.mac->frame = frame;
 	g_context.mac->subframe = subframe;
@@ -249,9 +249,9 @@ int32_t init_mac_period()
 	void* pTimer;
 	int32_t ret;
 	
-	(void)_RegTimer4ms();
+	//(void)_RegTimer4ms();
 
-	pTimer = _timerCreate(TASK_D2D_MAC, 1, 4,0);
+	pTimer = _timerCreate(TASK_D2D_MAC, 1, 400,0);
 	ret = _timerStart(pTimer);
 
 	LOG_INFO(MAC,"init_mac_period pTimer is %p, ret:%d\r\n", pTimer,ret);
@@ -341,9 +341,9 @@ int32_t init_mac_scheduler()
 	void* pTimer;
 	int32_t ret;
 
-	(void)_RegTimer1ms();
+	//(void)_RegTimer1ms();
 
-	pTimer = _timerCreate(TASK_D2D_MAC_SCH, 1, 4, 1);
+	pTimer = _timerCreate(TASK_D2D_MAC_SCH, 1, 400, 100);
 	ret = _timerStart(pTimer);
 
 	LOG_INFO(MAC,"init_mac_scheduler pTimer is %p, ret:%d\r\n", pTimer,ret);
@@ -358,7 +358,7 @@ void run_scheduler(msgDef* msg)
 	bool isTimer = is_timer(msg);
 	int32_t ret = pre_check(subframe);
 
-	LOG_INFO(MAC, "run_scheduler， frame:%u, subframe:%u, isTimer:%u", 
+	LOG_ERROR(MAC, "run_scheduler， frame:%u, subframe:%u, isTimer:%u", 
 		g_context.mac->frame, g_context.mac->subframe, isTimer);
 	
 	if (!isTimer)

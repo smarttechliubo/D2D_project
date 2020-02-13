@@ -49,7 +49,7 @@ uint32_t init_phy_rx_sim()
 	void* pTimer;
 	int32_t ret;
 
-	pTimer = _timerCreate(TASK_D2D_PHY_RX, 1, 4,0);
+	pTimer = _timerCreate(TASK_D2D_PHY_RX, 1, 400,0);
 	ret = _timerStart(pTimer);
 
 	LOG_INFO(MAC,"init_phy_rx_sim pTimer is %p, ret:%u\r\n", pTimer, ret);
