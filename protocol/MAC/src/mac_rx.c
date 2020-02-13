@@ -110,7 +110,7 @@ uint8_t *parse_mac_header(uint8_t *mac_header,
 	uint8_t *mac_header_ptr = mac_header;
 	uint16_t length, ce_len = 0;
 
-	LOG_INFO(MAC, "parse_mac_header, mac_header:%x,%x,%x,%x,%x,%x,%x,%x,%x,%x\n",
+	LOG_ERROR(MAC, "parse_mac_header, mac_header:%x,%x,%x,%x,%x,%x,%x,%x,%x,%x\n",
 		mac_header_ptr[0],mac_header_ptr[1],mac_header_ptr[2],
 		mac_header_ptr[3],mac_header_ptr[4],mac_header_ptr[5],
 		mac_header_ptr[6],mac_header_ptr[7],mac_header_ptr[8],mac_header_ptr[9]);

@@ -340,7 +340,7 @@ void handle_pusch(const      frame_t frame, const sub_frame_t subframe)
 	if (g_phyRx.flag_pusch && g_phyRx.flag_pdcch &&
 		(pusch_frame == frame && pusch_subframe == subframe))
 	{
-		LOG_INFO(PHY, "handle_pusch, frame:%u,subframe:%u, current frame:%u,subframe:%u, dci:%u, sch:%u",
+		LOG_ERROR(PHY, "handle_pusch, frame:%u,subframe:%u, current frame:%u,subframe:%u, dci:%u, sch:%u",
 			pusch_frame, pusch_subframe, g_phyRx.frame,g_phyRx.subframe, pdcch.num_dci, pusch.num);
 
 		for (uint32_t i = 0; i < pdcch.num_dci; i++)
@@ -473,7 +473,7 @@ void handle_pusch1(const      frame_t frame, const sub_frame_t subframe)
 	if (g_phyRx.flag_pusch1 && g_phyRx.flag_pdcch1 &&
 		(pusch_frame == frame && pusch_subframe == subframe))
 	{
-		LOG_INFO(PHY, "handle_pusch1, frame:%u,subframe:%u, current frame:%u,subframe:%u, dci:%u, sch:%u",
+		LOG_ERROR(PHY, "handle_pusch1, frame:%u,subframe:%u, current frame:%u,subframe:%u, dci:%u, sch:%u",
 			pusch_frame, pusch_subframe, g_phyRx.frame,g_phyRx.subframe, pdcch.num_dci, pusch.num);
 
 		for (uint32_t i = 0; i < pdcch.num_dci; i++)
