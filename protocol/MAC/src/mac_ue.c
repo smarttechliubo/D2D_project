@@ -22,6 +22,8 @@
 #include "messageDefine.h"//MAC_TEST
 #include "msg_handler.h"
 
+uint32_t g_mac_ready = 0; // 0:not ready,  1:ready
+
 bool get_ue_status(const uint16_t ueIndex)
 {
 	if (ueIndex >= MAX_UE)
@@ -283,6 +285,7 @@ void mac_user_setup(const rrc_mac_connnection_setup *req)
 
 		rnti = ue->rnti;
 		result = true;
+		g_mac_ready = 1;
 	}
 	else
 	{
