@@ -391,7 +391,7 @@ void rlc_tx_process(void *message, MessagesIds      msg_type)
 	int32_t   ue_status[D2D_MAX_USER_NUM] = {0};
 
 	
-	//LOG_ERROR(RLC_TX, "RLC_TX receive message = %d\n",msg_type);
+	LOG_ERROR(RLC_TX, "RLC_TX receive message = %d\n",msg_type);
 	switch (msg_type)
 	{
 		case RRC_RLC_BUF_STATUS_REQ: 
@@ -473,7 +473,7 @@ cur process time = [%lld, %lld, %lld] \n",
           	ue_num =  rlc_Get_Buffer_Status(rlc_buf_sta); 
 #ifndef  RLC_UT_DEBUG             
             rlc_Mac_BufferSta_Rpt(sfn,subsfn,ue_num,rlc_buf_sta);
-            LOG_INFO(RLC_TX, "message:%d,[sfn--subsfn]:[%d,%d] send %d ue_num rlc buffer status to mac \n",
+            LOG_ERROR(RLC_TX, "message:%d,[sfn--subsfn]:[%d,%d] send %d ue_num rlc buffer status to mac \n",
             		msg_type,sfn,subsfn);
 #endif 
             if (ue_num != 0)
