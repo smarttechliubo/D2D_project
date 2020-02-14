@@ -228,7 +228,7 @@ int dummy_init( )
     void* pTimer;
 	S32 ret;
 	
-	pTimer = OSP_timerCreateSim(TASK_D2D_DUMMY,0,1,0);
+	pTimer = OSP_timerCreateSim(TASK_D2D_DUMMY,1,100,0);
 	ret = OSP_timerStart(pTimer);
 
 	return OSP_OK;
@@ -248,76 +248,78 @@ void dummy_test_task(MessageDef *recv_msg)
 	{
 		gdummy_timer_cnt++; 
     
-		
-		LOG_DEBUG(DUMMY,"gdummy_timer_cnt = %d \n", gdummy_timer_cnt);
-		if (D2D_MODE_TYPE_SOURCE == rrc_mode)
+		if (1 == gdummy_timer_cnt)
 		{
-	       
-			while ( RRC_STATUS_INITIAL !=  rrc_GetCurrentStatus())  \
+			LOG_DEBUG(DUMMY,"gdummy_timer_cnt = %d \n", gdummy_timer_cnt);
+			if (D2D_MODE_TYPE_SOURCE == rrc_mode)
 			{
-				LOG_DEBUG(RRC, "SOURCE wait for initial stasus\n");
-			}
+		       
+				while ( RRC_STATUS_INITIAL !=  rrc_GetCurrentStatus())  \
+				{
+					LOG_DEBUG(RRC, "SOURCE wait for initial stasus\n");
+				}
 
-			//！simulate phy/mac/rlc confirm message 
-			
-			dummy_rrc_confirm_message(PHY_RRC_INITIAL_CFM); 
-
-			dummy_rrc_confirm_message(MAC_RRC_INITIAL_CFM); 
-			
-#ifndef RLC_MODULE_TEST
-			dummy_rrc_confirm_message(RLC_RRC_INITIAL_CFM); 
-#endif 
-			while (RRC_STATUS_INITIAL_CFM != rrc_GetCurrentStatus()) { }
-	        dummy_rrc_confirm_message(MAC_RRC_BCCH_PARA_CFG_CFM); //!mib schedule cfm 
-	 
-	        dummy_rrc_confirm_message(MAC_RRC_BCCH_PARA_CFG_CFM); //!sib1 schedule cfm 
-
-			//! send rrc connect request message to source 
-			dummy_rrc_rpt_message(MAC_RRC_CCCH_RPT,CCCH_MessageType_PR_rrcConnectionrequest); 
-
-
-			dummy_rrc_confirm_message(MAC_RRC_CONNECT_SETUP_CFG_CFM);
-			
-#ifndef RLC_MODULE_TEST
-
-			dummy_rrc_confirm_message(RLC_RRC_CONNECT_SETUP_CFG_CFM);
-#endif 
-			while (RRC_STATUS_CONNECTED !=  rrc_GetCurrentStatus()) 
-			{	
+				//！simulate phy/mac/rlc confirm message 
 				
-				LOG_DEBUG(RRC, "SOURCE wait for connect complete message  \n");
-			}
-			//!send rrc conncet complete message to source 
-			dummy_rrc_rpt_message(MAC_RRC_CCCH_RPT,CCCH_MessageType_PR_rrcConectioncomplete); 
+				dummy_rrc_confirm_message(PHY_RRC_INITIAL_CFM); 
 
-	     
-		}
-		else 
-		{
-			while ( RRC_STATUS_CELL_SEARCH !=  rrc_GetCurrentStatus())  \
+				dummy_rrc_confirm_message(MAC_RRC_INITIAL_CFM); 
+				
+#ifndef RLC_MODULE_TEST
+				dummy_rrc_confirm_message(RLC_RRC_INITIAL_CFM); 
+#endif 
+				while (RRC_STATUS_INITIAL_CFM != rrc_GetCurrentStatus()) { }
+		        dummy_rrc_confirm_message(MAC_RRC_BCCH_PARA_CFG_CFM); //!mib schedule cfm 
+		 
+		        dummy_rrc_confirm_message(MAC_RRC_BCCH_PARA_CFG_CFM); //!sib1 schedule cfm 
+
+				//! send rrc connect request message to source 
+				dummy_rrc_rpt_message(MAC_RRC_CCCH_RPT,CCCH_MessageType_PR_rrcConnectionrequest); 
+
+
+				dummy_rrc_confirm_message(MAC_RRC_CONNECT_SETUP_CFG_CFM);
+				
+#ifndef RLC_MODULE_TEST
+
+				dummy_rrc_confirm_message(RLC_RRC_CONNECT_SETUP_CFG_CFM);
+#endif 
+				while (RRC_STATUS_CONNECTED !=  rrc_GetCurrentStatus()) 
+				{	
+					
+					LOG_DEBUG(RRC, "SOURCE wait for connect complete message  \n");
+				}
+				//!send rrc conncet complete message to source 
+				dummy_rrc_rpt_message(MAC_RRC_CCCH_RPT,CCCH_MessageType_PR_rrcConectioncomplete); 
+
+		     
+			}
+			else 
 			{
-				LOG_DEBUG(RRC, "DESTINATION wait for initial stasus\n");
+				while ( RRC_STATUS_CELL_SEARCH !=  rrc_GetCurrentStatus())  \
+				{
+					LOG_DEBUG(RRC, "DESTINATION wait for initial stasus\n");
+				}
+
+
+				dummy_rrc_rpt_message(MAC_RRC_BCCH_MIB_RPT,0);
+
+				while (RRC_STATUS_IDLE != rrc_GetCurrentStatus())
+				{
+					LOG_DEBUG(RRC, "DESTINATION wait for PHY_RRC_BCCH_PARA_CFG_CFM report"); 
+				}
+
+		        dummy_rrc_confirm_message(PHY_RRC_BCCH_PARA_CFG_CFM);
+
+
+		        dummy_rrc_confirm_message(RLC_RRC_BCCH_PARA_CFG_CFM); //srb 0 established
+		        while(RRC_STATUS_CONNECT_REQUEST != rrc_GetCurrentStatus())
+		        {
+					LOG_DEBUG(RRC, "DESTINATION wait for CONNECT SETUP message \n"); 
+		        }
+		        //!send rrc conncet setup message to destination  
+		        dummy_rrc_rpt_message(MAC_RRC_CCCH_RPT,CCCH_MessageType_PR_rrcConnectionsetup); 
+		        
 			}
-
-
-			dummy_rrc_rpt_message(MAC_RRC_BCCH_MIB_RPT,0);
-
-			while (RRC_STATUS_IDLE != rrc_GetCurrentStatus())
-			{
-				LOG_DEBUG(RRC, "DESTINATION wait for PHY_RRC_BCCH_PARA_CFG_CFM report"); 
-			}
-
-	        dummy_rrc_confirm_message(PHY_RRC_BCCH_PARA_CFG_CFM);
-
-
-	        dummy_rrc_confirm_message(RLC_RRC_BCCH_PARA_CFG_CFM); //srb 0 established
-	        while(RRC_STATUS_CONNECT_REQUEST != rrc_GetCurrentStatus())
-	        {
-				LOG_DEBUG(RRC, "DESTINATION wait for CONNECT SETUP message \n"); 
-	        }
-	        //!send rrc conncet setup message to destination  
-	        dummy_rrc_rpt_message(MAC_RRC_CCCH_RPT,CCCH_MessageType_PR_rrcConnectionsetup); 
-	        
 		}
 	}
 

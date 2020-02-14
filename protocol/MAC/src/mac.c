@@ -353,8 +353,8 @@ int32_t init_mac_scheduler()
 
 void run_scheduler(msgDef* msg)
 {
-	sub_frame_t subframe = (g_context.subframe + TIMING_ADVANCE) % MAX_SUBSFN;
-
+	//sub_frame_t subframe = (g_context.subframe + TIMING_ADVANCE) % MAX_SUBSFN;
+    sub_frame_t subframe = g_context.subframe;
 	bool isTimer = is_timer(msg);
 	int32_t ret = pre_check(subframe);
 
