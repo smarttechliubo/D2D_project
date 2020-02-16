@@ -189,7 +189,7 @@ void dummy_rrc_rpt_message(uint16_t msg_id,CCCH_MessageType_PR ccch_message)
 				EncodeD2dCcch(buf, 256, &encode_size,ccch_message); 
 				ccch_rpt_ptr->sfn = 0x5; 
 				ccch_rpt_ptr->subsfn = 0x4; 
-				ccch_rpt_ptr->data_ptr = buf; 
+				ccch_rpt_ptr->data_ptr =(uint32_t *) buf; 
 				ccch_rpt_ptr->data_size = encode_size;
                
 				message = itti_alloc_new_message(TASK_D2D_MAC, MAC_RRC_CCCH_RPT, 
@@ -203,7 +203,7 @@ void dummy_rrc_rpt_message(uint16_t msg_id,CCCH_MessageType_PR ccch_message)
 				EncodeD2dCcch(buf, 256, &encode_size,CCCH_MessageType_PR_rrcConnectionsetup); 
 				ccch_rpt_ptr->sfn = 0x5; 
 				ccch_rpt_ptr->subsfn = 0x4; 
-				ccch_rpt_ptr->data_ptr = buf; 
+				ccch_rpt_ptr->data_ptr = (uint32_t *)buf; 
 				ccch_rpt_ptr->data_size = encode_size;
 
 				message = itti_alloc_new_message(TASK_D2D_MAC, MAC_RRC_CCCH_RPT, 

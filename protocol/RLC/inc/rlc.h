@@ -304,4 +304,45 @@ extern void rlc_um_init_timer_reordering(const protocol_ctxt_t* const ctxt_pP,
 												  rlc_um_entity_t * const rlc_pP,
 												  const uint32_t  ms_durationP);
 
+
+extern int32_t 	rlc_mac_logicchan_data_send(const protocol_ctxt_t          ctxt,
+									const logical_chan_id_t channel_idP,
+									const tb_size_t         logicch_tb_sizeP,
+									logic_channel_pdu_component   *lc_component_ptr,
+									mac_pdu_size_para  *ue_mac_pdu_size_ptr,
+									struct mac_data_req *data_request);
+
+extern void  rlc_tm_mac_data_indication (const protocol_ctxt_t* const  ctxt_pP,
+											void * const		rlc_pP,
+											struct mac_data_ind data_indP);
+
+extern void rlc_tm_cleanup (rlc_tm_entity_t * const rlcP);
+extern void rlc_tm_configure(
+								  const protocol_ctxt_t* const  ctxt_pP,
+								  rlc_tm_entity_t * const rlcP,
+								  const boolean_t is_uplink_downlinkP);
+extern void  rlc_tm_data_req (
+							  const protocol_ctxt_t* const	ctxt_pP,
+							  void *const rlc_pP,
+							  mem_block_t *const sdu_pP);
+
+extern void rlc_Rrc_BufStatus_Rpt(uint32_t send_data_size, rb_id_t rb_id, rb_type_e rb_type, rnti_t rnti, 
+									uint32_t  rlc_buffer_empty_size, uint32_t rlc_buffer_valid);
+extern void rlc_Mac_BufferSta_Rpt(uint16_t   sfn, uint16_t  subsfn, uint32_t valid_ue_num,rlc_buffer_rpt *buffer_status);
+extern int32_t  rlc_mac_ue_data_process(frame_t frameP, 
+									sub_frame_t  subframeP,
+								    rlc_data_req *rlc_data_ptr, 
+								    protocol_ctxt_t *protocol_ctxt_ptr,
+								    mac_pdu_size_para  *ue_pdu_size_para_ptr,
+								    uint8_t *ue_pdu_buffer,
+								    uint8_t *ue_mac_subheader_ptr
+								    );
+extern void config_req_rlc_tm(const protocol_ctxt_t* const  ctxt_pP,
+							  const srb_flag_t  srb_flagP,
+							  const rlc_tm_info_t * const config_tmP,
+							  const rb_id_t rb_idP,
+							  const logical_chan_id_t chan_idP
+							);
+
+extern void rlc_Rrc_Configure_Cfm(uint32_t        message_id);
 #endif

@@ -27,12 +27,12 @@ ue_info_dict  *dict_init()
 {
 	uint32_t i; 
     ue_info_node *temp; 
-    ue_info_dict *p = calloc(1,sizeof(ue_info_dict)); 
+    ue_info_dict *p = (ue_info_dict *)OSP_Alloc_Mem(sizeof(ue_info_dict)); 
     p->head = NULL; 
     p->tail = NULL;
 	p->element_number = 0; 
 
-	temp = (ue_info_node*)calloc(1,sizeof(ue_info_node));
+	temp = (ue_info_node *)OSP_Alloc_Mem(sizeof(ue_info_node));
 	temp->ue_info.value_ue_index = 0; 
 	temp->ue_info.key_ue_rnti = 0xffff;
     temp->next = NULL; 
@@ -71,7 +71,7 @@ void dict_SetValue(ue_info_dict *dict, uint16_t key_rnti,uint16_t value_ue_index
 
 	if (temp == dict->tail)  //!not find the key
     {
-		new_node = calloc(1,sizeof(ue_info_node)); 
+		new_node = (ue_info_node  *)OSP_Alloc_Mem(sizeof(ue_info_node)); 
 		new_node->next = NULL;
 		new_node->ue_info.key_ue_rnti = key_rnti; 
 		new_node->ue_info.value_ue_index = value_ue_index;

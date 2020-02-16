@@ -86,7 +86,7 @@ void mac_Rlc_data_Rpt(uint16_t frame, uint16_t subsfn,uint16_t valid_ue_num, mac
 #endif 
 
 
-void  rlc_mac_data_ind_message(U64         *ue_pdu_buffer_ptr, 
+void  rlc_mac_data_ind_message(uint32_t         *ue_pdu_buffer_ptr, 
 										uint32_t *ue_tb_size_ptr,
 										uint32_t *rnti_array, 
 										uint32_t  ue_num,
@@ -109,7 +109,7 @@ void  rlc_mac_data_ind_message(U64         *ue_pdu_buffer_ptr,
 	   for (ue_index = 0; ue_index < ue_num ; ue_index++)
 	   {
 			
-			rlc_mac_data_send_ptr->sdu_pdu_info[ue_index].data_buffer_adder_ptr = ue_pdu_buffer_ptr[ue_index];
+			rlc_mac_data_send_ptr->sdu_pdu_info[ue_index].data_buffer_adder_ptr = (uint32_t *)ue_pdu_buffer_ptr[ue_index];
 			rlc_mac_data_send_ptr->sdu_pdu_info[ue_index].tb_byte_size = ue_tb_size_ptr[ue_index]; 
 			rlc_mac_data_send_ptr->sdu_pdu_info[ue_index].rnti = rnti_array[ue_index]; 
             rlc_mac_data_send_ptr->sdu_pdu_info[ue_index].valid_flag = ue_status[ue_index]; 
@@ -270,7 +270,7 @@ rlc_op_status_t rlc_get_tx_data(const protocol_ctxt_t *const ctxt_pP,
 	  if (new_sdu_p != NULL) {
 		// PROCESS OF COMPRESSION HERE:
 	//	pthread_mutex_lock(&(rlc_union_p->rlc_union_mtex));
-		memset (new_sdu_p->data, 0, sizeof (struct rlc_tm_data_req_alloc));
+		memset ((void *)new_sdu_p->data, 0, sizeof (struct rlc_tm_data_req_alloc));
 		memcpy ((uint8_t *)(new_sdu_p->data) + sizeof (struct rlc_tm_data_req_alloc), sdu_pP, sdu_sizeP);
 		((struct rlc_tm_data_req *) (new_sdu_p->data))->data_size = sdu_sizeP;
 		((struct rlc_tm_data_req *) (new_sdu_p->data))->data_offset = sizeof (struct rlc_tm_data_req_alloc);
@@ -381,7 +381,7 @@ void rlc_tx_process(void *message, MessagesIds      msg_type)
 	uint32_t     srb_flag = 0; 
 
 	tb_size_t    tb_size; 
-	U64   ue_pdu_buffer_array[D2D_MAX_USER_NUM]; 
+	uint32_t   ue_pdu_buffer_array[D2D_MAX_USER_NUM]; 
 	uint32_t   ue_pdu_size_array[D2D_MAX_USER_NUM]; 
 	uint32_t   ue_rnti_array[D2D_MAX_USER_NUM]; 
 
@@ -425,7 +425,7 @@ void rlc_tx_process(void *message, MessagesIds      msg_type)
 			rb_type = rrc_rlc_data_ind_ptr->rb_type; 
 			rb_id = rrc_rlc_data_ind_ptr->rb_id; 
 			send_data_size = rrc_rlc_data_ind_ptr->data_size; 
-			data_buffer = rrc_rlc_data_ind_ptr->data_addr_ptr;
+			data_buffer = (uint8_t *)rrc_rlc_data_ind_ptr->data_addr_ptr;
 			rnti = rrc_rlc_data_ind_ptr->rnti; 
 			g_rlc_protocol_ctxt.rnti = rnti; 
 
@@ -542,7 +542,7 @@ tb_size = %d, logic tb_size = %d \n",
 				 						&g_rlc_pdu_buffer[ue_index * MAX_DLSCH_PAYLOAD_BYTES],
 				 						&g_rlc_mac_subheader[ue_index *((MAX_LOGICCHAN_NUM  + 1)* 3)]); 
 
-				ue_pdu_buffer_array[ue_index] = (U64)&g_rlc_pdu_buffer[ue_index * MAX_DLSCH_PAYLOAD_BYTES]; 
+				ue_pdu_buffer_array[ue_index] = (long)&g_rlc_pdu_buffer[ue_index * MAX_DLSCH_PAYLOAD_BYTES]; 
 				ue_pdu_size_array[ue_index] = (uint32_t )rlc_data_req_ptr->tb_size; 
 				ue_rnti_array[ue_index] =  	rlc_data_req_ptr->rnti; 
 				

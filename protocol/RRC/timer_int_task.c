@@ -29,7 +29,7 @@ extern uint32_t   g_d2d_subsfn ;
 extern uint32_t   g_d2d_sfn ; 
 extern void mac_Rlc_Bufstat_Req(uint16_t frame, uint16_t subsfn);
 
-
+extern void Ip_Rlc_Data_Send(rb_type_e rb_type, rb_id_t rb_id, rnti_t rnti, uint32_t data_number,uint32_t *data_buffer, uint32_t data_size);
 int  g_ut_timer_cnt = 0; 
 
 int g_ut_timerfd = 0;  
@@ -99,7 +99,7 @@ void timer_int_task(MessageDef *recv_msg)
 										3,
 										0XFF00,
 										g_udp_send_cnt[0],
-										msg_buffer,
+										(uint32_t *)msg_buffer,
 										g_fpga_test_num); 
 					
 						

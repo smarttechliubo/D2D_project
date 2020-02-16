@@ -261,7 +261,7 @@ void rlc_um_ip_rpt(
 	sdu_send_ptr->data_sn = data_sn; 
 	sdu_send_ptr->data_size = tb_sizeP; /**unit: byte*/
 	
-	sdu_send_ptr->data_addr_ptr = buffer_pP; /**data address*/
+	sdu_send_ptr->data_addr_ptr = (uint32_t *)buffer_pP; /**data address*/
 
 	message = itti_alloc_new_message(TASK_D2D_RLC_RX, RLC_IP_DATA_RPT,
 	                       ( char *)sdu_send_ptr, sizeof(rlc_ip_data_rpt ));
@@ -290,7 +290,7 @@ void  rlc_um_send_sdu (const protocol_ctxt_t* const ctxt_pP, uint32_t sn , rlc_u
        
      
        rlc_um_ip_rpt(rlc_pP->rb_id,rlc_pP->rnti, ctxt_pP->frame, ctxt_pP->subframe,sn, 
-       					rlc_pP->output_sdu_in_construction, (rlc_pP->output_sdu_size_to_write + sizeof(mem_block_t))); 
+       					(char *)rlc_pP->output_sdu_in_construction, (rlc_pP->output_sdu_size_to_write + sizeof(mem_block_t))); 
        					    
       rlc_pP->output_sdu_in_construction = NULL;  //！释放指针
     } else {

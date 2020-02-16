@@ -85,14 +85,11 @@
             }
 			else if (RLC_Config_PR_um_bi_direction == srb_addmod_ptr->rlc_config.present)  {
 				srb_add->srb_list[rb_cnt].rlc_mode = RLC_MODE_UM; 
-				srb_add->srb_list[rb_cnt].rlc_mode_cfg.ul_um_cfg.sn_field =  \
-					srb_addmod_ptr->rlc_config.choice.um_bi_direction.ul_um_rlc.sn_FieldLength; //! 1:SN = 10
+				srb_add->srb_list[rb_cnt].rlc_mode_cfg.ul_um_cfg.sn_field = srb_addmod_ptr->rlc_config.choice.um_bi_direction.ul_um_rlc.sn_FieldLength; //! 1:SN = 10
 
-				srb_add->srb_list[rb_cnt].rlc_mode_cfg.dl_um_cfg.sn_field =  \ 	
-					srb_addmod_ptr->rlc_config.choice.um_bi_direction.dl_um_rlc.sn_FieldLength; //! 1:SN = 10
+				srb_add->srb_list[rb_cnt].rlc_mode_cfg.dl_um_cfg.sn_field = srb_addmod_ptr->rlc_config.choice.um_bi_direction.dl_um_rlc.sn_FieldLength; //! 1:SN = 10
 
-				srb_add->srb_list[rb_cnt].rlc_mode_cfg.dl_um_cfg.t_recordering = \ 
-					srb_addmod_ptr->rlc_config.choice.um_bi_direction.dl_um_rlc.t_Reordering; 
+				srb_add->srb_list[rb_cnt].rlc_mode_cfg.dl_um_cfg.t_recordering = srb_addmod_ptr->rlc_config.choice.um_bi_direction.dl_um_rlc.t_Reordering; 
 				
 			}
 			else {
@@ -803,7 +800,7 @@ int  rrc_Receive_Signal_Msg(uint16_t mode_type, void *message, MessagesIds  msg_
 			rnti    = rlc_buffer_rpt_ptr->rnti; 
 			
 			//!send DATA_IND message to RLC 
-			rrc_Rlc_Data_Send(rb_type,rb_id, rnti, g_rrc_messge_encode,rlc_buffer_rpt_ptr->send_data_size); 
+			rrc_Rlc_Data_Send(rb_type,rb_id, rnti,(uint32_t *)g_rrc_messge_encode,rlc_buffer_rpt_ptr->send_data_size); 
 
 			break ;
         }

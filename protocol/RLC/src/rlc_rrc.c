@@ -23,7 +23,7 @@ void rlc_Rrc_Configure_Cfm(uint32_t        message_id)
 {
 
     MessageDef  *message; 
-	rlc_rrc_initial_cfm *rlc_cfm = calloc(1,sizeof(rlc_rrc_initial_cfm)); 
+	rlc_rrc_initial_cfm *rlc_cfm = (rlc_rrc_initial_cfm *)OSP_Alloc_Mem(sizeof(rlc_rrc_initial_cfm)); 
 
 	rlc_cfm->error_code = 0; 
 	rlc_cfm->status = 1; //！pass
@@ -43,7 +43,7 @@ void rlc_Rrc_BufStatus_Rpt(uint32_t send_data_size, rb_id_t rb_id, rb_type_e rb_
 {
 
 	MessageDef  *message; 
-	rlc_rrc_buffer_rpt  *buf_rpt_ptr = calloc(1,sizeof(rlc_rrc_buffer_rpt)); 
+	rlc_rrc_buffer_rpt  *buf_rpt_ptr = (rlc_rrc_buffer_rpt  *)OSP_Alloc_Mem(sizeof(rlc_rrc_buffer_rpt)); 
 
     buf_rpt_ptr->rb_id = rb_id; 
     buf_rpt_ptr->rb_type = rb_type; 

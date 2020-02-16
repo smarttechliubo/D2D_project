@@ -14,6 +14,9 @@
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+
 #include <string.h>
 #include <netinet/in.h>
 #include <errno.h>
@@ -257,7 +260,7 @@ void ip_udp_task( )
 								3,
 								0XFF00,
 								g_udp_send_cnt[0],
-								msg_buffer,
+								(uint32_t *)msg_buffer,
 								recv_length); 
 			
 				

@@ -14,6 +14,9 @@
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+
 #include <string.h>
 #include <netinet/in.h>
 #include <errno.h>
@@ -111,7 +114,7 @@ void ip_msg_process(void *message, MessagesIds      msg_type)
 			receive_subsfn = rlc_report_data_ptr->sub_frame; 
  			sn            =  rlc_report_data_ptr->data_sn; 
  			tbsize         = rlc_report_data_ptr->data_size -sizeof(mem_block_t); 
- 			sdu_buffer_addr  = rlc_report_data_ptr->data_addr_ptr; 
+ 			sdu_buffer_addr  = (uint8_t *)rlc_report_data_ptr->data_addr_ptr; 
  			sdu_real_data_addr = (uint8_t *)(((mem_block_t *)(rlc_report_data_ptr->data_addr_ptr))->data); 
  			
 			LOG_ERROR(IP_MSG, "frame-subsfn[%d,%d] receive rlc sdu, sn = %d,total_count =%d, total_tb_size = %d,data_size = %d, buffer_addr = %x,\
@@ -123,7 +126,7 @@ data_addr = %x\n", receive_frame,receive_subsfn,sn, g_rlcip_data_cnt,rlc_report_
            
 		    g_rlcip_data_cnt++;
              /*!free buffer */
-			free_mem_block(sdu_buffer_addr,__func__,__LINE__);
+			free_mem_block((mem_block_t *)sdu_buffer_addr,__func__,__LINE__);
 
 			
 			break; 
