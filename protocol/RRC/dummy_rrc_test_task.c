@@ -34,10 +34,10 @@ extern rrc_status_e  rrc_GetCurrentStatus( );
 void dummy_rrc_confirm_message(uint16_t msg_id)
 {
     MessageDef * message; 
-	phy_rrc_initial_cfm *initial_cfm = calloc(1,sizeof(phy_rrc_initial_cfm)); 
-    mac_rrc_connection_cfm *mac_connect_setup_ptr = calloc(1,sizeof(mac_rrc_connection_cfm)); 
-    rlc_rrc_connect_setup_cfg_cfm *rlc_connect_setup_ptr = calloc(1,sizeof(rlc_rrc_connect_setup_cfg_cfm));
-    mac_rrc_bcch_para_config_cfm  *mac_bcch_para_cfm_ptr = calloc(1,sizeof(mac_rrc_bcch_para_config_cfm)) ; 
+	phy_rrc_initial_cfm *initial_cfm = OSP_Alloc_Mem(sizeof(phy_rrc_initial_cfm)); 
+    mac_rrc_connection_cfm *mac_connect_setup_ptr = OSP_Alloc_Mem(sizeof(mac_rrc_connection_cfm)); 
+    rlc_rrc_connect_setup_cfg_cfm *rlc_connect_setup_ptr = OSP_Alloc_Mem(sizeof(rlc_rrc_connect_setup_cfg_cfm));
+    mac_rrc_bcch_para_config_cfm  *mac_bcch_para_cfm_ptr = OSP_Alloc_Mem(sizeof(mac_rrc_bcch_para_config_cfm)) ; 
     
     static int mac_bcch_para_cfg_flag = 1; 
     LOG_DEBUG(DUMMY,"send confirm message type:%d \n" ,msg_id); 
@@ -169,7 +169,7 @@ void dummy_rrc_rpt_message(uint16_t msg_id,CCCH_MessageType_PR ccch_message)
 			AssertFatal((D2D_MODE_TYPE_DESTINATION  == rrc_GetModeType()),  \
 			         RRC, "only RRC Destination can receive MIB RPT\n"); 
 
-	        mib_rpt_ptr = (mac_rrc_bcch_mib_rpt *)calloc(1,sizeof(mac_rrc_bcch_mib_rpt)); 
+	        mib_rpt_ptr = (mac_rrc_bcch_mib_rpt *)OSP_Alloc_Mem(sizeof(mac_rrc_bcch_mib_rpt)); 
 	        mib_rpt_ptr->SFN = 0x256; 
 	        mib_rpt_ptr->subsfn = 0x1;
 	        mib_rpt_ptr->mib_receive_flag = 1; 
@@ -182,7 +182,7 @@ void dummy_rrc_rpt_message(uint16_t msg_id,CCCH_MessageType_PR ccch_message)
 		}
 		case MAC_RRC_CCCH_RPT: 
 		{
-		    ccch_rpt_ptr = MALLOC(sizeof(mac_rrc_ccch_rpt)); 
+		    ccch_rpt_ptr = OSP_Alloc_Mem(sizeof(mac_rrc_ccch_rpt)); 
 		
 			if (D2D_MODE_TYPE_SOURCE  == rrc_GetModeType() )  //!source should receive rrc connect request message
             {

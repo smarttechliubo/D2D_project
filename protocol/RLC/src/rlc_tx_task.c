@@ -34,7 +34,7 @@ void mac_Rlc_data_Req(uint16_t frame, uint16_t subsfn,uint16_t valid_ue_num, rlc
 
 	uint16_t    ue_index; 
 
-	mac_rlc_data_req *mac_rlc_data_req_ptr = calloc(1,sizeof(mac_rlc_data_req)); 
+	mac_rlc_data_req *mac_rlc_data_req_ptr = OSP_Alloc_Mem(sizeof(mac_rlc_data_req)); 
 
  	
  	mac_rlc_data_req_ptr->sfn = frame; 
@@ -62,7 +62,7 @@ void mac_Rlc_data_Rpt(uint16_t frame, uint16_t subsfn,uint16_t valid_ue_num, mac
 
 	uint16_t    ue_index; 
 
-	mac_rlc_data_rpt *mac_rlc_data_rpt_ptr = calloc(1,sizeof(mac_rlc_data_rpt)); 
+	mac_rlc_data_rpt *mac_rlc_data_rpt_ptr = OSP_Alloc_Mem(sizeof(mac_rlc_data_rpt)); 
 
  	
  	mac_rlc_data_rpt_ptr->sfn = frame; 
@@ -98,7 +98,7 @@ void  rlc_mac_data_ind_message(uint32_t         *ue_pdu_buffer_ptr,
        
 
 	   MessageDef	*message; 
-	   rlc_mac_data_send_ptr = calloc(1,sizeof(rlc_mac_data_ind)); 
+	   rlc_mac_data_send_ptr = OSP_Alloc_Mem(sizeof(rlc_mac_data_ind)); 
 
 
 	   rlc_mac_data_send_ptr->sfn = 0; 

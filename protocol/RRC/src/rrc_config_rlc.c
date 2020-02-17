@@ -28,7 +28,7 @@
 void rrc_Rlc_InitialConfig(uint32_t        mode )
 {
     MessageDef  *message; 
-	rrc_rlc_initial_req *rlc_req = calloc(1,sizeof(rrc_rlc_initial_req)); 
+	rrc_rlc_initial_req *rlc_req = OSP_Alloc_Mem(sizeof(rrc_rlc_initial_req)); 
 
 	rlc_req->initial_flag = 1; 
 	rlc_req->mode = mode;
@@ -126,7 +126,7 @@ void rrc_Rlc_BcchPara_Config(rrc_rlc_srb_addmod_req *srb_info)
 	MessageDef  *message; 
     uint32_t rb_index = 0; 
 
-	bcch_req =  calloc(1,sizeof(rrc_rlc_bcch_para_cfg)); 
+	bcch_req =  OSP_Alloc_Mem(sizeof(rrc_rlc_bcch_para_cfg)); 
 
 	bcch_req->srb_cfg_req = *srb_info;
 
@@ -210,7 +210,7 @@ void rrc_Rlc_ConnectSetup_Config(uint32_t ue_rnti, uint32_t ue_index ,
 {
 
     MessageDef  *message; 
-	rrc_rlc_connect_setup_cfg  *connect_setup_req = calloc(1,sizeof(rrc_rlc_connect_setup_cfg)); 
+	rrc_rlc_connect_setup_cfg  *connect_setup_req = OSP_Alloc_Mem(sizeof(rrc_rlc_connect_setup_cfg)); 
 
 	
 	connect_setup_req->ue_index = ue_index; 
@@ -236,7 +236,7 @@ void rrc_Rlc_DataBuf_Sta_Req(rb_type_e         rb_type,uint32_t rb_id,rnti_t rnt
 {
 	MessageDef  *message; 
 
-	rrc_rlc_buffer_status_req    *data_status_req = calloc(1,sizeof(rrc_rlc_buffer_status_req)); 
+	rrc_rlc_buffer_status_req    *data_status_req = OSP_Alloc_Mem(sizeof(rrc_rlc_buffer_status_req)); 
 
 	data_status_req->request_id = 0; 
 	data_status_req->rb_type = rb_type; 
@@ -267,7 +267,7 @@ void rrc_Rlc_Data_Send(rb_type_e rb_type, rb_id_t rb_id, rnti_t rnti, uint32_t *
 {
 	MessageDef  *message;  
 
-	rrc_rlc_data_ind  *data_ind_ptr = calloc(1,sizeof(rrc_rlc_data_ind)); 
+	rrc_rlc_data_ind  *data_ind_ptr = OSP_Alloc_Mem(sizeof(rrc_rlc_data_ind)); 
 
  	data_ind_ptr->rb_type = rb_type; 
  	data_ind_ptr->rb_id = rb_id; 
@@ -295,7 +295,7 @@ void rrc_Rlc_Release_Req(uint32_t cell_id, uint32_t ue_index)
 {
 	MessageDef  *message;  
 
-	rrc_rlc_release_req   *data_ind_ptr = calloc(1,sizeof(rrc_rlc_release_req)); 
+	rrc_rlc_release_req   *data_ind_ptr = OSP_Alloc_Mem(sizeof(rrc_rlc_release_req)); 
 
     data_ind_ptr->cell_id = cell_id; 
     data_ind_ptr->ue_index  = ue_index; 

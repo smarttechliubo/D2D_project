@@ -62,10 +62,16 @@ typedef struct tag_Osp_Msg_Head
         U32      SrcId;                                                     
         U32      DstId;
 }Osp_Msg_Head;
+typedef enum en_osp_msg_type
+{
+    OSP_TIMER_TYPE =0x5555,
+    OSP_MAX_TYPE,
+}EN_OSP_MSG_TYPE;
+
 #define MSG_HEAD_SIZE  sizeof(Osp_Msg_Head)
 #define MSG_HEAD_TO_COMM(x)  (char *)((UINTPTR)x + MSG_HEAD_SIZE)
 #define MSG_DADA_LEN(x) (x->MsgSize)
-#define IS_TIMER_MSG(pMsg)((pMsg->SrcId)<32)
+#define IS_TIMER_MSG(pMsg)((pMsg->MsgType)== OSP_TIMER_TYPE)
 
 #define NOMSGTASK    0xaa000000
 #define MSGTASK        0x55000000
