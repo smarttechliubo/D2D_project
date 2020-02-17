@@ -49,7 +49,7 @@ void Ip_Rlc_Data_Send(rb_type_e rb_type, rb_id_t rb_id, rnti_t rnti, uint32_t da
 {
 	MessageDef  *message;  
 
-	ip_rlc_data_ind  *data_ind_ptr = OSP_Alloc_Mem(sizeof(ip_rlc_data_ind)); 
+	ip_rlc_data_ind  *data_ind_ptr = (ip_rlc_data_ind  *)OSP_Alloc_Mem(sizeof(ip_rlc_data_ind)); 
 
  	data_ind_ptr->rb_type = rb_type; 
  	data_ind_ptr->rb_id = rb_id; 
@@ -70,7 +70,7 @@ void mac_Rlc_Bufstat_Req(uint16_t frame, uint16_t subsfn)
 {
 	MessageDef  *message;  
 
-	mac_rlc_buf_status_req *buffer_stat_req = OSP_Alloc_Mem(sizeof(mac_rlc_buf_status_req)); 
+	mac_rlc_buf_status_req *buffer_stat_req =(mac_rlc_buf_status_req *) OSP_Alloc_Mem(sizeof(mac_rlc_buf_status_req)); 
 
  	
  	buffer_stat_req->sfn = frame; 

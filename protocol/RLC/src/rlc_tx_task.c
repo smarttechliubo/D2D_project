@@ -98,7 +98,7 @@ void  rlc_mac_data_ind_message(uint32_t         *ue_pdu_buffer_ptr,
        
 
 	   MessageDef	*message; 
-	   rlc_mac_data_send_ptr = OSP_Alloc_Mem(sizeof(rlc_mac_data_ind)); 
+	   rlc_mac_data_send_ptr =( rlc_mac_data_ind  *) OSP_Alloc_Mem(sizeof(rlc_mac_data_ind)); 
 
 
 	   rlc_mac_data_send_ptr->sfn = 0; 

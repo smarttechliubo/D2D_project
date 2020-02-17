@@ -29,7 +29,7 @@ void rlc_Mac_BufferSta_Rpt(uint16_t   sfn, uint16_t  subsfn, uint32_t valid_ue_n
 {
 
     MessageDef  *message; 
-	rlc_mac_buf_status_rpt  *rlc_rpt = OSP_Alloc_Mem(sizeof(rlc_mac_buf_status_rpt)); 
+	rlc_mac_buf_status_rpt  *rlc_rpt =(rlc_mac_buf_status_rpt  *)OSP_Alloc_Mem(sizeof(rlc_mac_buf_status_rpt)); 
 
 	rlc_rpt->sfn = sfn;
 	rlc_rpt->sub_sfn = subsfn;

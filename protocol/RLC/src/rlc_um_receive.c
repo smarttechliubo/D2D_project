@@ -250,7 +250,7 @@ void rlc_um_ip_rpt(
 	/*!send sdu to ip_msg_task */
 	MessageDef  *message = NULL; 
 	
-	rlc_ip_data_rpt *sdu_send_ptr = OSP_Alloc_Mem(sizeof(rlc_ip_data_rpt)); 
+	rlc_ip_data_rpt *sdu_send_ptr =(rlc_ip_data_rpt *) OSP_Alloc_Mem(sizeof(rlc_ip_data_rpt)); 
 
 	sdu_send_ptr->frame = sfn; 
 	sdu_send_ptr->sub_frame = subsfn; 
