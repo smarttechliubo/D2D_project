@@ -79,7 +79,9 @@ typedef struct sdu_segment_info_s
 {
 	uint16_t  valid_flag;
 	rnti_t    rnti; 
-	
+
+	uint32_t  buffer_id;//ping-pang id
+	uint32_t  offset;// buffer offset, default=0 in fpga
 	uint32_t  tb_byte_size;  /**unit: byte */
 	uint32_t  *data_buffer_adder_ptr;  /**mac buffer address*/
 
