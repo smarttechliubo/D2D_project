@@ -924,7 +924,7 @@ no E+LI, fill stoped  \n",
     //! buffer_status_sub_size 不包含E+LI的size, pdu_remaining_size 是RLC PDU，是包含 E+LI的size的
 	buffer_status_sub_size = pdu_remaining_size - test_e_li_length;
 
-   	LOG_WARN(RLC_TX, "sdu fill para result: %d sdu filled in RLC PDU,test_remaining_num_li_to_substract = %d,test_num_li = %d,\ 
+   	LOG_WARN(RLC_TX, "sdu fill para result: %d sdu filled in RLC PDU,test_remaining_num_li_to_substract = %d,test_num_li = %d,\
 test_e_li_length:%d,the real data pdu length %d,E_LI length:%d\n", num_fill_sdu, 
 					test_remaining_num_li_to_substract,
 					test_num_li,

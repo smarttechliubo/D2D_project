@@ -5,9 +5,9 @@ cmake_minimum_required (VERSION 2.8)
 project (D2D_project)
 
 
-#set(CMAKE_SYSTEM_NAME linux) 
-#set(CMAKE_SYSTEM_PROCESSOR arm)
-#set(CMAKE_C_COMPILER "/usr/bin/arm-linux-gnueabihf-gcc")
+set(CMAKE_SYSTEM_NAME linux) 
+set(CMAKE_SYSTEM_PROCESSOR arm)
+set(CMAKE_C_COMPILER "/usr/bin/arm-linux-gnueabihf-gcc")
 
 
 get_filename_component(PROJECT_ORIGIN_DIR ${PROJECT_SOURCE_DIR} DIRECTORY)

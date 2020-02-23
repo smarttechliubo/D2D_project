@@ -351,7 +351,5 @@ int itti_send_msg_to_task(task_id_t destination_task_id, instance_t instance, Me
 
 void itti_free_message(MessageDef *received_msg)
 {
-	
  	OSP_Free_Msg((Osp_Msg_Head*)received_msg);
-}
-           
+}           

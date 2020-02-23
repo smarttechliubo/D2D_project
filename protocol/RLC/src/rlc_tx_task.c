@@ -89,6 +89,8 @@ void mac_Rlc_data_Rpt(uint16_t frame, uint16_t subsfn,uint16_t valid_ue_num, mac
 void  rlc_mac_data_ind_message(uint32_t         *ue_pdu_buffer_ptr, 
 										uint32_t *ue_tb_size_ptr,
 										uint32_t *rnti_array, 
+										uint32_t *ue_pdu_buffer_offset,
+										uint32_t buffer_id,
 										uint32_t  ue_num,
 										int32_t  *ue_status)
 {
@@ -108,7 +110,9 @@ void  rlc_mac_data_ind_message(uint32_t         *ue_pdu_buffer_ptr,
 
 	   for (ue_index = 0; ue_index < ue_num ; ue_index++)
 	   {
-			
+	   		
+			rlc_mac_data_send_ptr->sdu_pdu_info[ue_index].buffer_id = buffer_id; 
+			rlc_mac_data_send_ptr->sdu_pdu_info[ue_index].offset = ue_pdu_buffer_offset[ue_index]; 
 			rlc_mac_data_send_ptr->sdu_pdu_info[ue_index].data_buffer_adder_ptr = (uint32_t *)ue_pdu_buffer_ptr[ue_index];
 			rlc_mac_data_send_ptr->sdu_pdu_info[ue_index].tb_byte_size = ue_tb_size_ptr[ue_index]; 
 			rlc_mac_data_send_ptr->sdu_pdu_info[ue_index].rnti = rnti_array[ue_index]; 
@@ -384,6 +388,9 @@ void rlc_tx_process(void *message, MessagesIds      msg_type)
 	uint32_t   ue_pdu_buffer_array[D2D_MAX_USER_NUM]; 
 	uint32_t   ue_pdu_size_array[D2D_MAX_USER_NUM]; 
 	uint32_t   ue_rnti_array[D2D_MAX_USER_NUM]; 
+	uint32_t   ue_buffer_offset[D2D_MAX_USER_NUM]; 
+	uint32_t   buffer_id; 
+	uint32_t   buffer_offset = 0; 
 
 	struct timeval    start_time; 
 	struct timeval    end_time; 
@@ -528,6 +535,7 @@ tb_size = %d, logic tb_size = %d \n",
 			sfn = mac_rlc_data_req_ptr->sfn; 
 			subsfn = mac_rlc_data_req_ptr->sub_sfn; 
             ue_num = mac_rlc_data_req_ptr->ue_num; 
+            buffer_offset = 0; 
             
 			for (ue_index = 0; ue_index < ue_num; ue_index++)
 			{
@@ -541,16 +549,19 @@ tb_size = %d, logic tb_size = %d \n",
 				 						&g_rlc_pdu_size_para[ue_index],
 				 						&g_rlc_pdu_buffer[ue_index * MAX_DLSCH_PAYLOAD_BYTES],
 				 						&g_rlc_mac_subheader[ue_index *((MAX_LOGICCHAN_NUM  + 1)* 3)]); 
-
-				ue_pdu_buffer_array[ue_index] = (long)&g_rlc_pdu_buffer[ue_index * MAX_DLSCH_PAYLOAD_BYTES]; 
-				ue_pdu_size_array[ue_index] = (uint32_t )rlc_data_req_ptr->tb_size; 
+                buffer_id = (subsfn & 0x1); 
+				ue_pdu_buffer_array[ue_index] = (uint32_t) OspGetApeTDateAddr(buffer_id);
+				ue_buffer_offset[ue_index] =  buffer_offset; 
+				ue_pdu_size_array[ue_index] = (uint32_t )rlc_data_req_ptr->tb_size;
+				memcpy((void *) ue_pdu_buffer_array[ue_index] , (void *)&g_rlc_pdu_buffer[ue_index * MAX_DLSCH_PAYLOAD_BYTES],ue_pdu_size_array[ue_index] * sizeof(char)); 
 				ue_rnti_array[ue_index] =  	rlc_data_req_ptr->rnti; 
+				buffer_offset = buffer_offset + ue_pdu_size_array[ue_index]; //update buffer_offset
 				
 				
 			}
 			
 #ifndef RLC_UT_DEBUG 			
-           rlc_mac_data_ind_message(ue_pdu_buffer_array,ue_pdu_size_array,ue_rnti_array,ue_num,ue_status); 
+           rlc_mac_data_ind_message(ue_pdu_buffer_array,ue_pdu_size_array,ue_rnti_array,ue_buffer_offset,buffer_id,ue_num,ue_status); 
 #else 
 		    mac_rlc_data_info    mac_rlc_data_rpt_temp; 
 
