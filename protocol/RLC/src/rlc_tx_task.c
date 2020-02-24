@@ -550,10 +550,14 @@ tb_size = %d, logic tb_size = %d \n",
 				 						&g_rlc_pdu_buffer[ue_index * MAX_DLSCH_PAYLOAD_BYTES],
 				 						&g_rlc_mac_subheader[ue_index *((MAX_LOGICCHAN_NUM  + 1)* 3)]); 
                 buffer_id = (subsfn & 0x1); 
+#ifdef  FPGA_PLATFORM
 				ue_pdu_buffer_array[ue_index] = (uint32_t) OspGetApeTDateAddr(buffer_id);
 				ue_buffer_offset[ue_index] =  buffer_offset; 
 				ue_pdu_size_array[ue_index] = (uint32_t )rlc_data_req_ptr->tb_size;
 				memcpy((void *) ue_pdu_buffer_array[ue_index] , (void *)&g_rlc_pdu_buffer[ue_index * MAX_DLSCH_PAYLOAD_BYTES],ue_pdu_size_array[ue_index] * sizeof(char)); 
+#else 
+				ue_pdu_buffer_array[ue_index] = (long)&g_rlc_pdu_buffer[ue_index * MAX_DLSCH_PAYLOAD_BYTES]; 
+#endif 
 				ue_rnti_array[ue_index] =  	rlc_data_req_ptr->rnti; 
 				buffer_offset = buffer_offset + ue_pdu_size_array[ue_index]; //update buffer_offset
 				

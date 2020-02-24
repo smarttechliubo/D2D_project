@@ -75,15 +75,17 @@ void timer_int_task(MessageDef *recv_msg)
 	if(IS_TIMER_MSG(pMsg))
 	{
 		 
-		    LOG_DEBUG(DUMMY, "-----------------------------[sfn-subsfn] = {%d--%d}-------------\n",g_d2d_sfn,g_d2d_subsfn);
-		    
-			g_d2d_subsfn++;
-			g_d2d_subsfn = g_d2d_subsfn % 10; 
-			if ((g_d2d_subsfn % 10) == 0)
+		 
+			
+			g_d2d_subsfn = g_d2d_subsfn % 4; 
+			if ((g_d2d_subsfn % 4) == 0)
 			{
 				g_d2d_sfn++;
-				g_d2d_sfn = g_d2d_sfn % 1024; 
+				g_d2d_sfn = g_d2d_sfn % 512; 
 			}
+			LOG_DEBUG(DUMMY, "-----------------------------[sfn-subsfn] = {%d--%d}-------------\n",g_d2d_sfn,g_d2d_subsfn);
+		    
+			g_d2d_subsfn++;
 			#if 0 
 			//if ((g_ut_timer_cnt % 4) < 2)//!模拟DDUU 
 			if (((g_udp_send_cnt[0] % 4) == 0) ||((g_udp_send_cnt[0] % 4) == 1))
@@ -91,7 +93,7 @@ void timer_int_task(MessageDef *recv_msg)
 				mac_Rlc_Bufstat_Req(g_d2d_sfn,g_d2d_subsfn);
 			}
 			#endif 
-			if (((g_ut_timer_cnt% 4) == 0) ||((g_ut_timer_cnt % 4) == 1))
+			if (((g_d2d_subsfn% 4) == 0) ||((g_d2d_subsfn % 4) == 1))
 			{
 	            if (RRC_STATUS_CONNECTE_COMPLETE == rrc_GetCurrentStatus() && (1 == g_mac_ready))
 	            {
