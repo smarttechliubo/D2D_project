@@ -196,6 +196,7 @@ bool update_scheduled_ue(const rnti_t rnti, const uint32_t data_size, uint8_t* d
 			}
 			else
 			{
+				sch->cancel = false;
 				if (data_size > sch->pdu_len)
 				{
 					LOG_WARN(MAC, "rlc pdu length wrong, rnti:%u, dataSize:%u, pdu_len:%u", 
@@ -213,6 +214,10 @@ bool update_scheduled_ue(const rnti_t rnti, const uint32_t data_size, uint8_t* d
 			if (cancel)
 			{
 				dci->cancel = true;
+			}
+			else
+			{
+				dci->cancel = false;
 			}
 
 			num++;
@@ -917,7 +922,7 @@ bool fill_dci_result(
 
 	if (cce_offset >= 0)
 	{
-		dci[dci_num].cancel = false;
+		dci[dci_num].cancel = true;
 		dci[dci_num].rnti = rnti;
 		dci[dci_num].ueIndex = ueIndex;
 
@@ -951,7 +956,7 @@ void fill_sch_result(ueInfo* ue,
 	const uint8_t ack,
 	const uint16_t pdu_len)
 {
-	sch[sch_num].cancel = false;
+	sch[sch_num].cancel = true;
 	sch[sch_num].ueIndex = ue->ueIndex;
 	sch[sch_num].rnti = ue->rnti;
 	sch[sch_num].rb_start = rb_start;
@@ -1125,7 +1130,7 @@ void handle_schedule_commom(const frame_t frame, const sub_frame_t subframe)
 	}
 }
 
-void mac_rlc_data_request(const frame_t frame, const sub_frame_t subframe)
+bool mac_rlc_data_request(const frame_t frame, const sub_frame_t subframe)
 {
 	mac_info_s* mac = g_sch_mac;
 	ueInfo* ue = &mac->ue[0];
@@ -1146,7 +1151,7 @@ void mac_rlc_data_request(const frame_t frame, const sub_frame_t subframe)
 	if (msg == NULL)
 	{
 		LOG_ERROR(MAC, "mac_rlc_data_request, new mac message fail!");
-		return;
+		return false;
 	}
 
 	req = (mac_rlc_data_req*)message_ptr(msg);
@@ -1193,10 +1198,13 @@ void mac_rlc_data_request(const frame_t frame, const sub_frame_t subframe)
 				req->rlc_data_request[0].logicchannel_id[0],
 				req->rlc_data_request[0].mac_pdu_byte_size[0]);
 		}
+
+		return true;
 	}
 	else
 	{
 		message_free(msg);
+		return false;
 	}
 }
 
@@ -1372,6 +1380,18 @@ void mac_phy_data_send(const frame_t frame, const sub_frame_t subframe)
 	send_pusch_req(frame, subframe);
 }
 
+void handle_tx_result(const frame_t frame, const sub_frame_t subframe)
+{
+	bool ret = false;
+
+	ret = mac_rlc_data_request(frame, subframe);
+
+	if (ret)
+	{
+		handle_rlc_data_ind();
+	}
+}
+
 void update_ue_result(const frame_t frame, const sub_frame_t subframe)
 {
 	uint16_t sch_ue_num = g_sch_mac->num0;
@@ -1428,10 +1448,7 @@ void mac_scheduler()
 
 	handle_schedule_result(frame, subframe);
 
-	mac_rlc_data_request(frame, subframe);
-
-	//sleep(100us);
-	handle_rlc_data_ind();
+	handle_tx_result(frame, subframe);
 
 	mac_phy_data_send(frame, subframe);
 
