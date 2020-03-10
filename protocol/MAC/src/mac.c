@@ -180,7 +180,7 @@ uint32_t get_syncTiming()
 */
 extern	int32_t get_sysSfn();
 
-void syncTime()//TODO: sync
+void syncTimeSim()//TODO: sync
 {
 
 	int time = get_sysSfn();
@@ -190,58 +190,82 @@ void syncTime()//TODO: sync
 
 	if (g_timing_sync == false)
 		g_timing_sync = true;
-/*
-	uint32_t time = 0;
+}
 
-	// 1. get timing sync with PHY	
+void update_sfn()
+{
+    frame_t frame = g_context.frame;
+    sub_frame_t subframe = g_context.subframe;
+
+	subframe++;
+
+	g_context.subframe = (subframe % MAX_SUBSFN);
+
+	if (g_context.subframe == 0)
+	{
+		frame++;
+		g_context.frame = (frame % MAX_SFN);
+	}
+	LOG_ERROR(MAC, "update_sfn, frame:%u, subframe:%u", g_context.frame, g_context.subframe);
+}
+
+void syncTime()//TODO: sync
+{
+	int time = 0;
+    frame_t frame = g_context.frame;
+    sub_frame_t subframe = g_context.subframe;
+
 	if (g_timing_sync == false)
-    {
-		time = get_syncTiming();// TODO: sync
+	{
+		time = sfn_sync();//get_sysSfn();
 
-		if (time != 0xFFFFFFFF)
+		if (time >= 0)
 		{
-			g_context.frame = time / 10;
+			g_context.frame = time >> 2;
 			g_context.subframe = time % MAX_SUBSFN;
+
 			g_timing_sync = true;
+
+			LOG_INFO(MAC, "syncTime: first SFN SYNC ");
 		}
 		else
-	    {
-			LOG_WARN(MAC, "Timing sync fail!!");
+		{
+			LOG_INFO(MAC, "syncTime: PHY not ready ");
 		}
 	}
-	// 2. get period sync with PHY
-	else if (g_timing_sync == true)
+	else
 	{
-	    g_context.subframe++;
-
-		if (g_context.subframe == MAX_SUBSFN)
+		if ((g_context.frame % 8 == 0) && (g_context.subframe % MAX_SUBSFN == 0))
 		{
-		    g_context.subframe = 0;
-			g_context.frame = (g_context.frame+1)%MAX_SFN;
-		}
-		
-		if ((g_context.frame*10 + g_context.subframe)%TIMING_SYNC_PERIOD == 0)
-		{
-			time = get_syncTiming();
+			time = sfn_sync();
 
-			if (time != 0xFFFFFFFF)
+			if (time >= 0)
 			{
-				if (time != g_context.frame*10 + g_context.subframe)
-				{
-					LOG_WARN(MAC, "Timing sync loast!! time:%u, frame:%u, subframe:%u",
-						time, g_context.frame, g_context.subframe);
+				frame = time >> 2;
+				subframe = time % MAX_SUBSFN;
 
-					g_context.frame = time / 10;
+				if (frame != g_context.frame || subframe != g_context.subframe)
+				{
+					LOG_ERROR(MAC, "syncTime: SFN SYNC fail,  sfn:%u, subsfn:%u, sfn:%u, subsfn:%u",
+						frame, subframe, g_context.frame, g_context.subframe);
+
+					g_context.frame = time >> 2;
 					g_context.subframe = time % MAX_SUBSFN;
 				}
+				else
+				{
+					LOG_INFO(MAC, "syncTime: SFN SYNC ,  sfn:%u, subsfn:%u", frame, subframe);
+				}
 			}
-			else
-		    {
-				LOG_WARN(MAC, "Timing sync failed with PHY");
+			else 
+			{
+				LOG_ERROR(MAC, "syncTime: SFN SYNC fail,  time:%d",time);
+
+				g_timing_sync = false;
 			}
 		}
 	}
-	*/
+
 }
 
 int32_t init_mac_period()
@@ -279,7 +303,7 @@ int32_t init_mac_period()
 
 		if (message_send(TASK_D2D_MAC, msg, sizeof(msgDef)))
 		{
-			LOG_INFO(RRC, "LGC: rrc_mac_initial_req send");
+			LOG_INFO(MAC, "LGC: rrc_mac_initial_req send");
 		}
 	}
 
@@ -303,7 +327,7 @@ int32_t init_mac_period()
 
 		if (message_send(TASK_D2D_MAC, msg, sizeof(msgDef)))
 		{
-			LOG_INFO(RRC, "LGC: RRC_MAC_CONNECT_SETUP_CFG_REQ send");
+			LOG_INFO(MAC, "LGC: RRC_MAC_CONNECT_SETUP_CFG_REQ send");
 		}
 	}
 
@@ -318,7 +342,7 @@ void run_period(msgDef* msg)
 
 	if (isTimer)
 	{
-		syncTime();
+		update_sfn();//syncTime();
 	}
 
 	LOG_INFO(MAC, "run_period current time, isTimer:%u, frame：%u，subframe:%u",  
@@ -346,6 +370,8 @@ int32_t init_mac_scheduler()
 	pTimer = _timerCreate(TASK_D2D_MAC_SCH, 1, 400, 100);
 	ret = _timerStart(pTimer);
 
+	setFrameOffsetTime(200);
+
 	LOG_INFO(MAC,"init_mac_scheduler pTimer is %p, ret:%d\r\n", pTimer,ret);
 
 	return 0;
@@ -361,6 +387,11 @@ void run_scheduler(msgDef* msg)
 	LOG_ERROR(MAC, "run_scheduler， frame:%u, subframe:%u, isTimer:%u", 
 		g_context.mac->frame, g_context.mac->subframe, isTimer);
 	
+	if (isTimer)
+	{
+		syncTime();
+	}
+
 	if (!isTimer)
 	{
 		msg_handler(msg);
