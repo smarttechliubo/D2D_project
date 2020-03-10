@@ -51,7 +51,7 @@ typedef struct
 	uint8_t harqId;
 	uint8_t ack;
 
-	uint16_t padding_len;
+	uint16_t buffer_id;//0:buffer 0,  1:buffer 1
 	uint16_t pdu_len;
 	uint8_t *data;
 }pusch_info;
@@ -73,9 +73,10 @@ typedef struct
 {
 	rnti_t rnti;
 	uint16_t crc;// 0:NACK, 1: ACK
+
+	uint16_t buffer_id;//0:buffer 0,  1:buffer 1
 	uint16_t dataSize;
 	uint8_t *dataptr;
-	uint8_t padding;
 }pusch_result;
 
 typedef struct{

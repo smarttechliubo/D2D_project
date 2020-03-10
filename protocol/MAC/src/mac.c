@@ -28,6 +28,8 @@
 #include "mac_osp_interface.h"
 
 bool g_timing_sync = false;
+int32_t g_sync_old_sfn = -1;
+
 
 mac_info_s* init_mac_info()
 {
@@ -206,6 +208,7 @@ void update_sfn()
 		frame++;
 		g_context.frame = (frame % MAX_SFN);
 	}
+
 	LOG_ERROR(MAC, "update_sfn, frame:%u, subframe:%u", g_context.frame, g_context.subframe);
 }
 
@@ -219,18 +222,19 @@ void syncTime()//TODO: sync
 	{
 		time = sfn_sync();//get_sysSfn();
 
-		if (time >= 0)
+		if ((time >= 0) && (time != g_sync_old_sfn))
 		{
 			g_context.frame = time >> 2;
-			g_context.subframe = time % MAX_SUBSFN;
+			g_context.subframe = time & 0x3;
 
 			g_timing_sync = true;
+			g_sync_old_sfn = time;
 
 			LOG_INFO(MAC, "syncTime: first SFN SYNC ");
 		}
 		else
 		{
-			LOG_INFO(MAC, "syncTime: PHY not ready ");
+			LOG_INFO(MAC, "syncTime: PHY not ready or time is not udpated ");
 		}
 	}
 	else
@@ -239,18 +243,21 @@ void syncTime()//TODO: sync
 		{
 			time = sfn_sync();
 
-			if (time >= 0)
+			if ((time >= 0) && (time != g_sync_old_sfn))
 			{
 				frame = time >> 2;
-				subframe = time % MAX_SUBSFN;
+				subframe = time & 0x3;
+				g_sync_old_sfn = time;
 
 				if (frame != g_context.frame || subframe != g_context.subframe)
 				{
 					LOG_ERROR(MAC, "syncTime: SFN SYNC fail,  sfn:%u, subsfn:%u, sfn:%u, subsfn:%u",
 						frame, subframe, g_context.frame, g_context.subframe);
 
-					g_context.frame = time >> 2;
-					g_context.subframe = time % MAX_SUBSFN;
+					g_context.frame = frame;
+					g_context.subframe = subframe;
+
+					g_timing_sync = false;
 				}
 				else
 				{
