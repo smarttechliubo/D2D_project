@@ -28,7 +28,7 @@ typedef struct
 	uint8_t harqId;
 	uint8_t ack;
 
-	uint16_t padding_len;
+	uint16_t buffer_id;
 	uint16_t pdu_len;
 	uint8_t *data;
 }sch_ind;

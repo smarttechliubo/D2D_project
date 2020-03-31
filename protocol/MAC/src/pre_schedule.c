@@ -67,7 +67,7 @@ void pre_schedule(const frame_t frame, const sub_frame_t subframe, mac_info_s *m
 
 	if (mac->mode == 0)//source
 	{
-		schedule_common(frame, subframe, mac);
+		//schedule_common(frame, subframe, mac);
 	}
 
 	pre_ue_select(frame, subframe, mac);

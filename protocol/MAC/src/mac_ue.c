@@ -281,7 +281,7 @@ void mac_user_setup(const rrc_mac_connnection_setup *req)
 		
 		ue->lc_num += req->logical_channel_num;
 
-		ue->sch_info.mcs = 15;//TODO: default MCS
+		ue->sch_info.mcs = 16;//TODO: default MCS
 
 		rnti = ue->rnti;
 		result = true;

@@ -230,7 +230,8 @@ void syncTime()//TODO: sync
 			g_timing_sync = true;
 			g_sync_old_sfn = time;
 
-			LOG_INFO(MAC, "syncTime: first SFN SYNC ");
+			LOG_INFO(MAC, "syncTime: first SFN SYNC frame:%u, subframe:%u", 
+				g_context.frame, g_context.subframe);
 		}
 		else
 		{
@@ -239,7 +240,7 @@ void syncTime()//TODO: sync
 	}
 	else
 	{
-		if ((g_context.frame % 8 == 0) && (g_context.subframe % MAX_SUBSFN == 0))
+		if ((g_context.frame % 8 == 0) && (g_context.subframe % MAX_SUBSFN == 2))
 		{
 			time = sfn_sync();
 
@@ -266,7 +267,8 @@ void syncTime()//TODO: sync
 			}
 			else 
 			{
-				LOG_ERROR(MAC, "syncTime: SFN SYNC fail,  time:%d",time);
+				LOG_ERROR(MAC, "syncTime: SFN SYNC fail,  time:%d, old sfn:%d, frame:%u, subframe:%u",
+					time, g_sync_old_sfn, g_context.frame, g_context.subframe);
 
 				g_timing_sync = false;
 			}
@@ -280,10 +282,10 @@ int32_t init_mac_period()
 	void* pTimer;
 	int32_t ret;
 	
-	//(void)_RegTimer4ms();
+	(void)_RegTimer4ms();
 
-	pTimer = _timerCreate(TASK_D2D_MAC, 1, 400,0);
-	ret = _timerStart(pTimer);
+	//pTimer = _timerCreate(TASK_D2D_MAC, 1, 400,0);
+	//ret = _timerStart(pTimer);
 
 	LOG_INFO(MAC,"init_mac_period pTimer is %p, ret:%d\r\n", pTimer,ret);
 
@@ -372,12 +374,12 @@ int32_t init_mac_scheduler()
 	void* pTimer;
 	int32_t ret;
 
-	//(void)_RegTimer1ms();
+	(void)_RegTimer1ms();
 
-	pTimer = _timerCreate(TASK_D2D_MAC_SCH, 1, 400, 100);
-	ret = _timerStart(pTimer);
+	//pTimer = _timerCreate(TASK_D2D_MAC_SCH, 1, 400, 100);
+	//ret = _timerStart(pTimer);
 
-	setFrameOffsetTime(200);
+	//setFrameOffsetTime(200);
 
 	LOG_INFO(MAC,"init_mac_scheduler pTimer is %p, ret:%d\r\n", pTimer,ret);
 

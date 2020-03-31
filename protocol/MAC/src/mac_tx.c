@@ -171,7 +171,11 @@ void add_to_scheduling_list0(uint16_t ueIndex)
 	g_sch_mac->scheduling_list0[g_sch_mac->num0++] = ueIndex;
 }
 
-bool update_scheduled_ue(const rnti_t rnti, const uint32_t data_size, uint8_t* dataptr, const bool cancel)
+bool update_scheduled_ue(const rnti_t rnti, 
+	const uint32_t data_size, 
+	uint8_t* dataptr, 
+	const bool cancel,
+	uint16_t buffer_id)
 {
 	uint16_t num = 0;
 	sch_ind* sch = NULL;
@@ -204,6 +208,7 @@ bool update_scheduled_ue(const rnti_t rnti, const uint32_t data_size, uint8_t* d
 				}
 
 				sch->data = dataptr;
+				sch->buffer_id = buffer_id;
 			}
 
 			num++;
@@ -243,6 +248,7 @@ void handle_rlc_data_result(const rlc_mac_data_ind* ind)
 	rnti_t rnti = INVALID_U16;
 	uint32_t data_size = 0;
 	uint8_t* dataptr = NULL;
+	uint16_t buffer_id = 0;
 
 	for (uint32_t i = 0; i < ue_num; i++)
 	{
@@ -273,9 +279,9 @@ void handle_rlc_data_result(const rlc_mac_data_ind* ind)
 		rnti = ind->sdu_pdu_info[i].rnti;
 		data_size = ind->sdu_pdu_info[i].tb_byte_size;
 		dataptr = (uint8_t*)ind->sdu_pdu_info[i].data_buffer_adder_ptr;
-		
+		buffer_id = (uint16_t)ind->sdu_pdu_info[i].buffer_id;
 
-		ret = update_scheduled_ue(rnti, data_size, dataptr, cancel);
+		ret = update_scheduled_ue(rnti, data_size, dataptr, cancel, buffer_id);
 
 		if (ret)
 		{
@@ -470,27 +476,14 @@ void pre_assign_rbs(const frame_t frame, const sub_frame_t subframe)
 		//cqi = ue->sch_info.cqi;
 		//mcs = cqi_to_mcs(cqi);
 		mcs = ue->sch_info.mcs;
-		rbs_req = (mcs == 0) ? (uint32_t)mac->min_rbs_per_ue : rbg_size;
+		rbs_req = 100;
 
-		tbs = get_tbs(mcs, rbg_size);
+		//tbs = get_tbs(mcs, rbg_size);
 
 		if (ue->buffer.buffer_total > 0)
 		{
-			//LOG_ERROR(MAC, "pre_assign_rbs buffer.buffer_total:%u, rbg_size:%u, tbs:%u, mcs:%u",
-			//ue->buffer.buffer_total, rbg_size, tbs, mcs);
 
-			while (tbs < ue->buffer.buffer_total)
-			{
-				rbs_req += rbg_size;
-
-				if (rbs_req > mac->max_rbs_per_ue || rbs_req > rb_max)
-				{
-					rbs_req = MIN(mac->max_rbs_per_ue,rb_max);
-					tbs = get_tbs(mcs, rbs_req);
-					break;
-				}
-				tbs = get_tbs(mcs, rbs_req);
-			}
+			tbs = get_tbs(mcs, rbs_req);
 
 			ue->sch_info.pre_tbs = tbs;
 			ue->sch_info.pre_rbs_alloc = rbs_req;
@@ -516,8 +509,8 @@ void pre_assign_rbs(const frame_t frame, const sub_frame_t subframe)
 		if (scheduled)
 		{
 			scheduled = false;
-			LOG_ERROR(MAC, "pre_assign_rbs, ue rnti:%u, pre_tbs:%u, buffer_total:%u, crc:%u, reTx:%u", 
-				ue->rnti, ue->sch_info.pre_tbs,ue->buffer.buffer_total, ue->sch_info.crc[harqId],ue->harq[harqId].reTx);
+			LOG_ERROR(MAC, "pre_assign_rbs, ue rnti:%u, pre_rbs_alloc:%u, pre_tbs:%u, buffer_total:%u, crc:%u, reTx:%u", 
+				ue->rnti, ue->sch_info.pre_rbs_alloc,ue->sch_info.pre_tbs,ue->buffer.buffer_total, ue->sch_info.crc[harqId],ue->harq[harqId].reTx);
 			add_to_scheduling_list0(i);
 		}
 	}
@@ -582,8 +575,8 @@ void scheduler_resouce_calc_greedy(const frame_t frame, const sub_frame_t subfra
 		{
 			newTxUe++;
 			totalUe++;
-			ue->sch_info.pre_rbs_alloc = MIN(ue->sch_info.pre_rbs_alloc, available_rbs);
-			ue->sch_info.pre_tbs = get_tbs(ue->sch_info.mcs, ue->sch_info.pre_rbs_alloc);
+			//ue->sch_info.pre_rbs_alloc = MIN(ue->sch_info.pre_rbs_alloc, available_rbs);
+			//ue->sch_info.pre_tbs = get_tbs(ue->sch_info.mcs, ue->sch_info.pre_rbs_alloc);
 			available_rbs = available_rbs - ue->sch_info.pre_rbs_alloc;
 			rbs_newTx += ue->sch_info.pre_rbs_alloc;
 		}
@@ -669,6 +662,7 @@ uint32_t scheduler_rballoc(mac_info_s *mac, const uint16_t ueIndex, const uint32
 	uint32_t pre_rbs_alloc = 0;
 	ueInfo* ue = &mac->ue[ueIndex];
 	uint8_t harqId = get_harqId(mac->subframe);
+	uint32_t rbs_alloc = 0;
 
 	if (ue->harq[harqId].reTx)
 	{
@@ -684,6 +678,7 @@ uint32_t scheduler_rballoc(mac_info_s *mac, const uint16_t ueIndex, const uint32
 		if (mac->rb_available[i] == 1)
 		{
 			rb_num++;
+			rbs_alloc++;
 			pre_rbs_alloc--;
 			mac->rb_available[i] = 0;
 		}
@@ -704,14 +699,20 @@ uint32_t scheduler_rballoc(mac_info_s *mac, const uint16_t ueIndex, const uint32
 	}
 	else
 	{
-		ue->sch_info.pre_tbs = get_tbs(ue->sch_info.mcs, rb_num);
+	    rb_num = 100;
+		ue->sch_info.pre_tbs = get_tbs(ue->sch_info.mcs, 50);
 
 		ue->sch_info.rb_start = first_rb;
 		ue->sch_info.pre_rbs_alloc = rb_num;
+		ue->sch_info.rb_num = rb_num;
 
 		ue->harq[harqId].rbs_alloc = rb_num;
 		ue->harq[harqId].rb_start = first_rb;
 		ue->harq[harqId].tbs = ue->sch_info.pre_tbs;
+
+		LOG_INFO(MAC, "scheduler_rballoc, pre_tbs:%u, pre_rbs_alloc:%u, rb_num:%u, mcs:%u, rbs_alloc:%u, total_rb_num:%u",
+			ue->sch_info.pre_tbs, ue->sch_info.pre_rbs_alloc, ue->sch_info.rb_num, ue->sch_info.mcs, rbs_alloc,total_rb_num);
+		
 	}
 
 	return rb_num;
@@ -778,11 +779,11 @@ void schedule_ue(const frame_t frame, const sub_frame_t subframe)
 
 	if (mac->alloc_pattern == EPATTERN_GREEDY)
 	{
-		scheduler_resouce_calc_greedy(frame, subframe);
+		//scheduler_resouce_calc_greedy(frame, subframe);
 	}
 	else
 	{
-		scheduler_resouce_calc_fair(frame, subframe);
+		//scheduler_resouce_calc_fair(frame, subframe);
 	}
 
 	scheduler_resource_locate();
@@ -849,8 +850,8 @@ void handle_ue_logic_channel(ueInfo* ue, uint16_t lc_index[MAX_LOGICCHAN_NUM], u
 			tbs = tbs - tbs_req;
 			buffer->lc_tbs_req[index] = tbs_req;
 
-			LOG_INFO(MAC, "handle_ue_logic_channel, lc_num:%u, pre_tbs:%u, lc_size:%u, tbs_req:%u",
-				lc_num,sch_info->pre_tbs,lc_size,tbs_req);
+			LOG_INFO(MAC, "handle_ue_logic_channel, lc_num:%u, pre_tbs:%u, pre_rbs_alloc:%u, rb_num:%u, lc_size:%u, tbs_req:%u",
+				lc_num,sch_info->pre_tbs, sch_info->pre_rbs_alloc, sch_info->rb_num,lc_size,tbs_req);
 
 			buffer->lc_priority_index[buffer->lc_num++] = index;
 		}
@@ -963,7 +964,7 @@ void fill_sch_result(ueInfo* ue,
 	sch[sch_num].rb_num = rb_num;
 	sch[sch_num].mcs = mcs;
 	sch[sch_num].data_ind = data_ind; //TODO:
-	sch[sch_num].modulation = 1;//TODO: not define yet
+	sch[sch_num].modulation = 6;//TODO: not define yet
 	sch[sch_num].rv = rv;
 	sch[sch_num].harqId = harqId;
 	sch[sch_num].ack = ack;
@@ -1347,6 +1348,7 @@ void send_pusch_req(const frame_t frame, const sub_frame_t subframe)
 			req->pusch[i+common_sch_num].ack = sch[i].ack;
 			req->pusch[i+common_sch_num].pdu_len = sch[i].pdu_len;
 			req->pusch[i+common_sch_num].data = sch[i].data;
+			req->pusch[i+common_sch_num].buffer_id = sch[i].buffer_id;
 		}
 
 		if (message_send(TASK_D2D_PHY_TX, msg, sizeof(msgDef)))

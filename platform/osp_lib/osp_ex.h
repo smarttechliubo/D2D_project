@@ -125,8 +125,8 @@ OSP_STATUS ospWriteDiagLog(char *pbuf, U32 len);
 OSP_STATUS OspDbgLog (char *pbuf, U32 buflen);
 char *OspGetApeTDateAddr(int Id);//Id should be 0 or  1
 char *OspGetApeRDateAddr(int Id);//Id should be 0 or  1
-void * OSP_RegFrameSync4ms(void);//task init func should call this
-void * OSP_RegFrameSync1ms(void);//task init func should call this
+void * OSP_RegFrameSync(void);//task init func should call this
+void * OSP_RegFrameSyncCal(void);//task init func should call this
 int Osp_SetFrameOffsetTime(int time);
 int Osp_FrameSyncIrqRead(int *data);
 

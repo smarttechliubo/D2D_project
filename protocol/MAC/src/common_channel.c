@@ -133,11 +133,11 @@ void schedule_sib(const frame_t frame, const sub_frame_t subframe, mac_info_s *m
 
 	if (tbs == sib_len)
 	{
-		tx_info->sch[sch_num].padding_len = 0;
+		tx_info->sch[sch_num].pdu_len = 0;
 	}
 	else
 	{
-		tx_info->sch[sch_num].padding_len = tbs - sib_len;
+		tx_info->sch[sch_num].pdu_len = tbs - sib_len;
 	}
 
 	cce_offset = allocate_CCE(aggregation_level);
