@@ -20,6 +20,7 @@
 
 #include "messageDefine.h"//MAC_TEST
 #include "msg_handler.h"
+#include "osp_ex.h"
 
 void init_mac_rx()
 {
@@ -413,7 +414,15 @@ void handlePuschReceivedInd(PHY_PuschReceivedInd *pusch)
 		result = &pusch->result[i];
 		rnti = result->rnti;
 		crc = result->crc;
-		payload = result->dataptr;
+
+		if (result->buffer_id != 0 && result->buffer_id != 1)
+		{
+			LOG_ERROR(MAC, "pusch buffer id error! buffer_id:%u",result->buffer_id);
+			return ;
+		}
+
+		payload = (uint8_t *)OspGetApeRDateAddr(result->buffer_id);
+
 		tb_length = result->dataSize;
 
 #if 0
@@ -521,6 +530,7 @@ void handle_phy_msg(msgDef* msg)
 		}
 		case PHY_MAC_DECOD_DATA_RPT:
 		{
+			LOG_INFO(MAC, "PHY_MAC_DECOD_DATA_RPT");
 			PHY_PuschReceivedInd* req = (PHY_PuschReceivedInd *)message_ptr(msg); //TODO:
 
 			handlePuschReceivedInd(req);
