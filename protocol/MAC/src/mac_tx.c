@@ -25,6 +25,8 @@
 
 #include "messageDefine.h"//MAC_TEST
 
+#include "dci_info.h"
+
 void init_mac_tx(const uint16_t cellId)
 {
 	g_sch.cellId = cellId;
@@ -1052,8 +1054,8 @@ bool fill_schedule_result(ueInfo* ue, const sub_frame_t subframe)
 	tx->dci_num = dci_num;
 	tx->sch_num = sch_num;
 
-	LOG_INFO(MAC, "fill_schedule_result, ret:%u, mode:%u, rnti:%u, dci_num:%u, sch_num:%u", 
-		ret, g_sch_mac->mode,ue->rnti, dci_num, sch_num);
+	LOG_INFO(MAC, "fill_schedule_result, ret:%u, mode:%u, rnti:%u, dci_num:%u, sch_num:%u, rb_start:%u, rb_num:%u, mcs:%u,data_ind:%u", 
+		ret, g_sch_mac->mode,ue->rnti, dci_num, sch_num, rb_start, rb_num,mcs,data_ind);
 
 	return true;
 }
@@ -1218,6 +1220,7 @@ void send_pdcch_req(const frame_t frame, const sub_frame_t subframe)
 	dci_ind* common_dci = &common->dci[0];
 	dci_ind* dci = &tx->dci[0];
 	uint32_t num_ue = 0;
+	dci_t *dci_info = NULL;
 
 	if (dci_num + common_dci_num <= 0)
 	{
@@ -1243,13 +1246,14 @@ void send_pdcch_req(const frame_t frame, const sub_frame_t subframe)
 			req->dci[i].dci_rb_start = common_dci[i].cce_rb_num;
 			req->dci[i].dci_rb_num = common_dci[i].cce_rb;
 			req->dci[i].data_size = MAX_DCI_LEN;
-			req->dci[i].data[0] = (common_dci[i].rb_start & 0X7F) << 1;
-			req->dci[i].data[0] |= (common_dci[i].rb_num & 0X40) >> 6;
-			req->dci[i].data[1] = (common_dci[i].rb_num & 0X3F) << 2;
-			req->dci[i].data[1] |= (common_dci[i].mcs & 0X1F) >> 3;
-			req->dci[i].data[2] = (common_dci[i].mcs & 0X07) << 5;
-			req->dci[i].data[2] |= (common_dci[i].data_ind & 0X03) << 3;
-			req->dci[i].data[2] |= (common_dci[i].ndi & 0X01) << 2;
+
+			dci_info = (dci_t*)&req->dci[i].data[0];
+				
+			dci_info->rb_start   = common_dci[i].rb_start & 0X7F;
+			dci_info->rb_num     = common_dci[i].rb_num & 0X7F;
+		    dci_info->mcs        = common_dci[i].mcs & 0X1F;
+			dci_info->data_ind   = common_dci[i].data_ind & 0X03;
+			dci_info->ndi        = common_dci[i].ndi & 0X01;
 		}
 
 		for (uint32_t i = 0; i < dci_num; i++)
@@ -1264,14 +1268,19 @@ void send_pdcch_req(const frame_t frame, const sub_frame_t subframe)
 			req->dci[i+common_dci_num].dci_rb_start = dci[i].cce_rb_num;
 			req->dci[i+common_dci_num].dci_rb_num = dci[i].cce_rb;
 			req->dci[i+common_dci_num].data_size = MAX_DCI_LEN;
-			req->dci[i+common_dci_num].data[0] = (dci[i].rb_start & 0X7F) << 1;
-			req->dci[i+common_dci_num].data[0] |= (dci[i].rb_num & 0X40) >> 6;
-			req->dci[i+common_dci_num].data[1] = (dci[i].rb_num & 0X3F) << 2;
-			req->dci[i+common_dci_num].data[1] |= (dci[i].mcs & 0X1F) >> 3;
-			req->dci[i+common_dci_num].data[2] = (dci[i].mcs & 0X07) << 5;
-			req->dci[i+common_dci_num].data[2] |= (dci[i].data_ind & 0X03) << 3;
-			req->dci[i+common_dci_num].data[2] |= (dci[i].ndi & 0X01) << 2;
+
+			dci_info = (dci_t*)&req->dci[i+common_dci_num].data[0];
+				
+			dci_info->rb_start   = dci[i].rb_start & 0X7F;
+			dci_info->rb_num     = dci[i].rb_num & 0X7F;
+		    dci_info->mcs        = dci[i].mcs & 0X1F;
+			dci_info->data_ind   = dci[i].data_ind & 0X03;
+			dci_info->ndi        = dci[i].ndi & 0X01;
+
 			num_ue++;
+
+			LOG_ERROR(MAC, "LGC: dci rb_start:%u,rb_num:%u, mcs%u,ind%u, ndi:%u", 
+				dci[i].rb_start,dci[i].rb_num,dci[i].mcs,dci[i].data_ind,dci[i].ndi);
 		}
 
 		req->num_dci = num_ue + common_dci_num;

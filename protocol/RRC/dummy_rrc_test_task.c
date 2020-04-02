@@ -260,9 +260,9 @@ void dummy_test_task(MessageDef *recv_msg)
 				}
 
 				//！simulate phy/mac/rlc confirm message 
-				
+#ifndef FPGA_PLATFORM
 				dummy_rrc_confirm_message(PHY_RRC_INITIAL_CFM); 
-
+#endif
 				dummy_rrc_confirm_message(MAC_RRC_INITIAL_CFM); 
 				
 #ifndef RLC_MODULE_TEST
