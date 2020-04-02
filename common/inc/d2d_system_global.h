@@ -18,7 +18,7 @@
  
 #define  MAX_LOGICCHAN_NUM    4
 
-#define MAX_SFN 1024
+#define MAX_SFN 512
 #define MAX_SUBSFN 4
 
 #define MAX_TX_UE 4
