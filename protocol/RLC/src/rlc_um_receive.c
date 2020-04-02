@@ -928,7 +928,7 @@ void   rlc_um_start_timer_reordering(const protocol_ctxt_t* const ctxt_pP,
 	if (rlc_pP->t_reordering.ms_duration > 0) {
 		rlc_pP->t_reordering.running		   = 1;
 		//!设置durtion 之后超时
-		rlc_pP->t_reordering.ms_time_out	  = PROTOCOL_CTXT_TIME_MILLI_SECONDS(ctxt_pP) + rlc_pP->t_reordering.ms_duration;
+		rlc_pP->t_reordering.ms_time_out	  = PROTOCOL_CTXT_TIME_MILLI_SECONDS(ctxt_pP) + rlc_pP->t_reordering.ms_duration * SUBSFN_MS_TIME;
 		 //！设置起始时刻从当前帧开始
 		rlc_pP->t_reordering.ms_start		 = PROTOCOL_CTXT_TIME_MILLI_SECONDS(ctxt_pP);
 

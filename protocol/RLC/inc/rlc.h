@@ -69,8 +69,10 @@
   (Ctxt_Pp)->frame     = fRAME; \
   (Ctxt_Pp)->subframe  = sUBfRAME; \
   (Ctxt_Pp)->eNB_index  = eNB_iNDEX; \
-
-#define PROTOCOL_CTXT_TIME_MILLI_SECONDS(CtXt_h) (Get_Frame() *16+ Get_Subsfn())
+  
+#define  SUBSFN_MS_TIME   800 
+#define  FRAME_SUBSFN_TIME  4 
+#define PROTOCOL_CTXT_TIME_MILLI_SECONDS(CtXt_h) ((Get_Frame() *FRAME_SUBSFN_TIME+ Get_Subsfn()) * SUBSFN_MS_TIME)
 
 
 typedef enum rlc_confirm_e {

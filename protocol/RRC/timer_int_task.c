@@ -69,23 +69,24 @@ int timer_int_init( )
 
 void timer_int_task(MessageDef *recv_msg)
 {
-	
+	int time = 0; 
+	int sfn = 0; 
+	int subsfn = 0; 
 	Osp_Msg_Head *pMsg = &(recv_msg->ittiMsgHeader);
 
 	if(IS_TIMER_MSG(pMsg))
 	{
-		 
+		    time = sfn_sync(); 
+			sfn = time >> 2; 
+			subsfn = time& 0x3; 
 		 
 			
-			g_d2d_subsfn = g_d2d_subsfn % 4; 
-			if ((g_d2d_subsfn % 4) == 0)
-			{
-				g_d2d_sfn++;
-				g_d2d_sfn = g_d2d_sfn % 512; 
-			}
+			g_d2d_subsfn = subsfn; 
+			g_d2d_sfn  = sfn ;
+			
 			LOG_DEBUG(DUMMY, "-----------------------------[sfn-subsfn] = {%d--%d}-------------\n",g_d2d_sfn,g_d2d_subsfn);
 		    
-			g_d2d_subsfn++;
+			
 			#if 0 
 			//if ((g_ut_timer_cnt % 4) < 2)//!模拟DDUU 
 			if (((g_udp_send_cnt[0] % 4) == 0) ||((g_udp_send_cnt[0] % 4) == 1))

@@ -22,14 +22,14 @@ extern int32_t get_sysSfn();
 
 uint32_t   Get_Subsfn( )
 {
-	int time = get_sysSfn();
-	return (time % 4);
+	int time = sfn_sync();
+	return (time & 0x3);
 
 }
 
 uint32_t   Get_Frame( )
 {
-	int time = get_sysSfn();
+	int time = sfn_sync();
 	return (time >> 2);
 
 }
