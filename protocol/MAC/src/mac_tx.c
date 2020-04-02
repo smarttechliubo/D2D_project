@@ -1348,7 +1348,7 @@ void send_pusch_req(const frame_t frame, const sub_frame_t subframe)
 
 			req->pusch[i+common_sch_num].rnti = sch[i].rnti;
 			req->pusch[i+common_sch_num].rb_start = sch[i].rb_start;
-			req->pusch[i+common_sch_num].rb_num = sch[i].rb_num;
+			req->pusch[i+common_sch_num].rb_num = c;
 			req->pusch[i+common_sch_num].mcs = sch[i].mcs;
 			req->pusch[i+common_sch_num].data_ind = sch[i].data_ind;
 			req->pusch[i+common_sch_num].modulation = sch[i].modulation;
@@ -1358,12 +1358,15 @@ void send_pusch_req(const frame_t frame, const sub_frame_t subframe)
 			req->pusch[i+common_sch_num].pdu_len = sch[i].pdu_len;
 			req->pusch[i+common_sch_num].data = sch[i].data;
 			req->pusch[i+common_sch_num].buffer_id = sch[i].buffer_id;
+
+			LOG_ERROR(MAC, "LGC: MAC_PHY_PUSCH_SEND send. schnum:%u, common:%u, frame:%u, subframe:%u, num_pusch:%u, rnti:%u, rb_start:%u, rb_num:%u", 
+				sch_num, common_sch_num, req->frame, req->subframe, req->num, sch[i].rnti, sch[i].rb_start, sch[i].rb_num);
 		}
 
-		if (message_send(TASK_D2D_PHY_TX, msg, sizeof(msgDef)))
+		if (message_send(TASK_D2D_PHY_TX, msg, sizeof(msgDef))c)
 		{
-			LOG_ERROR(MAC, "LGC: MAC_PHY_PUSCH_SEND send. schnum:%u, common:%u, frame:%u, subframe:%u, num_pusch:%u", 
-				sch_num, common_sch_num, req->frame, req->subframe, req->num);
+			//LOG_ERROR(MAC, "LGC: MAC_PHY_PUSCH_SEND send. schnum:%u, common:%u, frame:%u, subframe:%u, num_pusch:%u", 
+			//	sch_num, common_sch_num, req->frame, req->subframe, req->num);
 			LOG_ERROR(MAC, "LGC: MAC_PHY_PUSCH_SEND send. rnti:%u, mcs:%u, data_ind:%u, rv:%u, harqId:%u, ack:%u, pduLen:%u, data:%x,%x,%x,%x,%x,%x,%x,%x,%x", 
 				req->pusch[0].rnti, req->pusch[0].mcs,req->pusch[0].data_ind,req->pusch[0].rv,
 				req->pusch[0].harqId,req->pusch[0].ack,req->pusch[0].pdu_len, 
