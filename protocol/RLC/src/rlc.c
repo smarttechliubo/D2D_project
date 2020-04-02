@@ -22,16 +22,12 @@ extern int32_t get_sysSfn();
 
 uint32_t   Get_Subsfn( )
 {
-	int time = sfn_sync();
-	return (time & 0x3);
-
+	return g_context.subframe ;
 }
 
 uint32_t   Get_Frame( )
 {
-	int time = sfn_sync();
-	return (time >> 2);
-
+	return g_context.frame;
 }
 
 #endif

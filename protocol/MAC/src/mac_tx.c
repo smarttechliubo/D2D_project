@@ -1348,7 +1348,7 @@ void send_pusch_req(const frame_t frame, const sub_frame_t subframe)
 
 			req->pusch[i+common_sch_num].rnti = sch[i].rnti;
 			req->pusch[i+common_sch_num].rb_start = sch[i].rb_start;
-			req->pusch[i+common_sch_num].rb_num = c;
+			req->pusch[i+common_sch_num].rb_num = sch[i].rb_num;
 			req->pusch[i+common_sch_num].mcs = sch[i].mcs;
 			req->pusch[i+common_sch_num].data_ind = sch[i].data_ind;
 			req->pusch[i+common_sch_num].modulation = sch[i].modulation;
@@ -1363,7 +1363,7 @@ void send_pusch_req(const frame_t frame, const sub_frame_t subframe)
 				sch_num, common_sch_num, req->frame, req->subframe, req->num, sch[i].rnti, sch[i].rb_start, sch[i].rb_num);
 		}
 
-		if (message_send(TASK_D2D_PHY_TX, msg, sizeof(msgDef))c)
+		if (message_send(TASK_D2D_PHY_TX, msg, sizeof(msgDef)))
 		{
 			//LOG_ERROR(MAC, "LGC: MAC_PHY_PUSCH_SEND send. schnum:%u, common:%u, frame:%u, subframe:%u, num_pusch:%u", 
 			//	sch_num, common_sch_num, req->frame, req->subframe, req->num);

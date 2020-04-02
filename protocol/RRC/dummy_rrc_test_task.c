@@ -259,16 +259,20 @@ void dummy_test_task(MessageDef *recv_msg)
 					LOG_DEBUG(RRC, "SOURCE wait for initial stasus\n");
 				}
 
-				//！simulate phy/mac/rlc confirm message 
-				
+#ifndef  FPGA_PLATFORM
+				//！simulate phy/mac/rlc confirm message 			
 				dummy_rrc_confirm_message(PHY_RRC_INITIAL_CFM); 
+#endif 
 
 				dummy_rrc_confirm_message(MAC_RRC_INITIAL_CFM); 
 				
 #ifndef RLC_MODULE_TEST
 				dummy_rrc_confirm_message(RLC_RRC_INITIAL_CFM); 
 #endif 
-				while (RRC_STATUS_INITIAL_CFM != rrc_GetCurrentStatus()) { }
+				while (RRC_STATUS_INITIAL_CFM != rrc_GetCurrentStatus()) 
+				{
+					OSP_delay(100); 
+				}
 		        dummy_rrc_confirm_message(MAC_RRC_BCCH_PARA_CFG_CFM); //!mib schedule cfm 
 		 
 		        dummy_rrc_confirm_message(MAC_RRC_BCCH_PARA_CFG_CFM); //!sib1 schedule cfm 
@@ -285,7 +289,8 @@ void dummy_test_task(MessageDef *recv_msg)
 #endif 
 				while (RRC_STATUS_CONNECTED !=  rrc_GetCurrentStatus()) 
 				{	
-					
+				
+					OSP_delay(100); 
 					LOG_DEBUG(RRC, "SOURCE wait for connect complete message  \n");
 				}
 				//!send rrc conncet complete message to source 
@@ -297,6 +302,8 @@ void dummy_test_task(MessageDef *recv_msg)
 			{
 				while ( RRC_STATUS_CELL_SEARCH !=  rrc_GetCurrentStatus())  \
 				{
+					
+					OSP_delay(100); 
 					LOG_DEBUG(RRC, "DESTINATION wait for initial stasus\n");
 				}
 
@@ -305,6 +312,8 @@ void dummy_test_task(MessageDef *recv_msg)
 
 				while (RRC_STATUS_IDLE != rrc_GetCurrentStatus())
 				{
+					
+					OSP_delay(100); 
 					LOG_DEBUG(RRC, "DESTINATION wait for PHY_RRC_BCCH_PARA_CFG_CFM report"); 
 				}
 
@@ -314,6 +323,8 @@ void dummy_test_task(MessageDef *recv_msg)
 		        dummy_rrc_confirm_message(RLC_RRC_BCCH_PARA_CFG_CFM); //srb 0 established
 		        while(RRC_STATUS_CONNECT_REQUEST != rrc_GetCurrentStatus())
 		        {
+		            
+					OSP_delay(100); 
 					LOG_DEBUG(RRC, "DESTINATION wait for CONNECT SETUP message \n"); 
 		        }
 		        //!send rrc conncet setup message to destination  

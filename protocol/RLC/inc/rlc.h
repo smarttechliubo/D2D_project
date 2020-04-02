@@ -27,6 +27,7 @@
 #include <rlc_tm_entity.h>
 #include <pthread.h>
 #include <dictionary.h>
+#include <mac_vars.h>
 
 
 

@@ -23,6 +23,7 @@
 #include <unistd.h>
 #include <rrc_global_def.h>
 #include <unistd.h>
+#include <mac_vars.h>
 
 
 extern uint32_t   g_d2d_subsfn ; 
@@ -56,7 +57,7 @@ int timer_int_init( )
     }
 	
 	
-	pTimer = OSP_timerCreateSim(TASK_D2D_DUMMY_INT,1,400,0);
+	pTimer = OSP_timerCreateSim(TASK_D2D_DUMMY_INT,1,800,0);
 	ret = OSP_timerStart(pTimer);
 
 	return OSP_OK;
@@ -76,9 +77,9 @@ void timer_int_task(MessageDef *recv_msg)
 
 	if(IS_TIMER_MSG(pMsg))
 	{
-		    time = sfn_sync(); 
-			sfn = time >> 2; 
-			subsfn = time& 0x3; 
+		    
+			sfn = g_context.frame; 
+			subsfn = g_context.subframe; 
 		 
 			
 			g_d2d_subsfn = subsfn; 
