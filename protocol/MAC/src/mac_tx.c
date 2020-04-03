@@ -276,6 +276,8 @@ void handle_rlc_data_result(const rlc_mac_data_ind* ind)
 			LOG_INFO(MAC, "rlc data result, ue rnti:%u canceled", 
 				ind->sdu_pdu_info[i].rnti);
 			cancel = true;
+
+			AssertFatal(0, MAC, "valid_flag");
 		}
 
 		rnti = ind->sdu_pdu_info[i].rnti;
@@ -1305,6 +1307,7 @@ void send_pusch_req(const frame_t frame, const sub_frame_t subframe)
 	uint16_t sch_num = tx->sch_num;
 	sch_ind* common_sch = &common->sch[0];
 	sch_ind* sch = &tx->sch[0];
+	uint32_t pusch_num = 0;
 
 	if (sch_num + common_sch_num <= 0)
 	{
@@ -1320,7 +1323,6 @@ void send_pusch_req(const frame_t frame, const sub_frame_t subframe)
 	if (msg != NULL)
 	{
 		req = (PHY_PuschSendReq*)message_ptr(msg);
-		req->num = sch_num + common_sch_num;
 		req->frame = frame;
 		req->subframe = subframe;
 
@@ -1337,6 +1339,8 @@ void send_pusch_req(const frame_t frame, const sub_frame_t subframe)
 			req->pusch[i].ack = common_sch[i].ack;
 			req->pusch[i].pdu_len = common_sch[i].pdu_len;
 			req->pusch[i].data = common_sch[i].data;
+
+			pusch_num++;
 		}
 
 		for (uint32_t i = 0; i < sch_num; i++)
@@ -1361,7 +1365,19 @@ void send_pusch_req(const frame_t frame, const sub_frame_t subframe)
 
 			LOG_ERROR(MAC, "LGC: MAC_PHY_PUSCH_SEND send. schnum:%u, common:%u, frame:%u, subframe:%u, num_pusch:%u, rnti:%u, rb_start:%u, rb_num:%u", 
 				sch_num, common_sch_num, req->frame, req->subframe, req->num, sch[i].rnti, sch[i].rb_start, sch[i].rb_num);
+
+			pusch_num++;
 		}
+
+		if (pusch_num <= 0)
+		{
+			LOG_ERROR(MAC, "LGC: no PUSCH . schnum:%u, common:%u, cancel:%u", sch_num, common_sch_num, sch[0].cancel);
+
+			message_free(msg);
+			return;
+		}
+
+		req->num = sch_num + common_sch_num;
 
 		if (message_send(TASK_D2D_PHY_TX, msg, sizeof(msgDef)))
 		{

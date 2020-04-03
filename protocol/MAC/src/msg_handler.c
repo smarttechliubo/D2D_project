@@ -119,7 +119,8 @@ msgDef * message_receive_timeout(const task_id taskId, uint32_t timeout)
 
 	if (msg == NULL)
 	{
-		LOG_INFO(MAC, "message_receive_try, timer out no msg received taskId:%u", taskId);
+		LOG_ERROR(MAC, "message_receive_try, timer out no msg received taskId:%u", taskId);
+		AssertFatal(msg == NULL, MAC, "waiting for RLC data time out");
 	}
 	else
 	{	

@@ -354,8 +354,8 @@ void run_period(msgDef* msg)
 		update_sfn();//syncTime();
 	}
 
-	LOG_INFO(MAC, "run_period current time, isTimer:%u, frame：%u，subframe:%u",  
-		isTimer, g_context.frame, g_context.subframe);
+	LOG_INFO(MAC, "run_period current time, isTimer:%u, frame：%u，subframe:%u, count_ue:%u",  
+		isTimer, g_context.frame, g_context.subframe, g_context.mac->count_ue);
 
 	if (!isTimer)
 	{
