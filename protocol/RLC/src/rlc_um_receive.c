@@ -277,7 +277,7 @@ void rlc_um_ip_rpt(
 void  rlc_um_send_sdu (const protocol_ctxt_t* const ctxt_pP, uint32_t sn , rlc_um_entity_t *rlc_pP)
 {
   if ((rlc_pP->output_sdu_in_construction)) {
-   LOG_ERROR(RLC_RX, PROTOCOL_RLC_UM_CTXT_FMT" SEND_SDU SN:%d to upper layers %d bytes sdu %p\n",
+   LOG_WARN(RLC_RX, PROTOCOL_RLC_UM_CTXT_FMT" SEND_SDU SN:%d to upper layers %d bytes sdu %p\n",
           PROTOCOL_RLC_UM_CTXT_ARGS(ctxt_pP,rlc_pP),
           rlc_pP->last_reassemblied_sn,
           rlc_pP->output_sdu_size_to_write,
@@ -1318,18 +1318,18 @@ void   rlc_um_receive_process_dar (const protocol_ctxt_t* const ctxt_pP,
 	 //!当初始化开始后，当sn =0,vh = 0，返回-1，然后更新vr_uh + 1,
 	 //! 一直到sn = 512时，uh = 512,此时rlc_um_in_reordering_window 才能返回0 
 	 //! 下面这段代码用于更新uh
-	LOG_ERROR(RLC_RX, "judge 4: whether SN in recording window or not \n"); 
+	LOG_WARN(RLC_RX, "judge 4: whether SN in recording window or not \n"); 
 	if (rlc_um_in_reordering_window(ctxt_pP, rlc_pP, sn) < 0) {
 
 		//！这里也需要判断SN 在接收窗的上边界才能更新UH，但这里只需要判断不在窗内? 
 		//！更新UH
 		rlc_pP->vr_uh = (sn + 1) % rlc_pP->rx_sn_modulo;
         
-        LOG_ERROR(RLC_RX, "judge 4.1: SN:%d in not recording window,update UH = sn + 1: UH = %d  \n",
+        LOG_WARN(RLC_RX, "judge 4.1: SN:%d in not recording window,update UH = sn + 1: UH = %d  \n",
 						sn,
 						rlc_pP->vr_uh);
 
-		LOG_ERROR(RLC_RX, "judge 4.2: whether vr_ur:%d in  recording window or not after UH updated   \n",
+		LOG_WARN(RLC_RX, "judge 4.2: whether vr_ur:%d in  recording window or not after UH updated   \n",
 						rlc_pP->vr_ur);
 						
 		//!<如果ur 在recording 窗外，则表示需要处理窗外的PDU了,处理vr_ur以下的SDU 。
@@ -1376,7 +1376,7 @@ void   rlc_um_receive_process_dar (const protocol_ctxt_t* const ctxt_pP,
 		rlc_pP->vr_ur = (rlc_pP->vr_ur+1) % rlc_pP->rx_sn_modulo;
 	  } while (rlc_um_get_pdu_from_dar_buffer(ctxt_pP, rlc_pP, rlc_pP->vr_ur));  //! &&(rlc_pP->vr_ur != rlc_pP->vr_uh)
 
-	  LOG_ERROR(RLC_RX, "judge 5: sn == UR, update the UR = %d , and SN have stored in buffer,,and then handle the  PDU which'S SN < UR \n", rlc_pP->vr_ur); 
+	  LOG_WARN(RLC_RX, "judge 5: sn == UR, update the UR = %d , and SN have stored in buffer,,and then handle the  PDU which'S SN < UR \n", rlc_pP->vr_ur); 
 
 	   //!将SN < 更新后的ur 的PDU,进行去header处理，从SN 往上处理，处理到更新后的UR结束。
 	  rlc_um_try_reassembly(ctxt_pP, rlc_pP, sn, rlc_pP->vr_ur);

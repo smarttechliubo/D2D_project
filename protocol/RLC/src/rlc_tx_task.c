@@ -398,7 +398,7 @@ void rlc_tx_process(void *message, MessagesIds      msg_type)
 	int32_t   ue_status[D2D_MAX_USER_NUM] = {0};
 
 	
-	LOG_ERROR(RLC_TX, "RLC_TX receive message = %d\n",msg_type);
+	LOG_WARN(RLC_TX, "RLC_TX receive message = %d\n",msg_type);
 	switch (msg_type)
 	{
 		case RRC_RLC_BUF_STATUS_REQ: 

@@ -613,7 +613,7 @@ int32_t  rlc_um_segment_10(const protocol_ctxt_t* const ctxt_pP,
           //!RLC total size 
 		rlc_sdu_length =  (rlc_pP->buffer_occupancy + rlc_pP->tx_header_min_length_in_bytes + max_li_overhead); 
 
-		LOG_ERROR(RLC_TX, "-----------start to process  sdu data,lc_idx:%d , BO: %d, rlc fix header:2, sdu_num:%d,  E+LI:%d, \
+		LOG_WARN(RLC_TX, "-----------start to process  sdu data,lc_idx:%d , BO: %d, rlc fix header:2, sdu_num:%d,  E+LI:%d, \
 lc_tb_size:%d,rlc_sdu_size:%d\n",
 						  lc_pdu_component_ptr->logic_ch_index,
 						  rlc_pP->buffer_occupancy,

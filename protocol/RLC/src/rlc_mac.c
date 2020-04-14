@@ -216,7 +216,7 @@ int32_t   rlc_mac_ue_data_process(frame_t frameP,
 		lc_pdu_component[logic_index].remain_mac_pdu_size = lc_pdu_component[logic_index].mac_reqeust_tb_size; //!initial 
 		lc_pdu_component[logic_index].logic_ch_index = logic_index; 
 		lc_pdu_component[logic_index].valid_flag = 1; 
-		LOG_ERROR(RLC_TX, "%s: initial para: rnti:%d; logic_index info: lc_num:%d, lc_idx:%d, is_last_subheader:%d, mac_tb_size:%d \n",
+		LOG_WARN(RLC_TX, "%s: initial para: rnti:%d; logic_index info: lc_num:%d, lc_idx:%d, is_last_subheader:%d, mac_tb_size:%d \n",
 			__func__, ue_rnti,logic_num,logic_index,lc_pdu_component[logic_index].is_last_sub_header_flag, 
 			lc_pdu_component[logic_index].mac_reqeust_tb_size );
     }
@@ -247,7 +247,7 @@ int32_t   rlc_mac_ue_data_process(frame_t frameP,
         										
         										
 
-		LOG_ERROR(RLC_TX, "frame-subsfn:[%d, %d]: rnti:%d: ue_total_size:%d, logic_index:%d, is_last_lc_flag:%d,  mac_subheader:%d, total_rlc_sdu_size:%d,\
+		LOG_WARN(RLC_TX, "frame-subsfn:[%d, %d]: rnti:%d: ue_total_size:%d, logic_index:%d, is_last_lc_flag:%d,  mac_subheader:%d, total_rlc_sdu_size:%d,\
 ue remained size:%d after logic chan mapping \n",
 						frameP, 
 						subframeP,
@@ -296,7 +296,7 @@ ue remained size:%d after logic chan mapping \n",
         g_rlc_debug_ue_mac_header_size += ue_pdu_size_para_ptr->head_padding_header_size; 
 #endif 
         
-		LOG_ERROR(RLC_TX, "frame-subsfn:[%d, %d]: MAC padding header place at the head of MAC sdu ,padding header size:%d\n",
+		LOG_WARN(RLC_TX, "frame-subsfn:[%d, %d]: MAC padding header place at the head of MAC sdu ,padding header size:%d\n",
 				frameP,
 				subframeP,
 				ue_pdu_size_para_ptr->remain_pdu_size);
@@ -316,7 +316,7 @@ ue remained size:%d after logic chan mapping \n",
 				mac_subheader_without_l = e << 5 | (logic_ch_id); 
 				memcpy((void *)ue_mac_subheader_ptr,(void *)&mac_subheader_without_l,1); 
 
-				LOG_ERROR(RLC_TX, "1 byte mac subheader   content: 0x%.2x \n", mac_subheader_without_l);
+				LOG_WARN(RLC_TX, "1 byte mac subheader   content: 0x%.2x \n", mac_subheader_without_l);
 
 				ue_mac_subheader_ptr += 1; 
 				mac_subheader_length += 1; 
@@ -329,7 +329,7 @@ ue remained size:%d after logic chan mapping \n",
 				mac_subheader_2byte[1] = (f << 7) | (lc_pdu_component[logic_index].final_rlc_pdu_size);
 				memcpy((void *)ue_mac_subheader_ptr,(void *)mac_subheader_2byte,2); 
 
-				LOG_ERROR(RLC_TX, "2 byte mac subheader {0x%.2x%.2x} \n", mac_subheader_2byte[0],mac_subheader_2byte[1]);
+				LOG_WARN(RLC_TX, "2 byte mac subheader {0x%.2x%.2x} \n", mac_subheader_2byte[0],mac_subheader_2byte[1]);
 				ue_mac_subheader_ptr += 2; 
 				mac_subheader_length += 2; 
 				break; 
@@ -342,7 +342,7 @@ ue remained size:%d after logic chan mapping \n",
 
 				memcpy((void *)ue_mac_subheader_ptr,(void *)mac_subheader_3byte,3); 
 			
-				LOG_ERROR(RLC_TX, "3 byte mac subheader   content: %d,{0x%.2x%.2x%.2x} \n",lc_pdu_component[logic_index].final_rlc_pdu_size, mac_subheader_3byte[0],
+				LOG_WARN(RLC_TX, "3 byte mac subheader   content: %d,{0x%.2x%.2x%.2x} \n",lc_pdu_component[logic_index].final_rlc_pdu_size, mac_subheader_3byte[0],
 									mac_subheader_3byte[1],mac_subheader_3byte[2]);
 				ue_mac_subheader_ptr += 3; 
 				mac_subheader_length += 3; 
@@ -360,7 +360,7 @@ ue remained size:%d after logic chan mapping \n",
 		g_rlc_debug_ue_mac_header_size += lc_pdu_component[logic_index].mac_subheader_length;
 #endif 
 
-		LOG_ERROR(RLC_TX, "lc index:%d 's mac subheader type:%d, sub header length:%d byte \n", logic_index,
+		LOG_WARN(RLC_TX, "lc index:%d 's mac subheader type:%d, sub header length:%d byte \n", logic_index,
 				 lc_pdu_component[logic_index].mac_subheader_length_type, 
 				 lc_pdu_component[logic_index].mac_subheader_length); 
     }
@@ -377,9 +377,9 @@ ue remained size:%d after logic chan mapping \n",
 		ue_mac_subheader_ptr += 1; 
 		mac_subheader_length += 1; 
 		
-        LOG_ERROR(RLC_TX, "1 byte Paddind  subheader(pad > 2): content: 0x%x \n", mac_subheader_without_l);
+        LOG_WARN(RLC_TX, "1 byte Paddind  subheader(pad > 2): content: 0x%x \n", mac_subheader_without_l);
         
-		LOG_ERROR(RLC_TX, "frame-subsfn:[%d, %d]:UE TBS remained size:%d, pading sub header length:%d byte,padding size =%d \n",
+		LOG_WARN(RLC_TX, "frame-subsfn:[%d, %d]:UE TBS remained size:%d, pading sub header length:%d byte,padding size =%d \n",
 		         frameP,
 		         subframeP,
 				 ue_pdu_size_para_ptr->remain_pdu_size, 
@@ -406,8 +406,8 @@ ue remained size:%d after logic chan mapping \n",
     //!add padding 
     if (ue_pdu_size_para_ptr->remain_pdu_size > 0)
     {
-		memset(mac_pdu_buffer_ptr,0,ue_pdu_size_para_ptr->remain_pdu_size);
-		LOG_ERROR(RLC_TX,"add  tail padding bytes:%d\n", ue_pdu_size_para_ptr->remain_pdu_size) ;
+		memset(mac_pdu_buffer_ptr,0xa5,ue_pdu_size_para_ptr->remain_pdu_size);
+		LOG_WARN(RLC_TX,"add  tail padding bytes:%d\n", ue_pdu_size_para_ptr->remain_pdu_size) ;
     }
 
 	LOG_ERROR(RLC_TX, "----------%s finished----------- \n", __func__);

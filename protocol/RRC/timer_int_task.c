@@ -24,6 +24,10 @@
 #include <rrc_global_def.h>
 #include <unistd.h>
 #include <mac_vars.h>
+#include<stdlib.h>
+#include <time.h>
+
+
 
 
 extern uint32_t   g_d2d_subsfn ; 
@@ -49,12 +53,9 @@ int timer_int_init( )
     void* pTimer;
 	S32 ret;
     uint32_t  i = 0; 
+    
+	
 
-    for (i =0; i < 2048; i++)
-    {
-		msg_buffer[i] = i%255;	
-
-    }
 	
 	
 	pTimer = OSP_timerCreateSim(TASK_D2D_DUMMY_INT,1,800,0);
@@ -70,10 +71,11 @@ int timer_int_init( )
 
 void timer_int_task(MessageDef *recv_msg)
 {
-	int time = 0; 
+	
 	int sfn = 0; 
 	int subsfn = 0; 
 	Osp_Msg_Head *pMsg = &(recv_msg->ittiMsgHeader);
+	int i = 0 ;
 
 	if(IS_TIMER_MSG(pMsg))
 	{
@@ -95,8 +97,15 @@ void timer_int_task(MessageDef *recv_msg)
 				mac_Rlc_Bufstat_Req(g_d2d_sfn,g_d2d_subsfn);
 			}
 			#endif 
+			srand((unsigned)time(NULL));
 			if (((g_d2d_subsfn% 4) == 0) ||((g_d2d_subsfn % 4) == 1))
 			{
+
+			    for (i =0; i < 2048; i++)
+			    {
+					msg_buffer[i] = rand() % 255;	
+
+			    }
 	            if (RRC_STATUS_CONNECTE_COMPLETE == rrc_GetCurrentStatus() && (1 == g_mac_ready))
 	            {
 					Ip_Rlc_Data_Send(RB_TYPE_DRB,

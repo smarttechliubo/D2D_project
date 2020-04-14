@@ -103,7 +103,7 @@ void ip_msg_process(void *message, MessagesIds      msg_type)
 	uint8_t       *sdu_real_data_addr ; 
 	
   
-    LOG_ERROR(RLC_TX, "IP_MSG TASK receive message = %d\n",msg_type);
+    LOG_WARN(RLC_TX, "IP_MSG TASK receive message = %d\n",msg_type);
 
     switch(msg_type)
     {

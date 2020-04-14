@@ -17,6 +17,7 @@
 #include <interface_mac_rlc.h>
 #include <rlc.h>
 
+
 #ifndef  RLC_UT_DEBUG
 extern int32_t get_sysSfn();
 
@@ -292,7 +293,7 @@ void  rlc_ue_data_status_update(rnti_t rnti,
 
 	AssertFatal(g_rlc_buffer_status[ue_index].valid_flag == 1, RLC, "ue_index, %due_rnti must be valid for status update! \n",ue_index); 
 
-	LOG_ERROR(RLC_TX, "ue_index.data_size[logical_chan_id]  = %d\n",g_rlc_buffer_status[ue_index].data_size[logical_chan_id]);
+	LOG_WARN(RLC_TX, "ue_index.data_size[logical_chan_id]  = %d\n",g_rlc_buffer_status[ue_index].data_size[logical_chan_id]);
 	g_rlc_buffer_status[ue_index].data_size[logical_chan_id] -= send_data_size; 
 
     
@@ -330,7 +331,7 @@ void  rlc_ue_data_status_update(rnti_t rnti,
     	g_rlc_buffer_status[ue_index].rlc_header_size [logical_chan_id] = 2 + (((remaind_sdu_num - 1) * 3) / 2) + ((remaind_sdu_num - 1) % 2);
      }
      
-    LOG_ERROR(RLC_TX, "%s, rnti:%d, lc:%d, update buffer status: datasize substarct %d,send_sdu_num:%d, rlc_header_size substract %d,remaind_sdu_num:%d, \
+    LOG_WARN(RLC_TX, "%s, rnti:%d, lc:%d, update buffer status: datasize substarct %d,send_sdu_num:%d, rlc_header_size substract %d,remaind_sdu_num:%d, \
     remained_data_size:%d,remined_header_size:%d \n", 
           __func__,
 			rnti, 
