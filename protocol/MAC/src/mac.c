@@ -30,6 +30,12 @@
 bool g_timing_sync = false;
 int32_t g_sync_old_sfn = -1;
 
+bool  g_pdcch_send = false;
+ULONG g_start_time = 0;
+ULONG g_end_time = 0;
+ULONG g_diff_time = 0;
+ULONG g_run_period_time = 0;
+ULONG g_run_scheduler_time = 0;
 
 mac_info_s* init_mac_info()
 {
@@ -208,8 +214,6 @@ void update_sfn()
 		frame++;
 		g_context.frame = (frame % MAX_SFN);
 	}
-
-	LOG_ERROR(MAC, "update_sfn, frame:%u, subframe:%u", g_context.frame, g_context.subframe);
 }
 
 void syncTime()//TODO: sync
@@ -351,10 +355,11 @@ void run_period(msgDef* msg)
 
 	if (isTimer)
 	{
+		g_start_time = getOspCycel();
 		update_sfn();//syncTime();
 	}
 
-	LOG_INFO(MAC, "run_period current time, isTimer:%u, frame：%u，subframe:%u, count_ue:%u",  
+	LOG_ERROR(MAC, "run_period current time, isTimer:%u, frame：%u，subframe:%u, count_ue:%u",  
 		isTimer, g_context.frame, g_context.subframe, g_context.mac->count_ue);
 
 	if (!isTimer)
@@ -367,6 +372,9 @@ void run_period(msgDef* msg)
 	}
 
 	message_free(msg);
+
+	if (isTimer)
+		g_run_period_time = getOspCycel();
 }
 
 int32_t init_mac_scheduler()
@@ -379,7 +387,7 @@ int32_t init_mac_scheduler()
 	//pTimer = _timerCreate(TASK_D2D_MAC_SCH, 1, 400, 100);
 	//ret = _timerStart(pTimer);
 
-	//setFrameOffsetTime(200);
+	setFrameOffsetTime(2);
 
 	LOG_INFO(MAC,"init_mac_scheduler pTimer is %p, ret:%d\r\n", pTimer,ret);
 
@@ -393,11 +401,14 @@ void run_scheduler(msgDef* msg)
 	bool isTimer = is_timer(msg);
 	int32_t ret = pre_check(subframe);
 
-	LOG_ERROR(MAC, "run_scheduler， frame:%u, subframe:%u, isTimer:%u", 
-		g_context.mac->frame, g_context.mac->subframe, isTimer);
-	
+#ifdef MAC_DEBUG
+	LOG_ERROR(MAC, "run_scheduler， frame:%u, subframe:%u, isTimer:%u, g_timing_sync:%u,msgId:%u", 
+		g_context.mac->frame, g_context.mac->subframe, isTimer, g_timing_sync, isTimer ? get_msgId(msg) : 0);
+#endif
+
 	if (isTimer)
 	{
+		g_run_scheduler_time = getOspCycel();
 		syncTime();
 	}
 
@@ -410,6 +421,21 @@ void run_scheduler(msgDef* msg)
 		mac_scheduler();
 	}
 
+	g_end_time = getOspCycel();
+
+
 	message_free(msg);
+
+	if (g_pdcch_send == true)
+	{
+		g_diff_time = g_end_time - g_start_time;
+		ULONG run_period_time = g_run_period_time - g_start_time;
+		ULONG run_scheduler_time = g_end_time - g_run_scheduler_time;
+
+		LOG_ERROR(MAC, "MAC process time : %llu, run_period_time:%llu, run_scheduler_time:%llu", 
+			g_diff_time, run_period_time, run_scheduler_time);
+	}
+
+	g_pdcch_send = false;
 }
 
