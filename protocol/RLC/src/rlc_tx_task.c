@@ -391,6 +391,7 @@ void rlc_tx_process(void *message, MessagesIds      msg_type)
 	uint32_t   ue_buffer_offset[D2D_MAX_USER_NUM]; 
 	uint32_t   buffer_id; 
 	uint32_t   buffer_offset = 0; 
+	uint32_t   rlc_mac_buffer_size = 0;  //！must be multiplex of 8 byte 
 
 	struct timeval    start_time; 
 	struct timeval    end_time; 
@@ -554,7 +555,8 @@ tb_size = %d, logic tb_size = %d \n",
 				ue_pdu_buffer_array[ue_index] = (uint32_t) OspGetApeTDateAddr(buffer_id);
 				ue_buffer_offset[ue_index] =  buffer_offset; 
 				ue_pdu_size_array[ue_index] = (uint32_t )rlc_data_req_ptr->tb_size;
-				memcpy((void *) ue_pdu_buffer_array[ue_index] , (void *)&g_rlc_pdu_buffer[ue_index * MAX_DLSCH_PAYLOAD_BYTES],ue_pdu_size_array[ue_index] * sizeof(char)); 
+				rlc_mac_buffer_size = ((ue_pdu_size_array[ue_index] + 7) >> 3) << 3;  //!multiplex of 8 byte for linux64 system
+				memcpy((void *) ue_pdu_buffer_array[ue_index] , (void *)&g_rlc_pdu_buffer[ue_index * MAX_DLSCH_PAYLOAD_BYTES],rlc_mac_buffer_size * sizeof(char)); 
 #else 
 				ue_pdu_buffer_array[ue_index] = (long)&g_rlc_pdu_buffer[ue_index * MAX_DLSCH_PAYLOAD_BYTES]; 
 #endif 
