@@ -58,7 +58,7 @@ int timer_int_init( )
 
 	
 	
-	pTimer = OSP_timerCreateSim(TASK_D2D_DUMMY_INT,1,800,0);
+	pTimer = OSP_timerCreateSim(TASK_D2D_DUMMY_INT,1,40,0);
 	ret = OSP_timerStart(pTimer);
 
 	return OSP_OK;

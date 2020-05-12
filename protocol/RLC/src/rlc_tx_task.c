@@ -385,7 +385,7 @@ void rlc_tx_process(void *message, MessagesIds      msg_type)
 	uint32_t     srb_flag = 0; 
 
 	tb_size_t    tb_size; 
-	uint32_t   ue_pdu_buffer_array[D2D_MAX_USER_NUM]; 
+	uint64_t   ue_pdu_buffer_array[D2D_MAX_USER_NUM]; 
 	uint32_t   ue_pdu_size_array[D2D_MAX_USER_NUM]; 
 	uint32_t   ue_rnti_array[D2D_MAX_USER_NUM]; 
 	uint32_t   ue_buffer_offset[D2D_MAX_USER_NUM]; 
@@ -552,13 +552,13 @@ tb_size = %d, logic tb_size = %d \n",
 				 						&g_rlc_mac_subheader[ue_index *((MAX_LOGICCHAN_NUM  + 1)* 3)]); 
                 buffer_id = (subsfn & 0x1); 
 #ifdef  FPGA_PLATFORM
-				ue_pdu_buffer_array[ue_index] = (uint32_t) OspGetApeTDateAddr(buffer_id);
+				ue_pdu_buffer_array[ue_index] = (uint64_t) OspGetApeTDateAddr(buffer_id);
 				ue_buffer_offset[ue_index] =  buffer_offset; 
 				ue_pdu_size_array[ue_index] = (uint32_t )rlc_data_req_ptr->tb_size;
 				rlc_mac_buffer_size = ((ue_pdu_size_array[ue_index] + 7) >> 3) << 3;  //!multiplex of 8 byte for linux64 system
 				memcpy((void *) ue_pdu_buffer_array[ue_index] , (void *)&g_rlc_pdu_buffer[ue_index * MAX_DLSCH_PAYLOAD_BYTES],rlc_mac_buffer_size * sizeof(char)); 
 #else 
-				ue_pdu_buffer_array[ue_index] = (long)&g_rlc_pdu_buffer[ue_index * MAX_DLSCH_PAYLOAD_BYTES]; 
+				ue_pdu_buffer_array[ue_index] = (uint64_t)&g_rlc_pdu_buffer[ue_index * MAX_DLSCH_PAYLOAD_BYTES]; 
 #endif 
 				ue_rnti_array[ue_index] =  	rlc_data_req_ptr->rnti; 
 				buffer_offset = buffer_offset + ue_pdu_size_array[ue_index]; //update buffer_offset
@@ -567,7 +567,7 @@ tb_size = %d, logic tb_size = %d \n",
 			}
 			
 #ifndef RLC_UT_DEBUG 			
-           rlc_mac_data_ind_message(ue_pdu_buffer_array,ue_pdu_size_array,ue_rnti_array,ue_buffer_offset,buffer_id,ue_num,ue_status); 
+           rlc_mac_data_ind_message((uint32_t *)ue_pdu_buffer_array,ue_pdu_size_array,ue_rnti_array,ue_buffer_offset,buffer_id,ue_num,ue_status); 
 #else 
 		    mac_rlc_data_info    mac_rlc_data_rpt_temp; 
 
