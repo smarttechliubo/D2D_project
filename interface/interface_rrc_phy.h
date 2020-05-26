@@ -12,6 +12,7 @@
 #define INTERFACE_RRC_PHY_H_
 
 #include <typedef.h>
+#pragma pack(4)
 
 
 typedef struct{
@@ -89,5 +90,5 @@ typedef struct
 	pdcch_config_s pdcch_config;
 }phy_rrc_bcch_mib_rpt; 
 
-
+#pragma ()
 #endif /* _SMARTLOGICTECH_INTERFACE_INTERFACE_RRC_PHY_H_ */
