@@ -19,6 +19,8 @@ typedef enum{
 	DCI_TYPE_UE
 }dci_type_e;
 
+#pragma pack(4)
+
 typedef struct
 {
 	dci_type_e type;
@@ -135,5 +137,6 @@ typedef struct{
 	uint32_t num;
 	link_status status[MAX_RX_UE];
 }PHY_LinkStatusReportInd;
+#pragma pack()
 
 #endif //_SMARTLOGICTECH_INTERFACE_MAC_PHY_H

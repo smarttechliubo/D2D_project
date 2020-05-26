@@ -86,7 +86,7 @@ void mac_Rlc_data_Rpt(uint16_t frame, uint16_t subsfn,uint16_t valid_ue_num, mac
 #endif 
 
 
-void  rlc_mac_data_ind_message(uint32_t         *ue_pdu_buffer_ptr, 
+void  rlc_mac_data_ind_message(uint64_t           *ue_pdu_buffer_ptr, 
 										uint32_t *ue_tb_size_ptr,
 										uint32_t *rnti_array, 
 										uint32_t *ue_pdu_buffer_offset,
@@ -482,7 +482,7 @@ cur process time = [%lld, %lld, %lld] \n",
 #ifndef  RLC_UT_DEBUG             
             rlc_Mac_BufferSta_Rpt(sfn,subsfn,ue_num,rlc_buf_sta);
             LOG_ERROR(RLC_TX, "message:%d,[sfn--subsfn]:[%d,%d] send %d ue_num rlc buffer status to mac \n",
-            		msg_type,sfn,subsfn);
+            		msg_type,sfn,subsfn, ue_num);
 #endif 
             if (ue_num != 0)
             {
@@ -567,7 +567,7 @@ tb_size = %d, logic tb_size = %d \n",
 			}
 			
 #ifndef RLC_UT_DEBUG 			
-           rlc_mac_data_ind_message((uint32_t *)ue_pdu_buffer_array,ue_pdu_size_array,ue_rnti_array,ue_buffer_offset,buffer_id,ue_num,ue_status); 
+           rlc_mac_data_ind_message((uint64_t *)ue_pdu_buffer_array,ue_pdu_size_array,ue_rnti_array,ue_buffer_offset,buffer_id,ue_num,ue_status); 
 #else 
 		    mac_rlc_data_info    mac_rlc_data_rpt_temp; 
 
