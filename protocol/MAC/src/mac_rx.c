@@ -86,12 +86,12 @@ void mac_rrc_data_ind(const frame_t frame, const sub_frame_t subframe, const uin
 
 void fill_rlc_data_ind(const uint16_t rx_length, 
 	const uint8_t rx_lcId,
-	const uint8_t* payload,
+	const uint32_t offset,
 	mac_rlc_data_info *ind)
 {
 	ind->logicchannel_id[ind->logic_chan_num] = rx_lcId;
 	ind->mac_pdu_size[ind->logic_chan_num] = rx_length;
-	ind->mac_pdu_buffer_ptr[ind->logic_chan_num] = (uint32_t*)payload;
+	ind->logic_chan_data_offset[ind->logic_chan_num] = offset;
 	ind->logic_chan_num++;
 }
 
@@ -380,6 +380,7 @@ void handlePuschReceivedInd(PHY_PuschReceivedInd *pusch)
 	uint16_t num_ue = pusch->num_ue;
 	pusch_result* result = NULL;
 	uint8_t * payload = NULL;
+	uint8_t * data = NULL;
 	//mac_header_info header;
 	uint16_t tb_length = 0;
 	uint8_t num_ce = 0;
@@ -387,7 +388,7 @@ void handlePuschReceivedInd(PHY_PuschReceivedInd *pusch)
 	uint8_t rx_ceIds[MAX_NUM_CE];
 	uint8_t rx_lcIds[MAX_LOGICCHAN_NUM];
 	uint16_t rx_lengths[MAX_LOGICCHAN_NUM];
-	uint16_t offset = 0;
+	uint32_t offset = 0;
 	mac_rlc_data_info* data_ind = NULL;
 	bool hasData = false;
 
@@ -425,6 +426,11 @@ void handlePuschReceivedInd(PHY_PuschReceivedInd *pusch)
 
 		tb_length = result->dataSize;
 
+		data_ind = &rpt->sdu_data_rpt[rpt->ue_num];
+
+		data_ind->logic_chan_num = 0;
+		data_ind->ue_tb_size = tb_length;
+		data_ind->mac_pdu_buffer_ptr = (uint32_t *)payload;
 #if 0
 		if (rnti == RA_RNTI)
 		{
@@ -446,18 +452,16 @@ void handlePuschReceivedInd(PHY_PuschReceivedInd *pusch)
 			continue;
 		}
 #endif
-		payload = parse_mac_header(payload, &num_ce, &num_sdu, rx_ceIds, rx_lcIds, rx_lengths, tb_length);
+		data = parse_mac_header(payload, &num_ce, &num_sdu, rx_ceIds, rx_lcIds, rx_lengths, tb_length);
 	
-		if (payload == NULL)
+		if (data == NULL)
 		{
 			LOG_ERROR(MAC, "parse mac header error! rnti:%u",
 				result->rnti);
 			return;
 		}
-	
-		data_ind = &rpt->sdu_data_rpt[rpt->ue_num];
 
-		data_ind->logic_chan_num = 0;
+		offset = data - payload;
 
 		for (uint32_t i = 0; i < num_sdu; i++)
 		{
@@ -466,13 +470,13 @@ void handlePuschReceivedInd(PHY_PuschReceivedInd *pusch)
 				if (rx_lcIds[i] == CCCH_)
 				{
 					//CCCH
-					mac_rrc_data_ind(frame, subframe, rx_lengths[i], payload + offset);
+					mac_rrc_data_ind(frame, subframe, rx_lengths[i], data + offset);
 					offset = offset + rx_lengths[i];
 				}
 				else
 				{
 					//DTCH
-					fill_rlc_data_ind(rx_lengths[i], rx_lcIds[i], payload + offset, data_ind);
+					fill_rlc_data_ind(rx_lengths[i], rx_lcIds[i], offset, data_ind);
 					offset = offset + rx_lengths[i];
 					hasData = true;
 				}
