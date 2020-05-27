@@ -170,14 +170,14 @@ struct mac_status_resp {
   unsigned char     head_sdu_is_segmented;
   struct rlc_entity_info rlc_info;             /*!< xxx*/
 };
-
+#pragma pack(8)
 struct mac_tb_ind {
   unsigned char             *data_ptr;
   unsigned short             size; //!unit: byte 
   unsigned char              error_indication;
   unsigned char              first_bit;    // 0 if data starts on byte boundary(b7), 1 if b6, 2 if b5, etc
 };
-
+#pragma pack()
 
 //! mac sub header 
 typedef  struct  mac_subheader_s

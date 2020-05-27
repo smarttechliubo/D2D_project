@@ -92,6 +92,7 @@ struct mac_data_ind mac_rlc_deserialize_tb (char	   *buffer_pP,
 	mem_block_t*		   tb_p;
 	uint32_t			   nb_tb_read;
 	tbs_size_t		       tbs_size;
+	tbs_size_t             memcpy_tbs_size ; 
 	struct mac_tb_ind *    mac_tb_ind_ptr = NULL ; 
 
 	nb_tb_read = 0;
@@ -101,23 +102,25 @@ struct mac_data_ind mac_rlc_deserialize_tb (char	   *buffer_pP,
 
     //!按照逻辑信道的TB 块进行搬移，如果逻辑信道有2个TB块，则会有2个节点添加到list中去。
 	while (num_tbP > 0) {
+
+	     memcpy_tbs_size = tb_sizeP; //((tb_sizeP + 7) >> 3) <<3; 
 		//！get 一块大为mem_block_t + sizeof (mac_rlc_max_rx_header_size_t) + tb_sizeP 大小的memory 
-		tb_p = get_free_mem_block(sizeof (mac_rlc_max_rx_header_size_t) + tb_sizeP, __func__,__LINE__);
+		tb_p = get_free_mem_block(sizeof (mac_rlc_max_rx_header_size_t) + memcpy_tbs_size, __func__,__LINE__);
 
 		if (tb_p != NULL) {
 			mac_tb_ind_ptr = (struct mac_tb_ind *)(tb_p->data); 
 		mac_tb_ind_ptr->first_bit = 0;
 		mac_tb_ind_ptr->data_ptr = (uint8_t*)(tb_p->data) + sizeof(mac_rlc_max_rx_header_size_t);
-		mac_tb_ind_ptr->size = tb_sizeP;
+		mac_tb_ind_ptr->size = memcpy_tbs_size;
 		mac_tb_ind_ptr->error_indication = 0; //! CRC is not used
 		
-      
-		memcpy(mac_tb_ind_ptr->data_ptr, &buffer_pP[tbs_size], tb_sizeP);
+        
+		memcpy(mac_tb_ind_ptr->data_ptr, &buffer_pP[tbs_size], memcpy_tbs_size);
 
 
 
 		nb_tb_read = nb_tb_read + 1;
-		tbs_size	 = tbs_size   + tb_sizeP;
+		tbs_size	 = tbs_size   + tb_sizeP; //!update the actually tb_size for the next TB
 		list_add_tail_eurecom(tb_p, &data_ind.data); //！将mac给过来的数据添加到data_ind.dat链表后面
 		}
 

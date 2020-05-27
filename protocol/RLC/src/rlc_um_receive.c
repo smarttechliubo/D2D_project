@@ -1196,7 +1196,7 @@ void   rlc_um_receive_process_dar (const protocol_ctxt_t* const ctxt_pP,
 					in_window);
 
 
-//    AssertFatal(in_window != -2, RLC, "SN is lower than vr_uh - windowssize, the SDU maybe retransmited SDU,drop it\n"); 
+    //    AssertFatal(in_window != -2, RLC, "SN is lower than vr_uh - windowssize, the SDU maybe retransmited SDU,drop it\n"); 
     
     // rlc_um_in_window() returns -2 if lower_bound  > sn
 	// rlc_um_in_window() returns -1 if higher_bound < sn

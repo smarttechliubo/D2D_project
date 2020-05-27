@@ -105,9 +105,11 @@ typedef  struct mac_rlc_data_info_s
 	rnti_t   rnti; 
 	
 	uint16_t  logic_chan_num; 
+	uint16_t  ue_tb_size;  /*unit: byte */
 	uint16_t  logicchannel_id[MAX_LOGICCHAN_NUM];
 	uint32_t  mac_pdu_size[MAX_LOGICCHAN_NUM]; /**PDU size ,unit:byte*/
-	uint32_t  *mac_pdu_buffer_ptr[MAX_LOGICCHAN_NUM]; /**PDU buffer address */
+	uint32_t  logic_chan_data_offset[MAX_LOGICCHAN_NUM]; /*each logic channel's data offset */
+	uint32_t  *mac_pdu_buffer_ptr; /**PDU buffer address */
 
 }mac_rlc_data_info;
 /**MAC_RLC_DATA_RPT*/
