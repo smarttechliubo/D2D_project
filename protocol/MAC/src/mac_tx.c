@@ -1405,9 +1405,9 @@ void send_pusch_req(const frame_t frame, const sub_frame_t subframe)
 #ifdef MAC_DEBUG
 			LOG_ERROR(MAC, "LGC: MAC_PHY_PUSCH_SEND send. schnum:%u, common:%u, frame:%u, subframe:%u, num_pusch:%u, rnti:%u, rb_start:%u, rb_num:%u", 
 				sch_num, common_sch_num, req->frame, req->subframe, req->num, sch[0].rnti, sch[0].rb_start, sch[0].rb_num);
-			LOG_ERROR(MAC, "LGC: MAC_PHY_PUSCH_SEND send. rnti:%u, mcs:%u, data_ind:%u, rv:%u, harqId:%u, ack:%u, pduLen:%u, data:%x,%x,%x,%x,%x,%x,%x,%x,%x", 
+			LOG_ERROR(MAC, "LGC: MAC_PHY_PUSCH_SEND send. rnti:%u, mcs:%u, data_ind:%u, rv:%u, harqId:%u, buffer_id:%u, pduLen:%u, data:%x,%x,%x,%x,%x,%x,%x,%x,%x", 
 				req->pusch[0].rnti, req->pusch[0].mcs,req->pusch[0].data_ind,req->pusch[0].rv,
-				req->pusch[0].harqId,req->pusch[0].ack,req->pusch[0].pdu_len, 
+				req->pusch[0].harqId,req->pusch[0].buffer_id,req->pusch[0].pdu_len, 
 				req->pusch[0].data[0],
 				req->pusch[0].data[1],
 				req->pusch[0].data[2],

@@ -44,5 +44,5 @@ typedef uint32_t message_size_t;
 
 #define MAX_NUM_CE 4
 
-#define MAC_DEBUG
+//#define MAC_DEBUG
 #endif //_SMARTLOGICTECH_DEFS_H

@@ -239,7 +239,7 @@ void syncTime()//TODO: sync
 		}
 		else
 		{
-			LOG_INFO(MAC, "syncTime: PHY not ready or time is not udpated ");
+			LOG_WARN(MAC, "syncTime: PHY not ready or time is not udpated ");
 		}
 	}
 	else

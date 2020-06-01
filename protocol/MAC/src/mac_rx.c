@@ -215,7 +215,7 @@ void handle_mac_ce(const uint8_t num_ce, const uint8_t rx_ceIds[MAX_NUM_CE])
 		}
 	}
 }
-
+#if 0
 void handlePuschSdu(const frame_t frame, const sub_frame_t subframe, 
 	const pusch_result* result, mac_rlc_data_rpt *rpt)
 {
@@ -285,7 +285,7 @@ void handlePuschSdu(const frame_t frame, const sub_frame_t subframe,
 		}
 	}
 }
-
+#endif
 void handle_cqi(const PHY_CQIInd* ind)
 {
 	frame_t frame = ind->frame;
