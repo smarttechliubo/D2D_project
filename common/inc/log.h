@@ -43,6 +43,7 @@
 
 typedef enum
 {
+	CMD = CMD_DEBUG_LEVEL,
     ERROR = ERR_DEBUG_LEVEL,
     WARN  = WARNING_DEBUG_LEVEL,
     INFO  = RUN_DEBUG_LEVEL,
@@ -81,6 +82,7 @@ void log_info(const char* filename, int line, comp_name_t comp, LogLevel level, 
 #define LOG_INFO(comp, format, ...)  log_info(__FILE__, __LINE__, comp, INFO, format, ## __VA_ARGS__)
 #define LOG_DEBUG(comp, format, ...) log_info(__FILE__, __LINE__, comp, DEBUG, format, ## __VA_ARGS__)
 #else
+#define LOG_CMD(comp, format, ...)   DebugOutWithTime(CMD,  "[CMD]" comp  ": [%s:%d] "format"\n", __FILENAME__, __LINE__,  ## __VA_ARGS__)
 #define LOG_ERROR(comp, format, ...) DebugOutWithTime(ERROR,  "[ERROR]" comp  ": [%s:%d] "format"\n", __FILENAME__, __LINE__,  ## __VA_ARGS__)
 #define LOG_WARN(comp, format, ...)  DebugOutWithTime(WARN,  "[WARN]" comp  ": [%s:%d] "format"\n", __FILENAME__, __LINE__,  ## __VA_ARGS__)
 #define LOG_INFO(comp, format, ...)  DebugOutWithTime(INFO,  "[INFO]" comp  ": [%s:%d] "format"\n", __FILENAME__, __LINE__,  ## __VA_ARGS__)

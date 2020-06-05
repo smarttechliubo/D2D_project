@@ -387,12 +387,14 @@ int32_t init_mac_scheduler()
 	//pTimer = _timerCreate(TASK_D2D_MAC_SCH, 1, 400, 100);
 	//ret = _timerStart(pTimer);
 
-	setFrameOffsetTime(2);
+	setFrameOffsetTime(3);
 
 	LOG_INFO(MAC,"init_mac_scheduler pTimer is %p, ret:%d\r\n", pTimer,ret);
 
 	return 0;
 }
+
+uint32_t pdcch_num = 0;
 
 void run_scheduler(msgDef* msg)
 {
@@ -431,9 +433,21 @@ void run_scheduler(msgDef* msg)
 		g_diff_time = g_end_time - g_start_time;
 		ULONG run_period_time = g_run_period_time - g_start_time;
 		ULONG run_scheduler_time = g_end_time - g_run_scheduler_time;
+		ULONG run_scheduler_offset = g_run_scheduler_time - g_start_time;
 
 		LOG_ERROR(MAC, "MAC process time : %llu, run_period_time:%llu, run_scheduler_time:%llu", 
 			g_diff_time, run_period_time, run_scheduler_time);
+
+		if (g_diff_time > 300000 || run_period_time > 80000 || run_scheduler_time > 150000)
+		{
+			LOG_CMD(MAC, "CMD MAC process time : %llu, run_period_time:%llu, run_scheduler_offset:%llu, run_scheduler_time:%llu", 
+				g_diff_time, run_period_time, run_scheduler_offset, run_scheduler_time);
+		}
+
+		pdcch_num++;
+
+		LOG_CMD(MAC, "MAC process time : pdcch_num:%u, %llu, run_period_time:%llu, run_scheduler_offset:%llu, run_scheduler_time:%llu", 
+			pdcch_num, g_diff_time, run_period_time, run_scheduler_offset, run_scheduler_time);
 	}
 
 	g_pdcch_send = false;
