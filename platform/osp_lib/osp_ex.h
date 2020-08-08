@@ -62,17 +62,30 @@ typedef struct tag_Osp_Msg_Head
         U32      SrcId;                                                     
         U32      DstId;
 }Osp_Msg_Head;
+typedef enum en_osp_msg_type
+{
+    OSP_TIMER_TYPE =0x5555,
+    OSP_MAX_TYPE,
+}EN_OSP_MSG_TYPE;
+
 #define MSG_HEAD_SIZE  sizeof(Osp_Msg_Head)
 #define MSG_HEAD_TO_COMM(x)  (char *)((UINTPTR)x + MSG_HEAD_SIZE)
 #define MSG_DADA_LEN(x) (x->MsgSize)
-#define IS_TIMER_MSG(pMsg)((pMsg->SrcId)<32)
+#define IS_TIMER_MSG(pMsg)((pMsg->MsgType)== OSP_TIMER_TYPE)
 
 #define NOMSGTASK    0xaa000000
 #define MSGTASK        0x55000000
 #define RTTASK        0x00aa0000
+#define XXTASK        0x0000aa00
+#define XXMASK        0x0000ff00
+#define NORMALTASK    0x00550000
 
 #define RT_MSG_PRI(x) (x|MSGTASK|RTTASK)
 #define RT_NOMSG_PRI(x) (x|NOMSGTASK|RTTASK)
+#define XRT_MSG_PRI(x) (x|MSGTASK|RTTASK|XXTASK)
+
+#define NOMARL_MSG_PRI(x) (x|MSGTASK|NORMALTASK)
+#define NOMARL_NOMSG_PRI(x) (x|NOMSGTASK|NORMALTASK)
 
 typedef struct tag_OSP_TASKMSG_REG                                                                                         
 {   
@@ -112,7 +125,14 @@ int OSP_atomicGet(int* pVar);
 void OSP_atomicSet(int* pVar, int val);
 void DebugOutSetLevel(int level);
 OSP_STATUS DebugOutWithTime(int level, char *fmt,...);
-
+OSP_STATUS ospWriteDiagLog(char *pbuf, U32 len);
+OSP_STATUS OspDbgLog (char *pbuf, U32 buflen);
+char *OspGetApeTDateAddr(int Id);//Id should be 0 or  1
+char *OspGetApeRDateAddr(int Id);//Id should be 0 or  1
+void * OSP_RegFrameSync(void);//task init func should call this
+void * OSP_RegFrameSyncCal(void);//task init func should call this
+int Osp_SetFrameOffsetTime(int time);
+int Osp_FrameSyncIrqRead(int *data);
 
 
 

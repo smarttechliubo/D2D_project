@@ -34,7 +34,7 @@ void mac_Rlc_data_Req(uint16_t frame, uint16_t subsfn,uint16_t valid_ue_num, rlc
 
 	uint16_t    ue_index; 
 
-	mac_rlc_data_req *mac_rlc_data_req_ptr = calloc(1,sizeof(mac_rlc_data_req)); 
+	mac_rlc_data_req *mac_rlc_data_req_ptr = OSP_Alloc_Mem(sizeof(mac_rlc_data_req)); 
 
  	
  	mac_rlc_data_req_ptr->sfn = frame; 
@@ -45,7 +45,7 @@ void mac_Rlc_data_Req(uint16_t frame, uint16_t subsfn,uint16_t valid_ue_num, rlc
 
     memcpy((void *)mac_rlc_data_req_ptr->rlc_data_request,(void *)rlc_data_request_ptr,valid_ue_num * sizeof(rlc_data_req))	; 
  	
-    message = itti_alloc_new_message(TASK_D2D_MAC, MAC_RLC_DATA_REQ,
+    message = itti_alloc_new_message(TASK_D2D_MAC_SCH, MAC_RLC_DATA_REQ,
 	                       ( char *)mac_rlc_data_req_ptr, sizeof(mac_rlc_data_req));
 
 	itti_send_msg_to_task(TASK_D2D_RLC_TX,  0, message);
@@ -62,7 +62,7 @@ void mac_Rlc_data_Rpt(uint16_t frame, uint16_t subsfn,uint16_t valid_ue_num, mac
 
 	uint16_t    ue_index; 
 
-	mac_rlc_data_rpt *mac_rlc_data_rpt_ptr = calloc(1,sizeof(mac_rlc_data_rpt)); 
+	mac_rlc_data_rpt *mac_rlc_data_rpt_ptr = OSP_Alloc_Mem(sizeof(mac_rlc_data_rpt)); 
 
  	
  	mac_rlc_data_rpt_ptr->sfn = frame; 
@@ -73,7 +73,7 @@ void mac_Rlc_data_Rpt(uint16_t frame, uint16_t subsfn,uint16_t valid_ue_num, mac
 
     memcpy((void *)mac_rlc_data_rpt_ptr->sdu_data_rpt,(void *)rlc_data_rpt,valid_ue_num * sizeof(mac_rlc_data_info))	; 
  	
-    message = itti_alloc_new_message(TASK_D2D_MAC, MAC_RLC_DATA_RPT,
+    message = itti_alloc_new_message(TASK_D2D_MAC_SCH, MAC_RLC_DATA_RPT,
 	                       ( char *)mac_rlc_data_rpt_ptr, sizeof(mac_rlc_data_rpt));
 
 	itti_send_msg_to_task(TASK_D2D_RLC_RX,  0, message);
@@ -86,9 +86,11 @@ void mac_Rlc_data_Rpt(uint16_t frame, uint16_t subsfn,uint16_t valid_ue_num, mac
 #endif 
 
 
-void  rlc_mac_data_ind_message(uint32_t         *ue_pdu_buffer_ptr, 
+void  rlc_mac_data_ind_message(uint64_t           *ue_pdu_buffer_ptr, 
 										uint32_t *ue_tb_size_ptr,
 										uint32_t *rnti_array, 
+										uint32_t *ue_pdu_buffer_offset,
+										uint32_t buffer_id,
 										uint32_t  ue_num,
 										int32_t  *ue_status)
 {
@@ -98,7 +100,7 @@ void  rlc_mac_data_ind_message(uint32_t         *ue_pdu_buffer_ptr,
        
 
 	   MessageDef	*message; 
-	   rlc_mac_data_send_ptr = calloc(1,sizeof(rlc_mac_data_ind)); 
+	   rlc_mac_data_send_ptr =( rlc_mac_data_ind  *) OSP_Alloc_Mem(sizeof(rlc_mac_data_ind)); 
 
 
 	   rlc_mac_data_send_ptr->sfn = 0; 
@@ -108,11 +110,15 @@ void  rlc_mac_data_ind_message(uint32_t         *ue_pdu_buffer_ptr,
 
 	   for (ue_index = 0; ue_index < ue_num ; ue_index++)
 	   {
-			
-			rlc_mac_data_send_ptr->sdu_pdu_info[ue_index].data_buffer_adder_ptr = ue_pdu_buffer_ptr[ue_index];
+	   		
+			rlc_mac_data_send_ptr->sdu_pdu_info[ue_index].buffer_id = buffer_id; 
+			rlc_mac_data_send_ptr->sdu_pdu_info[ue_index].offset = ue_pdu_buffer_offset[ue_index]; 
+			rlc_mac_data_send_ptr->sdu_pdu_info[ue_index].data_buffer_adder_ptr = (uint32_t *)ue_pdu_buffer_ptr[ue_index];
 			rlc_mac_data_send_ptr->sdu_pdu_info[ue_index].tb_byte_size = ue_tb_size_ptr[ue_index]; 
 			rlc_mac_data_send_ptr->sdu_pdu_info[ue_index].rnti = rnti_array[ue_index]; 
             rlc_mac_data_send_ptr->sdu_pdu_info[ue_index].valid_flag = ue_status[ue_index]; 
+
+           
 			
 	   }
 	   
@@ -121,7 +127,7 @@ void  rlc_mac_data_ind_message(uint32_t         *ue_pdu_buffer_ptr,
 	   message = itti_alloc_new_message(TASK_D2D_RLC_TX, RLC_MAC_DATA_IND,
 							  ( char *)rlc_mac_data_send_ptr, sizeof(rlc_mac_data_ind ));
 	
-	   itti_send_msg_to_task(TASK_D2D_MAC,0, message);
+	   itti_send_msg_to_task(TASK_D2D_MAC_SCH,0, message);
 
 
 
@@ -268,7 +274,7 @@ rlc_op_status_t rlc_get_tx_data(const protocol_ctxt_t *const ctxt_pP,
 	  if (new_sdu_p != NULL) {
 		// PROCESS OF COMPRESSION HERE:
 	//	pthread_mutex_lock(&(rlc_union_p->rlc_union_mtex));
-		memset (new_sdu_p->data, 0, sizeof (struct rlc_tm_data_req_alloc));
+		memset ((void *)new_sdu_p->data, 0, sizeof (struct rlc_tm_data_req_alloc));
 		memcpy ((uint8_t *)(new_sdu_p->data) + sizeof (struct rlc_tm_data_req_alloc), sdu_pP, sdu_sizeP);
 		((struct rlc_tm_data_req *) (new_sdu_p->data))->data_size = sdu_sizeP;
 		((struct rlc_tm_data_req *) (new_sdu_p->data))->data_offset = sizeof (struct rlc_tm_data_req_alloc);
@@ -379,9 +385,13 @@ void rlc_tx_process(void *message, MessagesIds      msg_type)
 	uint32_t     srb_flag = 0; 
 
 	tb_size_t    tb_size; 
-	uint32_t   ue_pdu_buffer_array[D2D_MAX_USER_NUM]; 
+	uint64_t   ue_pdu_buffer_array[D2D_MAX_USER_NUM]; 
 	uint32_t   ue_pdu_size_array[D2D_MAX_USER_NUM]; 
 	uint32_t   ue_rnti_array[D2D_MAX_USER_NUM]; 
+	uint32_t   ue_buffer_offset[D2D_MAX_USER_NUM]; 
+	uint32_t   buffer_id; 
+	uint32_t   buffer_offset = 0; 
+	uint32_t   rlc_mac_buffer_size = 0;  //！must be multiplex of 8 byte 
 
 	struct timeval    start_time; 
 	struct timeval    end_time; 
@@ -389,7 +399,7 @@ void rlc_tx_process(void *message, MessagesIds      msg_type)
 	int32_t   ue_status[D2D_MAX_USER_NUM] = {0};
 
 	
-	//LOG_WARN(RLC_TX, "RLC_TX receive message = %d\n",msg_type);
+	LOG_WARN(RLC_TX, "RLC_TX receive message = %d\n",msg_type);
 	switch (msg_type)
 	{
 		case RRC_RLC_BUF_STATUS_REQ: 
@@ -423,7 +433,7 @@ void rlc_tx_process(void *message, MessagesIds      msg_type)
 			rb_type = rrc_rlc_data_ind_ptr->rb_type; 
 			rb_id = rrc_rlc_data_ind_ptr->rb_id; 
 			send_data_size = rrc_rlc_data_ind_ptr->data_size; 
-			data_buffer = rrc_rlc_data_ind_ptr->data_addr_ptr;
+			data_buffer = (uint8_t *)rrc_rlc_data_ind_ptr->data_addr_ptr;
 			rnti = rrc_rlc_data_ind_ptr->rnti; 
 			g_rlc_protocol_ctxt.rnti = rnti; 
 
@@ -471,16 +481,17 @@ cur process time = [%lld, %lld, %lld] \n",
           	ue_num =  rlc_Get_Buffer_Status(rlc_buf_sta); 
 #ifndef  RLC_UT_DEBUG             
             rlc_Mac_BufferSta_Rpt(sfn,subsfn,ue_num,rlc_buf_sta);
-            LOG_INFO(RLC_TX, "message:%d,[sfn--subsfn]:[%d,%d] send rlc buffer status to mac \n",
-            		msg_type,sfn,subsfn);
+            LOG_ERROR(RLC_TX, "message:%d,[sfn--subsfn]:[%d,%d] send %d ue_num rlc buffer status to mac \n",
+            		msg_type,sfn,subsfn, ue_num);
 #endif 
+           
             if (ue_num != 0)
             {
 				
 #ifdef  RLC_UT_DEBUG 
 			
             rlc_data_req   mac_data_req_to_rlc;
-            mac_data_req_to_rlc.rnti = 101; 
+            mac_data_req_to_rlc.rnti = 0xff00; 
             mac_data_req_to_rlc.logic_chan_num = 1; 
           //  mac_data_req_to_rlc.tb_size = 1280; //   //!total size ,unit:byte
 
@@ -526,6 +537,7 @@ tb_size = %d, logic tb_size = %d \n",
 			sfn = mac_rlc_data_req_ptr->sfn; 
 			subsfn = mac_rlc_data_req_ptr->sub_sfn; 
             ue_num = mac_rlc_data_req_ptr->ue_num; 
+            buffer_offset = 0; 
             
 			for (ue_index = 0; ue_index < ue_num; ue_index++)
 			{
@@ -539,26 +551,36 @@ tb_size = %d, logic tb_size = %d \n",
 				 						&g_rlc_pdu_size_para[ue_index],
 				 						&g_rlc_pdu_buffer[ue_index * MAX_DLSCH_PAYLOAD_BYTES],
 				 						&g_rlc_mac_subheader[ue_index *((MAX_LOGICCHAN_NUM  + 1)* 3)]); 
-
-				ue_pdu_buffer_array[ue_index] = (uint32_t )&g_rlc_pdu_buffer[ue_index * MAX_DLSCH_PAYLOAD_BYTES]; 
-				ue_pdu_size_array[ue_index] = (uint32_t )rlc_data_req_ptr->tb_size; 
+                buffer_id = (subsfn & 0x1); 
+#ifdef  FPGA_PLATFORM
+				ue_pdu_buffer_array[ue_index] = (uint64_t) OspGetApeTDateAddr(buffer_id);
+				ue_buffer_offset[ue_index] =  buffer_offset; 
+				ue_pdu_size_array[ue_index] = (uint32_t )rlc_data_req_ptr->tb_size;
+				rlc_mac_buffer_size = ((ue_pdu_size_array[ue_index] + 7) >> 3) << 3;  //!multiplex of 8 byte for linux64 system
+				memcpy((void *) ue_pdu_buffer_array[ue_index] , (void *)&g_rlc_pdu_buffer[ue_index * MAX_DLSCH_PAYLOAD_BYTES],rlc_mac_buffer_size * sizeof(char)); 
+#else 
+				ue_pdu_buffer_array[ue_index] = (uint64_t)&g_rlc_pdu_buffer[ue_index * MAX_DLSCH_PAYLOAD_BYTES]; 
+#endif 
 				ue_rnti_array[ue_index] =  	rlc_data_req_ptr->rnti; 
+				buffer_offset = buffer_offset + ue_pdu_size_array[ue_index]; //update buffer_offset
 				
 				
 			}
 			
 #ifndef RLC_UT_DEBUG 			
-           rlc_mac_data_ind_message(ue_pdu_buffer_array,ue_pdu_size_array,ue_rnti_array,ue_num,ue_status); 
+           rlc_mac_data_ind_message((uint64_t *)ue_pdu_buffer_array,ue_pdu_size_array,ue_rnti_array,ue_buffer_offset,buffer_id,ue_num,ue_status); 
 #else 
 		    mac_rlc_data_info    mac_rlc_data_rpt_temp; 
 
 		    mac_rlc_data_rpt_temp.valid_flag = 1; 
-		    mac_rlc_data_rpt_temp.rnti = 101; 
+		    mac_rlc_data_rpt_temp.rnti = 0xff00; 
 		    mac_rlc_data_rpt_temp.logic_chan_num = 1; 
 		    mac_rlc_data_rpt_temp.logicchannel_id[0] = 3; 
 		    mac_rlc_data_rpt_temp.mac_pdu_size[0] = g_debug_rlc_lc_pdu_component[0].final_rlc_pdu_size; 
-		    mac_rlc_data_rpt_temp.mac_pdu_buffer_ptr[0] = (uint32_t *)((uint8_t *)(&g_rlc_pdu_buffer[0 * MAX_DLSCH_PAYLOAD_BYTES]) 
-		    											+ g_rlc_debug_ue_mac_header_size);
+
+
+
+			mac_rlc_data_rpt_temp.mac_pdu_buffer_ptr = (uint32_t *)((uint8_t *)(&g_rlc_pdu_buffer[0 * MAX_DLSCH_PAYLOAD_BYTES]) + g_rlc_debug_ue_mac_header_size);
 		    
 			mac_Rlc_data_Rpt(sfn,subsfn,1, &mac_rlc_data_rpt_temp);
 

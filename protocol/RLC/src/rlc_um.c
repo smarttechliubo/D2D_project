@@ -303,6 +303,7 @@ void rlc_um_configure(
 	rlc_pP->last_reassemblied_sn  = rlc_pP->rx_sn_modulo - 1;
 	rlc_pP->last_reassemblied_missing_sn  = rlc_pP->rx_sn_modulo - 1;
 	rlc_pP->reassembly_missing_sn_detected = 0;  //！用在接收多个PDU 才能组包一个SDU时，检测是否丢包
+	rlc_pP->reassembly_missing_sn_packet = 0;
 	//! timers initial 
 	rlc_um_init_timer_reordering(ctxt_pP,rlc_pP, timer_reorderingP);
 
@@ -612,7 +613,7 @@ int32_t  rlc_um_segment_10(const protocol_ctxt_t* const ctxt_pP,
           //!RLC total size 
 		rlc_sdu_length =  (rlc_pP->buffer_occupancy + rlc_pP->tx_header_min_length_in_bytes + max_li_overhead); 
 
-		LOG_ERROR(RLC_TX, "-----------start to process  sdu data,lc_idx:%d , BO: %d, rlc fix header:2, sdu_num:%d,  E+LI:%d, \
+		LOG_WARN(RLC_TX, "-----------start to process  sdu data,lc_idx:%d , BO: %d, rlc fix header:2, sdu_num:%d,  E+LI:%d, \
 lc_tb_size:%d,rlc_sdu_size:%d\n",
 						  lc_pdu_component_ptr->logic_ch_index,
 						  rlc_pP->buffer_occupancy,
@@ -730,6 +731,7 @@ mac subheader size:%d, UE TB's padding info:[tail_padding header:%d, padding byt
 			lc_pdu_component_ptr->final_rlc_pdu_size = data_pdu_size; 
 			lc_pdu_component_ptr->tail_padding_header_size = 0; 
 			lc_pdu_component_ptr->tail_padding_byte = 0;
+			
 	
 			  //!如果是最后一个lc, 则根据总的tb size 确定padding size (存在tb_size > sum(lc's tb size)); 
 			//!如果是最后一个lc, 则根据总的tb size 确定padding size .
@@ -748,9 +750,9 @@ mac subheader size:%d, UE TB's padding info:[tail_padding header:%d, padding byt
 					{
 						lc_pdu_component_ptr->mac_subheader_length = 3; 
 						lc_pdu_component_ptr->mac_subheader_length_type  = 3;
-
 					}
 
+					
 					data_pdu_size = nb_bytes_to_transmit - lc_pdu_component_ptr->mac_subheader_length;
 					lc_pdu_component_ptr->final_rlc_pdu_size = data_pdu_size; 
 
@@ -922,7 +924,7 @@ no E+LI, fill stoped  \n",
     //! buffer_status_sub_size 不包含E+LI的size, pdu_remaining_size 是RLC PDU，是包含 E+LI的size的
 	buffer_status_sub_size = pdu_remaining_size - test_e_li_length;
 
-   	LOG_WARN(RLC_TX, "sdu fill para result: %d sdu filled in RLC PDU,test_remaining_num_li_to_substract = %d,test_num_li = %d,\ 
+   	LOG_WARN(RLC_TX, "sdu fill para result: %d sdu filled in RLC PDU,test_remaining_num_li_to_substract = %d,test_num_li = %d,\
 test_e_li_length:%d,the real data pdu length %d,E_LI length:%d\n", num_fill_sdu, 
 					test_remaining_num_li_to_substract,
 					test_num_li,

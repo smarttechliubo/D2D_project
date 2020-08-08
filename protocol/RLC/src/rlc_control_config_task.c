@@ -258,14 +258,13 @@ rlc_op_status_t rrc_rlc_config_req	 (const protocol_ctxt_t* const ctxt_pP,
 
 
 
-
-
 void  rlc_rrc_config_process(void *message, MessagesIds         msg_type)
 {
 
 	rrc_rlc_initial_req  *intial_req; 
 	rrc_rlc_bcch_para_cfg  *bcch_cfg_req; 
 	rrc_rlc_connect_setup_cfg  *connect_req; 
+	rrc_rlc_release_req *releaes_req; 
 	rlc_info_t     temp_rlc_info; 
 	uint32_t       rb_index;  
 	rb_id_t        rb_id; 
@@ -273,6 +272,7 @@ void  rlc_rrc_config_process(void *message, MessagesIds         msg_type)
 	uint16_t         dl_sn_field; 
 	uint16_t         dl_t_recorder; 
 	uint16_t         ul_sn_field; 
+	uint16_t         ue_index;
 
 
 	LOG_INFO(RLC, "RLC_RRC_TASK receive message = %d\n",msg_type);
@@ -283,19 +283,23 @@ void  rlc_rrc_config_process(void *message, MessagesIds         msg_type)
 		{
 			intial_req = (rrc_rlc_initial_req * )message;
 				
+
+		    if (D2D_MODE_TYPE_SOURCE ==  intial_req->mode)
+		    {
             //! constitue  protocol_ctxt_t; 
-            if (D2D_MODE_TYPE_SOURCE  == intial_req->mode)
-            {
-            	g_rlc_protocol_ctxt.enb_flag = 1; 
-            	g_rlc_protocol_ctxt.eNB_index = 0; 
-            }
+	            g_rlc_protocol_ctxt.enb_flag = 1; 
+	            g_rlc_protocol_ctxt.eNB_index = 0; 
+				g_rlc_protocol_ctxt.rnti = 0xffff;  //!initial value ; 
+	        }
             else
             {
 				g_rlc_protocol_ctxt.enb_flag = 0;
+				g_rlc_protocol_ctxt.rnti = RA_RNTI; //!目的端初始化为RA-RNTI 
             }
             g_rlc_protocol_ctxt.module_id = 0; 
-            g_rlc_protocol_ctxt.rnti = 0xffff;  //!initial value ; 
+            
             g_rlc_protocol_ctxt.configured = FALSE; 
+			memset((void *)g_rlc_ue_info,0,sizeof(g_rlc_ue_info));
             //! response to rrc 
             rlc_Rrc_Configure_Cfm(RLC_RRC_INITIAL_CFM); 
             
@@ -303,9 +307,56 @@ void  rlc_rrc_config_process(void *message, MessagesIds         msg_type)
 		}
 		case RRC_RLC_RELEASE_REQ: 
 		{
+		    releaes_req = (rrc_rlc_release_req *)message; 
+			//! TODO response to rrc ,clear buffer,clear hash table 
+			g_rlc_protocol_ctxt.rnti = releaes_req->ue_rnti; 
+
+			ue_index = dict_GetValue(g_rrc_ue_info_dict,releaes_req->ue_rnti);
+			AssertFatal(ue_index <= D2D_MAX_USER_NUM, RLC, "RRC_RLC_RELEASE_REQ  RNTI's index error \n");
+
+			//!maybe there is no srb for this ue 
+            if (1 == g_rlc_ue_info[ue_index].srb_setup_flag)
+            {
+				for (rb_index = 0; rb_index < g_rlc_ue_info[ue_index].srb_count; rb_index++)
+				{
+					temp_rlc_info.rlc_mode = g_rlc_ue_info[ue_index].srb_info[rb_index].rlc_mode; 
+					rrc_rlc_config_req(&g_rlc_protocol_ctxt,
+										SRB_FLAG_YES,
+										MBMS_FLAG_NO,
+										CONFIG_ACTION_REMOVE,
+										g_rlc_ue_info[ue_index].srb_info[rb_index].srb_rb_id,
+										g_rlc_ue_info[ue_index].srb_info[rb_index].srb_logic_ch_id,
+										temp_rlc_info); 
+					LOG_INFO(RLC,"RRC_RLC_RELEASE_REQ :SRB remove, rnti = %d, rb_indx = %d,rb_id = %d, lc_id = %d,\
+								rlc_mode = %s\n",  \
+				     			releaes_req->ue_rnti,rb_index,rb_id,logic_ch_id,g_rlc_mode_str[temp_rlc_info.rlc_mode]); 	
+
+
+
+
+				}
+            }
+						//!delete the ue's dRB 
+			AssertFatal(g_rlc_ue_info[ue_index].drb_setup_flag  == 1, RLC, "RRC_RLC_RELEASE_REQ, no drb_setup, myebe the rnti is error:rnti =%d\n",releaes_req->ue_rnti);
+              //!delete the ue's DRB 
+  			for (rb_index = 0; rb_index < MAX_DRB_COUNT; rb_index++)
+			{
+                temp_rlc_info.rlc_mode = g_rlc_ue_info[ue_index].drb_info[rb_index].rlc_mode;
+				rrc_rlc_config_req(&g_rlc_protocol_ctxt,
+									SRB_FLAG_NO,
+									MBMS_FLAG_NO,
+									CONFIG_ACTION_REMOVE,
+									g_rlc_ue_info[ue_index].drb_info[rb_index].drb_rb_id,
+									g_rlc_ue_info[ue_index].drb_info[rb_index].drb_logic_ch_id,
+									temp_rlc_info); 
+
+				LOG_ERROR(RLC,"RRC_RLC_RELEASE_REQ :DRB remove, rb_indx = %d,rb_id = %d, lc_id = %d,\
+							rlc_mode = %s\n",  \
+			     			rb_index,rb_id,logic_ch_id,g_rlc_mode_str[temp_rlc_info.rlc_mode]); 
+			}
+
 			
- 			
-			//! TODO response to rrc 
+			
 			rlc_Rrc_Configure_Cfm(RLC_RRC_RELEASE_CFM); 
 			break; 
 
@@ -355,9 +406,17 @@ void  rlc_rrc_config_process(void *message, MessagesIds         msg_type)
 		case RRC_RLC_CONNECT_SETUP_CFG_REQ: 
 		{
 			connect_req = (rrc_rlc_connect_setup_cfg *)message; 
- 
+
 			 //! update ue's rnti 
 			g_rlc_protocol_ctxt.rnti = connect_req->ue_rnit; 
+			ue_index = dict_GetValue(g_rrc_ue_info_dict,g_rlc_protocol_ctxt.rnti);
+			LOG_INFO(RLC,"RRC_RLC_CONNECT_SETUP_CFG_REQ :rnti=%d, ue_index = %d \n",connect_req->ue_rnit,ue_index);
+
+           
+			AssertFatal(ue_index <= D2D_MAX_USER_NUM, RLC, "RRC_RLC_CONNECT_SETUP_CFG_REQ RNTI's index error \n");
+          
+			g_rlc_ue_info[ue_index].ue_rnti = connect_req->ue_rnit;
+			
 			for (rb_index = 0; rb_index < connect_req->srb_cfg_req.srb_count; rb_index++)
 			{
 				
@@ -369,6 +428,16 @@ void  rlc_rrc_config_process(void *message, MessagesIds         msg_type)
 				}
 				rb_id = connect_req->srb_cfg_req.srb_list[rb_index].rb_id; 
 				logic_ch_id = connect_req->srb_cfg_req.srb_list[rb_index].logicchannel_id; 
+
+				//!record the ue's info 
+				
+				g_rlc_ue_info[ue_index].srb_info[g_rlc_ue_info[ue_index].srb_count].rlc_mode = temp_rlc_info.rlc_mode ; 
+				g_rlc_ue_info[ue_index].srb_info[g_rlc_ue_info[ue_index].srb_count].srb_rb_id = rb_id; 
+				g_rlc_ue_info[ue_index].srb_info[g_rlc_ue_info[ue_index].srb_count].srb_logic_ch_id = logic_ch_id; 
+				g_rlc_ue_info[ue_index].srb_count++; 
+				g_rlc_ue_info[ue_index].srb_setup_flag = 1; 
+
+				//!config rlc entity
 				rrc_rlc_config_req(&g_rlc_protocol_ctxt,
 									SRB_FLAG_YES,
 									MBMS_FLAG_NO,
@@ -425,6 +494,15 @@ void  rlc_rrc_config_process(void *message, MessagesIds         msg_type)
 				}
 				rb_id = connect_req->drb_cfg_req.drb_list[rb_index].rb_id; 
 				logic_ch_id = connect_req->drb_cfg_req.drb_list[rb_index].logicchannel_id; 
+
+				//!record the ue's info 
+				g_rlc_ue_info[ue_index].drb_info[g_rlc_ue_info[ue_index].drb_count].rlc_mode = temp_rlc_info.rlc_mode ; 
+				g_rlc_ue_info[ue_index].drb_info[g_rlc_ue_info[ue_index].drb_count].drb_rb_id = rb_id; 
+				g_rlc_ue_info[ue_index].drb_info[g_rlc_ue_info[ue_index].drb_count].drb_logic_ch_id = logic_ch_id; 
+				g_rlc_ue_info[ue_index].drb_count++; 
+				g_rlc_ue_info[ue_index].drb_setup_flag = 1; 
+
+				//! config rlc entity 
 				rrc_rlc_config_req(&g_rlc_protocol_ctxt,
 									SRB_FLAG_NO,
 									MBMS_FLAG_NO,
@@ -440,7 +518,7 @@ void  rlc_rrc_config_process(void *message, MessagesIds         msg_type)
 									logic_ch_id,
 									temp_rlc_info); 
 
-				LOG_INFO(RLC,"RRC_RLC_CONNECT_SETUP_CFG_REQ :DRB add and modify, rb_indx = %d,rb_id = %d, lc_id = %d,\
+				LOG_ERROR(RLC,"RRC_RLC_CONNECT_SETUP_CFG_REQ :DRB add and modify, rb_indx = %d,rb_id = %d, lc_id = %d,\
 							rlc_mode = %s\n",  \
 			     			rb_index,rb_id,logic_ch_id,g_rlc_mode_str[temp_rlc_info.rlc_mode]); 					
 			}

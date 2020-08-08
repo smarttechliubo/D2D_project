@@ -108,6 +108,7 @@ RLC_UM_SN_5_BITS_MODULO or RLC_UM_SN_10_BITS_MODULO. */
   rlc_usn_t         last_reassemblied_missing_sn;   /*!< \brief Sequence number of the last found missing PDU. */
   /*!< \brief Act as a boolean, set if a hole in the sequence numbering of received PDUs has been found. */
   rlc_usn_t         reassembly_missing_sn_detected; 
+  rlc_usn_t         reassembly_missing_sn_packet; 
   //-----------------------------
   // STATISTICS
   //-----------------------------

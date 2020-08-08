@@ -71,7 +71,7 @@ typedef struct
 {
 	uint16_t cellId; //value: 0..503, default: 0
 	uint16_t bandwith; // value: 0..4,  0: 1.5M, 1: 3M, 2: 6M, 3: 12M, 4:20M, default: 1
-	uint16_t subframe_config;// value: 0..1, 0: DDUUDDUU, 1: not define
+	uint16_t subframe_config;// value: 0..1, 0: DDUUDDUU, 1: DDDUDDDU
 	uint16_t mode; //value: 0..1, 0：Source，1：Destination
 	pdcch_config_s pdcch_config;
 }rrc_mac_initial_req; //RRC_MAC_INITIAL_REQ
@@ -81,6 +81,7 @@ typedef struct
 	uint16_t cellId; //value: 0..503, default: 0
 	uint16_t ue_index;// value: 0..16
 	uint16_t releaseCause;//value: 0..1, 0: out sync, 1: other
+	uint16_t pad; 
 }rrc_mac_release_req; //RRC_MAC_RELEASE_REQ
 
 typedef struct

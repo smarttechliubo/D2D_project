@@ -21,9 +21,9 @@
 
 
 
-void rlc_mac_data_rx_process(mac_rlc_data_info *ue_data_info,frame_t frame, sub_frame_t subsfn)
+void rlc_mac_data_rx_process(mac_rlc_data_info *ue_data_info,uint32_t ue_index, frame_t frame, sub_frame_t subsfn)
 {
-	uint32_t ue_index = 0; 
+	
 
 	
 	rnti_t  ue_rnti;
@@ -34,19 +34,29 @@ void rlc_mac_data_rx_process(mac_rlc_data_info *ue_data_info,frame_t frame, sub_
 	char	 *buffer_pP; 
 	tb_size_t			tb_sizeP; 
 
+	uint32_t *logic_chanenl_addr[MAX_LOGICCHAN_NUM] = {NULL}; 
+
 
     
 	
 	AssertFatal(1 == ue_data_info->valid_flag , RLC, "MAC_RLC_DATA_RPT message has error flag in data_ind!\n"); 
     ue_rnti = ue_data_info->rnti; 
 
+
+    AssertFatal((((ue_data_info->ue_tb_size +7)>>3) <<3)<= MAX_DLSCH_PAYLOAD_BYTES , RLC, "MAC_RLC_DATA_RPT message has error ue_tb_size in data_ind!\n"); 
+	memcpy((void *)&g_mac_rlc_pdu_buffer[ue_index * MAX_DLSCH_PAYLOAD_BYTES],
+						ue_data_info->mac_pdu_buffer_ptr,
+						((ue_data_info->ue_tb_size +7)>>3) <<3); //！8byte 
+
+
+
 	for (logic_index = 0; logic_index < ue_data_info->logic_chan_num;logic_index++)
 	{
 		logic_ch_id = ue_data_info->logicchannel_id[logic_index]; 
-		buffer_pP = (char *)ue_data_info->mac_pdu_buffer_ptr[logic_index]; 
+		buffer_pP = (char *)&g_mac_rlc_pdu_buffer[ue_index * MAX_DLSCH_PAYLOAD_BYTES] + ue_data_info->logic_chan_data_offset[logic_index]; 
 		tb_sizeP = ue_data_info->mac_pdu_size[logic_index]; 
 
-		LOG_ERROR(RLC_RX, "RLC_RX:frame-subsfn[%d,%d],rnti:%d, lc_idx:lc_id:[%d,%d],rlc_sdu_size:%d \n ", 
+		LOG_WARN(RLC_RX, "RLC_RX:frame-subsfn[%d,%d],rnti:%d, lc_idx:lc_id:[%d,%d],rlc_sdu_size:%d \n ", 
 					frame,
 					subsfn,
 					ue_rnti,
@@ -79,7 +89,7 @@ void rlc_rx_process(void *message, MessagesIds      msg_type)
 	uint32_t ue_index; 
 	
   
-    LOG_ERROR(RLC_RX, "RLC_RX receive message = %d\n",msg_type);
+    LOG_WARN(RLC_RX, "RLC_RX receive message = %d\n",msg_type);
 	switch(msg_type)
 	{
 		case MAC_RLC_DATA_RPT:
@@ -88,13 +98,16 @@ void rlc_rx_process(void *message, MessagesIds      msg_type)
 			receive_frame = mac_report_data_ptr->sfn; 
 			receive_subsfn = mac_report_data_ptr->sub_sfn; 
             ue_mac_data_ptr = (mac_rlc_data_info *)mac_report_data_ptr->sdu_data_rpt; 
-
+            
             for (ue_index = 0; ue_index < mac_report_data_ptr->ue_num; ue_index++)
             {
-            	LOG_ERROR(RLC_RX, "RLC_RX: ue_index:%d, rlc_rx_sdu_addr:%lld \n", 
+            	LOG_WARN(RLC_RX, "RLC_RX: ue_index:%d, rlc_rx_sdu_addr:%lld \n", 
             		 			ue_index,(uint8_t *)(ue_mac_data_ptr + ue_index)); 
-            		 			
+            	
+			
+				
 				rlc_mac_data_rx_process((mac_rlc_data_info *)(ue_mac_data_ptr + ue_index),
+									 ue_index,
 									 receive_frame,
 									 receive_subsfn); 
             }

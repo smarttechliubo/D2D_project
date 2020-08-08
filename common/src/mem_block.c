@@ -64,6 +64,8 @@ uint32_t             counters[14] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
  * initialize all ures
  */
 extern mem_pool  *memBlockVar;
+
+#ifndef USING_OSP_LIB
 void  *pool_buffer_init (void)
 {
   //-----------------------------------------------------------------------------
@@ -173,7 +175,7 @@ void  *pool_buffer_init (void)
 
   return 0;
 }
-
+#endif
 //-----------------------------------------------------------------------------
 void   *pool_buffer_clean (void *arg)
 {

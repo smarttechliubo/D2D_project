@@ -4,12 +4,32 @@ cmake_minimum_required (VERSION 2.8)
 project (D2D_project)
  
 
+#set(CMAKE_SYSTEM_NAME linux)
+#set(CMAKE_SYSTEM_PROCESSOR arm)
+#set(CMAKE_C_COMPILER "/usr/bin/arm-linux-gnueabihf-gcc")
+#set(CMAKE_SYSTEM_PROCESSOR arm64)
+#set(CMAKE_C_COMPILER "/usr/bin/aarch64-linux-gnu-gcc")
+#add_definitions(-DFPGA_PLATFORM)
+add_definitions(-DRLC_ONLY_DC_TEST)
+
+option(address "This is a default option for RRC_DST" OFF)
+
+if (${RRC_DST} STREQUAL "OFF")
+	 message("------The RRC is SOURCE MODE ------------")
+	 add_definitions(-DRRC_SOURCE)
+else(${RRC_DST} STREQUAL "ON")
+     message("------The RRC is  DESTINATION MODE ------------")
+endif(${RRC_DST} STREQUAL "OFF")
+
+
 get_filename_component(PROJECT_ORIGIN_DIR ${PROJECT_SOURCE_DIR} DIRECTORY)
 
 include_directories (${PROJECT_ORIGIN_DIR}/common/inc 
                      ${PROJECT_ORIGIN_DIR}/interface 
                      ${PROJECT_ORIGIN_DIR}/platform/ocp_itti 
 	     ${PROJECT_ORIGIN_DIR}/platform/osp_lib
+		             ${PROJECT_ORIGIN_DIR}/protocol/MAC/inc
+					 ${PROJECT_ORIGIN_DIR}/protocol/MAC/test/inc
                      ${PROJECT_ORIGIN_DIR}/protocol/RLC/inc 
                      ${PROJECT_ORIGIN_DIR}/protocol/RRC 
                      ${PROJECT_ORIGIN_DIR}/protocol/RRC/inc 
@@ -25,6 +45,8 @@ add_definitions(-DUSING_OSP_LIB)
 
 aux_source_directory (${PROJECT_ORIGIN_DIR}/common/src SRC_COMMON)
 aux_source_directory (${PROJECT_ORIGIN_DIR}/platform/ocp_itti SRC_PLATFORM)
+aux_source_directory (${PROJECT_ORIGIN_DIR}/protocol/MAC/src SRC_PROTOCOL_MAC)
+aux_source_directory (${PROJECT_ORIGIN_DIR}/protocol/MAC/test/src SRC_PROTOCOL_PHY)
 aux_source_directory (${PROJECT_ORIGIN_DIR}/protocol/RRC SRC_PROTOCOL_RRC_DUMMY)
 aux_source_directory (${PROJECT_ORIGIN_DIR}/protocol/RRC/src SRC_PROTOCOL_RRC)
 aux_source_directory (${PROJECT_ORIGIN_DIR}/protocol/RRC/src/asn1c_src SRC_PROTOCOL_RRC_ASN)
@@ -45,7 +67,7 @@ option(LIB_D2D_SHARED "enable compile d2d_shared_lib" ON)
 if (LIB_D2D_SHARED) 
 	message("------------------compile D2D_protocol_shared.so------------------------")
 	set (LIBRARY_OUTPUT_PATH ${PROJECT_ORIGIN_DIR}/target)
-	add_library (D2D_protocol_shared SHARED ${SRC_COMMON} ${SRC_PLATFORM} ${SRC_PROTOCOL_RRC} ${SRC_PROTOCOL_RLC} ${SRC_PROTOCOL_IP} ${SRC_PROTOCOL_RRC_DUMMY} ${SRC_PROTOCOL_RRC_ASN})
+	add_library (D2D_protocol_shared SHARED ${SRC_COMMON} ${SRC_PLATFORM} ${SRC_PROTOCOL_MAC} ${SRC_PROTOCOL_PHY} ${SRC_PROTOCOL_RRC} ${SRC_PROTOCOL_RLC} ${SRC_PROTOCOL_IP} ${SRC_PROTOCOL_RRC_DUMMY} ${SRC_PROTOCOL_RRC_ASN})
 else ( )
 	message("------------------compile executed file: D2D_protocol------------------------")
 	link_directories (${PROJECT_ORIGIN_DIR}/platform/osp_lib)
@@ -54,7 +76,7 @@ else ( )
 	LINK_LIBRARIES(-lm)
 	LINK_LIBRARIES(-ldl)
 	set (EXECUTABLE_OUTPUT_PATH ${PROJECT_ORIGIN_DIR}/target)
-	add_executable(D2D_project ${SRC_COMMON} ${SRC_PLATFORM} ${SRC_PROTOCOL_RRC} ${SRC_PROTOCOL_RLC} ${SRC_PROTOCOL_IP} ${SRC_PROTOCOL_RRC_DUMMY} ${SRC_PROTOCOL_RRC_ASN})
+	add_executable(D2D_project ${SRC_COMMON} ${SRC_PLATFORM} ${SRC_PROTOCOL_MAC} ${SRC_PROTOCOL_PHY} ${SRC_PROTOCOL_RRC} ${SRC_PROTOCOL_RLC} ${SRC_PROTOCOL_IP} ${SRC_PROTOCOL_RRC_DUMMY} ${SRC_PROTOCOL_RRC_ASN})
 	
 	
 endif ()

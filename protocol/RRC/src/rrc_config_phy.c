@@ -29,7 +29,7 @@ void  rrc_Phy_InitialConfig(rrc_init_var init_var)
 {
 
     MessageDef  *message; 
-	rrc_phy_initial_req   *phy_init_req = calloc(1,sizeof(rrc_phy_initial_req)); 
+	rrc_phy_initial_req   *phy_init_req =(rrc_phy_initial_req   *) OSP_Alloc_Mem(sizeof(rrc_phy_initial_req)); 
 	
     phy_init_req->source_type =  init_var.source_type; 
 	phy_init_req->bandwidth = (uint16_t )init_var.band_width; 
@@ -67,7 +67,7 @@ void  rrc_Phy_InitialConfig(rrc_init_var init_var)
 void rrc_Phy_CellSearch(uint16_t ul_freq, uint16_t dl_freq)
 {
      MessageDef  *message; 
-	rrc_phy_cs_req  *cs_req = calloc(1,sizeof(rrc_phy_cs_req)); 
+	rrc_phy_cs_req  *cs_req = (rrc_phy_cs_req  *)OSP_Alloc_Mem(sizeof(rrc_phy_cs_req)); 
 
 	cs_req->dl_freq = dl_freq;
 	cs_req->ul_freq = ul_freq; 
@@ -93,7 +93,7 @@ void rrc_Phy_BcchPara_Config(pusch_config_basic_s push_basic_config,
 {
 	
     MessageDef  *message; 
-	rrc_phy_bcch_para_cfg_req    *bcch_req = calloc(1,sizeof(rrc_phy_bcch_para_cfg_req)); 
+	rrc_phy_bcch_para_cfg_req    *bcch_req = (rrc_phy_bcch_para_cfg_req    *)OSP_Alloc_Mem(sizeof(rrc_phy_bcch_para_cfg_req)); 
 	bcch_req->pusch_config_basic = push_basic_config; 
 	bcch_req->ul_ref_signal_pusch =	ul_refsig_config; 
 
@@ -115,13 +115,37 @@ void rrc_Phy_ConnectSetup_Config(uint16_t              beta_off_ack_ind)
 {
 
     MessageDef  *message; 
-	rrc_phy_connection_setup_req   *connect_setup_req = calloc(1,sizeof(rrc_phy_connection_setup_req)); 
+	rrc_phy_connection_setup_req   *connect_setup_req =(rrc_phy_connection_setup_req   *)OSP_Alloc_Mem(sizeof(rrc_phy_connection_setup_req)); 
 
 	connect_setup_req->pusch_dedi_config.beta_off_ack_ind = beta_off_ack_ind; 
 	
      //!TODO send message 
     message = itti_alloc_new_message(TASK_D2D_RRC, RRC_PHY_CONNECT_SETUP_CFG_REQ,
 	                       ( char *)connect_setup_req, sizeof(rrc_phy_connection_setup_req));
+	                       
+	itti_send_msg_to_task(TASK_D2D_PHY,  0, message);
+}
+
+
+
+
+ /*!   
+ * @brief:  
+ * @author:  bo.liu
+ * @Date:  2020年8月8日
+ * @param: cell_id :          [param description ]
+ */
+void rrc_Phy_Release_config(uint16_t              cell_id)
+{
+
+    MessageDef  *message; 
+	rrc_phy_release_req   *release_req =(rrc_phy_release_req   *)OSP_Alloc_Mem(sizeof(rrc_phy_release_req)); 
+
+	release_req->cellId = cell_id;
+	
+     //!TODO send message 
+    message = itti_alloc_new_message(TASK_D2D_RRC, RRC_PHY_RELEASE_REQ,
+	                       ( char *)release_req, sizeof(rrc_phy_release_req));
 	                       
 	itti_send_msg_to_task(TASK_D2D_PHY,  0, message);
 }

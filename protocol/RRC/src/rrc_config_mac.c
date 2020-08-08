@@ -28,7 +28,7 @@
 void rrc_Mac_InitialConfig(uint16_t mode_type,rrc_init_var init_var)
 {
     MessageDef  *message; 
-	rrc_mac_initial_req   *mac_init_req = calloc(1,sizeof(rrc_mac_initial_req));
+	rrc_mac_initial_req   *mac_init_req = (rrc_mac_initial_req   *)OSP_Alloc_Mem(sizeof(rrc_mac_initial_req));
 
    
 	mac_init_req->cellId = init_var.cell_id; 
@@ -60,7 +60,7 @@ void rrc_Mac_BcchPara_Config(uint16_t mib_or_sib1,void *bcch_info)
 {
 
     MessageDef  *message; 
-    rrc_mac_bcch_para_config_req *bcch_para_config_req = calloc(1,sizeof(rrc_mac_bcch_para_config_req));
+    rrc_mac_bcch_para_config_req *bcch_para_config_req = (rrc_mac_bcch_para_config_req *)OSP_Alloc_Mem(sizeof(rrc_mac_bcch_para_config_req));
 	bcch_mib_info_s bcch_mib_info; 
 	bcch_si_info_s  bcch_sib_info; 
 
@@ -112,7 +112,7 @@ void rrc_Mac_ConnectSetup_Config(uint16_t mode, rnti_t ue_rnti ,
 
     MessageDef  *message; 
     uint16_t lch_index = 0; 
-	rrc_mac_connnection_setup  *mac_connect_req = calloc(1,sizeof(rrc_mac_connnection_setup)); 
+	rrc_mac_connnection_setup  *mac_connect_req =(rrc_mac_connnection_setup  *)OSP_Alloc_Mem(sizeof(rrc_mac_connnection_setup)); 
 	
     mac_connect_req->mode = mode; 
     mac_connect_req->rnti = ue_rnti;
@@ -144,15 +144,15 @@ void rrc_Mac_ConnectSetup_Config(uint16_t mode, rnti_t ue_rnti ,
  * @param: ue_idx :           [param description ]
  * @param: release_cause :    [param description ]
  */
-void rrc_Mac_Release_Config(uint16_t cell_id,uint16_t ue_idx, uint16_t release_cause)
+void rrc_Mac_Release_Config(uint16_t cell_id,uint16_t ue_index, uint16_t release_cause)
 {	
 
 	MessageDef	*message; 
 
-	rrc_mac_release_req  *mac_release_req = calloc(1,sizeof(rrc_mac_release_req)); 
+	rrc_mac_release_req  *mac_release_req = (rrc_mac_release_req  *)OSP_Alloc_Mem(sizeof(rrc_mac_release_req)); 
 
 	mac_release_req->cellId = cell_id; 
-	mac_release_req->ue_index  = ue_idx; 
+	mac_release_req->ue_index  = ue_index; 
 	mac_release_req->releaseCause = release_cause; 
 
 	

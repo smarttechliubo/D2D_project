@@ -186,7 +186,7 @@ void  rlc_tm_no_segment (const protocol_ctxt_t* const  ctxt_pP,
 
 		// SHOULD BE OPTIMIZED...SOON
 		pdu_mngt_p = (struct rlc_tm_tx_pdu_management *) (pdu_p->data);
-		memset (pdu_p->data, 0, sizeof (struct rlc_tm_tx_pdu_management));
+		memset ((void *)pdu_p->data, 0, sizeof (struct rlc_tm_tx_pdu_management));
 		//!指向buffer中的data地址，加上一个偏移
 		pdu_mngt_p->first_byte = (uint8_t*)pdu_p->data + sizeof (struct rlc_tm_tx_data_pdu_struct);
 

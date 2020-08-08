@@ -4,4 +4,4 @@ rm -rf CMakeCache.txt
 rm -rf cmake_install.cmake
 rm -rf Makefile
 
-cmake . -DLIB_D2D_SHARED=ON &&make
+cmake . -DRRC_DST=OFF  -DLIB_D2D_SHARED=ON &&make

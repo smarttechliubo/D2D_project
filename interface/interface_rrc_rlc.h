@@ -116,8 +116,8 @@ typedef struct rlc_rrc_initial_cfm_s
 /**RRC_RLC_RELEASE_REQ */
 typedef struct rrc_rlc_release_req_s
 {
-	uint32_t     cell_id;
-	uint32_t     ue_index; 
+	uint16_t     cell_id;
+	uint16_t     ue_rnti; 
 }rrc_rlc_release_req;
 
 typedef  rlc_rrc_initial_cfm   rrc_rlc_release_cfm;

@@ -125,6 +125,9 @@ int EncodeD2dSib1(uint8_t *encode_buffer, uint32_t max_buffersize, uint32_t *enc
 	int  size ; 
 	int i;
 	long p_max = 30; 
+	long *hop_mode_addr = calloc(1,sizeof(long)); 
+	long *group_assign_pusch_addr =calloc(1,sizeof(long));
+	long *cycle_shift_addr = calloc(1,sizeof(long));  
 	
 
  
@@ -145,11 +148,23 @@ int EncodeD2dSib1(uint8_t *encode_buffer, uint32_t max_buffersize, uint32_t *enc
 	sib1_msg->carrierFreq_info.ul_carrier_freq = 2300; 
 	
 	sib1_msg->radioResourceConfigCommon.psush_Hop_Config.hop_enable = 0; 
-
+	if (1 == sib1_msg->radioResourceConfigCommon.psush_Hop_Config.hop_enable)
+	{
+		*hop_mode_addr = 10; 
+		sib1_msg->radioResourceConfigCommon.psush_Hop_Config.hop_mode = hop_mode_addr; 
+	}
 	sib1_msg->radioResourceConfigCommon.ul_ref_signal_pusch.group_hopping_enable = 0; 
-
+	if (1 == sib1_msg->radioResourceConfigCommon.ul_ref_signal_pusch.group_hopping_enable)
+	{	
+		*group_assign_pusch_addr = 10; 
+		sib1_msg->radioResourceConfigCommon.ul_ref_signal_pusch.group_assign_pusch = group_assign_pusch_addr; 
+	}
 	sib1_msg->radioResourceConfigCommon.ul_ref_signal_pusch.seq_hopping_enable = 0; 
-	
+	if(1 == sib1_msg->radioResourceConfigCommon.ul_ref_signal_pusch.seq_hopping_enable )
+	{
+		*cycle_shift_addr = 10; 
+		sib1_msg->radioResourceConfigCommon.ul_ref_signal_pusch.cycle_shift = cycle_shift_addr;
+    }
     //!<encode BCH 
     //ec = asn_encode(0,ATS_UNALIGNED_BASIC_PER,&asn_DEF_SystemInformationBlockType1, sib1_msg, write_out, fp); 
     ec = asn_encode_to_buffer(0,ATS_UNALIGNED_BASIC_PER,&asn_DEF_SystemInformationBlockType1, 

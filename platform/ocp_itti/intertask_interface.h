@@ -22,10 +22,19 @@ typedef enum {
     TASK_D2D_RLC_RX,
     TASK_D2D_IP_UDP,
     TASK_D2D_IP_MSG,
-    TASK_D2D_MAC, 
-    TASK_D2D_PHY,
-    TASK_D2D_DUMMY,
+
+	TASK_D2D_DUMMY,
     TASK_D2D_DUMMY_INT,
+#ifdef RLC_ONLY_DC_TEST
+    TASK_D2D_MAC = TASK_D2D_DUMMY,
+	TASK_D2D_MAC_SCH,
+
+	TASK_D2D_PHY = TASK_D2D_DUMMY,
+#else 
+	TASK_D2D_PHY = 64,
+#endif 
+	TASK_D2D_PHY_TX = TASK_D2D_PHY,
+	TASK_D2D_PHY_RX = TASK_D2D_PHY,
     TASK_ID_MAX_VALUE = 127
 
 }task_id_t;
@@ -302,7 +311,7 @@ void itti_unsubscribe_event_fd(task_id_t task_id, int fd);
     \param events events list
     @returns number of events to handle
  **/
-int itti_get_events(task_id_t task_id, struct epoll_event **events);
+//int itti_get_events(task_id_t task_id, struct epoll_event **events);
 
 /** \brief Retrieves a message in the queue associated to task_id.
    If the queue is empty, the thread is blocked till a new message arrives.

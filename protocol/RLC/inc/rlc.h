@@ -27,6 +27,7 @@
 #include <rlc_tm_entity.h>
 #include <pthread.h>
 #include <dictionary.h>
+#include <mac_vars.h>
 
 
 
@@ -69,8 +70,10 @@
   (Ctxt_Pp)->frame     = fRAME; \
   (Ctxt_Pp)->subframe  = sUBfRAME; \
   (Ctxt_Pp)->eNB_index  = eNB_iNDEX; \
-
-#define PROTOCOL_CTXT_TIME_MILLI_SECONDS(CtXt_h) (Get_Frame() *10+ Get_Subsfn())
+  
+#define  SUBSFN_MS_TIME   800 
+#define  FRAME_SUBSFN_TIME  4 
+#define PROTOCOL_CTXT_TIME_MILLI_SECONDS(CtXt_h) ((Get_Frame() *FRAME_SUBSFN_TIME+ Get_Subsfn()) * SUBSFN_MS_TIME)
 
 
 typedef enum rlc_confirm_e {
@@ -176,6 +179,38 @@ typedef struct rlc_am_e_li {
 
 
 
+typedef struct ue_srb_info_s {
+	uint16_t    srb_rb_id; 
+	uint16_t    srb_logic_ch_id; 
+	rlc_mode_e  rlc_mode;
+ 
+}ue_srb_info; 
+
+typedef struct ue_drb_info_s {
+
+	uint16_t	drb_index; 
+	uint16_t    drb_rb_id; 
+	uint16_t    drb_logic_ch_id; 
+	rlc_mode_e  rlc_mode;
+ 
+
+}ue_drb_info; 
+
+
+
+typedef struct rlc_ue_info_s{
+	uint16_t ue_rnti; 
+	uint16_t srb_setup_flag; 
+	uint16_t drb_setup_flag;
+	uint16_t srb_count; 
+	uint16_t drb_count; 
+	uint16_t pad; 
+	
+	ue_srb_info  srb_info[MAX_SRB_COUNT];
+	ue_drb_info  drb_info[MAX_DRB_COUNT];
+
+}rlc_ue_info; 
+
 
 
 
@@ -241,6 +276,7 @@ typedef struct buffer_status_s
 
 /************************************global variable declare ********************/
 extern ue_info_dict  *g_rrc_ue_info_dict;
+extern rlc_ue_info      g_rlc_ue_info[D2D_MAX_USER_NUM];
 extern protocol_ctxt_t    g_rlc_protocol_ctxt;
 extern const uint32_t t_Reordering_tab[31] ;
 extern char *g_rlc_mode_str[];
@@ -256,6 +292,8 @@ extern uint8_t            g_rlc_mac_subheader[D2D_MAX_USER_NUM * ((MAX_LOGICCHAN
 extern mac_pdu_size_para  g_rlc_pdu_size_para[D2D_MAX_USER_NUM]; 
 
 extern struct mac_data_req g_rlc_mac_data_req;
+extern uint8_t  g_mac_rlc_pdu_buffer[D2D_MAX_USER_NUM *  MAX_DLSCH_PAYLOAD_BYTES];
+
 
 #ifdef RLC_UT_DEBUG 
 extern  uint32_t   g_rlc_no_data_transfer; 
@@ -304,4 +342,45 @@ extern void rlc_um_init_timer_reordering(const protocol_ctxt_t* const ctxt_pP,
 												  rlc_um_entity_t * const rlc_pP,
 												  const uint32_t  ms_durationP);
 
+
+extern int32_t 	rlc_mac_logicchan_data_send(const protocol_ctxt_t          ctxt,
+									const logical_chan_id_t channel_idP,
+									const tb_size_t         logicch_tb_sizeP,
+									logic_channel_pdu_component   *lc_component_ptr,
+									mac_pdu_size_para  *ue_mac_pdu_size_ptr,
+									struct mac_data_req *data_request);
+
+extern void  rlc_tm_mac_data_indication (const protocol_ctxt_t* const  ctxt_pP,
+											void * const		rlc_pP,
+											struct mac_data_ind data_indP);
+
+extern void rlc_tm_cleanup (rlc_tm_entity_t * const rlcP);
+extern void rlc_tm_configure(
+								  const protocol_ctxt_t* const  ctxt_pP,
+								  rlc_tm_entity_t * const rlcP,
+								  const boolean_t is_uplink_downlinkP);
+extern void  rlc_tm_data_req (
+							  const protocol_ctxt_t* const	ctxt_pP,
+							  void *const rlc_pP,
+							  mem_block_t *const sdu_pP);
+
+extern void rlc_Rrc_BufStatus_Rpt(uint32_t send_data_size, rb_id_t rb_id, rb_type_e rb_type, rnti_t rnti, 
+									uint32_t  rlc_buffer_empty_size, uint32_t rlc_buffer_valid);
+extern void rlc_Mac_BufferSta_Rpt(uint16_t   sfn, uint16_t  subsfn, uint32_t valid_ue_num,rlc_buffer_rpt *buffer_status);
+extern int32_t  rlc_mac_ue_data_process(frame_t frameP, 
+									sub_frame_t  subframeP,
+								    rlc_data_req *rlc_data_ptr, 
+								    protocol_ctxt_t *protocol_ctxt_ptr,
+								    mac_pdu_size_para  *ue_pdu_size_para_ptr,
+								    uint8_t *ue_pdu_buffer,
+								    uint8_t *ue_mac_subheader_ptr
+								    );
+extern void config_req_rlc_tm(const protocol_ctxt_t* const  ctxt_pP,
+							  const srb_flag_t  srb_flagP,
+							  const rlc_tm_info_t * const config_tmP,
+							  const rb_id_t rb_idP,
+							  const logical_chan_id_t chan_idP
+							);
+
+extern void rlc_Rrc_Configure_Cfm(uint32_t        message_id);
 #endif

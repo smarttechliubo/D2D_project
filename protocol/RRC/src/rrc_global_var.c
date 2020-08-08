@@ -24,4 +24,8 @@ rrc_status_e  g_rrc_status;
 ue_info_dict  *g_rrc_ue_info_dict; 
 uint8_t   g_rrc_messge_encode[ENCODE_MAX_SIZE] = {0}; 
 uint16_t  g_rrc_mac_report_rnti; 
- 
+uint16_t  g_rrc_release_cnt = 0; 
+uint16_t  g_rrc_release_ue_idx = 0; 
+uint16_t  g_rrc_release_ue_rnti = 0; 
+uint16_t  g_rrc_reestablish_max_cnt = 1;
+uint16_t  g_rrc_reestablish_cnt = 0;

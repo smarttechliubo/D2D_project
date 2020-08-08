@@ -14,6 +14,9 @@
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+
 #include <string.h>
 #include <netinet/in.h>
 #include <errno.h>
@@ -31,12 +34,12 @@
 //char *vm_addr1 = "192.168.1.168";
 //char *vm_addr2= "192.168.84.129";
 
-char *vm_addr1 = "192.168.0.136";
+char *vm_addr1 = "10.10.10.11"; //!本地接收的IP
 char *vm_addr2= "192.168.84.1";
 
 char *PC_src_ip = "192.168.84.1";
 char *PC_dst_ip = "192.168.84.1";
-char msg_buffer[MAX_BUFFER_LENGTH] = {0};
+char msg_buffer[2048] = {0};
 char msg_buffer_2[MAX_BUFFER_LENGTH] = {0};
 char pc_addr_ip[32] = {0};
 
@@ -46,7 +49,7 @@ void Ip_Rlc_Data_Send(rb_type_e rb_type, rb_id_t rb_id, rnti_t rnti, uint32_t da
 {
 	MessageDef  *message;  
 
-	ip_rlc_data_ind  *data_ind_ptr = calloc(1,sizeof(ip_rlc_data_ind)); 
+	ip_rlc_data_ind  *data_ind_ptr = (ip_rlc_data_ind  *)OSP_Alloc_Mem(sizeof(ip_rlc_data_ind)); 
 
  	data_ind_ptr->rb_type = rb_type; 
  	data_ind_ptr->rb_id = rb_id; 
@@ -67,7 +70,7 @@ void mac_Rlc_Bufstat_Req(uint16_t frame, uint16_t subsfn)
 {
 	MessageDef  *message;  
 
-	mac_rlc_buf_status_req *buffer_stat_req = calloc(1,sizeof(mac_rlc_buf_status_req)); 
+	mac_rlc_buf_status_req *buffer_stat_req =(mac_rlc_buf_status_req *) OSP_Alloc_Mem(sizeof(mac_rlc_buf_status_req)); 
 
  	
  	buffer_stat_req->sfn = frame; 
@@ -190,12 +193,14 @@ void ip_udp_task( )
 #endif 
 		max_fd = (sockfd_1>=sockfd_2) ? sockfd_1:sockfd_2;
 #ifdef RLC_UT_DEBUG 
-		//max_fd = (max_fd >= timerfd_1)?max_fd:timerfd_1; 
-		//max_fd = (max_fd >= timerfd_2)?max_fd:timerfd_2; 
+		max_fd = (max_fd >= timerfd_1)?max_fd:timerfd_1; 
+		max_fd = (max_fd >= timerfd_2)?max_fd:timerfd_2; 
 #endif 
 
 	    max_fd = max_fd +1;
 		select(max_fd, &rset,NULL,NULL,NULL);
+		
+#ifdef     RLC_UT_DEBUG 
 		if (FD_ISSET(timerfd_1,&rset))
 		{
 			read(timerfd_1,&timer_expire_count[0],sizeof(timer_expire_count[0]));
@@ -208,17 +213,17 @@ void ip_udp_task( )
 				g_d2d_sfn = g_d2d_sfn % 1024; 
 			}
 			curtime[0] = GetTimeUs();
-		//	LOG_ERROR(IP_UDP,"******timerfd_1,expire count:%lld,[sfn-subsfn]:[%d--%d],elapse time:%lld(us) \n",timer_expire_count[0],
-		//			g_d2d_sfn,g_d2d_subsfn,
-		//			 ((curtime[0].tv_sec*1000000 + curtime[0].tv_usec) - (oldtime[0].tv_sec*1000000 + oldtime[0].tv_usec)) );
+			//LOG_ERROR(IP_UDP,"******timerfd_1,expire count:%lld,[sfn-subsfn]:[%d--%d],elapse time:%lld(us) \n",timer_expire_count[0],
+			//		g_d2d_sfn,g_d2d_subsfn,
+			//		 ((curtime[0].tv_sec*1000000 + curtime[0].tv_usec) - (oldtime[0].tv_sec*1000000 + oldtime[0].tv_usec)) );
  
 			oldtime[0] = curtime[0];
-#ifdef     RLC_UT_DEBUG 
+
 		   if ((0 < g_udp_send_cnt[0]) && (g_udp_send_cnt[0] %1 == 0))
 		   {
 				mac_Rlc_Bufstat_Req(g_d2d_sfn,g_d2d_subsfn);
 		   }
-#endif 
+
 		}
 #if 1
 		if (FD_ISSET(timerfd_2,&rset))
@@ -233,6 +238,8 @@ void ip_udp_task( )
 			//old_cycle = current_cycle;
 		}
 #endif 		
+#endif 
+
 		if (FD_ISSET(sockfd_1,&rset))
 		{
             
@@ -241,34 +248,28 @@ void ip_udp_task( )
 			
 			inet_ntop(AF_INET,&PC_addr_src.sin_addr.s_addr, pc_addr_ip,sizeof(pc_addr_ip));
 			//LOG_DEBUG(IP,"message buffer = %s\n",msg_buffer);
-			 LOG_INFO(IP_UDP,"channel:0 -- receive data no.: %d \n",g_udp_recv_cnt[0]++);
-			 LOG_ERROR(IP_UDP,"channel:0 --data_length = %d, send data no.: %d \n",recv_length,g_udp_send_cnt[0]);
+			 LOG_INFO(IP_UDP,"channel:0 -- receive data no.: %d ,recv data_length = %d\n",g_udp_recv_cnt[0]++,recv_length);
+			
 
-			if (0 == errno)
+			if (0 < recv_length)
 	 		{
 		       // LOG_DEBUG(IP,"receive data from ip:%s, port: %d, length:%d ! \n",pc_addr_ip,ntohs(PC_addr_src.sin_port),recv_length);
-				
-#ifdef RLC_UT_DEBUG
 
-     		//! 组包消息，向RLC 发送消息
+     		//! 组包消息，向RLC 发送消息, 注意这里的RNTI 要跟MAC分配的RNTI 一致，否则在TX时会找不到这个RLC 实体
 				Ip_Rlc_Data_Send(RB_TYPE_DRB,
 								3,
-								0X65,
+								0xFF00,
 								g_udp_send_cnt[0],
-								msg_buffer,
+								(uint32_t *)msg_buffer,
 								recv_length); 
 			
 				
-#else 
-				//sendto(sockfd_2,msg_buffer,recv_length,0,SA&PC_addr_dst,sizeof(PC_addr_dst));
-#endif 
-				g_udp_send_cnt[0]++;
-	 			
 
-				if (0 != errno)
-				{
-					LOG_ERROR(IP_UDP,"channel 0--send errno = %d\n", errno);
-				}
+				
+				LOG_ERROR(IP_UDP,"IP_UDP send to RLC_TX: channel:0 --data_length = %d, send data no.: %d \n",recv_length,g_udp_send_cnt[0]);
+	 			g_udp_send_cnt[0]++;
+
+				
 			}
 			else
 			{
@@ -286,16 +287,13 @@ void ip_udp_task( )
 			LOG_DEBUG(IP_UDP,"start receive ip from %s\n",PC_dst_ip);
 			recv_length_2 = recvfrom(sockfd_2,msg_buffer_2,MAX_BUFFER_LENGTH,0,NULL,NULL); //!获取PC 发送的地址
 			inet_ntop(AF_INET,&PC_addr_dst.sin_addr.s_addr, pc_addr_ip,sizeof(pc_addr_ip));
- 			if (0 == errno)
+ 			if (0 < recv_length_2)
 			{
 				LOG_DEBUG(IP_UDP,"receive data from ip:%s, port: %d, length:%d ! \n",pc_addr_ip,ntohs(PC_addr_dst.sin_port),recv_length_2);
 				LOG_DEBUG(IP_UDP,"channel:1 -- receive data no.: %d \n",g_udp_recv_cnt[1]++);
 				sendto(sockfd_1,msg_buffer_2,recv_length_2,0,SA&PC_addr_src,sizeof(PC_addr_src));
 				LOG_DEBUG(IP_UDP,"channel:1 -- send data no.: %d \n",g_udp_send_cnt[1]++);
-				if (0 != errno)
-				{
-					LOG_ERROR(IP_UDP,"channel 1: send errno = %d\n",errno);
-				}
+			
 			}
 			else
 			{

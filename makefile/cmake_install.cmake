@@ -1,4 +1,4 @@
-# Install script for directory: /home/boliu/D2D_project/D2D_project_github/D2D_project/makefile
+# Install script for directory: /home/boliu/D2D_project/D2D_project/makefile
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
@@ -40,5 +40,5 @@ endif()
 
 string(REPLACE ";" "\n" CMAKE_INSTALL_MANIFEST_CONTENT
        "${CMAKE_INSTALL_MANIFEST_FILES}")
-file(WRITE "/home/boliu/D2D_project/D2D_project_github/D2D_project/makefile/${CMAKE_INSTALL_MANIFEST}"
+file(WRITE "/home/boliu/D2D_project/D2D_project/makefile/${CMAKE_INSTALL_MANIFEST}"
      "${CMAKE_INSTALL_MANIFEST_CONTENT}")

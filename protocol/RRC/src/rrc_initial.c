@@ -25,15 +25,15 @@
  
 int  rrc_module_Initial()
 {
-	DebugOutSetLevel(ERR_DEBUG_LEVEL);
+	DebugOutSetLevel(DBG_DEBUG_LEVEL);
 	memset((void *)&g_rrc_init_para,0,sizeof(g_rrc_init_para));
 	memset((void *)&g_dst_rrc_init_para,0,sizeof(g_dst_rrc_init_para)); 
-	rrc_SetStatus(RRC_STATUS_NULL);
+	
 
 	g_rrc_init_para.cell_id = 0; 
 
 	g_rrc_init_para.subframe_config = SUBFRAME_CONFIG_DDUUDDUU; 
-	g_rrc_init_para.band_width = BANDWIDTH_3M; 
+	g_rrc_init_para.band_width = BANDWIDTH_20M; 
 
 	   //!TODO 
     g_rrc_init_para.band_info = 0; 
@@ -53,19 +53,23 @@ int  rrc_module_Initial()
 	
 #ifdef RRC_SOURCE	
 	rrc_SetModeType(D2D_MODE_TYPE_SOURCE);    //! source
-	
+	LOG_ERROR(RRC,"---------RRC INITIAL MODE: SOURCE --------------\n"); 
+	rrc_SetStatus(RRC_STATUS_NULL);
 
 	if (rrc_GetCurrentStatus() < RRC_STATUS_INITIAL)
 	{
 		//!cell setup, initial PHY, MAC, RLC.
+#ifndef RLC_ONLY_DC_TEST
 		rrc_Phy_InitialConfig(g_rrc_init_para); 
+#endif 
 		rrc_Mac_InitialConfig(rrc_GetModeType(), g_rrc_init_para);
 		rrc_Rlc_InitialConfig(g_rrc_init_para.source_type); 
 		rrc_SetStatus(RRC_STATUS_INITIAL);
 	}
 #else 
     rrc_SetModeType(D2D_MODE_TYPE_DESTINATION);    //!destination
-  
+    rrc_SetStatus(RRC_STATUS_NULL);
+    LOG_ERROR(RRC,"---------RRC INITIAL MODE: DESTINATION --------------\n"); 
     if (rrc_GetCurrentStatus() < RRC_STATUS_CELL_SEARCH)
 	{
 		rrc_SetStatus(RRC_STATUS_INITIAL);
