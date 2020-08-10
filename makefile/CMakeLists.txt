@@ -10,7 +10,7 @@ project (D2D_project)
 #set(CMAKE_SYSTEM_PROCESSOR arm64)
 #set(CMAKE_C_COMPILER "/usr/bin/aarch64-linux-gnu-gcc")
 #add_definitions(-DFPGA_PLATFORM)
-add_definitions(-DRLC_ONLY_DC_TEST)
+
 
 option(address "This is a default option for RRC_DST" OFF)
 
@@ -19,6 +19,18 @@ if (${RRC_DST} STREQUAL "OFF")
 	 add_definitions(-DRRC_SOURCE)
 else(${RRC_DST} STREQUAL "ON")
      message("------The RRC is  DESTINATION MODE ------------")
+endif(${RRC_DST} STREQUAL "OFF")
+
+
+option(address "This is a default option for RRC_RLC_UT" OFF)
+
+if (${RRC_RLC_UT} STREQUAL "OFF")
+	message("------The RRC_RLC_UT is OFF------------")
+else(${RRC_RLC_UT} STREQUAL "ON")
+	add_definitions(-DRLC_ONLY_DC_TEST)
+	add_definitions(-DRLC_UT_DEBUG)
+	add_definitions(-DRLC_RX_UT)
+    message("------The RRC_RLC_UT is ON-------------")
 endif(${RRC_DST} STREQUAL "OFF")
 
 
@@ -38,8 +50,6 @@ include_directories (${PROJECT_ORIGIN_DIR}/common/inc
 
 add_definitions(-DASN_DISABLE_OER_SUPPORT)
 add_definitions(-DUSE_SYSLOG)
-add_definitions(-DRLC_UT_DEBUG)
-add_definitions(-DRLC_RX_UT)
 add_definitions(-DUSING_OSP_LIB)
 
 

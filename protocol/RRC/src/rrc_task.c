@@ -278,9 +278,10 @@ int  rrc_Receive_Signal_Msg(uint16_t mode_type, void *message, MessagesIds  msg_
 			//!TODO  PHY release 
 			rrc_Phy_Release_config(g_rrc_init_para.cell_id);
 
-			g_rrc_release_cnt = 3; 
+			g_rrc_release_cnt = 3; //!need to receive 3 confirm message from rlc,mac,phy 
 			rrc_SetStatus(RRC_STATUS_CONNECTE_OUT_SYNC); 
-			LOG_ERROR(RRC, "ERROR!OUT OF SYNC! OUT OF SYNC! \n"); 
+			LOG_ERROR(RRC, "ERROR!OUT OF SYNC! OUT OF SYNC! g_rrc_release_cnt = %d\n",g_rrc_release_cnt); 
+			break;
 
         }
 		case MAC_RRC_RELEASE_CFM:
@@ -288,6 +289,7 @@ int  rrc_Receive_Signal_Msg(uint16_t mode_type, void *message, MessagesIds  msg_
 		case RLC_RRC_RELEASE_CFM:
 		{
 			g_rrc_release_cnt  = g_rrc_release_cnt -1; 
+
 			if (0 == g_rrc_release_cnt)  //!all of the confirm message have received 
 		    {
 		    	if (g_rrc_reestablish_cnt < g_rrc_reestablish_max_cnt)
@@ -312,6 +314,9 @@ int  rrc_Receive_Signal_Msg(uint16_t mode_type, void *message, MessagesIds  msg_
 						rrc_SetStatus(RRC_STATUS_CELL_SEARCH);
 						rrc_timer_start(TASK_D2D_RRC,0,100,0);
 					}
+                    LOG_ERROR(RRC, "RRC REESTABLISH  START,start reestablish timer ! \n"); 
+					
+					g_rrc_reestablish_cnt++; //update reestablish cnt 
 
 				}
 				else 
@@ -322,7 +327,7 @@ int  rrc_Receive_Signal_Msg(uint16_t mode_type, void *message, MessagesIds  msg_
 			}
 			break; 
 		}
-		case 5555:  //!timer msg
+		case 0x5555:  //!timer msg
 	    {
 	         //! reestablish failed when  timer expire 
 			if (rrc_GetCurrentStatus() < RRC_STATUS_CONNECTE_COMPLETE )
@@ -334,6 +339,8 @@ int  rrc_Receive_Signal_Msg(uint16_t mode_type, void *message, MessagesIds  msg_
 
 				//!TODO  PHY release 
 				rrc_Phy_Release_config(g_rrc_init_para.cell_id);
+
+				LOG_ERROR(RRC, "RRC REESTABLISH  FAILED, reestablish timer expire! \n"); 
 			}
 
 			break;

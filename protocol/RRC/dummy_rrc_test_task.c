@@ -38,8 +38,10 @@ void dummy_rrc_confirm_message(uint16_t msg_id)
     mac_rrc_connection_cfm *mac_connect_setup_ptr =( mac_rrc_connection_cfm *) OSP_Alloc_Mem(sizeof(mac_rrc_connection_cfm)); 
     rlc_rrc_connect_setup_cfg_cfm *rlc_connect_setup_ptr =( rlc_rrc_connect_setup_cfg_cfm *) OSP_Alloc_Mem(sizeof(rlc_rrc_connect_setup_cfg_cfm));
     mac_rrc_bcch_para_config_cfm  *mac_bcch_para_cfm_ptr = (mac_rrc_bcch_para_config_cfm  *)OSP_Alloc_Mem(sizeof(mac_rrc_bcch_para_config_cfm)) ; 
-    
+    mac_rrc_outsync_rpt           *mac_rrc_outsync_rpt_ptr = (mac_rrc_outsync_rpt *)OSP_Alloc_Mem(sizeof(mac_rrc_outsync_rpt)) ; 
     static int mac_bcch_para_cfg_flag = 1; 
+	uint32_t  ue_rnti = 0xff00; 
+	
     LOG_DEBUG(DUMMY,"send confirm message type:%d \n" ,msg_id); 
 	
 	switch (msg_id)
@@ -100,7 +102,7 @@ void dummy_rrc_confirm_message(uint16_t msg_id)
  		{
 			mac_connect_setup_ptr->status = 1; 
 			mac_connect_setup_ptr->error_code = 0; 
-			mac_connect_setup_ptr->rnti = 0xff00; //!rnti from MAC 
+			mac_connect_setup_ptr->rnti = ue_rnti; //!rnti from MAC 
 			mac_connect_setup_ptr->ue_index = 0; 
 
 			message = itti_alloc_new_message(TASK_D2D_MAC, MAC_RRC_CONNECT_SETUP_CFG_CFM, 
@@ -136,6 +138,20 @@ void dummy_rrc_confirm_message(uint16_t msg_id)
 			break;
 
  		}
+		case  MAC_RRC_OUTSYNC_RPT:
+		{
+			mac_rrc_outsync_rpt_ptr->sfn = 0; 
+			mac_rrc_outsync_rpt_ptr->subsfn = 0; 
+			mac_rrc_outsync_rpt_ptr->rnti = ue_rnti; 
+			mac_rrc_outsync_rpt_ptr->outsync_flag = 1;
+
+
+			message = itti_alloc_new_message(TASK_D2D_MAC, MAC_RRC_OUTSYNC_RPT, 
+			                      (char *) mac_rrc_outsync_rpt_ptr, sizeof(mac_rrc_outsync_rpt));
+			itti_send_msg_to_task(TASK_D2D_RRC, 0,  message);
+
+			break; 
+		}
  			
  		default:break;
 
@@ -263,7 +279,7 @@ void dummy_test_task(MessageDef *recv_msg)
 	{
 		gdummy_timer_cnt++; 
 
-		LOG_DEBUG(DUMMY,"gdummy_timer_cnt = %d \n", gdummy_timer_cnt);
+		//LOG_DEBUG(DUMMY,"gdummy_timer_cnt = %d \n", gdummy_timer_cnt);
 		if (1 == gdummy_timer_cnt)
 		{
 			LOG_DEBUG(DUMMY,"gdummy_timer_cnt = %d \n", gdummy_timer_cnt);
@@ -313,7 +329,7 @@ void dummy_test_task(MessageDef *recv_msg)
 				{	
 				
 					OSP_delay(1000); 
-					LOG_DEBUG(RRC, "SOURCE wait for connect complete message  \n");
+					LOG_DEBUG(RRC, "SOURCE wait for connect CONNECTED message  \n");
 				}
 
 				
@@ -321,6 +337,18 @@ void dummy_test_task(MessageDef *recv_msg)
 				//!send rrc conncet complete message to source 
 				dummy_rrc_rpt_message(MAC_RRC_CCCH_RPT,CCCH_MessageType_PR_rrcConectioncomplete); 
 
+
+				while (RRC_STATUS_CONNECTE_COMPLETE !=  rrc_GetCurrentStatus()) 
+				{	
+				
+					OSP_delay(1000); 
+					LOG_DEBUG(RRC, "SOURCE wait for connect complete message  \n");
+				}
+
+				sleep(4); 
+
+				//！test out of sync flow, and release flow 
+				dummy_rrc_confirm_message(MAC_RRC_OUTSYNC_RPT); 
 
 			}
 			else 

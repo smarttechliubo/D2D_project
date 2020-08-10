@@ -21,8 +21,10 @@ OSP_TASKMSG_REG TaskRegTbl[]=
 	{TASK_D2D_RLC,			"task_rlc",			RT_MSG_PRI(70), 	(OSP_FUNCPTR)rlc_module_initial,	(OSP_FUNCPTR)rlc_rrc_config_task,0},
 	{TASK_D2D_RLC_TX,		"task_rlc_tx",		RT_MSG_PRI(75), 	NULL,	(OSP_FUNCPTR)rlc_tx_task,0},
 	{TASK_D2D_RLC_RX,		"task_rlc_rx",		RT_MSG_PRI(76), 	NULL,	(OSP_FUNCPTR)rlc_rx_task,0},
+#ifdef RLC_ONLY_DC_TEST
 	{TASK_D2D_DUMMY,        "task_dummy_test",	RT_MSG_PRI(65), 	(OSP_FUNCPTR)dummy_init,	(OSP_FUNCPTR)dummy_test_task,1},
-	{TASK_D2D_IP_UDP,           "task_ip_udp",       	RT_NOMSG_PRI(72), 	NULL,	(OSP_FUNCPTR)ip_udp_task,0},
+#endif 
+    {TASK_D2D_IP_UDP,           "task_ip_udp",       	RT_NOMSG_PRI(72), 	NULL,	(OSP_FUNCPTR)ip_udp_task,0},
 	{TASK_D2D_IP_MSG,           "task_ip_msg",       	RT_MSG_PRI(77), 	(OSP_FUNCPTR)ip_rlc_sdu_udp_initial,	(OSP_FUNCPTR)ip_msg_task,0},
 
 	//{TASK_D2D_DUMMY_INT,        "task_timer_int",	RT_MSG_PRI(78), 	(OSP_FUNCPTR)timer_int_init,	(OSP_FUNCPTR)timer_int_task,0},

@@ -311,21 +311,28 @@ void  rlc_rrc_config_process(void *message, MessagesIds         msg_type)
 			//! TODO response to rrc ,clear buffer,clear hash table 
 			g_rlc_protocol_ctxt.rnti = releaes_req->ue_rnti; 
 
+			
 			ue_index = dict_GetValue(g_rrc_ue_info_dict,releaes_req->ue_rnti);
 			AssertFatal(ue_index <= D2D_MAX_USER_NUM, RLC, "RRC_RLC_RELEASE_REQ  RNTI's index error \n");
 
+
+			
 			//!maybe there is no srb for this ue 
             if (1 == g_rlc_ue_info[ue_index].srb_setup_flag)
             {
 				for (rb_index = 0; rb_index < g_rlc_ue_info[ue_index].srb_count; rb_index++)
 				{
+
 					temp_rlc_info.rlc_mode = g_rlc_ue_info[ue_index].srb_info[rb_index].rlc_mode; 
+					
+					rb_id = g_rlc_ue_info[ue_index].srb_info[rb_index].srb_rb_id;
+					logic_ch_id = g_rlc_ue_info[ue_index].srb_info[rb_index].srb_logic_ch_id; 
 					rrc_rlc_config_req(&g_rlc_protocol_ctxt,
 										SRB_FLAG_YES,
 										MBMS_FLAG_NO,
 										CONFIG_ACTION_REMOVE,
-										g_rlc_ue_info[ue_index].srb_info[rb_index].srb_rb_id,
-										g_rlc_ue_info[ue_index].srb_info[rb_index].srb_logic_ch_id,
+										rb_id,
+										logic_ch_id,
 										temp_rlc_info); 
 					LOG_INFO(RLC,"RRC_RLC_RELEASE_REQ :SRB remove, rnti = %d, rb_indx = %d,rb_id = %d, lc_id = %d,\
 								rlc_mode = %s\n",  \
@@ -337,18 +344,22 @@ void  rlc_rrc_config_process(void *message, MessagesIds         msg_type)
 				}
             }
 						//!delete the ue's dRB 
-			AssertFatal(g_rlc_ue_info[ue_index].drb_setup_flag  == 1, RLC, "RRC_RLC_RELEASE_REQ, no drb_setup, myebe the rnti is error:rnti =%d\n",releaes_req->ue_rnti);
+			AssertFatal(1 == g_rlc_ue_info[ue_index].drb_setup_flag , RLC, "RRC_RLC_RELEASE_REQ, no drb_setup, myebe the rnti is error:rnti =%d\n",releaes_req->ue_rnti);
               //!delete the ue's DRB 
-  			for (rb_index = 0; rb_index < MAX_DRB_COUNT; rb_index++)
+  			for (rb_index = 0; rb_index < g_rlc_ue_info[ue_index].drb_count; rb_index++)
 			{
+
                 temp_rlc_info.rlc_mode = g_rlc_ue_info[ue_index].drb_info[rb_index].rlc_mode;
+				rb_id = g_rlc_ue_info[ue_index].drb_info[rb_index].drb_rb_id;
+				logic_ch_id = g_rlc_ue_info[ue_index].drb_info[rb_index].drb_logic_ch_id; 
 				rrc_rlc_config_req(&g_rlc_protocol_ctxt,
 									SRB_FLAG_NO,
 									MBMS_FLAG_NO,
 									CONFIG_ACTION_REMOVE,
-									g_rlc_ue_info[ue_index].drb_info[rb_index].drb_rb_id,
-									g_rlc_ue_info[ue_index].drb_info[rb_index].drb_logic_ch_id,
+									rb_id,
+									logic_ch_id,
 									temp_rlc_info); 
+
 
 				LOG_ERROR(RLC,"RRC_RLC_RELEASE_REQ :DRB remove, rb_indx = %d,rb_id = %d, lc_id = %d,\
 							rlc_mode = %s\n",  \
