@@ -399,7 +399,7 @@ void rlc_tx_process(void *message, MessagesIds      msg_type)
 	int32_t   ue_status[D2D_MAX_USER_NUM] = {0};
 
 	
-	LOG_WARN(RLC_TX, "RLC_TX receive message = %d\n",msg_type);
+	LOG_ERROR(RLC_TX, "RLC_TX receive message = %d\n",msg_type);
 	switch (msg_type)
 	{
 		case RRC_RLC_BUF_STATUS_REQ: 
@@ -552,7 +552,7 @@ tb_size = %d, logic tb_size = %d \n",
 				 						&g_rlc_pdu_buffer[ue_index * MAX_DLSCH_PAYLOAD_BYTES],
 				 						&g_rlc_mac_subheader[ue_index *((MAX_LOGICCHAN_NUM  + 1)* 3)]); 
                 buffer_id = (subsfn & 0x1); 
-#ifdef  FPGA_PLATFORM
+#ifndef RLC_UT_DEBUG
 				ue_pdu_buffer_array[ue_index] = (uint64_t) OspGetApeTDateAddr(buffer_id);
 				ue_buffer_offset[ue_index] =  buffer_offset; 
 				ue_pdu_size_array[ue_index] = (uint32_t )rlc_data_req_ptr->tb_size;
@@ -560,6 +560,7 @@ tb_size = %d, logic tb_size = %d \n",
 				memcpy((void *) ue_pdu_buffer_array[ue_index] , (void *)&g_rlc_pdu_buffer[ue_index * MAX_DLSCH_PAYLOAD_BYTES],rlc_mac_buffer_size * sizeof(char)); 
 #else 
 				ue_pdu_buffer_array[ue_index] = (uint64_t)&g_rlc_pdu_buffer[ue_index * MAX_DLSCH_PAYLOAD_BYTES]; 
+				LOG_DEBUG(RLC, "ue_pdu_buffer_array = %ld\n", ue_pdu_buffer_array[ue_index]); 
 #endif 
 				ue_rnti_array[ue_index] =  	rlc_data_req_ptr->rnti; 
 				buffer_offset = buffer_offset + ue_pdu_size_array[ue_index]; //update buffer_offset
@@ -574,6 +575,7 @@ tb_size = %d, logic tb_size = %d \n",
 
 		    mac_rlc_data_rpt_temp.valid_flag = 1; 
 		    mac_rlc_data_rpt_temp.rnti = 0xff00; 
+			mac_rlc_data_rpt_temp.ue_tb_size = g_debug_rlc_lc_pdu_component[0].final_rlc_pdu_size;
 		    mac_rlc_data_rpt_temp.logic_chan_num = 1; 
 		    mac_rlc_data_rpt_temp.logicchannel_id[0] = 3; 
 		    mac_rlc_data_rpt_temp.mac_pdu_size[0] = g_debug_rlc_lc_pdu_component[0].final_rlc_pdu_size; 
@@ -581,7 +583,7 @@ tb_size = %d, logic tb_size = %d \n",
 
 
 			mac_rlc_data_rpt_temp.mac_pdu_buffer_ptr = (uint32_t *)((uint8_t *)(&g_rlc_pdu_buffer[0 * MAX_DLSCH_PAYLOAD_BYTES]) + g_rlc_debug_ue_mac_header_size);
-		    
+		    LOG_DEBUG(RLC, "mac_rlc_data_rpt_temp.mac_pdu_buffer_ptr = %ld,final_rlc_pdu_size = %d\n", mac_rlc_data_rpt_temp.mac_pdu_buffer_ptr,g_debug_rlc_lc_pdu_component[0].final_rlc_pdu_size); 
 			mac_Rlc_data_Rpt(sfn,subsfn,1, &mac_rlc_data_rpt_temp);
 
 #endif 		

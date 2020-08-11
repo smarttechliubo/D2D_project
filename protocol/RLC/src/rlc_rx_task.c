@@ -44,11 +44,33 @@ void rlc_mac_data_rx_process(mac_rlc_data_info *ue_data_info,uint32_t ue_index, 
 
 
     AssertFatal((((ue_data_info->ue_tb_size +7)>>3) <<3)<= MAX_DLSCH_PAYLOAD_BYTES , RLC, "MAC_RLC_DATA_RPT message has error ue_tb_size in data_ind!\n"); 
+	LOG_DEBUG(RLC, "RLC_RX: ue_data_info->mac_pdu_buffer_ptr= %ld,ue_data_info->ue_tb_size = %d\n", ue_data_info->mac_pdu_buffer_ptr,ue_data_info->ue_tb_size);
 	memcpy((void *)&g_mac_rlc_pdu_buffer[ue_index * MAX_DLSCH_PAYLOAD_BYTES],
 						ue_data_info->mac_pdu_buffer_ptr,
 						((ue_data_info->ue_tb_size +7)>>3) <<3); //！8byte 
-
-
+	LOG_DEBUG(RLC, "RLC_RX: send data =%d,%d,%d,%d,%d, %d,%d,%d,%d\n", 
+				ue_data_info->mac_pdu_buffer_ptr[0],
+				ue_data_info->mac_pdu_buffer_ptr[1],
+				ue_data_info->mac_pdu_buffer_ptr[2],
+				ue_data_info->mac_pdu_buffer_ptr[3],
+				ue_data_info->mac_pdu_buffer_ptr[4],
+				ue_data_info->mac_pdu_buffer_ptr[5],
+				ue_data_info->mac_pdu_buffer_ptr[6],
+				ue_data_info->mac_pdu_buffer_ptr[7],
+				ue_data_info->mac_pdu_buffer_ptr[8]);
+	
+	LOG_DEBUG(RLC, "RLC_RX: copy data =%d,%d,%d,%d,%d, %d,%d,%d,%d\n", 
+				g_mac_rlc_pdu_buffer[ue_index * MAX_DLSCH_PAYLOAD_BYTES+0],
+				g_mac_rlc_pdu_buffer[ue_index * MAX_DLSCH_PAYLOAD_BYTES+1],
+				g_mac_rlc_pdu_buffer[ue_index * MAX_DLSCH_PAYLOAD_BYTES+2],
+				g_mac_rlc_pdu_buffer[ue_index * MAX_DLSCH_PAYLOAD_BYTES+3],
+				g_mac_rlc_pdu_buffer[ue_index * MAX_DLSCH_PAYLOAD_BYTES+4],
+				g_mac_rlc_pdu_buffer[ue_index * MAX_DLSCH_PAYLOAD_BYTES+5],
+				g_mac_rlc_pdu_buffer[ue_index * MAX_DLSCH_PAYLOAD_BYTES+6],
+				g_mac_rlc_pdu_buffer[ue_index * MAX_DLSCH_PAYLOAD_BYTES+7],
+				g_mac_rlc_pdu_buffer[ue_index * MAX_DLSCH_PAYLOAD_BYTES+8]
+				
+		        );
 
 	for (logic_index = 0; logic_index < ue_data_info->logic_chan_num;logic_index++)
 	{
@@ -89,7 +111,7 @@ void rlc_rx_process(void *message, MessagesIds      msg_type)
 	uint32_t ue_index; 
 	
   
-    LOG_WARN(RLC_RX, "RLC_RX receive message = %d\n",msg_type);
+    LOG_ERROR(RLC_RX, "RLC_RX receive message = %d\n",msg_type);
 	switch(msg_type)
 	{
 		case MAC_RLC_DATA_RPT:
