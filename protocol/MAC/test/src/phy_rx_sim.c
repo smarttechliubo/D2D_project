@@ -19,7 +19,7 @@
 #include "emac_enum_def.h"
 #include "mac_defs.h"
 #include "mac_osp_interface.h"
-
+#include "dci_info.h"
 
 phy_rx_info g_phyRx;
 bool g_timing_sync_phyRx = false;
@@ -46,13 +46,12 @@ void syncTimePhyRx()//TODO: sync
 
 uint32_t init_phy_rx_sim()
 {
-	void* pTimer;
-	int32_t ret;
+	//void* pTimer = _timerCreate(TASK_D2D_PHY_RX, 1, 400,0);
+	//int32_t ret = _timerStart(pTimer);
 
-	pTimer = _timerCreate(TASK_D2D_PHY_RX, 1, 400,0);
-	ret = _timerStart(pTimer);
+	//LOG_INFO(MAC,"init_phy_rx_sim pTimer is %p, ret:%u\r\n", pTimer, ret);
 
-	LOG_INFO(MAC,"init_phy_rx_sim pTimer is %p, ret:%u\r\n", pTimer, ret);
+	(void)_RegTimer4ms();
 
 	for (uint32_t i = 0; i < MAX_TX_UE; i++)
 	{
@@ -318,6 +317,7 @@ void handle_pusch(const      frame_t frame, const sub_frame_t subframe)
 	//dci_s dci;
 	//pusch_result* result;
 	uint8_t data_ind = 0;
+	dci_info* dci = NULL;
 
 	PHY_ACKInd ackInd;
 	ackInd.frame = pusch_frame;
@@ -345,16 +345,16 @@ void handle_pusch(const      frame_t frame, const sub_frame_t subframe)
 
 		for (uint32_t i = 0; i < pdcch.num_dci; i++)
 		{
-			//dci = (dci_s)pdcch.dci[i].data[0];
-			data_ind = (pdcch.dci[i].data[2] & 0X18) >> 3;
+			dci = (dci_t*)&pdcch.dci[i].data[0];
 
-			LOG_DEBUG(PHY, "handle_pusch, rnti:%u,data_ind:%u,dci:%x,%x,%x", 
-				pusch.pusch[i].rnti,data_ind,pdcch.dci[i].data[0],pdcch.dci[i].data[1],pdcch.dci[i].data[2]);
+			LOG_DEBUG(PHY, "handle_pusch, rnti:%u,sfn:%u,ack_num:%u,ack_bits:%x,dataFlag:%u", 
+				pusch.pusch[i].rnti,dci->sfn,dci->ack_num,dci->ack_bits,dci->dataFlag);
 
-			if (data_ind == 1 || data_ind == 3)//ACK/NACK
+			if (dci->ack_num > 0)//ACK/NACK
 			{
 				ackInd.ack[ackInd.num].rnti = pdcch.dci[i].rnti;
-				ackInd.ack[ackInd.num].ack = pusch.pusch[i].ack;
+				ackInd.ack[ackInd.num].ack_num = dci->ack_num;
+				ackInd.ack[ackInd.num].ack_bits = dci->ack_bits;
 				ackInd.num++;
 			}
 
@@ -369,7 +369,6 @@ void handle_pusch(const      frame_t frame, const sub_frame_t subframe)
 
 		}
 
-#if 0
 		if (ackInd.num > 0)
 		{
 			msg_size = sizeof(PHY_ACKInd);
@@ -386,7 +385,7 @@ void handle_pusch(const      frame_t frame, const sub_frame_t subframe)
 				}
 			}
 		}
-#endif
+
 		if (puschInd.num_ue > 0)
 		{
 			msg_size = sizeof(PHY_PuschReceivedInd);
@@ -451,6 +450,7 @@ void handle_pusch1(const      frame_t frame, const sub_frame_t subframe)
 	//dci_s dci;
 	//pusch_result* result;
 	uint8_t data_ind = 0;
+	dci_info* dci = NULL;
 
 	PHY_ACKInd ackInd;
 	ackInd.frame = pusch_frame;
@@ -478,16 +478,16 @@ void handle_pusch1(const      frame_t frame, const sub_frame_t subframe)
 
 		for (uint32_t i = 0; i < pdcch.num_dci; i++)
 		{
-			//dci = (dci_s)pdcch.dci[i].data[0];
-			data_ind = (pdcch.dci[i].data[2] & 0X18) >> 3;
+			dci = (dci_t*)&pdcch.dci[i].data[0];
 
-			LOG_DEBUG(PHY, "handle_pusch1, rnti:%u,data_ind:%u,dci:%x,%x,%x", 
-				pusch.pusch[i].rnti,data_ind,pdcch.dci[i].data[0],pdcch.dci[i].data[1],pdcch.dci[i].data[2]);
+			LOG_DEBUG(PHY, "handle_pusch1, rnti:%u,sfn:%u,ack_num:%u,ack_bits:%x,dataFlag:%u", 
+				pusch.pusch[i].rnti,dci->sfn,dci->ack_num,dci->ack_bits,dci->dataFlag);
 
-			if (data_ind == 1 || data_ind == 3)//ACK/NACK
+			if (dci->ack_num > 0)//ACK/NACK
 			{
 				ackInd.ack[ackInd.num].rnti = pdcch.dci[i].rnti;
-				ackInd.ack[ackInd.num].ack = pusch.pusch[i].ack;
+				ackInd.ack[ackInd.num].ack_num = dci->ack_num;
+				ackInd.ack[ackInd.num].ack_bits = dci->ack_bits;
 				ackInd.num++;
 			}
 

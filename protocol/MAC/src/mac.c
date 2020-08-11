@@ -36,6 +36,9 @@ ULONG g_end_time = 0;
 ULONG g_diff_time = 0;
 ULONG g_run_period_time = 0;
 ULONG g_run_scheduler_time = 0;
+uint32_t g_pdcch_num = 0;
+uint32_t g_pusch_num = 0;
+bool  g_pdcch_send;
 
 mac_info_s* init_mac_info()
 {
@@ -348,15 +351,12 @@ void syncTime()//TODO: sync
 
 int32_t init_mac_period()
 {
-	void* pTimer;
-	int32_t ret;
-	
-	(void)_RegTimer4ms();
+	//void* pTimer = _timerCreate(TASK_D2D_MAC, 1, 400,0);
+	//int32_t ret = _timerStart(pTimer);
 
-	//pTimer = _timerCreate(TASK_D2D_MAC, 1, 400,0);
-	//ret = _timerStart(pTimer);
+	//LOG_INFO(MAC,"init_mac_period pTimer is %p, ret:%d\r\n", pTimer,ret);
 
-	LOG_INFO(MAC,"init_mac_period pTimer is %p, ret:%d\r\n", pTimer,ret);
+	//(void)_RegTimer4ms();
 
 	init_mac();
 
@@ -395,24 +395,18 @@ void run_period(msgDef* msg)
 
 int32_t init_mac_scheduler()
 {
-	void* pTimer;
-	int32_t ret;
-
-	(void)_RegTimer4ms();
-
-	//pTimer = _timerCreate(TASK_D2D_MAC_SCH, 1, 400, 100);
-	//ret = _timerStart(pTimer);
+	//void* pTimer = _timerCreate(TASK_D2D_MAC_SCH, 1, 400, 100);
+	//int32_t ret = _timerStart(pTimer);
 
 	//setFrameOffsetTime(1);
 
-	LOG_INFO(MAC,"init_mac_scheduler pTimer is %p, ret:%d\r\n", pTimer,ret);
+	//LOG_INFO(MAC,"init_mac_scheduler pTimer is %p, ret:%d\r\n", pTimer,ret);
+
+	//(void)_RegTimer4ms();
+
 
 	return 0;
 }
-
-uint32_t g_pdcch_num = 0;
-uint32_t g_pusch_num = 0;
-bool  g_pdcch_send;
 
 void run_scheduler(msgDef* msg)
 {

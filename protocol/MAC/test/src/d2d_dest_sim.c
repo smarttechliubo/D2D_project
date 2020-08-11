@@ -76,7 +76,6 @@ bool d2d_dst_fill_pusch(pusch_info* pusch, ue_sim_info* ue)
 		pusch->harqId = 1;
 		pusch->ack = 1;
 
-		pusch->padding_len = 0;
 		pusch->pdu_len = 8;
 		//pusch->data = ue->ccch;
 	}

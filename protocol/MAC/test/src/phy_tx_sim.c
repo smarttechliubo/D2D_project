@@ -119,13 +119,12 @@ void syncTimePhyTx()//TODO: sync
 
 uint32_t init_phy_tx_sim()
 {	
-	void* pTimer;
-	int32_t ret;
+	//void* pTimer = _timerCreate(TASK_D2D_PHY_TX, 1, 400,0);
+	//int32_t ret = _timerStart(pTimer);
 
-	pTimer = _timerCreate(TASK_D2D_PHY_TX, 1, 400,0);
-	ret = _timerStart(pTimer);
+	//LOG_INFO(MAC,"init_phy_tx_sim pTimer is %p, ret:%u\r\n", pTimer, ret);
 
-	LOG_INFO(MAC,"init_phy_tx_sim pTimer is %p, ret:%u\r\n", pTimer, ret);
+	(void)_RegTimer4ms();
 
 #ifdef MAC_MQ_TEST
 	if(g_testing_mode == 1)
