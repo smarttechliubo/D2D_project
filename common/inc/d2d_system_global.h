@@ -14,11 +14,19 @@
 
 
 
+<<<<<<< HEAD
 #define  D2D_MAX_USER_NUM    8 
  
 #define  MAX_LOGICCHAN_NUM    4
 
 #define MAX_SFN 1024
+=======
+#define      D2D_MAX_USER_NUM    8 
+ 
+#define  MAX_LOGICCHAN_NUM    4
+
+#define MAX_SFN 512
+>>>>>>> master
 #define MAX_SUBSFN 4
 
 #define MAX_TX_UE 4
@@ -45,10 +53,26 @@ typedef enum
 typedef enum
 {
 	SUBFRAME_CONFIG_DDUUDDUU, 
+	SUBFRAME_CONFIG_DDDUDDDU, 
     NOT_DEFINED
 }subframeconfig_e; 
 
 
+<<<<<<< HEAD
  
+=======
+
+typedef struct
+{
+	uint16_t rb_num;// value: 1..2, default: 2
+	uint16_t rb_start_index; // value: 2..3, default: 2
+}pdcch_config_s;
+
+
+
+
+extern uint32_t   Get_Subsfn( ); 
+extern uint32_t   Get_Frame( );
+>>>>>>> master
 
 #endif

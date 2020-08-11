@@ -19,6 +19,7 @@ typedef enum{
 	DCI_TYPE_UE
 }dci_type_e;
 
+<<<<<<< HEAD
 typedef struct
 {
 	dci_type_e type;
@@ -26,6 +27,19 @@ typedef struct
 	uint8_t dci_rb_start;//dci rb start
 	uint8_t dci_rb_num;//dci rb num
 	uint8_t padding;
+=======
+#pragma pack(4)
+
+typedef struct
+{
+	frame_t sfn;
+	rnti_t  rnti;
+	uint8_t dci_rb_start;//dci rb start
+	uint8_t dci_rb_num;//dci rb num
+	uint8_t ack_num;
+	uint8_t ack_bits;//1:crc=OK, 0:crc=NG
+	uint8_t dataFlag;//0:no data, 1:data, 2:PSS+DCI
+>>>>>>> master
 	uint8_t data_size;
 	uint8_t data[MAX_DCI_LEN];
 }dci_info;
@@ -49,9 +63,15 @@ typedef struct
 	uint8_t modulation;
 	uint8_t rv;
 	uint8_t harqId;
+<<<<<<< HEAD
 	uint8_t ack;
 
 	uint16_t padding_len;
+=======
+	uint8_t ack;//no use
+
+	uint16_t buffer_id;//0:buffer 0,  1:buffer 1, 2:buffer 2
+>>>>>>> master
 	uint16_t pdu_len;
 	uint8_t *data;
 }pusch_info;
@@ -66,15 +86,27 @@ typedef struct{
 typedef struct{
 	frame_t frame;
 	sub_frame_t subframe;
+<<<<<<< HEAD
+=======
+	uint8_t mib[3];
+>>>>>>> master
 }PHY_PBCHSendReq;
 
 typedef struct
 {
 	rnti_t rnti;
+<<<<<<< HEAD
 	uint16_t crc;// 0:NACK, 1: ACK
 	uint16_t dataSize;
 	uint8_t *dataptr;
 	uint8_t padding;
+=======
+	uint16_t crc;// 0:NACK, 1: ACK, 3:Not define
+
+	uint16_t buffer_id;//0:buffer 0,  1:buffer 1, 2:buffer 2, 3:invalid
+	uint16_t dataSize;//0:invalid
+	uint8_t *dataptr;
+>>>>>>> master
 }pusch_result;
 
 typedef struct{
@@ -96,7 +128,12 @@ typedef struct
 typedef struct
 {
 	rnti_t rnti;
+<<<<<<< HEAD
 	uint16_t ack;//0:NACK, 1:ACK
+=======
+	uint8_t ack_num;
+	uint8_t ack_bits;//0:NACK, 1:ACK
+>>>>>>> master
 }ack_ind;
 
 typedef struct
@@ -133,5 +170,9 @@ typedef struct{
 	uint32_t num;
 	link_status status[MAX_RX_UE];
 }PHY_LinkStatusReportInd;
+<<<<<<< HEAD
+=======
+#pragma pack()
+>>>>>>> master
 
 #endif //_SMARTLOGICTECH_INTERFACE_MAC_PHY_H

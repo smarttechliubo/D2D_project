@@ -1,0 +1,14 @@
+EUTRA-RRC-Definitions DEFINITIONS AUTOMATIC TAGS ::=
+
+BEGIN
+RRCConnectionRequest ::= SEQUENCE {
+
+	ue-Identity		 INTEGER(0..maxUeId), 
+        ue-Ip                    BIT STRING(SIZE(15)),
+        establishmentCause       ENUMERATED {normal, emergency}
+}
+
+maxUeId  INTEGER ::= 8 
+
+END 
+

@@ -15,6 +15,10 @@
 void init_mac_tx(uint16_t cellId);
 void mac_scheduler();
 void handle_buffer_status_ind(msgDef* msg);
+<<<<<<< HEAD
+=======
+void handle_buffer_status_req(const frame_t frame, const sub_frame_t subframe);
+>>>>>>> master
 
 
 #endif /* _SMARTLOGICTECH_PROTOCOL_MAC_INC_MAC_TX_H_ */

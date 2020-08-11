@@ -10,6 +10,41 @@
 #include "typedef.h"
 #include "osp_ex.h"
 
+<<<<<<< HEAD
+=======
+void setFrameOffsetTime(int time)
+{
+	(void )Osp_SetFrameOffsetTime(time);
+}
+
+int32_t sfn_sync()
+{
+	int32_t ret = -1;
+	int32_t sfn = 0;
+
+	ret = Osp_FrameSyncIrqRead(&sfn);
+
+	if (ret >= 0)
+	{
+		return sfn;
+	}
+	else
+	{
+		return -1;
+	}
+}
+
+void* _RegTimer4ms()
+{
+	return OSP_RegFrameSync();
+}
+
+void* _RegTimer1ms()
+{
+	return OSP_RegFrameSyncCal();
+}
+
+>>>>>>> master
 void* _timerCreate(uint32_t DstTaskId,  bool isRepeat, uint32_t timeout, uint32_t delay)
 {
 	return OSP_timerCreateSim(DstTaskId, isRepeat, timeout, delay);

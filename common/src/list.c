@@ -40,7 +40,11 @@ list_free (list_t * listP)
   mem_block_t      *le;
    //！将全部节点都释放
   while ((le = list_remove_head (listP))) {
+<<<<<<< HEAD
     free_mem_block (le, __func__);
+=======
+    free_mem_block (le, __func__,__LINE__);
+>>>>>>> master
   }
 }
 //-----------------------------------------------------------------------------

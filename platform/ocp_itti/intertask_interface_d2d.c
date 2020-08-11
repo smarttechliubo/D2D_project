@@ -311,7 +311,11 @@ MessageDef *itti_alloc_new_message(task_id_t origin_task_id, MessagesIds message
 	  Osp_Msg_Head *temp = OSP_Alloc_Msg(message_size);
 	  temp->MsgType = message_id; 
 	  temp->MsgSize = message_size; 
+<<<<<<< HEAD
 	  temp->SrcId = CURRENT_TASKID;
+=======
+	  temp->SrcId = origin_task_id;
+>>>>>>> master
 
 	  message = (MessageDef *)temp; 
 	  message->ittiMsgHeader = *(Osp_Msg_Head *)temp;
@@ -320,7 +324,11 @@ MessageDef *itti_alloc_new_message(task_id_t origin_task_id, MessagesIds message
 
 	  memcpy((void *)(message_content_ptr), message_backup_ptr, message_size); 
 
+<<<<<<< HEAD
 	  free(message_backup_ptr); //!calloc 对应free, osp_alloc_mem 对应osp_free_mem 
+=======
+	  OSP_Free_Mem((char *)message_backup_ptr); //!calloc 对应free, osp_alloc_mem 对应osp_free_mem 
+>>>>>>> master
 
 	  return message;
 }
@@ -332,7 +340,11 @@ int itti_send_msg_to_task(task_id_t destination_task_id, instance_t instance, Me
 	
     OSP_STATUS   ret;
 	message->ittiMsgHeader.DstId = destination_task_id; 
+<<<<<<< HEAD
 	ret = OSP_Send_Msg(message);
+=======
+	ret = OSP_Send_Msg((Osp_Msg_Head *)message);
+>>>>>>> master
     if (OSP_OK == ret)
     {
 
@@ -351,6 +363,7 @@ int itti_send_msg_to_task(task_id_t destination_task_id, instance_t instance, Me
 
 void itti_free_message(MessageDef *received_msg)
 {
+<<<<<<< HEAD
  	OSP_Free_Msg(received_msg);
 }
 
@@ -361,3 +374,7 @@ void itti_free_message(MessageDef *received_msg)
 
 
            
+=======
+ 	OSP_Free_Msg((Osp_Msg_Head*)received_msg);
+}           
+>>>>>>> master

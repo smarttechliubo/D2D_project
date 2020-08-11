@@ -82,27 +82,27 @@
 		<OverviewOptions
 			IsVisible="0"
 			IsLocked="0"
-			ShowCurFunction="0"
+			ShowCurFunction="1"
 			ShowFunctions="0"
-			ShowBookmarks="0"
-			ShowSourceTips="0"
-			ShowSelection="0"
-			ShowChangeMarks="0"
-			ShowNestingLines="0"
+			ShowBookmarks="1"
+			ShowSourceTips="1"
+			ShowSelection="1"
+			ShowChangeMarks="1"
+			ShowNestingLines="1"
 			ShowRefHighlights="0"
-			PercentScale="1"
+			PercentScale="10"
 			DefaultWidth="750"
-			UseTextColor="1"
-			UseBackColor="1"
+			UseTextColor="0"
+			UseBackColor="0"
 			BackColor="#ffffff"
 			MarkColor="#0080c0"
 			TextColor="#000000"
 			/>
 		<DefaultPanelFontAndColor
-			TextColor="#000000"
-			BackColor="#ffffff"
+			TextColor="#cecece"
+			BackColor="#2d2d26"
 			>
-			<Font name="Microsoft YaHei UI" psize="9" fpfamily="0" charset="1" />
+			<Font name="Segoe UI" psize="9" fpfamily="0" charset="1" />
 		</DefaultPanelFontAndColor>
 	</DisplayPreferences>
 	<EditingPreferences
@@ -167,18 +167,18 @@
 		ScaleNestedParens="1"
 		/>
 	<DisplayColors>
-		<Item Name="DefaultText" Color="#000000" />
-		<Item Name="WindowBackground" Color="#ffffff" />
-		<Item Name="SelectionBar" Color="#e6e6e6" />
+		<Item Name="DefaultText" Color="#ebebeb" />
+		<Item Name="WindowBackground" Color="#2c2d26" />
+		<Item Name="SelectionBar" Color="#524941" />
 		<Item Name="PrintedDefaultText" Color="#000000" />
 		<Item Name="PrintedWindowBackground" Color="#ffffff" />
-		<Item Name="ChangeMarks" Color="#ffff00" />
+		<Item Name="ChangeMarks" Color="#939300" />
 		<Item Name="SavedChangeMarks" Color="#bdddba" />
 		<Item Name="CurrentLineIndicator" Color="#e6e6e6" />
-		<Item Name="EndofFile" Color="#c0c0c0" />
-		<Item Name="ApplicationBackground" Color="#ababab" />
-		<Item Name="FrameText" Color="#000000" />
-		<Item Name="FrameBackground" Color="#dbe2ea" />
+		<Item Name="EndofFile" Color="#4e4e4e" />
+		<Item Name="ApplicationBackground" Color="#3c301e" />
+		<Item Name="FrameText" Color="#e4e4dc" />
+		<Item Name="FrameBackground" Color="#585047" />
 	</DisplayColors>
 	<FilePreferences
 		ShareFiles="1"
@@ -424,222 +424,228 @@
 			Name="Work"
 			>
 <<<<<<< HEAD
+<<<<<<< HEAD
 			<item Command="InsertFunctionHeader" Allocated="1" />
 			<item Command="Enable Event Handlers" />
 			<item Command="fileInsertFileHeader" Allocated="1" />
 =======
+=======
+>>>>>>> master
 			<item Command="Enable Event Handlers" />
 			<item Command="InsertFunctionHeader" Allocated="1" />
 			<item Command="fileInsertFileHeader" Allocated="1" />
 			<item Command="AddModifyInfo" Allocated="1" />
 			<item Command="AddCommentMulti" Allocated="1" />
 			<item Command="AddCommentSingle" Allocated="1" />
+<<<<<<< HEAD
 >>>>>>> share_develop
+=======
+>>>>>>> master
 		</Menu>
 	</Menus>
 	<Keymaps>
 		<Main>
-			<item Command="InsertFileHeader" Keycode="mouse(DR)" Allocated="1" />
-			<item Command="Symbol Window" Keycode="F8" />
-			<item Command="Jump To Caller" Keycode="(C)D" />
-			<item Command="Load Layout A" Keycode="(CS)F1" />
-			<item Command="Load Layout B" Keycode="(CS)F2" />
-			<item Command="Load Layout C" Keycode="(CS)F3" />
-			<item Command="Load Layout D" Keycode="(CS)F4" />
-			<item Command="Help..." Keycode="F1" />
-			<item Command="Select Next Window" Keycode="F2" />
-			<item Command="Search Forward" Keycode="F4" />
-			<item Command="Go To Line..." Keycode="F5" />
-			<item Command="Tile Two Windows" Keycode="F6" />
-			<item Command="Activate Project Symbol List" Keycode="F7" />
-			<item Command="Indent Left" Keycode="F9" />
-			<item Command="Indent Right" Keycode="F10" />
-			<item Command="Full Screen" Keycode="F11" />
-			<item Command="Incremental Search..." Keycode="F12" />
-			<item Command="Mono Font View" Keycode="(A)F12" />
-			<item Command="SDK Help..." Keycode="(A)F1" />
-			<item Command="New Window" Keycode="(A)F5" />
-			<item Command="Close Window" Keycode="(A)F6" />
-			<item Command="Sort Symbol Window" Keycode="(A)F7" />
-			<item Command="Symbol Window" Keycode="(A)F8" />
-			<item Command="Zoom Window" Keycode="(A)F10" />
-			<item Command="Select Previous Window" Keycode="(S)F1" />
-			<item Command="Select Next Window" Keycode="(S)F2" />
-			<item Command="Select Word" Keycode="(S)F5" />
-			<item Command="Select Line" Keycode="(S)F6" />
-			<item Command="Select Sentence" Keycode="(S)F7" />
-			<item Command="Select Next Snippet Placeholder" Keycode="(CS);" />
-			<item Command="Activate Snippet Window" Keycode="(CA)S" />
-			<item Command="Show File Status" Keycode="(S)F10" />
-			<item Command="Close Window" Keycode="(C)F4" />
-			<item Command="Select Next Window" Keycode="(C)F6" />
-			<item Command="Zoom Window" Keycode="(C)F10" />
-			<item Command="Undo" Keycode="(C)Z" />
-			<item Command="Undo" Keycode="(A)BackSpace" />
-			<item Command="Redo" Keycode="(C)Y" />
-			<item Command="Copy" Keycode="(C)C" />
-			<item Command="Paste" Keycode="(C)V" />
-			<item Command="Paste" Keycode="(S)Ins" />
-			<item Command="Cut" Keycode="(S)Del" />
-			<item Command="Select All" Keycode="(C)A" />
-			<item Command="Activate File Menu" Keycode="(A)F" />
-			<item Command="Activate Edit Menu" Keycode="(A)E" />
-			<item Command="Activate Search Menu" Keycode="(A)S" />
-			<item Command="Activate Project Menu" Keycode="(A)P" />
-			<item Command="Activate Window Menu" Keycode="(A)W" />
-			<item Command="Activate Help Menu" Keycode="(A)H" />
-			<item Command="Activate Options Menu" Keycode="(A)O" />
-			<item Command="Activate View Menu" Keycode="(A)V" />
-			<item Command="Activate System Doc Menu" Keycode="(A)-" />
-			<item Command="Activate Work Menu" Keycode="(A)K" />
-			<item Command="Activate Tools Menu" Keycode="(A)T" />
-			<item Command="Select To End Of Line" Keycode="(S)End" />
-			<item Command="Select To Start Of Line" Keycode="(S)Home" />
-			<item Command="Select Word Left" Keycode="(CS)Left" />
-			<item Command="Select Word Right" Keycode="(CS)Right" />
-			<item Command="Select Char Left" Keycode="(S)Left" />
-			<item Command="Select Char Right" Keycode="(S)Right" />
-			<item Command="Select Line Up" Keycode="(S)Up" />
-			<item Command="Select Line Down" Keycode="(S)Down" />
-			<item Command="Select Page Down" Keycode="(S)PgDn" />
-			<item Command="Select Page Down" Keycode="(SN)PgDn" />
-			<item Command="Select Page Up" Keycode="(S)PgUp" />
-			<item Command="Select Page Up" Keycode="(SN)PgUp" />
-			<item Command="Select To Top Of File" Keycode="(CS)Home" />
-			<item Command="Select To End Of File" Keycode="(CS)End" />
-			<item Command="Page Up" Keycode="PgUp" />
-			<item Command="Page Up" Keycode="(N)PgUp" />
-			<item Command="Page Down" Keycode="PgDn" />
-			<item Command="Page Down" Keycode="(N)PgDn" />
-			<item Command="Scroll Half Page Down" Keycode="(C)PgDn" />
-			<item Command="Scroll Half Page Down" Keycode="(CN)PgDn" />
-			<item Command="Scroll Half Page Down" Keycode="(N)*" />
-			<item Command="Scroll Half Page Up" Keycode="(C)PgUp" />
-			<item Command="Scroll Half Page Up" Keycode="(CN)PgUp" />
-			<item Command="Scroll Half Page Up" Keycode="(N)/" />
-			<item Command="Scroll Line Up" Keycode="(A)Up" />
-			<item Command="Scroll Line Down" Keycode="(A)Down" />
-			<item Command="Scroll Left" Keycode="(A)Left" />
-			<item Command="Scroll Right" Keycode="(A)Right" />
-			<item Command="Top Of File" Keycode="(C)Home" />
-			<item Command="Top Of File" Keycode="(CN)Home" />
-			<item Command="Bottom Of File" Keycode="(C)End" />
-			<item Command="Bottom Of File" Keycode="(CN)End" />
-			<item Command="Beginning Of Line" Keycode="Home" />
-			<item Command="Top Of Window" Keycode="(N)Home" />
-			<item Command="End Of Line" Keycode="End" />
-			<item Command="Bottom Of Window" Keycode="(N)End" />
-			<item Command="Cursor Up" Keycode="Up" />
-			<item Command="Cursor Up" Keycode="(N)Up" />
-			<item Command="Cursor Down" Keycode="Down" />
-			<item Command="Cursor Down" Keycode="(N)Down" />
-			<item Command="Cursor Left" Keycode="Left" />
-			<item Command="Cursor Left" Keycode="(N)Left" />
-			<item Command="Cursor Right" Keycode="Right" />
-			<item Command="Cursor Right" Keycode="(N)Right" />
-			<item Command="Word Left" Keycode="(C)Left" />
-			<item Command="Word Right" Keycode="(C)Right" />
-			<item Command="Function Up" Keycode="(N)-" />
-			<item Command="Function Down" Keycode="(N)+" />
-			<item Command="Select Block" Keycode="(C)-" />
-			<item Command="Select Match" Keycode="(A)=" />
-			<item Command="Go To Next Change" Keycode="(AN)+" />
-			<item Command="Go To Previous Change" Keycode="(AN)-" />
-			<item Command="Jump To Match" Keycode="(A)]" />
-			<item Command="Paren Left" Keycode="(C)9" />
-			<item Command="Paren Right" Keycode="(C)0" />
-			<item Command="Block Up" Keycode="(CS)[" />
-			<item Command="Block Down" Keycode="(CS)]" />
-			<item Command="Select Sentence" Keycode="(C)." />
-			<item Command="End Of Selection" Keycode="(CA)]" />
-			<item Command="Beginning Of Selection" Keycode="(CA)[" />
-			<item Command="Go Back Toggle" Keycode="(A)M" />
-			<item Command="Go Back" Keycode="(A)," />
-			<item Command="Go Forward" Keycode="(A)." />
-			<item Command="Go Back" Keycode="mouse(T1)" />
-			<item Command="Go Forward" Keycode="mouse(T2)" />
-			<item Command="Repeat Typing" Keycode="(C)\" />
-			<item Command="New" Keycode="(C)N" />
-			<item Command="Open..." Keycode="(C)O" />
-			<item Command="Close All" Keycode="(CS)W" />
-			<item Command="Next File..." Keycode="(CS)N" />
-			<item Command="Save" Keycode="(C)S" />
-			<item Command="Save All" Keycode="(CA)A" />
-			<item Command="Save As..." Keycode="(CS)S" />
-			<item Command="Reload File" Keycode="(CS)O" />
-			<item Command="Activate Project Symbol List" Keycode="(A)G" />
-			<item Command="Activate Symbol Window" Keycode="(A)L" />
-			<item Command="Renumber..." Keycode="(C)R" />
-			<item Command="Search..." Keycode="(C)F" />
-			<item Command="Search Files..." Keycode="(CS)F" />
-			<item Command="Lookup References..." Keycode="(C)/" />
-			<item Command="Search Web..." Keycode="(CA)W" />
-			<item Command="Activate Search Bar" Keycode="(AS)F" />
-			<item Command="Activate Project Search Bar" Keycode="(AS)P" />
-			<item Command="Replace..." Keycode="(C)H" />
-			<item Command="Replace Files..." Keycode="(CS)H" />
-			<item Command="Go To Line..." Keycode="(C)G" />
-			<item Command="Jump To Link" Keycode="(C)L" />
-			<item Command="Go To Next Link" Keycode="(S)F9" />
-			<item Command="Go To Previous Link" Keycode="(S)F8" />
-			<item Command="Go To First Link" Keycode="(CS)L" />
-			<item Command="Jump To Definition" Keycode="(C)=" />
-			<item Command="Jump To Prototype..." Keycode="(A)-" />
-			<item Command="Jump To Base Type" Keycode="(A)0" />
-			<item Command="Toggle Insert Mode" Keycode="Ins" />
-			<item Command="Bookmark..." Keycode="(C)M" />
-			<item Command="Selection History..." Keycode="(CS)M" />
-			<item Command="Symbol Info..." Keycode="(A)/" />
-			<item Command="Last Window" Keycode="(C)Tab" />
-			<item Command="Last Window" Keycode="(CS)Tab" />
-			<item Command="File Type Options..." Keycode="(A)Y" />
-			<item Command="Smart Rename..." Keycode="(C)&apos;" />
-			<item Command="Complete Snippet" Keycode="(C)E" />
-			<item Command="Complete Symbol" Keycode="(C)8" />
-			<item Command="Incremental Search..." Keycode="(C)," />
-			<item Command="New Project..." Keycode="(AS)N" />
-			<item Command="Open Project..." Keycode="(AS)P" />
-			<item Command="Close Project" Keycode="(AS)W" />
-			<item Command="Add File..." Keycode="(AS)A" />
-			<item Command="Remove File..." Keycode="(AS)R" />
-			<item Command="Synchronize Files..." Keycode="(AS)S" />
-			<item Command="Backspace" Keycode="BackSpace" />
-			<item Command="Backspace" Keycode="(S)BackSpace" />
-			<item Command="Delete Character" Keycode="Del" />
-			<item Command="Delete Character" Keycode="(N)Del" />
-			<item Command="Copy Line" Keycode="(C)K" />
-			<item Command="Copy Line Right" Keycode="(CS)K" />
-			<item Command="Paste Line" Keycode="(C)P" />
-			<item Command="Cut Line" Keycode="(C)U" />
-			<item Command="Insert Line" Keycode="(C)I" />
-			<item Command="Cut Line Right" Keycode="(C);" />
-			<item Command="Cut Word" Keycode="(C)," />
-			<item Command="Insert Line Before Next" Keycode="(C)Space" />
-			<item Command="Join Lines" Keycode="(C)J" />
-			<item Command="Insert New Line" Keycode="(C)Enter" />
-			<item Command="Cut To Clip..." Keycode="(CS)X" />
-			<item Command="Copy To Clip..." Keycode="(C)Del" />
-			<item Command="Paste From Clip..." Keycode="(C)Ins" />
-			<item Command="Restore Lines" Keycode="(A)D" />
-			<item Command="Drag Line Up" Keycode="(C)Up" />
-			<item Command="Drag Line Down" Keycode="(C)Down" />
-			<item Command="Redraw Screen" Keycode="(CA)Space" />
-			<item Command="Copy" Keycode="mouse(LR)" />
-			<item Command="Select To" Keycode="(S)mouse(L)" />
-			<item Command="Make Column Selection" Keycode="(A)mouse(L)" />
-			<item Command="Symbol Info..." Keycode="(C)mouse(R+SEL)" />
-			<item Command="Enter" Keycode="Enter" />
-			<item Command="Enter" Keycode="Enter" />
-			<item Command="Enter" Keycode="(N)Enter" />
-			<item Command="Tab" Keycode="Tab" />
-			<item Command="Back Tab" Keycode="(S)Tab" />
-			<item Command="Simple Tab" Keycode="(CA)Tab" />
-			<item Command="Search Forward for Selection" Keycode="F3" />
-			<item Command="Search Backward for Selection" Keycode="(C)F3" />
-			<item Command="Close" Keycode="(A)F4" />
-			<item Command="Highlight Word" Keycode="(C)X" />
-			<item Command="getsymbol" Keycode="(C)F1" Allocated="1" />
 			<item Command="Enable Event Handlers" Keycode="(C)F2" />
+			<item Command="getsymbol" Keycode="(C)F1" Allocated="1" />
+			<item Command="Highlight Word" Keycode="(C)X" />
+			<item Command="Close" Keycode="(A)F4" />
+			<item Command="Search Backward for Selection" Keycode="(C)F3" />
+			<item Command="Search Forward for Selection" Keycode="F3" />
+			<item Command="Simple Tab" Keycode="(CA)Tab" />
+			<item Command="Back Tab" Keycode="(S)Tab" />
+			<item Command="Tab" Keycode="Tab" />
+			<item Command="Enter" Keycode="(N)Enter" />
+			<item Command="Enter" Keycode="Enter" />
+			<item Command="Enter" Keycode="Enter" />
+			<item Command="Symbol Info..." Keycode="(C)mouse(R+SEL)" />
+			<item Command="Make Column Selection" Keycode="(A)mouse(L)" />
+			<item Command="Select To" Keycode="(S)mouse(L)" />
+			<item Command="Copy" Keycode="mouse(LR)" />
+			<item Command="Redraw Screen" Keycode="(CA)Space" />
+			<item Command="Drag Line Down" Keycode="(C)Down" />
+			<item Command="Drag Line Up" Keycode="(C)Up" />
+			<item Command="Restore Lines" Keycode="(A)D" />
+			<item Command="Paste From Clip..." Keycode="(C)Ins" />
+			<item Command="Copy To Clip..." Keycode="(C)Del" />
+			<item Command="Cut To Clip..." Keycode="(CS)X" />
+			<item Command="Insert New Line" Keycode="(C)Enter" />
+			<item Command="Join Lines" Keycode="(C)J" />
+			<item Command="Insert Line Before Next" Keycode="(C)Space" />
+			<item Command="Cut Word" Keycode="(C)," />
+			<item Command="Cut Line Right" Keycode="(C);" />
+			<item Command="Insert Line" Keycode="(C)I" />
+			<item Command="Cut Line" Keycode="(C)U" />
+			<item Command="Paste Line" Keycode="(C)P" />
+			<item Command="Copy Line Right" Keycode="(CS)K" />
+			<item Command="Copy Line" Keycode="(C)K" />
+			<item Command="Delete Character" Keycode="(N)Del" />
+			<item Command="Delete Character" Keycode="Del" />
+			<item Command="Backspace" Keycode="(S)BackSpace" />
+			<item Command="Backspace" Keycode="BackSpace" />
+			<item Command="Synchronize Files..." Keycode="(AS)S" />
+			<item Command="Remove File..." Keycode="(AS)R" />
+			<item Command="Add File..." Keycode="(AS)A" />
+			<item Command="Close Project" Keycode="(AS)W" />
+			<item Command="Open Project..." Keycode="(AS)P" />
+			<item Command="New Project..." Keycode="(AS)N" />
+			<item Command="Incremental Search..." Keycode="(C)," />
+			<item Command="Complete Symbol" Keycode="(C)8" />
+			<item Command="Complete Snippet" Keycode="(C)E" />
+			<item Command="Smart Rename..." Keycode="(C)&apos;" />
+			<item Command="File Type Options..." Keycode="(A)Y" />
+			<item Command="Last Window" Keycode="(CS)Tab" />
+			<item Command="Last Window" Keycode="(C)Tab" />
+			<item Command="Symbol Info..." Keycode="(A)/" />
+			<item Command="Selection History..." Keycode="(CS)M" />
+			<item Command="Bookmark..." Keycode="(C)M" />
+			<item Command="Toggle Insert Mode" Keycode="Ins" />
+			<item Command="Jump To Base Type" Keycode="(A)0" />
+			<item Command="Jump To Prototype..." Keycode="(A)-" />
+			<item Command="Jump To Definition" Keycode="(C)=" />
+			<item Command="Go To First Link" Keycode="(CS)L" />
+			<item Command="Go To Previous Link" Keycode="(S)F8" />
+			<item Command="Go To Next Link" Keycode="(S)F9" />
+			<item Command="Jump To Link" Keycode="(C)L" />
+			<item Command="Go To Line..." Keycode="(C)G" />
+			<item Command="Replace Files..." Keycode="(CS)H" />
+			<item Command="Replace..." Keycode="(C)H" />
+			<item Command="Activate Project Search Bar" Keycode="(AS)P" />
+			<item Command="Activate Search Bar" Keycode="(AS)F" />
+			<item Command="Search Web..." Keycode="(CA)W" />
+			<item Command="Lookup References..." Keycode="(C)/" />
+			<item Command="Search Files..." Keycode="(CS)F" />
+			<item Command="Search..." Keycode="(C)F" />
+			<item Command="Renumber..." Keycode="(C)R" />
+			<item Command="Activate Symbol Window" Keycode="(A)L" />
+			<item Command="Activate Project Symbol List" Keycode="(A)G" />
+			<item Command="Reload File" Keycode="(CS)O" />
+			<item Command="Save As..." Keycode="(CS)S" />
+			<item Command="Save All" Keycode="(CA)A" />
+			<item Command="Save" Keycode="(C)S" />
+			<item Command="Next File..." Keycode="(CS)N" />
+			<item Command="Close All" Keycode="(CS)W" />
+			<item Command="Open..." Keycode="(C)O" />
+			<item Command="New" Keycode="(C)N" />
+			<item Command="Repeat Typing" Keycode="(C)\" />
+			<item Command="Go Forward" Keycode="mouse(T2)" />
+			<item Command="Go Back" Keycode="mouse(T1)" />
+			<item Command="Go Forward" Keycode="(A)." />
+			<item Command="Go Back" Keycode="(A)," />
+			<item Command="Go Back Toggle" Keycode="(A)M" />
+			<item Command="Beginning Of Selection" Keycode="(CA)[" />
+			<item Command="End Of Selection" Keycode="(CA)]" />
+			<item Command="Select Sentence" Keycode="(C)." />
+			<item Command="Block Down" Keycode="(CS)]" />
+			<item Command="Block Up" Keycode="(CS)[" />
+			<item Command="Paren Right" Keycode="(C)0" />
+			<item Command="Paren Left" Keycode="(C)9" />
+			<item Command="Jump To Match" Keycode="(A)]" />
+			<item Command="Go To Previous Change" Keycode="(AN)-" />
+			<item Command="Go To Next Change" Keycode="(AN)+" />
+			<item Command="Select Match" Keycode="(A)=" />
+			<item Command="Select Block" Keycode="(C)-" />
+			<item Command="Function Down" Keycode="(N)+" />
+			<item Command="Function Up" Keycode="(N)-" />
+			<item Command="Word Right" Keycode="(C)Right" />
+			<item Command="Word Left" Keycode="(C)Left" />
+			<item Command="Cursor Right" Keycode="(N)Right" />
+			<item Command="Cursor Right" Keycode="Right" />
+			<item Command="Cursor Left" Keycode="(N)Left" />
+			<item Command="Cursor Left" Keycode="Left" />
+			<item Command="Cursor Down" Keycode="(N)Down" />
+			<item Command="Cursor Down" Keycode="Down" />
+			<item Command="Cursor Up" Keycode="(N)Up" />
+			<item Command="Cursor Up" Keycode="Up" />
+			<item Command="Bottom Of Window" Keycode="(N)End" />
+			<item Command="End Of Line" Keycode="End" />
+			<item Command="Top Of Window" Keycode="(N)Home" />
+			<item Command="Beginning Of Line" Keycode="Home" />
+			<item Command="Bottom Of File" Keycode="(CN)End" />
+			<item Command="Bottom Of File" Keycode="(C)End" />
+			<item Command="Top Of File" Keycode="(CN)Home" />
+			<item Command="Top Of File" Keycode="(C)Home" />
+			<item Command="Scroll Right" Keycode="(A)Right" />
+			<item Command="Scroll Left" Keycode="(A)Left" />
+			<item Command="Scroll Line Down" Keycode="(A)Down" />
+			<item Command="Scroll Line Up" Keycode="(A)Up" />
+			<item Command="Scroll Half Page Up" Keycode="(N)/" />
+			<item Command="Scroll Half Page Up" Keycode="(CN)PgUp" />
+			<item Command="Scroll Half Page Up" Keycode="(C)PgUp" />
+			<item Command="Scroll Half Page Down" Keycode="(N)*" />
+			<item Command="Scroll Half Page Down" Keycode="(CN)PgDn" />
+			<item Command="Scroll Half Page Down" Keycode="(C)PgDn" />
+			<item Command="Page Down" Keycode="(N)PgDn" />
+			<item Command="Page Down" Keycode="PgDn" />
+			<item Command="Page Up" Keycode="(N)PgUp" />
+			<item Command="Page Up" Keycode="PgUp" />
+			<item Command="Select To End Of File" Keycode="(CS)End" />
+			<item Command="Select To Top Of File" Keycode="(CS)Home" />
+			<item Command="Select Page Up" Keycode="(SN)PgUp" />
+			<item Command="Select Page Up" Keycode="(S)PgUp" />
+			<item Command="Select Page Down" Keycode="(SN)PgDn" />
+			<item Command="Select Page Down" Keycode="(S)PgDn" />
+			<item Command="Select Line Down" Keycode="(S)Down" />
+			<item Command="Select Line Up" Keycode="(S)Up" />
+			<item Command="Select Char Right" Keycode="(S)Right" />
+			<item Command="Select Char Left" Keycode="(S)Left" />
+			<item Command="Select Word Right" Keycode="(CS)Right" />
+			<item Command="Select Word Left" Keycode="(CS)Left" />
+			<item Command="Select To Start Of Line" Keycode="(S)Home" />
+			<item Command="Select To End Of Line" Keycode="(S)End" />
+			<item Command="Activate Tools Menu" Keycode="(A)T" />
+			<item Command="Activate Work Menu" Keycode="(A)K" />
+			<item Command="Activate System Doc Menu" Keycode="(A)-" />
+			<item Command="Activate View Menu" Keycode="(A)V" />
+			<item Command="Activate Options Menu" Keycode="(A)O" />
+			<item Command="Activate Help Menu" Keycode="(A)H" />
+			<item Command="Activate Window Menu" Keycode="(A)W" />
+			<item Command="Activate Project Menu" Keycode="(A)P" />
+			<item Command="Activate Search Menu" Keycode="(A)S" />
+			<item Command="Activate Edit Menu" Keycode="(A)E" />
+			<item Command="Activate File Menu" Keycode="(A)F" />
+			<item Command="Select All" Keycode="(C)A" />
+			<item Command="Cut" Keycode="(S)Del" />
+			<item Command="Paste" Keycode="(S)Ins" />
+			<item Command="Paste" Keycode="(C)V" />
+			<item Command="Copy" Keycode="(C)C" />
+			<item Command="Redo" Keycode="(C)Y" />
+			<item Command="Undo" Keycode="(A)BackSpace" />
+			<item Command="Undo" Keycode="(C)Z" />
+			<item Command="Zoom Window" Keycode="(C)F10" />
+			<item Command="Select Next Window" Keycode="(C)F6" />
+			<item Command="Close Window" Keycode="(C)F4" />
+			<item Command="Show File Status" Keycode="(S)F10" />
+			<item Command="Activate Snippet Window" Keycode="(CA)S" />
+			<item Command="Select Next Snippet Placeholder" Keycode="(CS);" />
+			<item Command="Select Sentence" Keycode="(S)F7" />
+			<item Command="Select Line" Keycode="(S)F6" />
+			<item Command="Select Word" Keycode="(S)F5" />
+			<item Command="Select Next Window" Keycode="(S)F2" />
+			<item Command="Select Previous Window" Keycode="(S)F1" />
+			<item Command="Zoom Window" Keycode="(A)F10" />
+			<item Command="Symbol Window" Keycode="(A)F8" />
+			<item Command="Sort Symbol Window" Keycode="(A)F7" />
+			<item Command="Close Window" Keycode="(A)F6" />
+			<item Command="New Window" Keycode="(A)F5" />
+			<item Command="SDK Help..." Keycode="(A)F1" />
+			<item Command="Mono Font View" Keycode="(A)F12" />
+			<item Command="Incremental Search..." Keycode="F12" />
+			<item Command="Full Screen" Keycode="F11" />
+			<item Command="Indent Right" Keycode="F10" />
+			<item Command="Indent Left" Keycode="F9" />
+			<item Command="Activate Project Symbol List" Keycode="F7" />
+			<item Command="Tile Two Windows" Keycode="F6" />
+			<item Command="Go To Line..." Keycode="F5" />
+			<item Command="Search Forward" Keycode="F4" />
+			<item Command="Select Next Window" Keycode="F2" />
+			<item Command="Help..." Keycode="F1" />
+			<item Command="Load Layout D" Keycode="(CS)F4" />
+			<item Command="Load Layout C" Keycode="(CS)F3" />
+			<item Command="Load Layout B" Keycode="(CS)F2" />
+			<item Command="Load Layout A" Keycode="(CS)F1" />
+			<item Command="Jump To Caller" Keycode="(C)D" />
+			<item Command="Symbol Window" Keycode="F8" />
+			<item Command="InsertFileHeader" Keycode="mouse(DR)" Allocated="1" />
 		</Main>
 	</Keymaps>
 	<CustomCommands>
@@ -1094,7 +1100,7 @@
 			FileFilter="*.c;*.h;*.cpp;*.hpp;*.cxx;*.hxx"
 			Language="C/C++ Language"
 			ParsePattern=""
-			WordWrap="0"
+			WordWrap="1"
 			ExpandTabs="0"
 			EnterKeyIsEOL="1"
 			StatusbarMode="0"
@@ -1104,7 +1110,7 @@
 			VisibleTabs="0"
 			VisibleSpaces="0"
 			ShowLineNumbers="1"
-			ShowRightMargin="0"
+			ShowRightMargin="1"
 			ShowPageBreaks="0"
 			UseSymbolPane="1"
 			UseOverview="1"
@@ -1114,10 +1120,10 @@
 			ShowRefHighlights="0"
 			TabWidth="4"
 			MarginWidth="120"
-			IndentWidth="4"
+			IndentWidth="0"
 			AutoInsertPairs="1"
 			ParsePatternSymbolType=""
-			AutoIndentMode="2"
+			AutoIndentMode="1"
 			IndentOpenBrace="1"
 			IndentCloseBrace="1"
 			>
@@ -2038,37 +2044,41 @@
 	<Styles
 		StyleAppVer="4.00.0084"
 		>
-		<Style Name="Default Text" TextColor="#000000" />
+		<Style Name="Default Text" />
 		<Style
 			Name="Number"
-			TextColor="#ff0000"
 			FontName="Consolas"
 			FontPitchFamily="1"
 			FontCharset="0"
+			ParentStyle="Ref to Const"
 			/>
-		<Style Name="Operator" TextColor="#008000" />
-		<Style Name="Delimiter" TextColor="#800080" KeepWithNextLine="1" />
-		<Style Name="Comment" TextColor="#800080" />
+		<Style Name="Operator" TextColor="#00b700" />
+		<Style Name="Delimiter" KeepWithNextLine="1" TextColor="#feebab" />
+		<Style Name="Comment" TextColor="#beb7ff" />
 		<Style
 			Name="String"
-			TextColor="#000080"
 			FixedWhiteSpace="0"
-			BackColor="#ffffbb"
+			TextColor="#ffffff"
+			BackColor="#75684d"
 			/>
 		<Style Name="Keyword" TextColor="#008000" />
-		<Style Name="Control" TextColor="#000080" Bold="1" />
-		<Style Name="Special" TextColor="#800080" Bold="1" Italic="1" />
-		<Style Name="Boolean" TextColor="#800080" />
+		<Style Name="Control" Bold="1" />
+		<Style Name="Special" Bold="1" Italic="1" />
+		<Style Name="Boolean" TextColor="#ff6fff" />
 		<Style Name="Debug" TextColor="#ff0000" Italic="1" Underline="Dotted" />
-		<Style Name="Null Value" TextColor="#ff0000" />
-		<Style Name="System" TextColor="#008000" />
-		<Style Name="Declaration" Bold="1" TextColor="#000080" />
+		<Style
+			Name="Null Value"
+			TextColor="#ff0000"
+			ParentStyle="Ref to Const"
+			/>
+		<Style Name="System" ParentStyle="Reference" />
+		<Style Name="Declaration" Bold="1" TextColor="#ffff00" />
 		<Style
 			Name="Ref To Local"
-			TextColor="#008080"
+			TextColor="#00b3b3"
 			ParentStyle="Reference"
 			/>
-		<Style Name="Reference" TextColor="#008000" />
+		<Style Name="Reference" TextColor="#ff8040" />
 		<Style Name="Directive" ParentStyle="Control" />
 		<Style
 			Name="Line Number"
@@ -2095,7 +2105,12 @@
 			Underline="Single"
 			ParentStyle="Declaration"
 			/>
-		<Style Name="Ref to Parameter" Bold="1" ParentStyle="Ref To Local" />
+		<Style
+			Name="Ref to Parameter"
+			Bold="1"
+			Underline="Dotted"
+			ParentStyle="Ref To Local"
+			/>
 		<Style Name="Declare Template" ParentStyle="Declare Function" />
 		<Style Name="Declare Package" ParentStyle="Declaration" />
 		<Style Name="Ref to Template" ParentStyle="Reference" />
@@ -2106,26 +2121,30 @@
 			Bold="1"
 			ParentStyle="Reference"
 			/>
-		<Style Name="Selection" TextColor="#ffffff" BackColor="#000080" />
+		<Style Name="Selection" TextColor="#ffffff" BackColor="#509e9e" />
 		<Style Name="Declare Namespace" ParentStyle="Declaration" />
 		<Style Name="Ref to Namespace" ParentStyle="Reference" />
 		<Style Name="Declare Local" ParentStyle="Declaration" />
 		<Style Name="Declare Member" ParentStyle="Declaration" />
-		<Style Name="Declare Method" ParentStyle="Declare Function" />
+		<Style
+			Name="Declare Method"
+			CharSpacing="10"
+			ParentStyle="Declare Function"
+			/>
 		<Style Name="Declare Method Inline" ParentStyle="Declare Function" />
 		<Style
 			Name="Declare Function"
 			Scale="140"
-			ShadowColor="#c0c0c0"
 			KeepWithNextLine="1"
+			TextColor="#ffffff"
 			ParentStyle="Declaration"
 			/>
 		<Style Name="Declare Macro" ParentStyle="Declaration" />
 		<Style
 			Name="Declare Struct"
 			Scale="140"
-			ShadowColor="#c0c0c0"
 			KeepWithNextLine="1"
+			TextColor="#ffff00"
 			ParentStyle="Declaration"
 			/>
 		<Style Name="Declare Union" ParentStyle="Declare Struct" />
@@ -2158,32 +2177,32 @@
 		<Style Name="Ref to Func" Bold="1" ParentStyle="Reference" />
 		<Style Name="Ref to Macro" ParentStyle="Ref to Func" />
 		<Style Name="Ref to Struct" ParentStyle="Reference" />
-		<Style Name="Ref to Union" ParentStyle="Ref to Struct" />
-		<Style Name="Ref to Typedef" ParentStyle="Ref to Struct" />
+		<Style Name="Ref to Union" ParentStyle="Reference" />
+		<Style Name="Ref to Typedef" ParentStyle="Reference" />
 		<Style
 			Name="Ref to Global Var"
 			Bold="1"
 			Italic="1"
-			TextColor="#800080"
+			TextColor="#ff48ff"
 			ParentStyle="Reference"
 			/>
 		<Style
 			Name="Ref to Const"
-			TextColor="#ff0000"
+			TextColor="#ff4646"
 			ParentStyle="Reference"
 			/>
 		<Style Name="Ref to Enum" ParentStyle="Reference" />
 		<Style Name="Ref to Custom" ParentStyle="Reference" />
 		<Style Name="Ref to EdMacro" ParentStyle="Reference" />
-		<Style Name="Ref to Class" ParentStyle="Ref to Struct" />
-		<Style Name="Ref to Method" ParentStyle="Ref to Func" />
+		<Style Name="Ref to Class" ParentStyle="Reference" />
+		<Style Name="Ref to Method" Italic="1" ParentStyle="Ref to Func" />
 		<Style Name="Ref to EnumConst" ParentStyle="Ref to Const" />
 		<Style Name="Ref to Proto" ParentStyle="Ref to Func" />
 		<Style Name="Ref to Preproc" ParentStyle="Reference" />
 		<Style Name="Ref to Search" ParentStyle="Reference" />
 		<Style Name="Ref to Label" ParentStyle="Reference" />
-		<Style Name="Ref to Member" ParentStyle="Reference" />
-		<Style Name="Ref to Interface" ParentStyle="Ref to Class" />
+		<Style Name="Ref to Member" Italic="1" ParentStyle="Reference" />
+		<Style Name="Ref to Interface" ParentStyle="Reference" />
 		<Style Name="Ref to Resource" ParentStyle="Reference" />
 		<Style Name="Ref to File" ParentStyle="Reference" />
 		<Style
@@ -2191,7 +2210,7 @@
 			Bold="1"
 			Scale="150"
 			Underline="Thick"
-			FontName="Segoe UI"
+			FontName="Arial"
 			FontPitchFamily="2"
 			FontCharset="0"
 			ParentStyle="Comment"
@@ -2201,7 +2220,7 @@
 			Bold="1"
 			Scale="130"
 			Underline="Single"
-			FontName="Segoe UI"
+			FontName="Arial"
 			FontPitchFamily="2"
 			FontCharset="0"
 			ParentStyle="Comment"
@@ -2210,7 +2229,7 @@
 			Name="Comment Heading 3"
 			Bold="1"
 			Scale="120"
-			FontName="Segoe UI"
+			FontName="Arial"
 			FontPitchFamily="2"
 			FontCharset="0"
 			ParentStyle="Comment"
@@ -2218,7 +2237,7 @@
 		<Style
 			Name="Comment Heading 4"
 			Bold="1"
-			FontName="Segoe UI"
+			FontName="Arial"
 			FontPitchFamily="2"
 			FontCharset="0"
 			ParentStyle="Comment"
@@ -2252,10 +2271,11 @@
 		<Style Name="Ref to Method Prototype" ParentStyle="Ref to Method" />
 		<Style
 			Name="Comment To Do"
-			Bold="1"
 			Scale="120"
+			Bold="1"
+			TextColor="#000000"
 			BackColor="#ffff00"
-			FontName="Segoe UI"
+			FontName="Arial"
 			FontPitchFamily="2"
 			FontCharset="0"
 			ParentStyle="Comment"
@@ -2324,16 +2344,12 @@
 		<Style Name="Register" TextColor="#008000" Bold="1" />
 		<Style
 			Name="Python Doc String"
-			TextColor="#000080"
-			FixedWhiteSpace="0"
 			Italic="1"
+			FixedWhiteSpace="0"
+			ParentStyle="Comment"
 			/>
 		<Style Name="Instruction" ParentStyle="Control" />
-		<Style
-			Name="Reference Highlight"
-			TextColor="#000000"
-			BackColor="#aae1ff"
-			/>
+		<Style Name="Reference Highlight" Underline="Thick" />
 		<Style
 			Name="Declare VHDL Entity"
 			Scale="140"
@@ -2354,7 +2370,7 @@
 			KeepWithNextLine="1"
 			ParentStyle="Declaration"
 			/>
-		<Style Name="Declare VHDL Process" ParentStyle="Declare Function" />
+		<Style Name="Declare VHDL Process" ParentStyle="Declaration" />
 		<Style
 			Name="Declare VHDL Config"
 			ShadowColor="#c0c0c0"
@@ -2366,6 +2382,8 @@
 		<Style Name="Ref to VHDL Component" ParentStyle="Reference" />
 		<Style Name="Ref to VHDL Process" ParentStyle="Reference" />
 		<Style Name="Ref to VHDL Config" ParentStyle="Reference" />
+		<Style Name="HTML Tag Excerpt" />
+		<Style Name="new comment" />
 	</Styles>
 	<FTPSites>
 		<SiteList/>
@@ -7752,13 +7770,13 @@
 		<SymbolTypes All="1" />
 	</ProjectReport>
 	<SymbolPane
-		Width="289"
-		TextColor="#000000"
-		BackColor="#c5d2de"
+		Width="387"
+		TextColor="#cecece"
+		BackColor="#2d2d26"
 		ShowChanges="1"
 		ShowLongFunctions="1"
 		>
-		<Font name="Microsoft YaHei UI" psize="9" fpfamily="0" charset="1" />
+		<Font name="Segoe UI" psize="8" fpfamily="34" charset="0" />
 		<SymbolTypes All="1" />
 		<SymbolSorting
 			SortMode="1"
@@ -8022,10 +8040,10 @@
 			ConfirmDelete="0"
 			/>
 		<ListDisplay
-			TextColor="#000000"
-			BackColor="#ffffff"
+			TextColor="#cecece"
+			BackColor="#2d2d26"
 			>
-			<Font name="Arial" psize="9" fpfamily="0" charset="0" />
+			<Font name="Segoe UI" psize="9" fpfamily="0" charset="1" />
 		</ListDisplay>
 	</BookmarkWindow>
 	<SnippetWindow>
@@ -8041,10 +8059,10 @@
 			SortBy="Name"
 			>
 			<ListDisplay
-				TextColor="#000000"
-				BackColor="#ffffff"
+				TextColor="#cecece"
+				BackColor="#2d2d26"
 				>
-				<Font name="Microsoft YaHei UI" psize="9" fpfamily="0" charset="1" />
+				<Font name="Segoe UI" psize="9" fpfamily="0" charset="1" />
 			</ListDisplay>
 		</SnippetWindowOptions>
 	</SnippetWindow>
@@ -8057,10 +8075,10 @@
 		ExpandSnippetVars="1"
 		>
 		<ListDisplay
-			TextColor="#000000"
-			BackColor="#ffffc8"
+			TextColor="#cecece"
+			BackColor="#2d2d26"
 			>
-			<Font name="Microsoft YaHei UI" psize="9" fpfamily="0" charset="1" />
+			<Font name="Segoe UI" psize="9" fpfamily="0" charset="1" />
 		</ListDisplay>
 	</ClipWindow>
 	<ContextWindow
@@ -8070,13 +8088,13 @@
 		ViewLineNumbers="0"
 		ShowOverview="0"
 		PercentScale="100"
-		BackColor="#ffffff"
+		BackColor="#2c2d26"
 		>
 		<ListDisplay
-			TextColor="#000000"
-			BackColor="#ffffff"
+			TextColor="#cecece"
+			BackColor="#2d2d26"
 			>
-			<Font name="Microsoft YaHei UI" psize="9" fpfamily="0" charset="1" />
+			<Font name="Segoe UI" psize="9" fpfamily="0" charset="1" />
 		</ListDisplay>
 		<TrackingOptions tracktype="2" InComments="0" InStrings="0" InAnyFile="1" />
 	</ContextWindow>
@@ -8091,10 +8109,10 @@
 		FileCompareMethod="CompareSizeAndDate"
 		>
 		<ListDisplay
-			TextColor="#000000"
-			BackColor="#ffffff"
+			TextColor="#cecece"
+			BackColor="#2d2d26"
 			>
-			<Font name="Microsoft YaHei UI" psize="9" fpfamily="0" charset="1" />
+			<Font name="Segoe UI" psize="9" fpfamily="0" charset="1" />
 		</ListDisplay>
 	</DirectoryCompareWindow>
 	<FileCompareWindow
@@ -8105,17 +8123,17 @@
 		ShowScrollBar="1"
 		ShowNestingLines="1"
 		PercentScale="100"
-		BackColor="#ffffff"
+		BackColor="#2c2d26"
 		ShowSymbolPane="1"
 		SymbolPaneWidth="216"
 		DiffCmdLine="&quot;%PROGRAM_DIR%\sidiff.exe&quot; -C -b -n"
 		AllowEdits="0"
 		>
 		<ListDisplay
-			TextColor="#000000"
-			BackColor="#ffffff"
+			TextColor="#cecece"
+			BackColor="#2d2d26"
 			>
-			<Font name="Microsoft YaHei UI" psize="9" fpfamily="0" charset="1" />
+			<Font name="Segoe UI" psize="9" fpfamily="0" charset="1" />
 		</ListDisplay>
 	</FileCompareWindow>
 	<ProjectFileWindow
@@ -8128,10 +8146,10 @@
 		SortColumn="0"
 		>
 		<ListDisplay
-			TextColor="#000000"
-			BackColor="#ffffff"
+			TextColor="#cecece"
+			BackColor="#2d2d26"
 			>
-			<Font name="Microsoft YaHei UI" psize="9" fpfamily="0" charset="1" />
+			<Font name="Segoe UI" psize="9" fpfamily="0" charset="1" />
 		</ListDisplay>
 	</ProjectFileWindow>
 	<ProjectFileTypeWindow
@@ -8143,10 +8161,10 @@
 		>
 		<Sort SortType="6" Invert="0" />
 		<ListDisplay
-			TextColor="#000000"
-			BackColor="#ffffff"
+			TextColor="#cecece"
+			BackColor="#2d2d26"
 			>
-			<Font name="Microsoft YaHei UI" psize="9" fpfamily="0" charset="1" />
+			<Font name="Segoe UI" psize="9" fpfamily="0" charset="1" />
 		</ListDisplay>
 	</ProjectFileTypeWindow>
 	<ProjectFolderWindow
@@ -8157,10 +8175,10 @@
 		SplitPercent="50"
 		>
 		<ListDisplay
-			TextColor="#000000"
-			BackColor="#ffffff"
+			TextColor="#cecece"
+			BackColor="#2d2d26"
 			>
-			<Font name="Microsoft YaHei UI" psize="9" fpfamily="0" charset="1" />
+			<Font name="Segoe UI" psize="9" fpfamily="0" charset="1" />
 		</ListDisplay>
 	</ProjectFolderWindow>
 	<ProjectSymbolWindow
@@ -8229,10 +8247,10 @@
 		</SymbolTypes>
 		<Sort SortType="6" Invert="0" />
 		<ListDisplay
-			TextColor="#000000"
-			BackColor="#ffffff"
+			TextColor="#cecece"
+			BackColor="#2d2d26"
 			>
-			<Font name="Microsoft YaHei UI" psize="9" fpfamily="0" charset="1" />
+			<Font name="Segoe UI" psize="9" fpfamily="0" charset="1" />
 		</ListDisplay>
 	</ProjectSymbolWindow>
 	<ProjectSymbolTypeWindow
@@ -8301,10 +8319,10 @@
 		</SymbolTypes>
 		<Sort SortType="6" Invert="0" />
 		<ListDisplay
-			TextColor="#000000"
-			BackColor="#ffffff"
+			TextColor="#cecece"
+			BackColor="#2d2d26"
 			>
-			<Font name="Microsoft YaHei UI" psize="9" fpfamily="0" charset="1" />
+			<Font name="Segoe UI" psize="9" fpfamily="0" charset="1" />
 		</ListDisplay>
 	</ProjectSymbolTypeWindow>
 	<WindowListWindow
@@ -8313,10 +8331,10 @@
 		ShowSymbol="1"
 		>
 		<ListDisplay
-			TextColor="#000000"
-			BackColor="#ffffff"
+			TextColor="#cecece"
+			BackColor="#2d2d26"
 			>
-			<Font name="Microsoft YaHei UI" psize="9" fpfamily="0" charset="1" />
+			<Font name="Segoe UI" psize="9" fpfamily="0" charset="1" />
 		</ListDisplay>
 	</WindowListWindow>
 	<RelationWindow>
@@ -8324,10 +8342,10 @@
 			IsVisible="0"
 			>
 			<ListOptions
-				TextColor="#000000"
-				BackColor="#ffffff"
+				TextColor="#cecece"
+				BackColor="#2d2d26"
 				>
-				<Font name="Microsoft YaHei UI" psize="9" fpfamily="0" charset="1" />
+				<Font name="Segoe UI" psize="9" fpfamily="0" charset="1" />
 			</ListOptions>
 			<GraphOptions
 				LayoutStyle="2"
@@ -8407,10 +8425,10 @@
 			<item wildcard="*.xml" />
 		</AsciiModeFiles>
 		<ListDisplay
-			TextColor="#000000"
-			BackColor="#ffffff"
+			TextColor="#cecece"
+			BackColor="#2d2d26"
 			>
-			<Font name="Microsoft YaHei UI" psize="9" fpfamily="0" charset="1" />
+			<Font name="Segoe UI" psize="9" fpfamily="0" charset="1" />
 		</ListDisplay>
 	</FTPWindow>
 </SourceInsightConfiguration>

@@ -301,6 +301,7 @@ event DocumentNew(sfile)
         hfile_name_2 = toupper(hfile_name)
         hfile_name_3= strtrunc(hfile_name_2,strlen(hfile_name_2)-2)
 <<<<<<< HEAD
+<<<<<<< HEAD
         
         pre_1 = "#ifndef " # "   " # hfile_name_3 # "_H" 
         pre_2 = "#ifdef " # "    " # hfile_name_3 # "_H" 
@@ -309,6 +310,12 @@ event DocumentNew(sfile)
         pre_1 = "#ifndef " # "    " # hfile_name_3 # "_H" 
         pre_2 = "#define " # "    " # hfile_name_3 # "_H" 
 >>>>>>> share_develop
+=======
+
+        pre_1 = "#ifndef " # "    " # hfile_name_3 # "_H" 
+        pre_2 = "#define " # "    " # hfile_name_3 # "_H" 
+
+>>>>>>> master
        
         post = "#endif" 
 	    AppendBufLine(hbuf,pre_1)
@@ -326,6 +333,7 @@ event DocumentNew(sfile)
 	{
         hbuf = GetCurrentBuf()  
         AppendBufLine(hbuf,"/**************************include******************************/")
+        AppendBufLine(hbuf,"#include <typedef.h>")
          i = 0
         while(i < 5)
         {
@@ -359,6 +367,7 @@ function read_function_line(hbuf,line)
 	if (str_len < 1)
 	{
 <<<<<<< HEAD
+<<<<<<< HEAD
        return
 	}
 
@@ -375,6 +384,8 @@ function read_function_line(hbuf,line)
 	}
 
 =======
+=======
+>>>>>>> master
 	  // msg("string is empty,find the next line for \")\"")
        
 	}
@@ -393,16 +404,23 @@ function read_function_line(hbuf,line)
 		}
 	}
     //!没有找到")"
+<<<<<<< HEAD
 >>>>>>> share_develop
+=======
+>>>>>>> master
 	if (str_len == 0)
 	{
 		//msg("there is no ) in this line" # line)
 		last_line_read = line +1
 <<<<<<< HEAD
+<<<<<<< HEAD
         read_function_line(hbuf,last_line_read)
 =======
 	    read_function_line(hbuf,last_line_read)
 >>>>>>> share_develop
+=======
+	    read_function_line(hbuf,last_line_read)
+>>>>>>> master
 	}
 
 
@@ -481,15 +499,20 @@ macro InsertFunctionHeader( )
         func_name_para.first_line = func_name_para.first_line + 1
     }
 <<<<<<< HEAD
+<<<<<<< HEAD
 	// msg(all_str)  //！打印函数声明
 =======
 	//msg(all_str)  //！打印函数声明
 >>>>>>> share_develop
+=======
+	//msg(all_str)  //！打印函数声明
+>>>>>>> master
 
 	//!step3: truncate the content in ( )
 	param_num = 0
     param_list = SymListNew()
 
+<<<<<<< HEAD
 <<<<<<< HEAD
 	process_txt_len  = strlen(all_str)
     i = 0 
@@ -550,6 +573,8 @@ macro InsertFunctionHeader( )
         
         i = i + 1
 =======
+=======
+>>>>>>> master
 
     //!step4:排除参数为空的情况
 	process_txt_len  = strlen(all_str)
@@ -665,7 +690,10 @@ macro InsertFunctionHeader( )
     else
     {
         param_num = 0
+<<<<<<< HEAD
 >>>>>>> share_develop
+=======
+>>>>>>> master
     }
     msg("function parameter number:@param_num@")
 

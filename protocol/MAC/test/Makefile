@@ -4,7 +4,11 @@ CFLAGS += -DMAC_TEST
 
 #for mac test
 
+<<<<<<< HEAD
 MAC_SRCS_TEST += $(wildcard ../src/*.c src/*.c ../../../common/src/log.c case/$(case).c)
+=======
+MAC_SRCS_TEST += $(wildcard ../src/*.c src/*.c ../../../common/src/log.c case/$(case).c ../../../platform/ocp_itti/task_define.c)
+>>>>>>> master
 #MAC_SRCS_TEST += $(wildcard ../src/*.c ../../../common/src/log.c ../../../platform/ocp_itti/task_define.c)
 MAC_OBJS_TEST += $(MAC_SRCS_TEST:.c=.o)
 MAC_DEPS_TEST += $(MAC_SRCS_TEST:.c=.d)

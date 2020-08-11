@@ -1,4 +1,11 @@
+<<<<<<< HEAD
 /.metadata/
 /Debug/
 /.cproject/
 /.settings/
+=======
+/.metadata/
+/Debug/
+/makefile/CMakeFiles/
+
+>>>>>>> master
