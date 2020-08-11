@@ -20,10 +20,7 @@
 
 #include "messageDefine.h"//MAC_TEST
 #include "msg_handler.h"
-<<<<<<< HEAD
-=======
 #include "osp_ex.h"
->>>>>>> master
 
 void init_mac_rx()
 {
@@ -89,30 +86,15 @@ void mac_rrc_data_ind(const frame_t frame, const sub_frame_t subframe, const uin
 
 void fill_rlc_data_ind(const uint16_t rx_length, 
 	const uint8_t rx_lcId,
-<<<<<<< HEAD
-	const uint8_t* payload,
-=======
 	const uint32_t offset,
->>>>>>> master
 	mac_rlc_data_info *ind)
 {
 	ind->logicchannel_id[ind->logic_chan_num] = rx_lcId;
 	ind->mac_pdu_size[ind->logic_chan_num] = rx_length;
-<<<<<<< HEAD
-	ind->mac_pdu_buffer_ptr[ind->logic_chan_num] = (uint32_t*)payload;
-	ind->logic_chan_num++;
-}
-
-void mac_rlc_data_ind(msgDef* msg)
-{
-}
-
-=======
 	ind->logic_chan_data_offset[ind->logic_chan_num] = offset;
 	ind->logic_chan_num++;
 }
 
->>>>>>> master
 uint8_t *parse_mac_header(uint8_t *mac_header,
                                   uint8_t *num_ce,
                                   uint8_t *num_sdu,
@@ -129,11 +111,7 @@ uint8_t *parse_mac_header(uint8_t *mac_header,
 	uint8_t *mac_header_ptr = mac_header;
 	uint16_t length, ce_len = 0;
 
-<<<<<<< HEAD
-	LOG_INFO(MAC, "parse_mac_header, mac_header:%x,%x,%x,%x,%x,%x,%x,%x,%x,%x",
-=======
 	LOG_ERROR(MAC, "parse_mac_header, mac_header:%x,%x,%x,%x,%x,%x,%x,%x,%x,%x\n",
->>>>>>> master
 		mac_header_ptr[0],mac_header_ptr[1],mac_header_ptr[2],
 		mac_header_ptr[3],mac_header_ptr[4],mac_header_ptr[5],
 		mac_header_ptr[6],mac_header_ptr[7],mac_header_ptr[8],mac_header_ptr[9]);
@@ -237,11 +215,7 @@ void handle_mac_ce(const uint8_t num_ce, const uint8_t rx_ceIds[MAX_NUM_CE])
 		}
 	}
 }
-<<<<<<< HEAD
-
-=======
 #if 0
->>>>>>> master
 void handlePuschSdu(const frame_t frame, const sub_frame_t subframe, 
 	const pusch_result* result, mac_rlc_data_rpt *rpt)
 {
@@ -311,11 +285,7 @@ void handlePuschSdu(const frame_t frame, const sub_frame_t subframe,
 		}
 	}
 }
-<<<<<<< HEAD
-
-=======
 #endif
->>>>>>> master
 void handle_cqi(const PHY_CQIInd* ind)
 {
 	frame_t frame = ind->frame;
@@ -367,39 +337,26 @@ void handleCrcOK(const frame_t frame, const sub_frame_t subframe,
 	handlePuschSdu(frame, subframe, result, rpt);
 }
 */
-<<<<<<< HEAD
-=======
 
 
->>>>>>> master
 void handle_ack(const PHY_ACKInd* ind)
 {
 	//frame_t frame = ind->frame;
 	sub_frame_t subframe = ind->subframe;
 	uint32_t num = ind->num;
 	rnti_t rnti = INVALID_U16;
-<<<<<<< HEAD
-	uint16_t ack = 0;
-=======
 	uint8_t ack_num = 0;
 	uint8_t ack_bits;//0:NACK, 1:ACK
->>>>>>> master
 
 	for (uint32_t i = 0; i < num; i++)
 	{
 		rnti = ind->ack[i].rnti;
-<<<<<<< HEAD
-		ack = ind->ack[i].ack;
-
-		update_harq_info(subframe, rnti, ack);
-=======
 		ack_num = ind->ack[i].ack_num;
 		ack_bits = ind->ack[i].ack_bits;
 
 		handle_ack_result(rnti, ack_num, ack_bits);
 
 		//update_harq_info(subframe, rnti, ack);
->>>>>>> master
 	}
 }
 
@@ -429,10 +386,7 @@ void handlePuschReceivedInd(PHY_PuschReceivedInd *pusch)
 	uint16_t num_ue = pusch->num_ue;
 	pusch_result* result = NULL;
 	uint8_t * payload = NULL;
-<<<<<<< HEAD
-=======
 	uint8_t * data = NULL;
->>>>>>> master
 	//mac_header_info header;
 	uint16_t tb_length = 0;
 	uint8_t num_ce = 0;
@@ -440,11 +394,7 @@ void handlePuschReceivedInd(PHY_PuschReceivedInd *pusch)
 	uint8_t rx_ceIds[MAX_NUM_CE];
 	uint8_t rx_lcIds[MAX_LOGICCHAN_NUM];
 	uint16_t rx_lengths[MAX_LOGICCHAN_NUM];
-<<<<<<< HEAD
-	uint16_t offset = 0;
-=======
 	uint32_t offset = 0;
->>>>>>> master
 	mac_rlc_data_info* data_ind = NULL;
 	bool hasData = false;
 
@@ -452,11 +402,7 @@ void handlePuschReceivedInd(PHY_PuschReceivedInd *pusch)
 	msgSize msg_size = sizeof(mac_rlc_data_rpt);
 	mac_rlc_data_rpt *rpt = NULL;
 
-<<<<<<< HEAD
-	msg = new_message(MAC_RLC_DATA_RPT, TASK_D2D_MAC_SCH, TASK_D2D_RLC, msg_size);
-=======
 	msg = new_message(MAC_RLC_DATA_RPT, TASK_D2D_MAC_SCH, TASK_D2D_RLC_RX, msg_size);
->>>>>>> master
 
 	if (msg != NULL)
 	{
@@ -475,11 +421,6 @@ void handlePuschReceivedInd(PHY_PuschReceivedInd *pusch)
 		result = &pusch->result[i];
 		rnti = result->rnti;
 		crc = result->crc;
-<<<<<<< HEAD
-		payload = result->dataptr;
-		tb_length = result->dataSize;
-
-=======
 
 		if (result->buffer_id != 0 && result->buffer_id != 1)
 		{
@@ -499,7 +440,6 @@ void handlePuschReceivedInd(PHY_PuschReceivedInd *pusch)
 
 		handle_crc_result(subframe, rnti, crc);
 #if 0
->>>>>>> master
 		if (rnti == RA_RNTI)
 		{
 			if(crc == 0)
@@ -519,31 +459,17 @@ void handlePuschReceivedInd(PHY_PuschReceivedInd *pusch)
 		{
 			continue;
 		}
-<<<<<<< HEAD
-	
-		payload = parse_mac_header(payload, &num_ce, &num_sdu, rx_ceIds, rx_lcIds, rx_lengths, tb_length);
-	
-		if (payload == NULL)
-=======
 #endif
 		data = parse_mac_header(payload, &num_ce, &num_sdu, rx_ceIds, rx_lcIds, rx_lengths, tb_length);
 	
 		if (data == NULL)
->>>>>>> master
 		{
 			LOG_ERROR(MAC, "parse mac header error! rnti:%u",
 				result->rnti);
 			return;
 		}
-<<<<<<< HEAD
-	
-		data_ind = &rpt->sdu_data_rpt[rpt->ue_num];
-
-		data_ind->logic_chan_num = 0;
-=======
 
 		offset = data - payload;
->>>>>>> master
 
 		for (uint32_t i = 0; i < num_sdu; i++)
 		{
@@ -552,21 +478,13 @@ void handlePuschReceivedInd(PHY_PuschReceivedInd *pusch)
 				if (rx_lcIds[i] == CCCH_)
 				{
 					//CCCH
-<<<<<<< HEAD
-					mac_rrc_data_ind(frame, subframe, rx_lengths[i], payload + offset);
-=======
 					mac_rrc_data_ind(frame, subframe, rx_lengths[i], data + offset);
->>>>>>> master
 					offset = offset + rx_lengths[i];
 				}
 				else
 				{
 					//DTCH
-<<<<<<< HEAD
-					fill_rlc_data_ind(rx_lengths[i], rx_lcIds[i], payload + offset, data_ind);
-=======
 					fill_rlc_data_ind(rx_lengths[i], rx_lcIds[i], offset, data_ind);
->>>>>>> master
 					offset = offset + rx_lengths[i];
 					hasData = true;
 				}
@@ -590,11 +508,7 @@ void handlePuschReceivedInd(PHY_PuschReceivedInd *pusch)
 
 	if (rpt->ue_num > 0)
 	{
-<<<<<<< HEAD
-		if (message_send(TASK_D2D_RLC, msg, sizeof(msgDef)))
-=======
 		if (message_send(TASK_D2D_RLC_RX, msg, sizeof(msgDef)))
->>>>>>> master
 		{
 			LOG_INFO(MAC, "LGC: MAC_RLC_DATA_RPT send, ue_num:%u", rpt->ue_num);
 		}
@@ -628,10 +542,7 @@ void handle_phy_msg(msgDef* msg)
 		}
 		case PHY_MAC_DECOD_DATA_RPT:
 		{
-<<<<<<< HEAD
-=======
 			LOG_INFO(MAC, "PHY_MAC_DECOD_DATA_RPT");
->>>>>>> master
 			PHY_PuschReceivedInd* req = (PHY_PuschReceivedInd *)message_ptr(msg); //TODO:
 
 			handlePuschReceivedInd(req);

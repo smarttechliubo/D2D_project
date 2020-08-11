@@ -15,23 +15,11 @@
 #include "log.h"
 #include "msg_handler.h"
 #include "interface_mac_phy.h"
-<<<<<<< HEAD
-#include "mytask.h"
-#include "phy_sim.h"
-#include "emac_enum_def.h"
-#include "mac_defs.h"
-#include "msg_queue.h"
-#include "mac_osp_interface.h"
-#include "mac_testconfig.h"
-
-extern mac_testPolicy g_TEST_POLICY;
-=======
 #include "phy_sim.h"
 #include "emac_enum_def.h"
 #include "mac_defs.h"
 #include "mac_osp_interface.h"
 
->>>>>>> master
 
 phy_rx_info g_phyRx;
 bool g_timing_sync_phyRx = false;
@@ -53,98 +41,31 @@ void syncTimePhyRx()//TODO: sync
 
 	g_phyRx.frame = time >> 2;
 	g_phyRx.subframe = time % MAX_SUBSFN;
-<<<<<<< HEAD
-/*
-	uint32_t time = 0;
-
-	// 1. get timing sync
-	if (g_timing_sync_phyRx == false)
-    {
-		time = get_syncTiming();// TODO: sync
-
-		if (time != 0xFFFFFFFF)
-		{
-			g_phyRx.frame = time / 10;
-			g_phyRx.subframe = time % MAX_SUBSFN;
-			g_timing_sync_phyRx = true;
-		}
-		else
-	    {
-			LOG_WARN(MAC, "Timing sync fail!!");
-			g_timing_sync_phyRx = false;
-		}
-	}
-	else if (g_timing_sync_phyRx == true)
-	{
-	    g_phyRx.subframe++;
-
-		if (g_phyRx.subframe == MAX_SUBSFN)
-		{
-		    g_phyRx.subframe = 0;
-			g_phyRx.frame = (g_phyRx.frame+1)%MAX_SFN;
-		}
-		
-		if ((g_phyRx.frame*10 + g_phyRx.subframe)%TIMING_SYNC_PERIOD == 0)
-		{
-			time = get_syncTiming();
-
-			if (time != 0xFFFFFFFF)
-			{
-				if (time != g_phyRx.frame*10 + g_phyRx.subframe)
-				{
-					LOG_WARN(PHY, "Timing sync loast!! time:%u, frame:%u, subframe:%u",
-						time, g_phyRx.frame, g_phyRx.subframe);
-
-					g_phyRx.frame = time / 10;
-					g_phyRx.subframe = time % MAX_SUBSFN;
-				}
-			}
-			else
-		    {
-				LOG_WARN(MAC, "Timing sync failed with PHY");
-			}
-		}
-	}*/
-}
-
-=======
 }
 
 
->>>>>>> master
 uint32_t init_phy_rx_sim()
 {
 	void* pTimer;
 	int32_t ret;
 
-<<<<<<< HEAD
-	pTimer = _timerCreate(TASK_D2D_PHY_RX, 1, 4,0);
-=======
 	pTimer = _timerCreate(TASK_D2D_PHY_RX, 1, 400,0);
->>>>>>> master
 	ret = _timerStart(pTimer);
 
 	LOG_INFO(MAC,"init_phy_rx_sim pTimer is %p, ret:%u\r\n", pTimer, ret);
 
 	for (uint32_t i = 0; i < MAX_TX_UE; i++)
 	{
-<<<<<<< HEAD
-		g_phyRx.pusch.pusch[i].data = (uint8_t *)mem_alloc(1024);
-=======
 		g_phyRx.pusch.pusch[i].data = (uint8_t *)mem_alloc(5120);
 		g_phyRx.pusch1.pusch[i].data = (uint8_t *)mem_alloc(5120);
->>>>>>> master
 	}
 
 	g_phyRx.flag_pbch = false;
 	g_phyRx.flag_pdcch = false;
 	g_phyRx.flag_pusch = false;
-<<<<<<< HEAD
-=======
 	g_phyRx.flag_pdcch1 = false;
 	g_phyRx.flag_pusch1 = false;
 
->>>>>>> master
 	return 0;
 }
 
@@ -179,11 +100,7 @@ void phyRxMsgHandler(msgDef *msg)
 		{
 			case MAC_PHY_PBCH_TX_REQ:
 			{
-<<<<<<< HEAD
-				PHY_PBCHSendReq* req = (PHY_PBCHSendReq*)MQ_MSG_CONTENT_PTR(msg);
-=======
 				PHY_PBCHSendReq* req = (PHY_PBCHSendReq*)MSG_HEAD_TO_COMM(msg);
->>>>>>> master
 
 				g_phyRx.flag_pbch = true;
 				memcpy(&g_phyRx.pbch, req, sizeof(PHY_PBCHSendReq));
@@ -203,15 +120,6 @@ void phyRxMsgHandler(msgDef *msg)
 			}
 			case MAC_PHY_PDCCH_SEND:
 			{
-<<<<<<< HEAD
-				PHY_PdcchSendReq* req = (PHY_PdcchSendReq*)MQ_MSG_CONTENT_PTR(msg);
-
-				g_phyRx.flag_pdcch = true;
-				memcpy(&g_phyRx.pdcch, req, sizeof(PHY_PdcchSendReq));
-		
-				LOG_DEBUG(PHY, "MAC_PHY_PDCCH_SEND received, frame:%u,subframe:%u, current frame:%u,subframe:%u",
-					req->frame, req->subframe, g_phyRx.frame,g_phyRx.subframe);
-=======
 				PHY_PdcchSendReq* req = (PHY_PdcchSendReq*)MSG_HEAD_TO_COMM(msg);
 
 				if (g_phyRx.flag_pdcch == false)
@@ -232,23 +140,10 @@ void phyRxMsgHandler(msgDef *msg)
 
 				LOG_DEBUG(PHY, "MAC_PHY_PDCCH_SEND00 received, frame:%u,subframe:%u, current frame:%u,subframe:%u,flag_pdcch:%u,flag_pdcch1:%u",
 					req->frame, req->subframe, g_phyRx.frame,g_phyRx.subframe,g_phyRx.flag_pdcch,g_phyRx.flag_pdcch1);
->>>>>>> master
 				break;
 			}
 			case MAC_PHY_PUSCH_SEND:
 			{				
-<<<<<<< HEAD
-				PHY_PuschSendReq* req = (PHY_PuschSendReq*)MQ_MSG_CONTENT_PTR(msg);
-
-				g_phyRx.flag_pusch = true;
-
-				//g_phyRx.pusch.frame = req->frame;
-				//g_phyRx.pusch.subframe = req->subframe;
-				//g_phyRx.pusch.num = req->num;
-
-				memcpy(&g_phyRx.pusch, req, sizeof(PHY_PuschSendReq));
-
-=======
 				PHY_PuschSendReq* req = (PHY_PuschSendReq*)MSG_HEAD_TO_COMM(msg);
 
 				if (g_phyRx.flag_pusch == false)
@@ -321,19 +216,13 @@ void phyRxMsgHandler(msgDef *msg)
 					LOG_ERROR(PHY, "MAC_PHY_PUSCH_SEND received, frame:%u,subframe:%u, current frame:%u,subframe:%u",
 						req->frame, req->subframe, g_phyRx.frame,g_phyRx.subframe);
 				}
->>>>>>> master
 				//for (uint32_t i = 0; i < g_phyRx.pusch.num ; i++)
 				//{
 				//	memcpy(g_phyRx.pusch.pusch[i].data, req->pusch[i].data, req->pusch[i].pdu_len);
 				//}
 				//memcpy(&g_phyRx.pusch, req, sizeof(PHY_PuschSendReq));
-<<<<<<< HEAD
-				LOG_DEBUG(PHY, "MAC_PHY_PUSCH_SEND received, frame:%u,subframe:%u, current frame:%u,subframe:%u",
-					req->frame, req->subframe, g_phyRx.frame,g_phyRx.subframe);
-=======
 				LOG_DEBUG(PHY, "MAC_PHY_PUSCH_SEND received, frame:%u,subframe:%u, current frame:%u,subframe:%u,flag_pusch:%u,flag_pusch1:%u",
 					req->frame, req->subframe, g_phyRx.frame,g_phyRx.subframe, g_phyRx.flag_pusch,g_phyRx.flag_pusch1);
->>>>>>> master
 				break;
 			}
 			default:
@@ -360,13 +249,8 @@ void handle_pusch_data(uint8_t data_ind, PHY_PuschReceivedInd* puschInd, pusch_i
 	uint8_t rx_lcIds[MAX_LOGICCHAN_NUM];
 	uint16_t rx_lengths[MAX_LOGICCHAN_NUM];
 
-<<<<<<< HEAD
-	bool hasCCCH = false;
-	bool hasData = false;
-=======
 	//bool hasCCCH = false;
 	//bool hasData = false;
->>>>>>> master
 
 	{
 		rnti = pusch->rnti;
@@ -393,19 +277,11 @@ void handle_pusch_data(uint8_t data_ind, PHY_PuschReceivedInd* puschInd, pusch_i
 			{
 				if (rx_lcIds[i] == CCCH_)
 				{
-<<<<<<< HEAD
-					hasCCCH = true;
-				}
-				else
-				{
-					hasData = true;
-=======
 				//	hasCCCH = true;
 				}
 				else
 				{
 				//	hasData = true;
->>>>>>> master
 				}
 			}	
 		}
@@ -418,18 +294,6 @@ void handle_pusch_data(uint8_t data_ind, PHY_PuschReceivedInd* puschInd, pusch_i
 	{
 		result = &puschInd->result[puschInd->num_ue];
 
-<<<<<<< HEAD
-		if (hasCCCH && g_TEST_POLICY.RA_OK == false)
-		{
-			result->crc = 0;
-		}
-		else if (hasData && g_TEST_POLICY.TX_OK == false)
-		{
-			result->crc = 0;
-		}
-		else
-=======
->>>>>>> master
 		{
 			result->crc = 1;
 		}
@@ -470,22 +334,13 @@ void handle_pusch(const      frame_t frame, const sub_frame_t subframe)
 	cqi.subframe = pusch_subframe;
 	cqi.num = 0;
 
-<<<<<<< HEAD
-	pusch_frame = (pusch_frame + (pusch_subframe + 1) / MAX_SUBSFN) % MAX_SFN;
-	pusch_subframe = (pusch_subframe + 1) % MAX_SUBSFN;
-=======
 	pusch_frame = (pusch_frame + (pusch_subframe + 2) / MAX_SUBSFN) % MAX_SFN;
 	pusch_subframe = (pusch_subframe + 2) % MAX_SUBSFN;
->>>>>>> master
 
 	if (g_phyRx.flag_pusch && g_phyRx.flag_pdcch &&
 		(pusch_frame == frame && pusch_subframe == subframe))
 	{
-<<<<<<< HEAD
-		LOG_INFO(PHY, "handle_pusch, frame:%u,subframe:%u, current frame:%u,subframe:%u, dci:%u, sch:%u",
-=======
 		LOG_ERROR(PHY, "handle_pusch, frame:%u,subframe:%u, current frame:%u,subframe:%u, dci:%u, sch:%u",
->>>>>>> master
 			pusch_frame, pusch_subframe, g_phyRx.frame,g_phyRx.subframe, pdcch.num_dci, pusch.num);
 
 		for (uint32_t i = 0; i < pdcch.num_dci; i++)
@@ -512,18 +367,9 @@ void handle_pusch(const      frame_t frame, const sub_frame_t subframe)
 				cqi.num++;
 			}
 
-<<<<<<< HEAD
-			if (g_TEST_POLICY.IN_SYNC)
-			{
-
-			}
-		}
-
-=======
 		}
 
 #if 0
->>>>>>> master
 		if (ackInd.num > 0)
 		{
 			msg_size = sizeof(PHY_ACKInd);
@@ -540,11 +386,7 @@ void handle_pusch(const      frame_t frame, const sub_frame_t subframe)
 				}
 			}
 		}
-<<<<<<< HEAD
-
-=======
 #endif
->>>>>>> master
 		if (puschInd.num_ue > 0)
 		{
 			msg_size = sizeof(PHY_PuschReceivedInd);
@@ -562,10 +404,7 @@ void handle_pusch(const      frame_t frame, const sub_frame_t subframe)
 			}
 		}
 
-<<<<<<< HEAD
-=======
 #if 0
->>>>>>> master
 		if (cqi.num > 0)
 		{
 			msg_size = sizeof(PHY_CQIInd);
@@ -582,11 +421,7 @@ void handle_pusch(const      frame_t frame, const sub_frame_t subframe)
 				}
 			}
 		}
-<<<<<<< HEAD
-
-=======
 #endif
->>>>>>> master
 		if (pdcch.num_dci != pusch.num)
 		{
 			LOG_ERROR(PHY, "phy msg missing, num_dci:%u, pusch.num:%u", pdcch.num_dci, pusch.num);
@@ -604,8 +439,6 @@ void handle_pusch(const      frame_t frame, const sub_frame_t subframe)
 
 }
 
-<<<<<<< HEAD
-=======
 void handle_pusch1(const      frame_t frame, const sub_frame_t subframe)
 {
 	frame_t pusch_frame = g_phyRx.pusch1.frame;
@@ -739,7 +572,6 @@ void handle_pusch1(const      frame_t frame, const sub_frame_t subframe)
 
 }
 
->>>>>>> master
 void handle_pbch(const      frame_t frame, const sub_frame_t subframe)
 {
 	frame_t pbch_frame = g_phyRx.pbch.frame;
@@ -783,10 +615,7 @@ void handle_phy_rx(const      frame_t frame, const sub_frame_t subframe)
 	handle_pbch(frame, subframe);
 
 	handle_pusch(frame, subframe);	
-<<<<<<< HEAD
-=======
 	handle_pusch1(frame, subframe);
->>>>>>> master
 }
 
 void phy_rx_sim_thread(msgDef *msg)

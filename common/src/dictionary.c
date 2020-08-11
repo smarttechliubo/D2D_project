@@ -27,20 +27,12 @@ ue_info_dict  *dict_init()
 {
 	uint32_t i; 
     ue_info_node *temp; 
-<<<<<<< HEAD
-    ue_info_dict *p = calloc(1,sizeof(ue_info_dict)); 
-=======
     ue_info_dict *p = (ue_info_dict *)OSP_Alloc_Mem(sizeof(ue_info_dict)); 
->>>>>>> master
     p->head = NULL; 
     p->tail = NULL;
 	p->element_number = 0; 
 
-<<<<<<< HEAD
-	temp = (ue_info_node*)calloc(1,sizeof(ue_info_node));
-=======
 	temp = (ue_info_node *)OSP_Alloc_Mem(sizeof(ue_info_node));
->>>>>>> master
 	temp->ue_info.value_ue_index = 0; 
 	temp->ue_info.key_ue_rnti = 0xffff;
     temp->next = NULL; 
@@ -66,21 +58,14 @@ void dict_SetValue(ue_info_dict *dict, uint16_t key_rnti,uint16_t value_ue_index
 {
     ue_info_node  *new_node; 
     ue_info_node *temp = dict->head; 
-<<<<<<< HEAD
-=======
 	
->>>>>>> master
 	while(temp != dict->tail)
 	{
 		if (temp->ue_info.key_ue_rnti == key_rnti)
 		{
 			temp->ue_info.value_ue_index = value_ue_index; 
-<<<<<<< HEAD
-			LOG_INFO(RRC,"find right node in dictionary,change the value of element\n"); 
-=======
 			LOG_INFO(RRC,"find right node in dictionary,change the value of element\n");
 			
->>>>>>> master
 			break; 
 		}
 		temp = temp->next;
@@ -88,12 +73,8 @@ void dict_SetValue(ue_info_dict *dict, uint16_t key_rnti,uint16_t value_ue_index
 
 	if (temp == dict->tail)  //!not find the key
     {
-<<<<<<< HEAD
-		new_node = calloc(1,sizeof(ue_info_node)); 
-=======
         
 		new_node = (ue_info_node  *)OSP_Alloc_Mem(sizeof(ue_info_node)); 
->>>>>>> master
 		new_node->next = NULL;
 		new_node->ue_info.key_ue_rnti = key_rnti; 
 		new_node->ue_info.value_ue_index = value_ue_index;
@@ -101,19 +82,11 @@ void dict_SetValue(ue_info_dict *dict, uint16_t key_rnti,uint16_t value_ue_index
 		 
 		dict->tail = new_node; 
 		dict->element_number++; 
-<<<<<<< HEAD
-		LOG_INFO(RRC, "don't find the node, so insert new node to the dictionary, key_rnti = %d,value_ue_index = %d,elment_number = %d\n",
-		key_rnti,value_ue_index,dict->element_number); 
-		
-    }
-
-=======
 		LOG_INFO(RRC, "doesn't find the node, so insert new node to the dictionary, key_rnti = %d,value_ue_index = %d,elment_number = %d\n",
 		key_rnti,value_ue_index,dict->element_number); 
 		
     }
     
->>>>>>> master
 }
 
 
@@ -152,28 +125,17 @@ uint32_t  dict_GetValue(ue_info_dict *dict, uint16_t key_rnti)
    
 	while(temp != dict->tail->next)
 	{
-<<<<<<< HEAD
-		LOG_DEBUG(RRC, "func:%s, dictionary's node's key = %d \n",__func__,temp->ue_info.key_ue_rnti);
-		if (temp->ue_info.key_ue_rnti == key_rnti)
-		{
-		    LOG_INFO(RRC, "find right node in dictionary,return the value of element\n"); 
-=======
 	    LOG_DEBUG(RRC,"temp->ue_info.key_ue_rnti = %d, temp->ue_info.key_ue_index = %d,\n",temp->ue_info.key_ue_rnti,temp->ue_info.value_ue_index);
 		//LOG_DEBUG(RRC, "func:%s, dictionary's node's key = %d \n",__func__,temp->ue_info.key_ue_rnti);
 		if (temp->ue_info.key_ue_rnti == key_rnti)
 		{
 		   // LOG_INFO(RRC, "find right node in dictionary,return the value of element\n"); 
->>>>>>> master
 			return temp->ue_info.value_ue_index ;
 		}
 		temp = temp->next;
 	}
 
-<<<<<<< HEAD
-	AssertFatal(temp != dict->tail->next , RRC, "can't find the node which's key == key_rnti,pls check it\n"); 
-=======
 	AssertFatal((temp != dict->tail->next), RRC, "can't find the node which's key == key_rnti,pls check it\n"); 
->>>>>>> master
 
 } 
  

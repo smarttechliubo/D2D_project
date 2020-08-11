@@ -17,12 +17,7 @@ typedef struct
 {
     frame_t frame;
     sub_frame_t subframe;
-<<<<<<< HEAD
-	mac_info_s *mac;//source
-	mac_info_s *macd;//destination
-=======
 	mac_info_s *mac;
->>>>>>> master
 }context_s;
 
 

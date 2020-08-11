@@ -16,10 +16,6 @@
 
 extern context_s g_context;
 extern schedule_result_s g_sch;
-<<<<<<< HEAD
-extern mac_info_s *g_sch_mac;
-=======
->>>>>>> master
 
 uint32_t get_rb_num(uint16_t bandwith);
 uint32_t get_rb_start(const uint16_t bandwith);

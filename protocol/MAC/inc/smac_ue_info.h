@@ -55,13 +55,8 @@ typedef struct
 typedef struct
 {
 	uint8_t  chan_num;
-<<<<<<< HEAD
-	uint8_t  padding;
-	uint16_t buffer_total;
-=======
 	uint8_t  padding[3];
 	uint32_t buffer_total;
->>>>>>> master
 	uint8_t  chan_id[MAX_LOGICCHAN_NUM];
 	uint32_t buffer_size[MAX_LOGICCHAN_NUM];
 
@@ -75,17 +70,6 @@ typedef struct
 	bool      active;
 	bool      temp;
 	uint16_t  ueId;
-<<<<<<< HEAD
-	uint16_t  ueIndex;
-	rnti_t    rnti;
-	uint16_t  maxHARQ_Tx;
-	bool      out_of_sync;
-	uint16_t  max_out_sync;
-	uint16_t  out_sync_count;
-	uint16_t  padding;
-
-	uint16_t  lc_num;
-=======
 
 	uint16_t  ueIndex;
 	rnti_t    rnti;
@@ -98,14 +82,11 @@ typedef struct
 	uint16_t  out_sync_count;
 
 	uint32_t  lc_num;
->>>>>>> master
 	lc_config lc_config[MAX_LOGICCHAN_NUM];
 	uint32_t  ce_num;
 	mac_ce    macCE[2];
 
 	//uint16_t cqi[4];
-<<<<<<< HEAD
-=======
 	uint8_t 	  crc_num;
 	uint8_t       crc_bits;//1:crc=OK, 0:crc=NG
 	uint16_t      padding1;
@@ -115,7 +96,6 @@ typedef struct
 
 	uint16_t      nack_timer;
 	uint16_t      nack_count;
->>>>>>> master
 
 	txBuffer      buffer;
 	schedule_info sch_info;

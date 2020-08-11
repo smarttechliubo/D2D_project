@@ -4,11 +4,7 @@
 #include <stdio.h>
 #include<stdlib.h>
 #include <log.h>
-<<<<<<< HEAD
-
-=======
 #if 0
->>>>>>> master
 void * dummy_func(void *args)
 {
     int index = 0; 
@@ -96,8 +92,5 @@ int main()
 }
 #endif 
 
-<<<<<<< HEAD
-=======
 #endif 
 
->>>>>>> master

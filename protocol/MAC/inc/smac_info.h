@@ -26,11 +26,7 @@ typedef struct
 	uint16_t    max_rbs_per_ue;
 	uint16_t    min_rbs_per_ue;
 	uint16_t    padding;
-<<<<<<< HEAD
-	uint16_t    subframe_config;// frame type config
-=======
 	uint16_t    subframe_config;// frame type config value: 0..1, 0: DDUUDDUU, 1: DDDUDDDU
->>>>>>> master
 	uint32_t    cce_bits;//1: in use, 0: available
 	uint16_t    rb_num;//pdcch rb num
 	uint16_t    rb_start_index; // pdcch rb start

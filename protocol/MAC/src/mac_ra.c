@@ -325,11 +325,7 @@ void update_ra_buffer(rlc_buffer_rpt buffer)
 
 	if (rnti == RA_RNTI)// dest
 	{
-<<<<<<< HEAD
-		if ((ra = add_ra(g_sch_mac->cellId, EMAC_DEST)) == NULL)
-=======
 		if ((ra = add_ra(g_context.mac->cellId, EMAC_DEST)) == NULL)
->>>>>>> master
 		{
 			LOG_ERROR(MAC, "add new ra ue fail! cellId:%u", g_sch.cellId);
 		}	
@@ -393,11 +389,7 @@ uint16_t mac_ra_data_request(rlc_data_req         rlc_data_request[D2D_MAX_USER_
 
 void ra_msg(const frame_t frame, const sub_frame_t subframe, ra_list *ra)
 {
-<<<<<<< HEAD
-	mac_info_s *mac = g_sch_mac;
-=======
 	mac_info_s *mac = g_context.mac;
->>>>>>> master
 	uint16_t bandwith = mac->bandwith;
 	tx_req_info *tx_info = &g_sch.tx_info;
 	uint16_t sch_num = tx_info->sch_num;
@@ -479,11 +471,7 @@ bool check_ra_timer(ra_list *ra)
 
 void schedule_ra(const frame_t frame, const sub_frame_t subframe)
 {
-<<<<<<< HEAD
-	if (g_sch_mac->mode != EMAC_DEST)
-=======
 	if (g_context.mac->mode != EMAC_DEST)
->>>>>>> master
 		return;
 
 	ra_list *ra = g_dst_ra.ra_list;

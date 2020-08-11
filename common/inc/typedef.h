@@ -10,10 +10,7 @@
 #ifndef INC_TYPEDEF_H_
 #define INC_TYPEDEF_H_
 
-<<<<<<< HEAD
-=======
 #include <stddef.h>
->>>>>>> master
 #define true 1
 #define false 0
 
@@ -28,11 +25,7 @@ typedef   int   MessagesIds;
 typedef   int   instance_t;
 
 
-<<<<<<< HEAD
-typedef int                bool;
-=======
 typedef unsigned char                bool;
->>>>>>> master
 typedef uint32_t           frame_t;
 typedef uint32_t           sub_frame_t;
 typedef uint16_t           rnti_t;

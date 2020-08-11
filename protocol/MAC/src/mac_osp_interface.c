@@ -10,8 +10,6 @@
 #include "typedef.h"
 #include "osp_ex.h"
 
-<<<<<<< HEAD
-=======
 void setFrameOffsetTime(int time)
 {
 	(void )Osp_SetFrameOffsetTime(time);
@@ -44,7 +42,6 @@ void* _RegTimer1ms()
 	return OSP_RegFrameSyncCal();
 }
 
->>>>>>> master
 void* _timerCreate(uint32_t DstTaskId,  bool isRepeat, uint32_t timeout, uint32_t delay)
 {
 	return OSP_timerCreateSim(DstTaskId, isRepeat, timeout, delay);

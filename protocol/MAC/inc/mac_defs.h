@@ -22,21 +22,13 @@ typedef uint32_t message_size_t;
 #define INVALID_U32 0XFFFFFFFF
 
 
-<<<<<<< HEAD
-#define TIMING_ADVANCE 1
-=======
 #define MAC_SCH_TIMING_ADVANCE 2
->>>>>>> master
 #define TIMING_SYNC_PERIOD 20
 
 #define MIB_PDU_SIZE 3
 #define SIB_PDU_SIZE 64 //TODO
 #define MAX_MCS 30
-<<<<<<< HEAD
-#define MAX_RBS 50
-=======
 #define MAX_RBS 100
->>>>>>> master
 #define MAX_UE  D2D_MAX_USER_NUM
 #define MAX_RA_NUM 2
 #define MAX_RA_TIMER 10
@@ -51,10 +43,6 @@ typedef uint32_t message_size_t;
 #define SHORT_PADDING 31
 
 #define MAX_NUM_CE 4
-<<<<<<< HEAD
-
-
-=======
 #define MAX_CRC_TIMER 10
 #define MAX_NACK_TIMER 10
 #define MAX_CRC_NG 4
@@ -65,5 +53,4 @@ typedef uint32_t message_size_t;
 #define BIT1 1
 
 #define MAC_DEBUG
->>>>>>> master
 #endif //_SMARTLOGICTECH_DEFS_H

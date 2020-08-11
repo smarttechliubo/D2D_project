@@ -18,10 +18,7 @@ void init_mac();
 void mac_reset();
 void run_period(msgDef* msg);
 void run_scheduler(msgDef* msg);
-<<<<<<< HEAD
-=======
 int32_t pre_check(const sub_frame_t subframe);
->>>>>>> master
 
 
 #endif //_SMARTLOGICTECH_MAC_H

@@ -15,17 +15,9 @@
 #include "log.h"
 #include "msg_handler.h"
 #include "interface_mac_phy.h"
-<<<<<<< HEAD
-#include "mytask.h"
 #include "phy_sim.h"
 #include "emac_enum_def.h"
 #include "mac_defs.h"
-#include "msg_queue.h"
-=======
-#include "phy_sim.h"
-#include "emac_enum_def.h"
-#include "mac_defs.h"
->>>>>>> master
 #include "mac_osp_interface.h"
 
 phy_tx_info g_phyTx;
@@ -130,11 +122,7 @@ uint32_t init_phy_tx_sim()
 	void* pTimer;
 	int32_t ret;
 
-<<<<<<< HEAD
-	pTimer = _timerCreate(TASK_D2D_PHY_TX, 1, 4,0);
-=======
 	pTimer = _timerCreate(TASK_D2D_PHY_TX, 1, 400,0);
->>>>>>> master
 	ret = _timerStart(pTimer);
 
 	LOG_INFO(MAC,"init_phy_tx_sim pTimer is %p, ret:%u\r\n", pTimer, ret);
@@ -226,11 +214,7 @@ void handle_phy_tx(const      frame_t frame, const sub_frame_t subframe)
 
 		if (msg != NULL)
 		{
-<<<<<<< HEAD
-			memcpy(MQ_MSG_CONTENT_PTR(msg), &g_phyTx.pbch, msg_size);
-=======
 			memcpy(MSG_HEAD_TO_COMM(msg), &g_phyTx.pbch, msg_size);
->>>>>>> master
 
 			if (msgSend(taskId, (char*)msg, sizeof(msgHeader) + msg_size))
 			{
@@ -266,11 +250,7 @@ void handle_phy_tx(const      frame_t frame, const sub_frame_t subframe)
 
 		if (msg != NULL)
 		{
-<<<<<<< HEAD
-			memcpy(MQ_MSG_CONTENT_PTR(msg), &g_phyTx.pdcch, msg_size);
-=======
 			memcpy(MSG_HEAD_TO_COMM(msg), &g_phyTx.pdcch, msg_size);
->>>>>>> master
 
 			if (msgSend(taskId, (char*)msg, sizeof(msgHeader) + msg_size))
 			{
@@ -305,11 +285,7 @@ void handle_phy_tx(const      frame_t frame, const sub_frame_t subframe)
 
 		if (msg != NULL)
 		{
-<<<<<<< HEAD
-			memcpy(MQ_MSG_CONTENT_PTR(msg), &g_phyTx.pusch, msg_size);
-=======
 			memcpy(MSG_HEAD_TO_COMM(msg), &g_phyTx.pusch, msg_size);
->>>>>>> master
 
 			if (msgSend(taskId, (char*)msg, sizeof(msgHeader) + msg_size))
 			{
@@ -351,17 +327,6 @@ void phy_tx_sim_thread(msgDef* msg)
 	frame = g_phyTx.frame;
 	subframe = g_phyTx.subframe;
 
-<<<<<<< HEAD
-	//frame = (frame + (subframe + TIMING_ADVANCE) / MAX_SUBSFN) % MAX_SFN;
-	//subframe = (subframe + TIMING_ADVANCE) % MAX_SUBSFN;
-	if (!isTimer)
-	{
-		phyTxMsgHandler(msg);
-	}
-	else
-	{
-		handle_phy_tx(frame, subframe);
-=======
 	//frame = (frame + (subframe + MAC_SCH_TIMING_ADVANCE) / MAX_SUBSFN) % MAX_SFN;
 	//subframe = (subframe + MAC_SCH_TIMING_ADVANCE) % MAX_SUBSFN;
 	if (!isTimer)
@@ -373,7 +338,6 @@ void phy_tx_sim_thread(msgDef* msg)
 	else
 	{
 		//handle_phy_tx(frame, subframe);
->>>>>>> master
 	}
 
 	message_free(msg);
@@ -395,13 +359,8 @@ void *phy_tx_thread()
 		frame = g_phyTx.frame;
 		subframe = g_phyTx.subframe;
 		
-<<<<<<< HEAD
-		//frame = (frame + (subframe + TIMING_ADVANCE) / MAX_SUBSFN) % MAX_SFN;
-		//subframe = (subframe + TIMING_ADVANCE) % MAX_SUBSFN;
-=======
 		//frame = (frame + (subframe + MAC_SCH_TIMING_ADVANCE) / MAX_SUBSFN) % MAX_SFN;
 		//subframe = (subframe + MAC_SCH_TIMING_ADVANCE) % MAX_SUBSFN;
->>>>>>> master
 
 		phyTxMsgHandler();
 		handle_phy_tx(frame, subframe);

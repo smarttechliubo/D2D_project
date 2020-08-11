@@ -41,15 +41,6 @@ extern "C" {
 //-----------------------------------------------------------------------------
 
 typedef struct mem_block_t {
-<<<<<<< HEAD
-  struct mem_block_t *next;
-  struct mem_block_t *previous;
-  size_t size;
-  unsigned char pool_id; //!<从哪个pool中获取的
-  unsigned char *data;  //！数据地址
-} mem_block_t;
-
-=======
 	  struct mem_block_t *next;
 	  struct mem_block_t *previous;
 	  size_t size;
@@ -60,18 +51,12 @@ typedef struct mem_block_t {
 
 
 
->>>>>>> master
 //-----------------------------------------------------------------------------
 
 void        *pool_buffer_init (void);
 void        *pool_buffer_clean (void *arg);
-<<<<<<< HEAD
-void         free_mem_block (mem_block_t * leP, const char* caller);
-mem_block_t* get_free_mem_block (uint32_t sizeP, const char* caller);
-=======
 void         free_mem_block (mem_block_t * leP, const char* caller,uint32_t line);
 mem_block_t* get_free_mem_block (uint32_t sizeP, const char* caller,uint32_t line);
->>>>>>> master
 mem_block_t *get_free_copy_mem_block (void);
 mem_block_t *get_free_copy_mem_block_up (void);
 mem_block_t *copy_mem_block (mem_block_t * leP, mem_block_t * destP);

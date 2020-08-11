@@ -14,19 +14,11 @@
 
 
 
-<<<<<<< HEAD
-#define  D2D_MAX_USER_NUM    8 
- 
-#define  MAX_LOGICCHAN_NUM    4
-
-#define MAX_SFN 1024
-=======
 #define      D2D_MAX_USER_NUM    8 
  
 #define  MAX_LOGICCHAN_NUM    4
 
 #define MAX_SFN 512
->>>>>>> master
 #define MAX_SUBSFN 4
 
 #define MAX_TX_UE 4
@@ -58,9 +50,6 @@ typedef enum
 }subframeconfig_e; 
 
 
-<<<<<<< HEAD
- 
-=======
 
 typedef struct
 {
@@ -73,6 +62,5 @@ typedef struct
 
 extern uint32_t   Get_Subsfn( ); 
 extern uint32_t   Get_Frame( );
->>>>>>> master
 
 #endif

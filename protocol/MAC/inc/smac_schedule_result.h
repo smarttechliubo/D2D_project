@@ -28,11 +28,7 @@ typedef struct
 	uint8_t harqId;
 	uint8_t ack;
 
-<<<<<<< HEAD
-	uint16_t padding_len;
-=======
 	uint16_t buffer_id;
->>>>>>> master
 	uint16_t pdu_len;
 	uint8_t *data;
 }sch_ind;
@@ -46,14 +42,9 @@ typedef struct
 
 	uint8_t cce_rb;//dci rb start
 	uint8_t cce_rb_num;//dci rb num
-<<<<<<< HEAD
-	uint16_t padding;
-	//dci
-=======
 	//dci
 	uint8_t  crc_num;
 	uint8_t  crc_bits;//1:crc=OK, 0:crc=NG
->>>>>>> master
     uint32_t rb_start;
 	uint32_t rb_num;
 	uint8_t mcs;
