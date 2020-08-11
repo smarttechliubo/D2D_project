@@ -17,7 +17,6 @@
 
 context_s g_context;
 schedule_result_s g_sch;
-mac_info_s *g_sch_mac = NULL;
 
 uint32_t g_prbmap[5] = {54, 108, 216, 432, 720}; //0: 1.5M, 1: 3M, 2: 6M, 3: 12M, 4:20M
 

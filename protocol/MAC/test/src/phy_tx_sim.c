@@ -327,8 +327,8 @@ void phy_tx_sim_thread(msgDef* msg)
 	frame = g_phyTx.frame;
 	subframe = g_phyTx.subframe;
 
-	//frame = (frame + (subframe + TIMING_ADVANCE) / MAX_SUBSFN) % MAX_SFN;
-	//subframe = (subframe + TIMING_ADVANCE) % MAX_SUBSFN;
+	//frame = (frame + (subframe + MAC_SCH_TIMING_ADVANCE) / MAX_SUBSFN) % MAX_SFN;
+	//subframe = (subframe + MAC_SCH_TIMING_ADVANCE) % MAX_SUBSFN;
 	if (!isTimer)
 	{
 		phyTxMsgHandler(msg);
@@ -359,8 +359,8 @@ void *phy_tx_thread()
 		frame = g_phyTx.frame;
 		subframe = g_phyTx.subframe;
 		
-		//frame = (frame + (subframe + TIMING_ADVANCE) / MAX_SUBSFN) % MAX_SFN;
-		//subframe = (subframe + TIMING_ADVANCE) % MAX_SUBSFN;
+		//frame = (frame + (subframe + MAC_SCH_TIMING_ADVANCE) / MAX_SUBSFN) % MAX_SFN;
+		//subframe = (subframe + MAC_SCH_TIMING_ADVANCE) % MAX_SUBSFN;
 
 		phyTxMsgHandler();
 		handle_phy_tx(frame, subframe);

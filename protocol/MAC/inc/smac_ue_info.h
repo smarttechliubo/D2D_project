@@ -70,20 +70,32 @@ typedef struct
 	bool      active;
 	bool      temp;
 	uint16_t  ueId;
+
 	uint16_t  ueIndex;
 	rnti_t    rnti;
+
 	uint16_t  maxHARQ_Tx;
 	bool      out_of_sync;
+	uint8_t   padding;
+
 	uint16_t  max_out_sync;
 	uint16_t  out_sync_count;
-	uint16_t  padding;
 
-	uint16_t  lc_num;
+	uint32_t  lc_num;
 	lc_config lc_config[MAX_LOGICCHAN_NUM];
 	uint32_t  ce_num;
 	mac_ce    macCE[2];
 
 	//uint16_t cqi[4];
+	uint8_t 	  crc_num;
+	uint8_t       crc_bits;//1:crc=OK, 0:crc=NG
+	uint16_t      padding1;
+
+	uint16_t	  crc_timer;
+	uint16_t      crc_ng_count;
+
+	uint16_t      nack_timer;
+	uint16_t      nack_count;
 
 	txBuffer      buffer;
 	schedule_info sch_info;

@@ -42,8 +42,9 @@ typedef struct
 
 	uint8_t cce_rb;//dci rb start
 	uint8_t cce_rb_num;//dci rb num
-	uint16_t padding;
 	//dci
+	uint8_t  crc_num;
+	uint8_t  crc_bits;//1:crc=OK, 0:crc=NG
     uint32_t rb_start;
 	uint32_t rb_num;
 	uint8_t mcs;

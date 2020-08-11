@@ -337,20 +337,26 @@ void handleCrcOK(const frame_t frame, const sub_frame_t subframe,
 	handlePuschSdu(frame, subframe, result, rpt);
 }
 */
+
+
 void handle_ack(const PHY_ACKInd* ind)
 {
 	//frame_t frame = ind->frame;
 	sub_frame_t subframe = ind->subframe;
 	uint32_t num = ind->num;
 	rnti_t rnti = INVALID_U16;
-	uint16_t ack = 0;
+	uint8_t ack_num = 0;
+	uint8_t ack_bits;//0:NACK, 1:ACK
 
 	for (uint32_t i = 0; i < num; i++)
 	{
 		rnti = ind->ack[i].rnti;
-		ack = ind->ack[i].ack;
+		ack_num = ind->ack[i].ack_num;
+		ack_bits = ind->ack[i].ack_bits;
 
-		update_harq_info(subframe, rnti, ack);
+		handle_ack_result(rnti, ack_num, ack_bits);
+
+		//update_harq_info(subframe, rnti, ack);
 	}
 }
 
@@ -431,6 +437,8 @@ void handlePuschReceivedInd(PHY_PuschReceivedInd *pusch)
 		data_ind->logic_chan_num = 0;
 		data_ind->ue_tb_size = tb_length;
 		data_ind->mac_pdu_buffer_ptr = (uint32_t *)payload;
+
+		handle_crc_result(subframe, rnti, crc);
 #if 0
 		if (rnti == RA_RNTI)
 		{

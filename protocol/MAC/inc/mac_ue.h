@@ -19,6 +19,8 @@ void mac_user_release(const rrc_mac_release_req *req);
 uint16_t find_ue(const rnti_t rnti);
 bool remove_ue(const uint16_t ueIndex, const uint32_t mode);
 void add_temp_ue(const rnti_t rnti);
+void handle_ack_result(const rnti_t rnti, const uint8_t ack_num, const uint8_t ack_bits);
+bool handle_crc_result(const sub_frame_t subframe, const rnti_t rnti, const uint16_t crc);
 bool update_temp_ue_crc_result(const sub_frame_t subframe, const rnti_t rnti, const uint16_t crc);
 bool update_crc_result(const sub_frame_t subframe, const rnti_t rnti, const uint16_t crc);
 bool update_ue_cqi(const rnti_t rnti, const uint16_t cqi);

@@ -74,30 +74,79 @@ mac_info_s* init_mac_info()
 void init_mac()
 {
 	g_context.mac = init_mac_info();
-	g_context.macd = init_mac_info();
 	g_timing_sync = false;
 }
 
 void mac_clean()
 {
 	mem_free((char*)g_context.mac);
-	mem_free((char*)g_context.macd);
 
 	LOG_INFO(MAC, "mac_clean");
 }
 
 int32_t pre_check(const sub_frame_t subframe)
 {
-	if ((g_context.mac->status == ESTATUS_ACTIVE) && (subframe == 0 || subframe == 1))
+	int32_t ret = 0;
+
+	if (g_context.mac->status == ESTATUS_ACTIVE)
 	{
-		return 0;
+		if (g_context.mac->mode == 0)
+		{
+			if (g_context.mac->subframe_config == 0)
+			{
+				if (subframe <= 1)
+				{
+					ret = 1;
+				}
+				else
+				{
+					ret = 0;
+				}
+			}
+			else if (g_context.mac->subframe_config == 1)
+			{
+				if (subframe <= 2)
+				{
+					ret = 1;
+				}
+				else
+				{
+					ret = 0;
+				}
+			}
+		}
+		else if (g_context.mac->mode == 1)
+		{
+			if (g_context.mac->subframe_config == 0)
+			{
+				if (subframe <= 1)
+				{
+					ret = 0;
+				}
+				else
+				{
+					ret = 1;
+				}
+			}
+			else if (g_context.mac->subframe_config == 1)
+			{
+				if (subframe <= 2)
+				{
+					ret = 0;
+				}
+				else
+				{
+					ret = 1;
+				}
+			}
+		}
 	}
-	else if((g_context.macd->status == ESTATUS_ACTIVE) && (subframe == 2 || subframe == 3))
+	else
 	{
-		return 1;
+		ret = 0;
 	}
 
-	return -1;
+	return ret;
 }
 
 void mac_pre_handler(msgDef *msg)
@@ -111,33 +160,54 @@ void mac_pre_handler(msgDef *msg)
 	frame = g_context.frame;
 	subframe = g_context.subframe;
 
-	//frame = (frame + (subframe + TIMING_ADVANCE) / MAX_SUBSFN) % MAX_SFN;
-	//subframe = (subframe + TIMING_ADVANCE) % MAX_SUBSFN;
+	frame = (frame + (subframe + MAC_SCH_TIMING_ADVANCE) / MAX_SUBSFN) % MAX_SFN;
+	subframe = (subframe + MAC_SCH_TIMING_ADVANCE) % MAX_SUBSFN;
 
 	g_context.mac->frame = frame;
 	g_context.mac->subframe = subframe;
 	g_context.mac->cce_bits = 0;
 
-	g_context.macd->frame = frame;
-	g_context.macd->subframe = subframe;
-	g_context.macd->cce_bits = 0;
-
 	int32_t ret = pre_check(subframe);
 
-	g_sch_mac = ((ret == 0) ? g_context.mac : g_context.macd);
-
-	if (ret == 0)
+	if (ret == 1)
 	{
 		pre_schedule(frame, subframe, g_context.mac);
 	}
 	else
 	{
-		//pre_schedule(frame, subframe, g_context.macd);
+		//pre_schedule(frame, subframe, g_context.mac);
 	}
 
 }
 
-void msg_handler(msgDef* msg)
+void rcv_msg_handler(msgDef* msg)
+{
+	task_id taskId = 0;
+	
+	taskId = get_SrcId(msg);
+	
+	switch (taskId)
+	{
+		case TASK_D2D_RRC:
+		case TASK_D2D_MAC://TODO:FPGA only
+		{
+			handle_rrc_msg(msg);
+			break;
+		}
+		case TASK_D2D_PHY_RX:
+		{
+			handle_phy_msg(msg);
+			break;
+		}
+		default:
+		{
+			LOG_ERROR(MAC, "msg_handler, unknown task msg msg_id:%u", taskId);
+			break;
+		}
+	}
+}
+
+void sch_msg_handler(msgDef* msg)
 {
 	//msgDef* msg = NULL;
 	//uint32_t msg_len = 0;
@@ -150,11 +220,6 @@ void msg_handler(msgDef* msg)
 		case TASK_D2D_RLC_TX:
 		{
 			handle_buffer_status_ind(msg);
-			break;
-		}
-		case TASK_D2D_PHY_RX:
-		{
-			handle_phy_msg(msg);
 			break;
 		}
 		default:
@@ -295,55 +360,6 @@ int32_t init_mac_period()
 
 	init_mac();
 
-	g_sch_mac = g_context.mac;
-
-	msgDef* msg = NULL;
-
-	rrc_mac_initial_req *req;
-	msgSize msg_size = sizeof(rrc_mac_initial_req);
-
-	msg = new_message(RRC_MAC_INITIAL_REQ, TASK_D2D_RRC, TASK_D2D_MAC, msg_size);
-
-	if (msg != NULL)
-	{
-		req = (rrc_mac_initial_req*)message_ptr(msg);
-		req->cellId = 					 0;
-		req->bandwith =					 1;
-		req->pdcch_config.rb_num =		 2;
-		req->pdcch_config.rb_start_index = 2;
-		req->subframe_config =			 0;
-		req->mode =   0;
-
-		if (message_send(TASK_D2D_MAC, msg, sizeof(msgDef)))
-		{
-			LOG_INFO(MAC, "LGC: rrc_mac_initial_req send");
-		}
-	}
-
-	rrc_mac_connnection_setup* setup;
-	msg_size = sizeof(rrc_mac_connnection_setup);
-
-	msg = new_message(RRC_MAC_CONNECT_SETUP_CFG_REQ, TASK_D2D_RRC, TASK_D2D_MAC, msg_size);
-
-	if (msg != NULL)
-	{
-		setup = (rrc_mac_connnection_setup*)message_ptr(msg);
-
-		setup->mode = 0;
-		setup->ue_index = 1;
-		setup->maxHARQ_Tx = 4;
-		setup->max_out_sync = 4;
-		setup->logical_channel_num = 1;
-		setup->logical_channel_config[0].chan_type = DTCH;
-		setup->logical_channel_config[0].priority = 15;
-		setup->logical_channel_config[0].logical_channel_id = 3;
-
-		if (message_send(TASK_D2D_MAC, msg, sizeof(msgDef)))
-		{
-			LOG_INFO(MAC, "LGC: RRC_MAC_CONNECT_SETUP_CFG_REQ send");
-		}
-	}
-
 	return 0;
 }
 
@@ -364,7 +380,7 @@ void run_period(msgDef* msg)
 
 	if (!isTimer)
 	{
-		handle_rrc_msg(msg);
+		rcv_msg_handler(msg);
 	}
 	else
 	{
@@ -382,31 +398,37 @@ int32_t init_mac_scheduler()
 	void* pTimer;
 	int32_t ret;
 
-	(void)_RegTimer1ms();
+	(void)_RegTimer4ms();
 
 	//pTimer = _timerCreate(TASK_D2D_MAC_SCH, 1, 400, 100);
 	//ret = _timerStart(pTimer);
 
-	setFrameOffsetTime(3);
+	//setFrameOffsetTime(1);
 
 	LOG_INFO(MAC,"init_mac_scheduler pTimer is %p, ret:%d\r\n", pTimer,ret);
 
 	return 0;
 }
 
-uint32_t pdcch_num = 0;
+uint32_t g_pdcch_num = 0;
+uint32_t g_pusch_num = 0;
+bool  g_pdcch_send;
 
 void run_scheduler(msgDef* msg)
 {
-	//sub_frame_t subframe = (g_context.subframe + TIMING_ADVANCE) % MAX_SUBSFN;
-    sub_frame_t subframe = g_context.subframe;
 	bool isTimer = is_timer(msg);
-	int32_t ret = pre_check(subframe);
 
 #ifdef MAC_DEBUG
-	LOG_ERROR(MAC, "run_scheduler， frame:%u, subframe:%u, isTimer:%u, g_timing_sync:%u,msgId:%u", 
-		g_context.mac->frame, g_context.mac->subframe, isTimer, g_timing_sync, isTimer ? get_msgId(msg) : 0);
+	LOG_ERROR(MAC, "run_scheduler， frame:%u, subframe:%u, isTimer:%u, g_timing_sync:%u", 
+		g_context.mac->frame, g_context.mac->subframe, isTimer, g_timing_sync);
 #endif
+
+	int32_t ret = 0;
+
+	sub_frame_t subframe = (g_context.subframe + MAC_SCH_TIMING_ADVANCE) % MAX_SUBSFN;
+	frame_t frame = (g_context.frame + (subframe + MAC_SCH_TIMING_ADVANCE) / MAX_SUBSFN) % MAX_SFN;
+
+	ret = pre_check(subframe);
 
 	if (isTimer)
 	{
@@ -416,11 +438,19 @@ void run_scheduler(msgDef* msg)
 
 	if (!isTimer)
 	{
-		msg_handler(msg);
+		sch_msg_handler(msg);
 	}
-	else if(ret >= 0)
-	{			
+	else if(ret > 0)
+	{
 		mac_scheduler();
+	}
+
+	frame = (frame + (subframe + 1) / MAX_SUBSFN) % MAX_SFN;
+	subframe = (subframe + 1) % MAX_SUBSFN;
+
+	if (pre_check(subframe))
+	{
+		handle_buffer_status_req(frame, subframe);
 	}
 
 	g_end_time = getOspCycel();
@@ -440,14 +470,14 @@ void run_scheduler(msgDef* msg)
 
 		if (g_diff_time > 300000 || run_period_time > 80000 || run_scheduler_time > 150000)
 		{
-			LOG_CMD(MAC, "CMD MAC process time : %llu, run_period_time:%llu, run_scheduler_offset:%llu, run_scheduler_time:%llu", 
+			LOG_ERROR(MAC, "CMD MAC process time : %llu, run_period_time:%llu, run_scheduler_offset:%llu, run_scheduler_time:%llu", 
 				g_diff_time, run_period_time, run_scheduler_offset, run_scheduler_time);
 		}
 
-		pdcch_num++;
+		//pdcch_num++;
 
-		LOG_CMD(MAC, "MAC process time : pdcch_num:%u, %llu, run_period_time:%llu, run_scheduler_offset:%llu, run_scheduler_time:%llu", 
-			pdcch_num, g_diff_time, run_period_time, run_scheduler_offset, run_scheduler_time);
+		LOG_CMD(MAC, " pdcch+pusch:%u,pdcch_num:%u, pusch:%u, MAC process time : %llu, run_period_time:%llu, run_scheduler_offset:%llu, run_scheduler_time:%llu", 
+			g_pdcch_num+g_pusch_num,g_pdcch_num, g_pusch_num,g_diff_time, run_period_time, run_scheduler_offset, run_scheduler_time);
 	}
 
 	g_pdcch_send = false;

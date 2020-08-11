@@ -15,12 +15,15 @@
 
 typedef struct
 {
-	uint32_t rb_start:7;
-	uint32_t rb_num:7;
+	uint32_t sfn:9;
+	//uint32_t rb_num:5;
 	uint32_t mcs:5;
 	uint32_t data_ind:2;
 	uint32_t ndi:1;
-	uint32_t padding:10;
+	uint32_t ack_num:2;
+	uint32_t ack_bits:3;
+	uint32_t dataFlag:2;//0:no data, 1:data, 2:PSS+DCI
+	uint32_t padding:8;
 }dci_t;
 
 #endif //_SMARTLOGICTECH_INTERFACE_DIC_INFO_H

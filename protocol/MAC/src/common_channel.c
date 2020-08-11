@@ -144,7 +144,7 @@ void schedule_sib(const frame_t frame, const sub_frame_t subframe, mac_info_s *m
 
 	if (cce_offset >= 0)
 	{
-		tx_info->dci[dci_num].type = 1;
+		tx_info->dci[dci_num].type = 0;
 		tx_info->dci[dci_num].rnti = SI_RNTI;
 		tx_info->dci[dci_num].ueIndex = INVALID_U16;
 

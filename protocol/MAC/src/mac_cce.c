@@ -43,7 +43,7 @@ uint16_t get_aggregation_level(const uint16_t bandwith, const uint8_t dci_fmt, c
 int32_t get_cce_offset(const uint16_t rb_num, const uint16_t rb_start_index, const uint16_t aggregation_level)
 {
 	bool find = false;
-	const uint32_t cce_bits = g_sch_mac->cce_bits;
+	const uint32_t cce_bits = g_context.mac->cce_bits;
 
 	for (uint32_t i = 0; i < rb_num; i++)
 	{
@@ -67,7 +67,7 @@ int32_t get_cce_offset(const uint16_t rb_num, const uint16_t rb_start_index, con
 
 int32_t allocate_CCE(const uint16_t      aggregation_level)
 {
-	mac_info_s *mac = g_sch_mac;
+	mac_info_s *mac = g_context.mac;
 	uint16_t rb_num = mac->rb_num;
 	uint16_t rb_start_index = mac->rb_start_index;
 	//uint16_t candidates = rb_num/aggregation_level;
