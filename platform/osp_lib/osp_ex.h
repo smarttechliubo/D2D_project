@@ -78,10 +78,14 @@ typedef enum en_osp_msg_type
 #define RTTASK        0x00aa0000
 #define XXTASK        0x0000aa00
 #define XXMASK        0x0000ff00
+#define NORMALTASK    0x00550000
 
 #define RT_MSG_PRI(x) (x|MSGTASK|RTTASK)
 #define RT_NOMSG_PRI(x) (x|NOMSGTASK|RTTASK)
 #define XRT_MSG_PRI(x) (x|MSGTASK|RTTASK|XXTASK)
+
+#define NOMARL_MSG_PRI(x) (x|MSGTASK|NORMALTASK)
+#define NOMARL_NOMSG_PRI(x) (x|NOMSGTASK|NORMALTASK)
 
 typedef struct tag_OSP_TASKMSG_REG                                                                                         
 {   
@@ -125,12 +129,14 @@ OSP_STATUS ospWriteDiagLog(char *pbuf, U32 len);
 OSP_STATUS OspDbgLog (char *pbuf, U32 buflen);
 char *OspGetApeTDateAddr(int Id);//Id should be 0 or  1
 char *OspGetApeRDateAddr(int Id);//Id should be 0 or  1
-void * OSP_RegFrameSync(void);//task init func should call this
-void * OSP_RegFrameSyncCal(void);//task init func should call this
+
 int Osp_SetFrameOffsetTime(int time);
 int Osp_FrameSyncIrqRead(int *data);
 
 
+int Osp_FrameIrqBlock(void);
+int Osp_FrameOffsetIrqBlock(void);
+void *  OSP_GetTimerFromMsg(Osp_Msg_Head* pmsg);
 
 
 #ifdef __cplusplus

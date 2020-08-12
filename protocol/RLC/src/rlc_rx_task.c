@@ -89,7 +89,7 @@ void rlc_rx_process(void *message, MessagesIds      msg_type)
 	uint32_t ue_index; 
 	
   
-    LOG_WARN(RLC_RX, "RLC_RX receive message = %d\n",msg_type);
+    LOG_ERROR(RLC_RX, "RLC_RX receive message = %d\n",msg_type);
 	switch(msg_type)
 	{
 		case MAC_RLC_DATA_RPT:

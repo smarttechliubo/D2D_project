@@ -344,11 +344,12 @@ void dummy_test_task(MessageDef *recv_msg)
 					OSP_delay(1000); 
 					LOG_DEBUG(RRC, "SOURCE wait for connect complete message  \n");
 				}
-
+				#if 0
 				sleep(4); 
 
 				//！test out of sync flow, and release flow 
 				dummy_rrc_confirm_message(MAC_RRC_OUTSYNC_RPT); 
+				#endif 
 
 			}
 			else 

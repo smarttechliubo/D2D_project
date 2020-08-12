@@ -22,7 +22,7 @@
 #include <string.h>
  
  
- 
+   
  
 /**************************function******************************/
 void rlc_Mac_BufferSta_Rpt(uint16_t   sfn, uint16_t  subsfn, uint32_t valid_ue_num,rlc_buffer_rpt *buffer_status)
@@ -177,8 +177,12 @@ int32_t   rlc_mac_ue_data_process(frame_t frameP,
     uint8_t      *mac_pdu_buffer_ptr = ue_pdu_buffer; 
     int32_t      ue_status = 1;
     int32_t      logic_ch_status = 0; 
+	ULONG        start_cycle =0; 
+	ULONG        end_cycle = 0; 
 
-    LOG_ERROR(RLC_TX, "----------%s start----------- \n", __func__);
+	start_cycle = getOspCycel();
+
+    LOG_ERROR(RLC_TX, "----------%s start----------- ,ospcycle = %ld \n", __func__,start_cycle);
 	ue_rnti = rlc_data_ptr->rnti; 
 	logic_num = rlc_data_ptr->logic_chan_num; 	
 	pdu_total_size = rlc_data_ptr->tb_size; 
@@ -412,8 +416,8 @@ ue remained size:%d after logic chan mapping \n",
 		memset(mac_pdu_buffer_ptr,0xa5,ue_pdu_size_para_ptr->remain_pdu_size);
 		LOG_WARN(RLC_TX,"add  tail padding bytes:%d\n", ue_pdu_size_para_ptr->remain_pdu_size) ;
     }
-
-	LOG_ERROR(RLC_TX, "----------%s finished----------- \n", __func__);
+    end_cycle  = getOspCycel(); 
+	LOG_ERROR(RLC_TX, "----------%s finished-----------,ospcycle= %ld,tx process cycle = %d \n", __func__,end_cycle,end_cycle - start_cycle);
 
     return ue_status; 
 }

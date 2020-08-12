@@ -1164,6 +1164,12 @@ void   rlc_um_receive_process_dar (const protocol_ctxt_t* const ctxt_pP,
 // -else:
 //		-place the received UMD PDU in the reception buffer.
 
+	ULONG		 start_cycle =0; 
+	ULONG		 end_cycle = 0; 
+
+    start_cycle = getOspCycel();
+	LOG_ERROR(RLC_RX, "----------%s start----------- ,ospcycle = %ld \n", __func__,start_cycle);
+	
 	rlc_sn_t sn = -1;
 	signed int in_window = 0;
 	uint32_t  state_index = 0; 
@@ -1472,6 +1478,9 @@ VR(UX):%d != VR(UH):%d \\n",
 					rlc_pP->vr_ur, 
 					rlc_pP->vr_ux,
 					rlc_pP->vr_uh); 
+
+    end_cycle  = getOspCycel(); 
+	LOG_ERROR(RLC_RX, "----------%s finished-----------,ospcycle= %ld,rx process cycle = %d \n", __func__,end_cycle,end_cycle - start_cycle);
 
 
 }
