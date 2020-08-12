@@ -712,6 +712,28 @@ int  rrc_Receive_Signal_Msg(uint16_t mode_type, void *message, MessagesIds  msg_
 	        }
 	        else 
 	        {
+				dict_SetValue(g_rrc_ue_info_dict,
+										  mac_rrc_connection_cfm_ptr->rnti,
+										  mac_rrc_connection_cfm_ptr->ue_index); 
+						
+				g_rrc_mac_report_rnti = mac_rrc_connection_cfm_ptr->rnti; 
+				LOG_DEBUG(RRC,"RRC DESTINATION:MAC allocate RNTI = %d, connect setup config for MAC/RLC \n",g_rrc_mac_report_rnti);
+						
+			
+								  //! RRC CONFIG RLC and MAC 
+				rrc_rbinfo_decode_connect_setup(g_connect_setup_record,//ccch_message->message.choice.rrcConnectionsetup,
+															&srb_add,
+															&drb_add,
+															logic_channel_config, 
+															&logic_ch_num, 
+															&max_harq_tx, 
+															&max_out_sync); 
+			
+							
+							
+				//!destination's rlc ue_index fix to 0
+				rrc_Rlc_ConnectSetup_Config(g_rrc_mac_report_rnti,0,&srb_add,&drb_add); 
+			
 				LOG_DEBUG(RRC,"RRC DETINATION receive MAC_RRC_CONNECT_SETUP_CFG_CFM message\n "); 
 	        }
 	      
@@ -736,7 +758,8 @@ int  rrc_Receive_Signal_Msg(uint16_t mode_type, void *message, MessagesIds  msg_
 			    rrc_Rlc_DataBuf_Sta_Req(RB_TYPE_SRB1,1, g_rrc_mac_report_rnti,encode_buffer_size); 
 			    
 					 
-	            rrc_SetStatus(RRC_STATUS_CONNECTED);
+	            
+				rrc_SetStatus(RRC_STATUS_CONNECTED);
 
 			}
 			else 
@@ -868,20 +891,10 @@ int  rrc_Receive_Signal_Msg(uint16_t mode_type, void *message, MessagesIds  msg_
                                             logic_ch_num,  
                                             logic_channel_config);
 
-				  //! RRC CONFIG RLC and MAC 
-                rrc_rbinfo_decode_connect_setup(ccch_message->message.choice.rrcConnectionsetup,
-                                                &srb_add,
-                                                &drb_add,
-                                                logic_channel_config, 
-                                                &logic_ch_num, 
-                                                &max_harq_tx, 
-                                                &max_out_sync); 
 
-                
-				
-                //!destination's rlc ue_index fix to 0
-                rrc_Rlc_ConnectSetup_Config(g_rrc_mac_report_rnti,0,&srb_add,&drb_add); 
 
+												
+				memcpy((void *)&g_connect_setup_record ,(void *)&(ccch_message->message.choice.rrcConnectionsetup),sizeof(g_connect_setup_record));
 
 				LOG_DEBUG(RRC,"RRC DESTINATION receive connect setup message,rnti = %d,\
 								connect setup config for MAC/RLC\n",g_rrc_mac_report_rnti);

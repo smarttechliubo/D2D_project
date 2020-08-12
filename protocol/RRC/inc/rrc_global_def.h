@@ -112,6 +112,7 @@ extern uint16_t  g_rrc_release_ue_idx ;
 extern uint16_t  g_rrc_release_ue_rnti ; 
 extern uint16_t  g_rrc_reestablish_max_cnt;
 extern uint16_t  g_rrc_reestablish_cnt ;
+extern RRCConnectionSetup_t   g_connect_setup_record; 
 
 /*************************************extern function****************************/
 extern int rrc_GetModeType( ); 

@@ -175,11 +175,29 @@ void dummy_rrc_rpt_message(uint16_t msg_id,CCCH_MessageType_PR ccch_message)
 	mac_rrc_bcch_mib_rpt    *mib_rpt_ptr; 
 
 	mac_rrc_ccch_rpt *ccch_rpt_ptr ; 
+	phy_rrc_bcch_mib_rpt  *phy_rrc_mib_ptr; 
+	
 
 	uint8_t  *buf = MALLOC(256); 
 	uint32_t encode_size = 0; 
 	switch (msg_id)
 	{
+	    case  PHY_RRC_MIB_RPT: 
+	    {
+			phy_rrc_mib_ptr = (phy_rrc_bcch_mib_rpt *)OSP_Alloc_Mem(sizeof(phy_rrc_bcch_mib_rpt)); 
+			phy_rrc_mib_ptr->SFN = 0; 
+			phy_rrc_mib_ptr->subsfn = 0; 
+			phy_rrc_mib_ptr->cellId = 0; 
+			phy_rrc_mib_ptr->pdcch_config.rb_num = 100; 
+			phy_rrc_mib_ptr->pdcch_config.rb_start_index = 0;
+			phy_rrc_mib_ptr->bandwidth = 0; 
+
+			message = itti_alloc_new_message(TASK_D2D_DUMMY, PHY_RRC_MIB_RPT, 
+				                      (char *) phy_rrc_mib_ptr, sizeof(phy_rrc_bcch_mib_rpt)); 
+		    itti_send_msg_to_task(TASK_D2D_RRC, 0,  message);
+
+			break; 
+		}
 		case MAC_RRC_BCCH_MIB_RPT:
 		{
 			AssertFatal((D2D_MODE_TYPE_DESTINATION  == rrc_GetModeType()),  \
@@ -279,7 +297,7 @@ void dummy_test_task(MessageDef *recv_msg)
 	{
 		gdummy_timer_cnt++; 
 
-		//LOG_DEBUG(DUMMY,"gdummy_timer_cnt = %d \n", gdummy_timer_cnt);
+		//LOG_DEBUG(DUMMY,"gdummy_timer_cnt = %d,rrc_mode = %d \n", gdummy_timer_cnt,rrc_mode);
 		if (1 == gdummy_timer_cnt)
 		{
 			LOG_DEBUG(DUMMY,"gdummy_timer_cnt = %d \n", gdummy_timer_cnt);
@@ -325,7 +343,7 @@ void dummy_test_task(MessageDef *recv_msg)
 
 		//		dummy_rrc_confirm_message(RLC_RRC_CONNECT_SETUP_CFG_CFM);
 
-				while (RRC_STATUS_CONNECTED !=  rrc_GetCurrentStatus()) 
+				while (RRC_STATUS_CONNECTED >  rrc_GetCurrentStatus()) 
 				{	
 				
 					OSP_delay(1000); 
@@ -338,7 +356,7 @@ void dummy_test_task(MessageDef *recv_msg)
 				dummy_rrc_rpt_message(MAC_RRC_CCCH_RPT,CCCH_MessageType_PR_rrcConectioncomplete); 
 
 
-				while (RRC_STATUS_CONNECTE_COMPLETE !=  rrc_GetCurrentStatus()) 
+				while (RRC_STATUS_CONNECTE_COMPLETE >  rrc_GetCurrentStatus()) 
 				{	
 				
 					OSP_delay(1000); 
@@ -354,7 +372,8 @@ void dummy_test_task(MessageDef *recv_msg)
 			}
 			else 
 			{
-				while ( RRC_STATUS_CELL_SEARCH !=  rrc_GetCurrentStatus())  \
+			  
+				while ( RRC_STATUS_CELL_SEARCH >  rrc_GetCurrentStatus())  \
 				{
 					
 					OSP_delay(100); 
@@ -362,27 +381,23 @@ void dummy_test_task(MessageDef *recv_msg)
 				}
 
 
-				dummy_rrc_rpt_message(MAC_RRC_BCCH_MIB_RPT,0);
+			    dummy_rrc_rpt_message(PHY_RRC_MIB_RPT,0);
 
-				while (RRC_STATUS_IDLE != rrc_GetCurrentStatus())
-				{
-					
-					OSP_delay(100); 
-					LOG_DEBUG(RRC, "DESTINATION wait for PHY_RRC_BCCH_PARA_CFG_CFM report"); 
-				}
+				OSP_delay(1000); 
 
-		        dummy_rrc_confirm_message(PHY_RRC_BCCH_PARA_CFG_CFM);
-
+				dummy_rrc_confirm_message(PHY_RRC_BCCH_PARA_CFG_CFM);
 
 		 //       dummy_rrc_confirm_message(RLC_RRC_BCCH_PARA_CFG_CFM); //srb 0 established
-		        while(RRC_STATUS_CONNECT_REQUEST != rrc_GetCurrentStatus())
+		        while(RRC_STATUS_CONNECT_REQUEST > rrc_GetCurrentStatus())
 		        {
-		            
 					OSP_delay(100); 
 					LOG_DEBUG(RRC, "DESTINATION wait for CONNECT SETUP message \n"); 
 		        }
 		        //!send rrc conncet setup message to destination  
 		        dummy_rrc_rpt_message(MAC_RRC_CCCH_RPT,CCCH_MessageType_PR_rrcConnectionsetup); 
+
+				OSP_delay(1000); 
+				dummy_rrc_confirm_message(MAC_RRC_CONNECT_SETUP_CFG_CFM);
 		        
 			}
 		}
