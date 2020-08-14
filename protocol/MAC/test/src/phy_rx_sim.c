@@ -19,7 +19,7 @@
 #include "emac_enum_def.h"
 #include "mac_defs.h"
 #include "mac_osp_interface.h"
-
+#include "dci_info.h"
 
 phy_rx_info g_phyRx;
 bool g_timing_sync_phyRx = false;
@@ -46,18 +46,19 @@ void syncTimePhyRx()//TODO: sync
 
 uint32_t init_phy_rx_sim()
 {
-	void* pTimer;
-	int32_t ret;
+	//void* pTimer = _timerCreate(TASK_D2D_PHY_RX, 1, 400,0);
+	//int32_t ret = _timerStart(pTimer);
 
-	pTimer = _timerCreate(TASK_D2D_PHY_RX, 1, 400,0);
-	ret = _timerStart(pTimer);
+	//LOG_INFO(MAC,"init_phy_rx_sim pTimer is %p, ret:%u\r\n", pTimer, ret);
 
-	LOG_INFO(MAC,"init_phy_rx_sim pTimer is %p, ret:%u\r\n", pTimer, ret);
+	//(void)_RegTimer4ms();
 
 	for (uint32_t i = 0; i < MAX_TX_UE; i++)
 	{
 		g_phyRx.pusch.pusch[i].data = (uint8_t *)mem_alloc(5120);
 		g_phyRx.pusch1.pusch[i].data = (uint8_t *)mem_alloc(5120);
+		g_phyRx.pusch2.pusch[i].data = (uint8_t *)mem_alloc(5120);
+		g_phyRx.pusch3.pusch[i].data = (uint8_t *)mem_alloc(5120);
 	}
 
 	g_phyRx.flag_pbch = false;
@@ -132,6 +133,16 @@ void phyRxMsgHandler(msgDef *msg)
 					g_phyRx.flag_pdcch1 = true;
 					memcpy(&g_phyRx.pdcch1, req, sizeof(PHY_PdcchSendReq));
 				}
+				else if (g_phyRx.flag_pdcch2 == false)
+				{
+					g_phyRx.flag_pdcch2 = true;
+					memcpy(&g_phyRx.pdcch2, req, sizeof(PHY_PdcchSendReq));
+				}
+				else if (g_phyRx.flag_pdcch3 == false)
+				{
+					g_phyRx.flag_pdcch3 = true;
+					memcpy(&g_phyRx.pdcch3, req, sizeof(PHY_PdcchSendReq));
+				}
 				else
 				{
 					LOG_ERROR(PHY, "MAC_PHY_PDCCH_SEND00 received, frame:%u,subframe:%u, current frame:%u,subframe:%u",
@@ -175,7 +186,7 @@ void phyRxMsgHandler(msgDef *msg)
 						
 					}
 
-					LOG_DEBUG(PHY, "MAC_PHY_PUSCH_SEND00, frame:%u,subframe:%u, pusch data:%x,%x,%x,%x,%x,%x,%x,%x,%x,%x",
+					LOG_DEBUG(PHY, "MAC_PHY_PUSCH_SEND, frame:%u,subframe:%u, pusch data:%x,%x,%x,%x,%x,%x,%x,%x,%x,%x",
 						req->frame, req->subframe, req->pusch[0].data[0],req->pusch[0].data[1],req->pusch[0].data[2],req->pusch[0].data[3],
 						req->pusch[0].data[4],req->pusch[0].data[5],req->pusch[0].data[6],req->pusch[0].data[7],req->pusch[0].data[8],req->pusch[0].data[9]);
 				}
@@ -207,7 +218,71 @@ void phyRxMsgHandler(msgDef *msg)
 						memcpy(g_phyRx.pusch1.pusch[i].data, req->pusch[i].data, req->pusch[i].pdu_len);
 						
 					}
-					LOG_DEBUG(PHY, "MAC_PHY_PUSCH_SEND00, frame:%u,subframe:%u, pusch1 data:%x,%x,%x,%x,%x,%x,%x,%x,%x,%x",
+					LOG_DEBUG(PHY, "MAC_PHY_PUSCH_SEND, frame:%u,subframe:%u, pusch1 data:%x,%x,%x,%x,%x,%x,%x,%x,%x,%x",
+						req->frame, req->subframe, req->pusch[0].data[0],req->pusch[0].data[1],req->pusch[0].data[2],req->pusch[0].data[3],
+						req->pusch[0].data[4],req->pusch[0].data[5],req->pusch[0].data[6],req->pusch[0].data[7],req->pusch[0].data[8],req->pusch[0].data[9]);
+				}
+				else if (g_phyRx.flag_pusch2 == false)
+				{
+					g_phyRx.flag_pusch2 = true;
+
+					//memcpy(&g_phyRx.pusch1, req, sizeof(PHY_PuschSendReq));
+					g_phyRx.pusch2.frame = req->frame;
+					g_phyRx.pusch2.subframe = req->subframe;
+					g_phyRx.pusch2.num = req->num;
+
+					for (uint32_t i = 0; i < req->num; i++)
+					{
+						g_phyRx.pusch2.pusch[i].rnti = req->pusch[i].rnti;
+						
+						g_phyRx.pusch2.pusch[i].rb_start = req->pusch[i].rb_start;
+						g_phyRx.pusch2.pusch[i].rb_num = req->pusch[i].rb_num;
+						g_phyRx.pusch2.pusch[i].mcs = req->pusch[i].mcs;
+						g_phyRx.pusch2.pusch[i].data_ind = req->pusch[i].data_ind;// 1:ack/nack, 2:data, 3:ack/nack + data
+						
+						g_phyRx.pusch2.pusch[i].modulation = req->pusch[i].modulation;
+						g_phyRx.pusch2.pusch[i].rv = req->pusch[i].rv;
+						g_phyRx.pusch2.pusch[i].harqId = req->pusch[i].harqId;
+						g_phyRx.pusch2.pusch[i].ack = req->pusch[i].ack;
+						
+						g_phyRx.pusch2.pusch[i].pdu_len = req->pusch[i].pdu_len;
+
+						memcpy(g_phyRx.pusch2.pusch[i].data, req->pusch[i].data, req->pusch[i].pdu_len);
+						
+					}
+					LOG_DEBUG(PHY, "MAC_PHY_PUSCH_SEND, frame:%u,subframe:%u, pusch1 data:%x,%x,%x,%x,%x,%x,%x,%x,%x,%x",
+						req->frame, req->subframe, req->pusch[0].data[0],req->pusch[0].data[1],req->pusch[0].data[2],req->pusch[0].data[3],
+						req->pusch[0].data[4],req->pusch[0].data[5],req->pusch[0].data[6],req->pusch[0].data[7],req->pusch[0].data[8],req->pusch[0].data[9]);
+				}
+				else if (g_phyRx.flag_pusch3 == false)
+				{
+					g_phyRx.flag_pusch3 = true;
+
+					//memcpy(&g_phyRx.pusch1, req, sizeof(PHY_PuschSendReq));
+					g_phyRx.pusch3.frame = req->frame;
+					g_phyRx.pusch3.subframe = req->subframe;
+					g_phyRx.pusch3.num = req->num;
+
+					for (uint32_t i = 0; i < req->num; i++)
+					{
+						g_phyRx.pusch3.pusch[i].rnti = req->pusch[i].rnti;
+						
+						g_phyRx.pusch3.pusch[i].rb_start = req->pusch[i].rb_start;
+						g_phyRx.pusch3.pusch[i].rb_num = req->pusch[i].rb_num;
+						g_phyRx.pusch3.pusch[i].mcs = req->pusch[i].mcs;
+						g_phyRx.pusch3.pusch[i].data_ind = req->pusch[i].data_ind;// 1:ack/nack, 2:data, 3:ack/nack + data
+						
+						g_phyRx.pusch3.pusch[i].modulation = req->pusch[i].modulation;
+						g_phyRx.pusch3.pusch[i].rv = req->pusch[i].rv;
+						g_phyRx.pusch3.pusch[i].harqId = req->pusch[i].harqId;
+						g_phyRx.pusch3.pusch[i].ack = req->pusch[i].ack;
+						
+						g_phyRx.pusch3.pusch[i].pdu_len = req->pusch[i].pdu_len;
+
+						memcpy(g_phyRx.pusch3.pusch[i].data, req->pusch[i].data, req->pusch[i].pdu_len);
+						
+					}
+					LOG_DEBUG(PHY, "MAC_PHY_PUSCH_SEND, frame:%u,subframe:%u, pusch1 data:%x,%x,%x,%x,%x,%x,%x,%x,%x,%x",
 						req->frame, req->subframe, req->pusch[0].data[0],req->pusch[0].data[1],req->pusch[0].data[2],req->pusch[0].data[3],
 						req->pusch[0].data[4],req->pusch[0].data[5],req->pusch[0].data[6],req->pusch[0].data[7],req->pusch[0].data[8],req->pusch[0].data[9]);
 				}
@@ -221,8 +296,8 @@ void phyRxMsgHandler(msgDef *msg)
 				//	memcpy(g_phyRx.pusch.pusch[i].data, req->pusch[i].data, req->pusch[i].pdu_len);
 				//}
 				//memcpy(&g_phyRx.pusch, req, sizeof(PHY_PuschSendReq));
-				LOG_DEBUG(PHY, "MAC_PHY_PUSCH_SEND received, frame:%u,subframe:%u, current frame:%u,subframe:%u,flag_pusch:%u,flag_pusch1:%u",
-					req->frame, req->subframe, g_phyRx.frame,g_phyRx.subframe, g_phyRx.flag_pusch,g_phyRx.flag_pusch1);
+				LOG_DEBUG(PHY, "MAC_PHY_PUSCH_SEND received, frame:%u,subframe:%u,flag_pusch:%u,flag_pusch1:%u",
+					req->frame, req->subframe, g_phyRx.flag_pusch,g_phyRx.flag_pusch1);
 				break;
 			}
 			default:
@@ -290,7 +365,7 @@ void handle_pusch_data(uint8_t data_ind, PHY_PuschReceivedInd* puschInd, pusch_i
 
 	pusch_result* result;
 
-	if (data_ind == 2 || data_ind == 3)//DATA
+	if (data_ind == 1)//DATA
 	{
 		result = &puschInd->result[puschInd->num_ue];
 
@@ -318,6 +393,7 @@ void handle_pusch(const      frame_t frame, const sub_frame_t subframe)
 	//dci_s dci;
 	//pusch_result* result;
 	uint8_t data_ind = 0;
+	dci_t* dci = NULL;
 
 	PHY_ACKInd ackInd;
 	ackInd.frame = pusch_frame;
@@ -334,31 +410,31 @@ void handle_pusch(const      frame_t frame, const sub_frame_t subframe)
 	cqi.subframe = pusch_subframe;
 	cqi.num = 0;
 
-	pusch_frame = (pusch_frame + (pusch_subframe + 2) / MAX_SUBSFN) % MAX_SFN;
-	pusch_subframe = (pusch_subframe + 2) % MAX_SUBSFN;
+	pusch_frame = (pusch_frame + (pusch_subframe + 1) / MAX_SUBSFN) % MAX_SFN;
+	pusch_subframe = (pusch_subframe + 1) % MAX_SUBSFN;
 
 	if (g_phyRx.flag_pusch && g_phyRx.flag_pdcch &&
 		(pusch_frame == frame && pusch_subframe == subframe))
 	{
 		LOG_ERROR(PHY, "handle_pusch, frame:%u,subframe:%u, current frame:%u,subframe:%u, dci:%u, sch:%u",
-			pusch_frame, pusch_subframe, g_phyRx.frame,g_phyRx.subframe, pdcch.num_dci, pusch.num);
+			pusch_frame, pusch_subframe, frame,subframe, pdcch.num_dci, pusch.num);
 
 		for (uint32_t i = 0; i < pdcch.num_dci; i++)
 		{
-			//dci = (dci_s)pdcch.dci[i].data[0];
-			data_ind = (pdcch.dci[i].data[2] & 0X18) >> 3;
+			dci = (dci_t*)&pdcch.dci[i].data[0];
 
-			LOG_DEBUG(PHY, "handle_pusch, rnti:%u,data_ind:%u,dci:%x,%x,%x", 
-				pusch.pusch[i].rnti,data_ind,pdcch.dci[i].data[0],pdcch.dci[i].data[1],pdcch.dci[i].data[2]);
+			LOG_DEBUG(PHY, "handle_pusch, rnti:%u,sfn:%u,ack_num:%u,ack_bits:%x,dataFlag:%u", 
+				pusch.pusch[i].rnti,dci->sfn,dci->ack_num,dci->ack_bits,dci->dataFlag);
 
-			if (data_ind == 1 || data_ind == 3)//ACK/NACK
+			if (dci->ack_num > 0)//ACK/NACK
 			{
 				ackInd.ack[ackInd.num].rnti = pdcch.dci[i].rnti;
-				ackInd.ack[ackInd.num].ack = pusch.pusch[i].ack;
+				ackInd.ack[ackInd.num].ack_num = dci->ack_num;
+				ackInd.ack[ackInd.num].ack_bits = dci->ack_bits;
 				ackInd.num++;
 			}
 
-			handle_pusch_data(data_ind, &puschInd, &pusch.pusch[i]);
+			handle_pusch_data(dci->dataFlag, &puschInd, &pusch.pusch[i]);
 
 			if (frame%4 == 0)//cqi
 			{
@@ -369,35 +445,34 @@ void handle_pusch(const      frame_t frame, const sub_frame_t subframe)
 
 		}
 
-#if 0
 		if (ackInd.num > 0)
 		{
 			msg_size = sizeof(PHY_ACKInd);
 
-			msg = new_message(PHY_MAC_ACK_RPT, TASK_D2D_PHY_RX, TASK_D2D_MAC_SCH, msg_size);
+			msg = new_message(PHY_MAC_ACK_RPT, TASK_D2D_PHY_RX, TASK_D2D_MAC, msg_size);
 
 			if (msg != NULL)
 			{
 				memcpy(message_ptr(msg), &ackInd, msg_size);
 			
-				if (message_send(TASK_D2D_MAC_SCH, msg, sizeof(msgDef)))
+				if (message_send(TASK_D2D_MAC, msg, sizeof(msgDef)))
 				{
 					LOG_DEBUG(PHY, "LGC: PHY_MAC_ACK_RPT send");
 				}
 			}
 		}
-#endif
+
 		if (puschInd.num_ue > 0)
 		{
 			msg_size = sizeof(PHY_PuschReceivedInd);
 
-			msg = new_message(PHY_MAC_DECOD_DATA_RPT, TASK_D2D_PHY_RX, TASK_D2D_MAC_SCH, msg_size);
+			msg = new_message(PHY_MAC_DECOD_DATA_RPT, TASK_D2D_PHY_RX, TASK_D2D_MAC, msg_size);
 
 			if (msg != NULL)
 			{
 				memcpy(message_ptr(msg), &puschInd, msg_size);
 			
-				if (message_send(TASK_D2D_MAC_SCH, msg, sizeof(msgDef)))
+				if (message_send(TASK_D2D_MAC, msg, sizeof(msgDef)))
 				{
 					LOG_DEBUG(PHY, "LGC: PHY_MAC_DECOD_DATA_RPT send");
 				}
@@ -451,6 +526,7 @@ void handle_pusch1(const      frame_t frame, const sub_frame_t subframe)
 	//dci_s dci;
 	//pusch_result* result;
 	uint8_t data_ind = 0;
+	dci_info* dci = NULL;
 
 	PHY_ACKInd ackInd;
 	ackInd.frame = pusch_frame;
@@ -467,27 +543,27 @@ void handle_pusch1(const      frame_t frame, const sub_frame_t subframe)
 	cqi.subframe = pusch_subframe;
 	cqi.num = 0;
 
-	pusch_frame = (pusch_frame + (pusch_subframe + 2) / MAX_SUBSFN) % MAX_SFN;
-	pusch_subframe = (pusch_subframe + 2) % MAX_SUBSFN;
+	pusch_frame = (pusch_frame + (pusch_subframe + 1) / MAX_SUBSFN) % MAX_SFN;
+	pusch_subframe = (pusch_subframe + 1) % MAX_SUBSFN;
 
 	if (g_phyRx.flag_pusch1 && g_phyRx.flag_pdcch1 &&
 		(pusch_frame == frame && pusch_subframe == subframe))
 	{
 		LOG_ERROR(PHY, "handle_pusch1, frame:%u,subframe:%u, current frame:%u,subframe:%u, dci:%u, sch:%u",
-			pusch_frame, pusch_subframe, g_phyRx.frame,g_phyRx.subframe, pdcch.num_dci, pusch.num);
+			pusch_frame, pusch_subframe, frame,subframe, pdcch.num_dci, pusch.num);
 
 		for (uint32_t i = 0; i < pdcch.num_dci; i++)
 		{
-			//dci = (dci_s)pdcch.dci[i].data[0];
-			data_ind = (pdcch.dci[i].data[2] & 0X18) >> 3;
+			dci = (dci_t*)&pdcch.dci[i].data[0];
 
-			LOG_DEBUG(PHY, "handle_pusch1, rnti:%u,data_ind:%u,dci:%x,%x,%x", 
-				pusch.pusch[i].rnti,data_ind,pdcch.dci[i].data[0],pdcch.dci[i].data[1],pdcch.dci[i].data[2]);
+			LOG_DEBUG(PHY, "handle_pusch1, rnti:%u,sfn:%u,ack_num:%u,ack_bits:%x,dataFlag:%u", 
+				pusch.pusch[i].rnti,dci->sfn,dci->ack_num,dci->ack_bits,dci->dataFlag);
 
-			if (data_ind == 1 || data_ind == 3)//ACK/NACK
+			if (dci->ack_num > 0)//ACK/NACK
 			{
 				ackInd.ack[ackInd.num].rnti = pdcch.dci[i].rnti;
-				ackInd.ack[ackInd.num].ack = pusch.pusch[i].ack;
+				ackInd.ack[ackInd.num].ack_num = dci->ack_num;
+				ackInd.ack[ackInd.num].ack_bits = dci->ack_bits;
 				ackInd.num++;
 			}
 
@@ -502,35 +578,35 @@ void handle_pusch1(const      frame_t frame, const sub_frame_t subframe)
 
 		}
 
-#if 0
+
 		if (ackInd.num > 0)
 		{
 			msg_size = sizeof(PHY_ACKInd);
 
-			msg = new_message(PHY_MAC_ACK_RPT, TASK_D2D_PHY_RX, TASK_D2D_MAC_SCH, msg_size);
+			msg = new_message(PHY_MAC_ACK_RPT, TASK_D2D_PHY_RX, TASK_D2D_MAC, msg_size);
 
 			if (msg != NULL)
 			{
 				memcpy(message_ptr(msg), &ackInd, msg_size);
 			
-				if (message_send(TASK_D2D_MAC_SCH, msg, sizeof(msgDef)))
+				if (message_send(TASK_D2D_MAC, msg, sizeof(msgDef)))
 				{
 					LOG_DEBUG(PHY, "LGC: PHY_MAC_ACK_RPT send");
 				}
 			}
 		}
-#endif
+
 		if (puschInd.num_ue > 0)
 		{
 			msg_size = sizeof(PHY_PuschReceivedInd);
 
-			msg = new_message(PHY_MAC_DECOD_DATA_RPT, TASK_D2D_PHY_RX, TASK_D2D_MAC_SCH, msg_size);
+			msg = new_message(PHY_MAC_DECOD_DATA_RPT, TASK_D2D_PHY_RX, TASK_D2D_MAC, msg_size);
 
 			if (msg != NULL)
 			{
 				memcpy(message_ptr(msg), &puschInd, msg_size);
 			
-				if (message_send(TASK_D2D_MAC_SCH, msg, sizeof(msgDef)))
+				if (message_send(TASK_D2D_MAC, msg, sizeof(msgDef)))
 				{
 					LOG_DEBUG(PHY, "LGC: PHY_MAC_DECOD_DATA_RPT send");
 				}
@@ -572,6 +648,273 @@ void handle_pusch1(const      frame_t frame, const sub_frame_t subframe)
 
 }
 
+void handle_pusch2(const      frame_t frame, const sub_frame_t subframe)
+{
+	frame_t pusch_frame = g_phyRx.pusch2.frame;
+	sub_frame_t pusch_subframe = g_phyRx.pusch2.subframe;
+
+	msgDef* msg = NULL;
+	msgSize msg_size = 0;
+	PHY_PdcchSendReq pdcch = g_phyRx.pdcch2;
+	PHY_PuschSendReq pusch = g_phyRx.pusch2;
+	//dci_s dci;
+	//pusch_result* result;
+	uint8_t data_ind = 0;
+	dci_info* dci = NULL;
+
+	PHY_ACKInd ackInd;
+	ackInd.frame = pusch_frame;
+	ackInd.subframe = pusch_subframe;
+	ackInd.num = 0;
+
+	PHY_PuschReceivedInd puschInd;
+	puschInd.frame = pusch_frame;
+	puschInd.subframe = pusch_subframe;
+	puschInd.num_ue = 0;
+
+	PHY_CQIInd cqi;
+	cqi.frame = pusch_frame;
+	cqi.subframe = pusch_subframe;
+	cqi.num = 0;
+
+	pusch_frame = (pusch_frame + (pusch_subframe + 1) / MAX_SUBSFN) % MAX_SFN;
+	pusch_subframe = (pusch_subframe + 1) % MAX_SUBSFN;
+
+	if (g_phyRx.flag_pusch2 && g_phyRx.flag_pdcch2 &&
+		(pusch_frame == frame && pusch_subframe == subframe))
+	{
+		LOG_ERROR(PHY, "handle_pusch1, frame:%u,subframe:%u, current frame:%u,subframe:%u, dci:%u, sch:%u",
+			pusch_frame, pusch_subframe, frame,subframe, pdcch.num_dci, pusch.num);
+
+		for (uint32_t i = 0; i < pdcch.num_dci; i++)
+		{
+			dci = (dci_t*)&pdcch.dci[i].data[0];
+
+			LOG_DEBUG(PHY, "handle_pusch1, rnti:%u,sfn:%u,ack_num:%u,ack_bits:%x,dataFlag:%u", 
+				pusch.pusch[i].rnti,dci->sfn,dci->ack_num,dci->ack_bits,dci->dataFlag);
+
+			if (dci->ack_num > 0)//ACK/NACK
+			{
+				ackInd.ack[ackInd.num].rnti = pdcch.dci[i].rnti;
+				ackInd.ack[ackInd.num].ack_num = dci->ack_num;
+				ackInd.ack[ackInd.num].ack_bits = dci->ack_bits;
+				ackInd.num++;
+			}
+
+			handle_pusch_data(data_ind, &puschInd, &pusch.pusch[i]);
+
+			if (frame%4 == 0)//cqi
+			{
+				cqi.cqiInfo[cqi.num].rnti = pusch.pusch[i].rnti;
+				cqi.cqiInfo[cqi.num].cqi = 15;
+				cqi.num++;
+			}
+
+		}
+
+
+		if (ackInd.num > 0)
+		{
+			msg_size = sizeof(PHY_ACKInd);
+
+			msg = new_message(PHY_MAC_ACK_RPT, TASK_D2D_PHY_RX, TASK_D2D_MAC, msg_size);
+
+			if (msg != NULL)
+			{
+				memcpy(message_ptr(msg), &ackInd, msg_size);
+			
+				if (message_send(TASK_D2D_MAC, msg, sizeof(msgDef)))
+				{
+					LOG_DEBUG(PHY, "LGC: PHY_MAC_ACK_RPT send");
+				}
+			}
+		}
+
+		if (puschInd.num_ue > 0)
+		{
+			msg_size = sizeof(PHY_PuschReceivedInd);
+
+			msg = new_message(PHY_MAC_DECOD_DATA_RPT, TASK_D2D_PHY_RX, TASK_D2D_MAC, msg_size);
+
+			if (msg != NULL)
+			{
+				memcpy(message_ptr(msg), &puschInd, msg_size);
+			
+				if (message_send(TASK_D2D_MAC, msg, sizeof(msgDef)))
+				{
+					LOG_DEBUG(PHY, "LGC: PHY_MAC_DECOD_DATA_RPT send");
+				}
+			}
+		}
+
+#if 0
+		if (cqi.num > 0)
+		{
+			msg_size = sizeof(PHY_CQIInd);
+
+			msg = new_message(PHY_MAC_CQI_IND, TASK_D2D_PHY_RX, TASK_D2D_MAC_SCH, msg_size);
+
+			if (msg != NULL)
+			{
+				memcpy(message_ptr(msg), &cqi, msg_size);
+
+				if (message_send(TASK_D2D_MAC_SCH, msg, sizeof(msgDef)))
+				{
+					LOG_DEBUG(PHY, "LGC: PHY_MAC_CQI_IND send");
+				}
+			}
+		}
+#endif
+		if (pdcch.num_dci != pusch.num)
+		{
+			LOG_ERROR(PHY, "phy msg missing, num_dci:%u, pusch.num:%u", pdcch.num_dci, pusch.num);
+		}
+
+		if ((g_phyRx.flag_pusch2 && !g_phyRx.flag_pdcch2) || (!g_phyRx.flag_pusch2 && g_phyRx.flag_pdcch2))
+		{
+			LOG_ERROR(PHY, "phy msg missing, flag_pusch:%u, flag_pdcch:%u", g_phyRx.flag_pusch2, g_phyRx.flag_pdcch2);
+		}
+
+		g_phyRx.flag_pusch2 = false;
+		g_phyRx.flag_pdcch2 = false;
+	}
+
+
+}
+void handle_pusch3(const      frame_t frame, const sub_frame_t subframe)
+{
+	frame_t pusch_frame = g_phyRx.pusch3.frame;
+	sub_frame_t pusch_subframe = g_phyRx.pusch3.subframe;
+
+	msgDef* msg = NULL;
+	msgSize msg_size = 0;
+	PHY_PdcchSendReq pdcch = g_phyRx.pdcch3;
+	PHY_PuschSendReq pusch = g_phyRx.pusch3;
+	//dci_s dci;
+	//pusch_result* result;
+	uint8_t data_ind = 0;
+	dci_info* dci = NULL;
+
+	PHY_ACKInd ackInd;
+	ackInd.frame = pusch_frame;
+	ackInd.subframe = pusch_subframe;
+	ackInd.num = 0;
+
+	PHY_PuschReceivedInd puschInd;
+	puschInd.frame = pusch_frame;
+	puschInd.subframe = pusch_subframe;
+	puschInd.num_ue = 0;
+
+	PHY_CQIInd cqi;
+	cqi.frame = pusch_frame;
+	cqi.subframe = pusch_subframe;
+	cqi.num = 0;
+
+	pusch_frame = (pusch_frame + (pusch_subframe + 1) / MAX_SUBSFN) % MAX_SFN;
+	pusch_subframe = (pusch_subframe + 1) % MAX_SUBSFN;
+
+	if (g_phyRx.flag_pusch3 && g_phyRx.flag_pdcch3 &&
+		(pusch_frame == frame && pusch_subframe == subframe))
+	{
+		LOG_ERROR(PHY, "handle_pusch1, frame:%u,subframe:%u, current frame:%u,subframe:%u, dci:%u, sch:%u",
+			pusch_frame, pusch_subframe, frame,subframe, pdcch.num_dci, pusch.num);
+
+		for (uint32_t i = 0; i < pdcch.num_dci; i++)
+		{
+			dci = (dci_t*)&pdcch.dci[i].data[0];
+
+			LOG_DEBUG(PHY, "handle_pusch1, rnti:%u,sfn:%u,ack_num:%u,ack_bits:%x,dataFlag:%u", 
+				pusch.pusch[i].rnti,dci->sfn,dci->ack_num,dci->ack_bits,dci->dataFlag);
+
+			if (dci->ack_num > 0)//ACK/NACK
+			{
+				ackInd.ack[ackInd.num].rnti = pdcch.dci[i].rnti;
+				ackInd.ack[ackInd.num].ack_num = dci->ack_num;
+				ackInd.ack[ackInd.num].ack_bits = dci->ack_bits;
+				ackInd.num++;
+			}
+
+			handle_pusch_data(data_ind, &puschInd, &pusch.pusch[i]);
+
+			if (frame%4 == 0)//cqi
+			{
+				cqi.cqiInfo[cqi.num].rnti = pusch.pusch[i].rnti;
+				cqi.cqiInfo[cqi.num].cqi = 15;
+				cqi.num++;
+			}
+
+		}
+
+
+		if (ackInd.num > 0)
+		{
+			msg_size = sizeof(PHY_ACKInd);
+
+			msg = new_message(PHY_MAC_ACK_RPT, TASK_D2D_PHY_RX, TASK_D2D_MAC, msg_size);
+
+			if (msg != NULL)
+			{
+				memcpy(message_ptr(msg), &ackInd, msg_size);
+			
+				if (message_send(TASK_D2D_MAC, msg, sizeof(msgDef)))
+				{
+					LOG_DEBUG(PHY, "LGC: PHY_MAC_ACK_RPT send");
+				}
+			}
+		}
+
+		if (puschInd.num_ue > 0)
+		{
+			msg_size = sizeof(PHY_PuschReceivedInd);
+
+			msg = new_message(PHY_MAC_DECOD_DATA_RPT, TASK_D2D_PHY_RX, TASK_D2D_MAC, msg_size);
+
+			if (msg != NULL)
+			{
+				memcpy(message_ptr(msg), &puschInd, msg_size);
+			
+				if (message_send(TASK_D2D_MAC, msg, sizeof(msgDef)))
+				{
+					LOG_DEBUG(PHY, "LGC: PHY_MAC_DECOD_DATA_RPT send");
+				}
+			}
+		}
+
+#if 0
+		if (cqi.num > 0)
+		{
+			msg_size = sizeof(PHY_CQIInd);
+
+			msg = new_message(PHY_MAC_CQI_IND, TASK_D2D_PHY_RX, TASK_D2D_MAC_SCH, msg_size);
+
+			if (msg != NULL)
+			{
+				memcpy(message_ptr(msg), &cqi, msg_size);
+
+				if (message_send(TASK_D2D_MAC_SCH, msg, sizeof(msgDef)))
+				{
+					LOG_DEBUG(PHY, "LGC: PHY_MAC_CQI_IND send");
+				}
+			}
+		}
+#endif
+		if (pdcch.num_dci != pusch.num)
+		{
+			LOG_ERROR(PHY, "phy msg missing, num_dci:%u, pusch.num:%u", pdcch.num_dci, pusch.num);
+		}
+
+		if ((g_phyRx.flag_pusch3 && !g_phyRx.flag_pdcch3) || (!g_phyRx.flag_pusch3 && g_phyRx.flag_pdcch3))
+		{
+			LOG_ERROR(PHY, "phy msg missing, flag_pusch:%u, flag_pdcch:%u", g_phyRx.flag_pusch3, g_phyRx.flag_pdcch3);
+		}
+
+		g_phyRx.flag_pusch3 = false;
+		g_phyRx.flag_pdcch3 = false;
+	}
+
+
+}
+
 void handle_pbch(const      frame_t frame, const sub_frame_t subframe)
 {
 	frame_t pbch_frame = g_phyRx.pbch.frame;
@@ -588,7 +931,7 @@ void handle_pbch(const      frame_t frame, const sub_frame_t subframe)
 	{
 		msg_size = sizeof(PHY_PBCHReceivedInd);
 		
-		msg = new_message(PHY_MAC_PBCH_PDU_RPT, TASK_D2D_PHY_RX, TASK_D2D_MAC_SCH, msg_size);
+		msg = new_message(PHY_MAC_PBCH_PDU_RPT, TASK_D2D_PHY_RX, TASK_D2D_MAC, msg_size);
 
 		if (msg != NULL)
 		{
@@ -599,7 +942,7 @@ void handle_pbch(const      frame_t frame, const sub_frame_t subframe)
 			ind->subframe = g_phyRx.pbch.subframe;
 			ind->flag = 1;
 
-			if (message_send(TASK_D2D_MAC_SCH, msg, sizeof(msgDef)))
+			if (message_send(TASK_D2D_MAC, msg, sizeof(msgDef)))
 			{
 				LOG_INFO(PHY, "LGC: PHY_MAC_PBCH_PDU_RPT send");
 			}
@@ -616,6 +959,8 @@ void handle_phy_rx(const      frame_t frame, const sub_frame_t subframe)
 
 	handle_pusch(frame, subframe);	
 	handle_pusch1(frame, subframe);
+	handle_pusch2(frame, subframe);
+	handle_pusch3(frame, subframe);
 }
 
 void phy_rx_sim_thread(msgDef *msg)
@@ -642,7 +987,7 @@ void phy_rx_sim_thread(msgDef *msg)
 	}
 	else
 	{
-		handle_phy_rx(frame, subframe);
+		//handle_phy_rx(frame, subframe);
 	}
 
 	message_free(msg);

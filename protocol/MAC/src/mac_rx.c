@@ -55,7 +55,11 @@ void mac_rrc_bcch_received(const frame_t frame, const sub_frame_t subframe)
 	}
 }
 
-void mac_rrc_data_ind(const frame_t frame, const sub_frame_t subframe, const uint16_t rx_length, const uint8_t* payload)
+void mac_rrc_data_ind(const frame_t frame, 
+	const sub_frame_t subframe, 
+	const uint16_t rx_length, 
+	const uint8_t* payload,
+	const uint32_t offset)
 {
 	msgDef* msg = NULL;
 	mac_rrc_ccch_rpt *ind;
@@ -68,8 +72,9 @@ void mac_rrc_data_ind(const frame_t frame, const sub_frame_t subframe, const uin
 		ind = (mac_rrc_ccch_rpt*)message_ptr(msg);
 		ind->sfn = frame;
 		ind->subsfn = subframe;
+		//ind->offset = offset;
 		ind->data_size = rx_length;
-		ind->data_ptr = (uint32_t*)payload;
+		ind->data_ptr = (uint32_t*)(payload+offset);
 
 		if (message_send(TASK_D2D_RRC, msg, sizeof(msgDef)))
 		{
@@ -422,6 +427,9 @@ void handlePuschReceivedInd(PHY_PuschReceivedInd *pusch)
 		rnti = result->rnti;
 		crc = result->crc;
 
+#ifdef MAC_TEST
+		payload = result->dataptr;
+#else
 		if (result->buffer_id != 0 && result->buffer_id != 1)
 		{
 			LOG_ERROR(MAC, "pusch buffer id error! buffer_id:%u",result->buffer_id);
@@ -429,7 +437,7 @@ void handlePuschReceivedInd(PHY_PuschReceivedInd *pusch)
 		}
 
 		payload = (uint8_t *)OspGetApeRDateAddr(result->buffer_id);
-
+#endif
 		tb_length = result->dataSize;
 
 		data_ind = &rpt->sdu_data_rpt[rpt->ue_num];
@@ -478,7 +486,7 @@ void handlePuschReceivedInd(PHY_PuschReceivedInd *pusch)
 				if (rx_lcIds[i] == CCCH_)
 				{
 					//CCCH
-					mac_rrc_data_ind(frame, subframe, rx_lengths[i], data + offset);
+					mac_rrc_data_ind(frame, subframe, rx_lengths[i], payload, offset);
 					offset = offset + rx_lengths[i];
 				}
 				else

@@ -184,8 +184,8 @@ void schedule_common(const frame_t frame, const sub_frame_t subframe, mac_info_s
 
 	if ((mac->common_channel.sib_size > 0) && ((subframe == 1) && (frame % 2) == 0))
 	{
-		schedule_sib(frame, subframe, mac, &tx_info);
-		handle_common_result(frame, subframe, &tx_info);
+		//schedule_sib(frame, subframe, mac, &tx_info);
+		//handle_common_result(frame, subframe, &tx_info);
 	}
 }
 

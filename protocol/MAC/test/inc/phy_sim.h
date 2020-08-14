@@ -43,10 +43,18 @@ typedef struct
 	bool flag_pusch;
 	bool flag_pdcch1;
 	bool flag_pusch1;
+	bool flag_pdcch2;
+	bool flag_pusch2;
+	bool flag_pdcch3;
+	bool flag_pusch3;
 	PHY_PdcchSendReq pdcch;
 	PHY_PuschSendReq pusch;
 	PHY_PdcchSendReq pdcch1;
 	PHY_PuschSendReq pusch1;
+	PHY_PdcchSendReq pdcch2;
+	PHY_PuschSendReq pusch2;
+	PHY_PdcchSendReq pdcch3;
+	PHY_PuschSendReq pusch3;
 
 }phy_rx_info;
 

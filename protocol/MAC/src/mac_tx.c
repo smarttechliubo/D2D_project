@@ -52,7 +52,7 @@ void handle_buffer_status_req(const frame_t frame, const sub_frame_t subframe)
 		if (message_send(TASK_D2D_RLC_TX, msg, sizeof(msgDef)))
 		{
 #ifdef MAC_DEBUG
-			LOG_ERROR(MAC, "run_period, mac_rlc_buf_status_req send, frame:%u, subframe:%u", frame, subframe);
+			LOG_ERROR(MAC, "mac_rlc_buf_status_req send, frame:%u, subframe:%u", frame, subframe);
 #endif
 		}
 	}
@@ -125,8 +125,8 @@ void handle_buffer_status(const rlc_mac_buf_status_rpt *rpt)
 	//uint16_t cellId = g_sch.cellId;
 	//uint8_t logic_chan_num = 0;
 #ifdef MAC_DEBUG
-	LOG_ERROR(MAC, "RLC_MAC_BUF_STATUS_RPT, ueNum:%u, flag:%u, rnti:%u", 
-		ue_num, rpt->rlc_buffer_rpt[0].valid_flag, rpt->rlc_buffer_rpt[0].rnti);
+	LOG_ERROR(MAC, "RLC_MAC_BUF_STATUS_RPT, ueNum:%u, rnti:%u", 
+		ue_num,  rpt->rlc_buffer_rpt[0].rnti);
 #endif
 
 	for (uint32_t i = 0; i < ue_num; i++)
@@ -136,9 +136,10 @@ void handle_buffer_status(const rlc_mac_buf_status_rpt *rpt)
 
 		if (buffer.rnti == RA_RNTI && buffer.logicchannel_id[i] == CCCH_)// TODO: no data should be transmit before ue get connection setup.
 		{
+			//add_new_ue(C_RNTI);
 			//update_ra_buffer(buffer);
-			add_temp_ue(C_RNTI);
-			break;
+			add_temp_ue(RA_RNTI);
+			//break;
 		}
 
 		if (buffer.valid_flag)
@@ -1342,8 +1343,8 @@ void send_pdcch_req(const frame_t frame, const sub_frame_t subframe)
 			num_ue++;
 
 #ifdef MAC_DEBUG
-			LOG_ERROR(MAC, "LGC: dci rb_start:%u,rb_num:%u, mcs%u,ind%u, ndi:%u", 
-				dci[i].rb_start,dci[i].rb_num,dci[i].mcs,dci[i].data_ind,dci[i].ndi);
+			LOG_ERROR(MAC, "LGC: dci sfn:%u,mcs:%u, ack_num%u,ack_bits%u, dataFlag:%u", 
+				dci_info->sfn,dci_info->mcs,dci_info->ack_num,dci_info->ack_bits,dci_info->dataFlag);
 #endif
 		}
 
@@ -1493,18 +1494,19 @@ void send_pdcch_req_without_data(const frame_t frame, const sub_frame_t subframe
 		for (uint32_t i = 0; i < MAX_UE; i++)
 		{
 			ue = &g_context.mac->ue[i];
-
-			if (ue->crc_num == 0)
-			{
-				LOG_ERROR(MAC, "send_pdcch_req_without_data, no data & no ack,frame:%u, subframe:%u", 
-					frame, subframe);
-				continue;
-			}
-
+			
 			if (ue->active == false && ue->out_of_sync == true)
 			{
 				continue;
 			}
+			
+			if (ue->crc_num == 0)
+			{
+				//LOG_ERROR(MAC, "send_pdcch_req_without_data, no data & no ack,frame:%u, subframe:%u", 
+				//	frame, subframe);
+				continue;
+			}
+
 
 			req->dci[i].sfn = frame;
 			req->dci[i].rnti = C_RNTI;
@@ -1531,13 +1533,17 @@ void send_pdcch_req_without_data(const frame_t frame, const sub_frame_t subframe
 
 		req->num_dci = num_ue;
 
-		if (message_send(TASK_D2D_PHY_TX, msg, sizeof(msgDef)))
+		if ((req->num_dci > 0) && message_send(TASK_D2D_PHY_TX, msg, sizeof(msgDef)))
 		{
 			g_pdcch_num++;
 #ifdef MAC_DEBUG
-			LOG_ERROR(MAC, "MAC_PHY_PDCCH_SEND send.frame:%u, subframe:%u, num_dci:%u,dci:%x,%x,%x", 
+			LOG_ERROR(MAC, "MAC_PHY_PDCCH_SEND NO DATA send.frame:%u, subframe:%u, num_dci:%u,dci:%x,%x,%x", 
 				req->frame, req->subframe, req->num_dci, req->dci[0].data[0],req->dci[0].data[1],req->dci[0].data[2]);
 #endif
+		}
+		else
+		{
+			message_free(msg);
 		}
 	}
 	else
@@ -1632,7 +1638,7 @@ void mac_phy_data_send(const frame_t frame, const sub_frame_t subframe)
 
 	if (common_dci_num+dci_num <= 0)
 	{
-		send_pdcch_req_without_data(frame, subframe);
+		//send_pdcch_req_without_data(frame, subframe);
 		//send_pusch_req_without_data(frame, subframe);
 	}
 	else

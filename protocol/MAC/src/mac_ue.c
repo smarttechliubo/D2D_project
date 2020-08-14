@@ -140,7 +140,31 @@ uint16_t find_ue(const rnti_t rnti)
 
 	if (ueIndex == INVALID_U16)
 	{
-		LOG_WARN(MAC, "ue rnti:%u does not exist!", rnti);
+		LOG_WARN(MAC, "find_ue rnti:%u does not exist!", rnti);
+	}
+
+	return ueIndex;
+}
+
+uint16_t find_rrc_ue(const uint16_t ueId)
+{
+	ueInfo* ue;
+	uint16_t ueIndex = INVALID_U16;
+
+	for(uint32_t i = 0; i < MAX_UE; i++)
+	{
+		ue = &g_context.mac->ue[i];
+
+		if(ue->active == true &&
+			ue->ueId == ueId)
+		{
+			return ue->ueIndex;
+		}
+	}
+
+	if (ueIndex == INVALID_U16)
+	{
+		LOG_WARN(MAC, "find_ue ueId:%u does not exist!", ueId);
 	}
 
 	return ueIndex;
@@ -175,7 +199,7 @@ ueInfo* add_new_ue(rnti_t rnti, const uint16_t ueId, const uint16_t mode)
 	mac_info_s *mac = g_context.mac;
 	ueInfo *ue = NULL;
 	uint16_t cellId = mac->cellId;
-	uint16_t ueIndex = (mode == 0) ? find_ue(rnti) : find_ue(RA_RNTI);
+	uint16_t ueIndex = find_rrc_ue(ueId);
 
 	if (ueIndex == INVALID_U16)
 	{
@@ -195,7 +219,7 @@ ueInfo* add_new_ue(rnti_t rnti, const uint16_t ueId, const uint16_t mode)
 			ue->active = true;
 			ue->temp   = false;
 			ue->ueId = ueId;
-			ue->rnti = ((mode == 0) ? new_rnti(cellId, ueIndex) : rnti);
+			ue->rnti = ((mode == 0) ? C_RNTI/*new_rnti(cellId, ueIndex) */: rnti);
 			ue->ueIndex = ueIndex;
 
 			mac->count_ue++;
@@ -204,10 +228,15 @@ ueInfo* add_new_ue(rnti_t rnti, const uint16_t ueId, const uint16_t mode)
 		}
 		else
 		{
+#ifdef MAC_TEST
+			return ue;
+#else
+
 			LOG_ERROR(MAC, "add_new_ue ue already exist, ueIndex:%u",ueIndex);
 			release_index(ueIndex, mode);
 
 			return NULL;
+#endif
 		}
 	}
 

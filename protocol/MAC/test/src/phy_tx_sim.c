@@ -25,107 +25,25 @@ bool g_timing_sync_phyTx = false;
 
 extern uint32_t get_syncTiming();
 extern uint16_t g_testing_mode;//0:source, 1:destination
+extern	int32_t get_sysSfn();
 
-int sysSFN = 0;
-
-void sysTimingUpdate()
-{
-	if (sysSFN == 4095)
-	{
-		OSP_atomicSet(&sysSFN, 0);
-	}
-	else
-	{
-		OSP_atomicInc(&sysSFN);
-	}
-}
-
-void set_sysSfn(frame_t frame, sub_frame_t subframe)
-{
-	uint16_t time = (frame << 2) | (subframe & 0X3);
-	
-	OSP_atomicSet(&sysSFN, time);
-
-	LOG_INFO(PHY, "set_sysSfn, frame:%u, subframe:%u, time:%u, sysSFN:%u",frame, subframe, time, sysSFN);
-}
-
-int32_t get_sysSfn()
-{
-	int sfn = OSP_atomicGet(&sysSFN);
-	return sfn;
-}
 
 void syncTimePhyTx()//TODO: sync
 {
-	sysTimingUpdate();
-
 	int time = get_sysSfn();
 
 	g_phyTx.frame = time >> 2;
 	g_phyTx.subframe = time % MAX_SUBSFN;
-	
-/*
-	uint32_t time = 0;
-
-	// 1. get timing sync
-	if (g_timing_sync_phyTx == false)
-	{
-		time = get_syncTiming();// TODO: sync
-
-		if (time != 0xFFFFFFFF)
-		{
-			g_phyTx.frame = time / 10;
-			g_phyTx.subframe = time % MAX_SUBSFN;
-			g_timing_sync_phyTx = true;
-		}
-		else
-		{
-			LOG_WARN(PHY, "Timing sync fail!!");
-			g_timing_sync_phyTx = false;
-		}
-	}
-	else if (g_timing_sync_phyTx == true)
-	{
-		g_phyTx.subframe++;
-
-		if (g_phyTx.subframe == MAX_SUBSFN)
-		{
-			g_phyTx.subframe = 0;
-			g_phyTx.frame = (g_phyTx.frame+1)%MAX_SFN;
-		}
-		
-		if ((g_phyTx.frame*10 + g_phyTx.subframe)%TIMING_SYNC_PERIOD == 0)
-		{
-			time = get_syncTiming();
-
-			if (time != 0xFFFFFFFF)
-			{
-				if (time != g_phyTx.frame*10 + g_phyTx.subframe)
-				{
-					LOG_WARN(PHY, "Timing sync loast!! time:%u, frame:%u, subframe:%u",
-						time, g_phyTx.frame, g_phyTx.subframe);
-					g_phyTx.frame = time / 10;
-					g_phyTx.subframe = time % MAX_SUBSFN;
-				}
-			}
-			else
-			{
-				LOG_WARN(PHY, "Timing sync failed with PHY");
-			}
-		}
-	}
-*/
 }
 
 uint32_t init_phy_tx_sim()
 {	
-	void* pTimer;
-	int32_t ret;
+	//void* pTimer = _timerCreate(TASK_D2D_PHY_TX, 1, 400,0);
+	//int32_t ret = _timerStart(pTimer);
 
-	pTimer = _timerCreate(TASK_D2D_PHY_TX, 1, 400,0);
-	ret = _timerStart(pTimer);
+	//LOG_INFO(MAC,"init_phy_tx_sim pTimer is %p, ret:%u\r\n", pTimer, ret);
 
-	LOG_INFO(MAC,"init_phy_tx_sim pTimer is %p, ret:%u\r\n", pTimer, ret);
+	//(void)_RegTimer4ms();
 
 #ifdef MAC_MQ_TEST
 	if(g_testing_mode == 1)
@@ -195,7 +113,7 @@ void phyTxMsgHandler(msgDef* msg)
 void handle_phy_tx(const      frame_t frame, const sub_frame_t subframe)
 {
 	//mode_e mode = g_testing_mode;
-#ifdef MAC_MQ_TEST
+#if 0//def MAC_MQ_TEST
 	task_id taskId = ETASK_B;
 
 	msgHeader* msg = NULL;
@@ -209,7 +127,7 @@ void handle_phy_tx(const      frame_t frame, const sub_frame_t subframe)
 		(g_phyTx.pbch.frame == frame && g_phyTx.pbch.subframe == subframe))
 	{
 		msg_size = sizeof(PHY_PBCHSendReq);
-#ifdef MAC_MQ_TEST
+#if 0//def MAC_MQ_TEST
 		msg = new_msg(MAC_PHY_PBCH_TX_REQ, TASK_D2D_PHY_TX, taskId, msg_size);
 
 		if (msg != NULL)
@@ -245,7 +163,7 @@ void handle_phy_tx(const      frame_t frame, const sub_frame_t subframe)
 	{
 		msg_size = sizeof(PHY_PdcchSendReq);
 
-#ifdef MAC_MQ_TEST	
+#if 0//def MAC_MQ_TEST	
 		msg = new_msg(MAC_PHY_PDCCH_SEND, TASK_D2D_PHY_TX, taskId, msg_size);
 
 		if (msg != NULL)
@@ -280,7 +198,7 @@ void handle_phy_tx(const      frame_t frame, const sub_frame_t subframe)
 	{
 		msg_size = sizeof(PHY_PuschSendReq);
 
-#ifdef MAC_MQ_TEST
+#if 0//def MAC_MQ_TEST
 		msg = new_msg(MAC_PHY_PUSCH_SEND, TASK_D2D_PHY_TX, taskId, msg_size);
 
 		if (msg != NULL)
@@ -327,13 +245,14 @@ void phy_tx_sim_thread(msgDef* msg)
 	frame = g_phyTx.frame;
 	subframe = g_phyTx.subframe;
 
-	//frame = (frame + (subframe + MAC_SCH_TIMING_ADVANCE) / MAX_SUBSFN) % MAX_SFN;
-	//subframe = (subframe + MAC_SCH_TIMING_ADVANCE) % MAX_SUBSFN;
+	frame = (frame + (subframe + MAC_SCH_TIMING_ADVANCE) / MAX_SUBSFN) % MAX_SFN;
+	subframe = (subframe + MAC_SCH_TIMING_ADVANCE) % MAX_SUBSFN;
+
 	if (!isTimer)
 	{
 		phyTxMsgHandler(msg);
 		
-		handle_phy_tx(frame, subframe);// for FPGA
+		//handle_phy_tx(frame, subframe);// for FPGA
 	}
 	else
 	{

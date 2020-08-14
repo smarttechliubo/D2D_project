@@ -75,10 +75,10 @@ bool mac_config_cfm(bool success)
 
 void mac_config(const rrc_mac_initial_req *req)
 {
-	bool success = mac_paras_check(req);
+	bool ret = mac_paras_check(req);
 	mac_info_s *mac = g_context.mac;
 
-	if(mac != NULL && mac->status == ESTATUS_NONE)
+	if(ret && mac != NULL && mac->status == ESTATUS_NONE)
 	{
 		mac->mode = (mode_e)req->mode;
 		mac->cellId = req->cellId;
@@ -90,22 +90,24 @@ void mac_config(const rrc_mac_initial_req *req)
 		mac->max_rbs_per_ue = MAX_RBS;
 		//mac->max_rbs_per_ue = 1;
 
-		success = true;
-
 		for (uint32_t i = mac->rb_start_index; i < (mac->rb_start_index + mac->rb_num); i++)
 		{
 			mac->rb_available[i] = 0;
 		}
 
-		if (mac_config_cfm(success))
+		if (mac_config_cfm(true))
 		{
 			mac->status = ESTATUS_ACTIVE;
 			init_mac_tx(mac->cellId);
 		}
 	}
 	else
-	{	
-		//mac_config_cfm(success);
+	{
+#ifdef MAC_TEST
+		mac_config_cfm(true);
+#else
+		mac_config_cfm(false);
+#endif
 		LOG_ERROR(MAC, "MAC config error, mode:%u, mac:%u, status:%u", req->mode, mac != NULL, mac->status);
 	}
 

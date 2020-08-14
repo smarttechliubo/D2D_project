@@ -44,7 +44,7 @@ extern int timer_int_init( );
 extern int32_t init_mac_period();
 extern int32_t init_mac_scheduler();
 extern void run_period(MessageDef* msg);
-extern void run_scheduler(MessageDef* msg);
+extern void run_scheduler();
 
 extern uint32_t init_phy_tx_sim();
 extern uint32_t init_phy_rx_sim();

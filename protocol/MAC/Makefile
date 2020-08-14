@@ -18,17 +18,17 @@ INCFLAGS += -Iinc/
 MAC_LIB=libD2D_protocol_shared.so
 
 mac:$(MAC_LIB)
-	gcc $^ -o $@  -g $(MAC_LIB) -losp -lrt -ldl -lpthread
 	cp ../../platform/osp_lib/libosp.so /lib
+	aarch64-linux-gnu-gcc $^ -o $@  -g $(MAC_LIB) -losp -lrt -ldl -lpthread
 	cp $(MAC_LIB) /lib
 
 $(MAC_OBJS):%.o:%.c
 	@echo "Compiling obj"
-	gcc $(CFLAGS) $(INCFLAGS) -c  -fPIC -g -Wall $< -o $@ -MD -MF $*.d -MP
+	aarch64-linux-gnu-gcc $(CFLAGS) $(INCFLAGS) -c  -fPIC -g -Wall $< -o $@ -MD -MF $*.d -MP
 
 $(MAC_LIB):$(MAC_OBJS)
 	@echo "Compiling start"
-	gcc -shared -fPIC -o $(MAC_LIB) $^ -o $@  -g
+	aarch64-linux-gnu-gcc -shared -fPIC -o $(MAC_LIB) $^ -o $@  -g
 	rm -f  $(MAC_OBJS) $(MAC_DEPS)
 
 clean:

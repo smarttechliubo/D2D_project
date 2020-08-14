@@ -34,12 +34,12 @@ int32_t sfn_sync()
 
 void* _RegTimer4ms()
 {
-	return OSP_RegFrameSync();
+	return 0;//OSP_RegFrameSync();
 }
 
 void* _RegTimer1ms()
 {
-	return OSP_RegFrameSyncCal();
+	return 0;//OSP_RegFrameSyncCal();
 }
 
 void* _timerCreate(uint32_t DstTaskId,  bool isRepeat, uint32_t timeout, uint32_t delay)

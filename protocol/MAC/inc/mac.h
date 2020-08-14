@@ -17,7 +17,7 @@ void init_mac();
 
 void mac_reset();
 void run_period(msgDef* msg);
-void run_scheduler(msgDef* msg);
+void run_scheduler();
 int32_t pre_check(const sub_frame_t subframe);
 
 
